@@ -322,8 +322,8 @@ describe("🤺 duels panel: kill share, ⚔️ iVi and 🎲 vs expected (owner 2
   });
 });
 
-describe("🤺 duels panel: replay links (#102)", () => {
-  it("pair summary + crowd rows link to replay/?name=A&vs=B; PS hides them", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
+describe("🤺 duels panel: replay duel links hidden (owner 2026-11-07)", () => {
+  it("pair summary + crowd rows show no replay links; PS still shows none", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
     await withPage(async ({ ev, nav }) => {
       await nav("index.html");
       const r = await ev(`(async () => {
@@ -339,11 +339,13 @@ describe("🤺 duels panel: replay links (#102)", () => {
         const opts = (isPS) => ({ getJson, baseOf: () => "https://x/get/ps2:v2/", catalog: async () => null, pairApi: async (args) => replyFor(args.q), isPS });
         const panel = mountDuels(s, opts(false));
         panel.setPlayers([{ cid: "1", display: "Alice" }, { cid: "2", display: "Bob" }]);
-        let pairLink = null;
-        for (let i = 0; i < 60 && !pairLink; i++) { await sleep(100); const a = s.querySelector(".duel-summary a.replay-link"); if (a) pairLink = { href: a.getAttribute("href"), text: a.textContent }; }
+        for (let i = 0; i < 60 && !s.querySelector(".duel-summary").textContent.includes("Alice"); i++) await sleep(100);
+        const pairSummary = s.querySelector(".duel-summary").textContent;
+        const pairLinks = s.querySelectorAll(".duel-summary a.replay-link").length;
         panel.setPlayers([{ cid: "1", display: "Alice", rows: [{ name: "Bob", kills: 5, deaths: 3 }, { name: "Carol", kills: 2, deaths: 7 }] }]);
-        let crowdLinks = [];
-        for (let i = 0; i < 60 && crowdLinks.length < 2; i++) { await sleep(100); crowdLinks = [...s.querySelectorAll(".duel-table tbody a.replay-link")].map(a => a.getAttribute("href")); }
+        for (let i = 0; i < 60 && s.querySelectorAll(".duel-table tbody tr").length < 2; i++) await sleep(100);
+        const crowdLinks = s.querySelectorAll(".duel-table tbody a.replay-link").length;
+        const crowdRows = s.querySelectorAll(".duel-table tbody tr").length;
         const s2 = document.createElement("details");
         s2.setAttribute("open", "");
         s2.innerHTML = "<summary>Duels</summary><span class=\\"duel-count\\"></span><p class=\\"duel-summary\\" hidden></p><p class=\\"duel-status\\" hidden></p><div class=\\"duel-cmp-wrap\\" hidden><table class=\\"duel-cmp\\"></table></div><div class=\\"duel-scroll\\" hidden><table class=\\"duel-table\\"><thead></thead><tbody></tbody></table></div><button type=\\"button\\" class=\\"duel-more\\" hidden>Read further back</button>";
@@ -355,13 +357,233 @@ describe("🤺 duels panel: replay links (#102)", () => {
         psPanel.setPlayers([{ cid: "1", display: "Alice", rows: [{ name: "Bob", kills: 5, deaths: 3 }] }]);
         for (let i = 0; i < 30 && !s2.querySelectorAll(".duel-table tbody tr").length; i++) await sleep(100);
         const psCrowdLinks = s2.querySelectorAll("a.replay-link").length;
-        return { pairLink, crowdLinks, psPairLinks, psCrowdLinks };
+        return { pairSummary, pairLinks, crowdLinks, crowdRows, psPairLinks, psCrowdLinks };
       })()`);
-      assert.equal(r.pairLink.href, "replay/?name=Alice&vs=Bob");
-      assert.match(r.pairLink.text, /Replay this duel/);
-      assert.deepEqual(r.crowdLinks.sort(), ["replay/?name=Alice&vs=Bob", "replay/?name=Alice&vs=Carol"]);
-      assert.equal(r.psPairLinks, 0, "PS hides the pair link");
-      assert.equal(r.psCrowdLinks, 0, "PS hides the crowd links");
+      assert.match(r.pairSummary, /Alice/, "pair summary still renders");
+      assert.match(r.pairSummary, /Bob/, "pair summary still renders");
+      assert.equal(r.pairLinks, 0, "no replay link in the pair summary");
+      assert.equal(r.crowdRows, 2, "crowd rows still render");
+      assert.equal(r.crowdLinks, 0, "no replay links in the crowd rows");
+      assert.equal(r.psPairLinks, 0, "PS still shows no pair link");
+      assert.equal(r.psCrowdLinks, 0, "PS still shows no crowd links");
+    });
+  });
+});
+
+describe("🤺 duels panel: 1-vs-many Glicko table (#113)", () => {
+  it("3 names open the multi table: one row per opponent, ladder + pairwise side by side", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
+    await withPage(async ({ ev, nav }) => {
+      await nav("index.html");
+      const r = await ev(`(async () => {
+        ${fixture}
+        const { mountDuels } = await import("/duels-panel.mjs");
+        const t = 1792000000;
+        // 25 infantry kills between the subject and each opponent: 20 won, 5 lost.
+        const replyFor = (q) => {
+          const evs = [];
+          for (let i = 0; i < 25; i++) evs.push([t - i * 100, i < 20 ? 1 : 0, String(q), 1, 0, 2, 0, 0, 0]);
+          return { v: 1, events: evs, rev: 1, lo: t - 2400, hi: t, done: true, fights: 1, kills: 25, pages: 1, blocks: 1 };
+        };
+        const getJson = async (u) => {
+          if (u.includes("character/?character_id=")) return { character_list: [
+            { character_id: "11", faction_id: "1", w: { world_id: "10" } },
+            { character_id: "22", faction_id: "3", w: { world_id: "10" } },
+            { character_id: "33", faction_id: "2", w: { world_id: "10" } } ] };
+          return { error: "stub" };
+        };
+        const panel = mountDuels(s, { getJson, baseOf: () => "https://x/get/ps2:v2/", catalog: async () => null, pairApi: async (args) => replyFor(args.q) });
+        const F = { cid: "11", display: "Fantom220TR", rows: [
+          { name: "Sarleyy", kills: 120, deaths: 90, kpm: 1 },
+          { name: "BlackRodger", kills: 80, deaths: 70, kpm: 1 } ] };
+        panel.setPlayers([F, { cid: "22", display: "Sarleyy" }, { cid: "33", display: "BlackRodger" }]);
+        let done = null;
+        for (let i = 0; i < 60 && !done; i++) {
+          await sleep(100);
+          if (status().includes("disagree")) done = {
+            hidden: s.hidden,
+            sum: summary(),
+            head: [...s.querySelectorAll(".duel-table thead th")].map((x) => x.textContent),
+            rows: [...s.querySelectorAll(".duel-table tbody tr")].map((tr) => [...tr.cells].map((c) => c.textContent)),
+            titles: [...s.querySelectorAll(".duel-table tbody tr")].map((tr) => [...tr.cells].map((c) => c.title)),
+            multi: s.querySelector(".duel-table").classList.contains("duel-multi"),
+            count: s.querySelector(".duel-count").textContent,
+          };
+        }
+        return done;
+      })()`);
+      assert.ok(r, "multi table settles (status note appears)");
+      assert.equal(r.hidden, false, "section shows for 3 names");
+      assert.equal(r.multi, true, "table carries duel-multi");
+      assert.equal(r.count, "(2)", "count is the opponent count");
+      assert.match(r.sum, /Fantom220TR vs 2 opponents/, "summary names the subject and the opponent count");
+      assert.deepEqual(r.head, ["#", "Opponent", "Kills", "🌐 Ladder", "📈 Pairwise", "Last fight"], "five columns, ladder before pairwise");
+      assert.equal(r.rows.length, 2, "one row per opponent, input order");
+      assert.match(r.rows[0][1], /Sarleyy/, "first row is the first opponent");
+      assert.match(r.rows[0][2], /120–90/, "kills cell is the killboard split, subject first");
+      assert.match(r.rows[0][3], /1,712 ±38 · 52%/, "ladder cell: Fantom's ladder rating vs Sarleyy (1712 ±38, 52%)");
+      assert.match(r.rows[0][4], /1,\d{3} ±\d+ · \d+%/, "pairwise cell carries a Glicko rating ± RD · win%");
+      assert.match(r.titles[0][4], /Next kill \d+% · 25 counted infantry kills since/, "pairwise hover names the win%, the counted kills and the last fight");
+      assert.match(r.rows[0][5], /2026/, "last-fight cell carries the last kill's date");
+      assert.match(r.rows[1][2], /80–70/, "second row's kill split");
+      assert.match(r.rows[1][3], /1,712 ±38 · 60%/, "ladder cell: Fantom vs BlackRodger (1712 ±38, 60%)");
+      assert.match(r.rows[1][4], /1,\d{3} ±\d+ · \d+%/, "second row's pairwise verdict");
+    });
+  });
+
+  it("cross-server opponent: pairwise —, ladder still shows, pair cache never asked", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
+    await withPage(async ({ ev, nav }) => {
+      await nav("index.html");
+      const r = await ev(`(async () => {
+        ${fixture}
+        const { mountDuels } = await import("/duels-panel.mjs");
+        let apiCalls = 0;
+        const getJson = async (u) => {
+          if (u.includes("character/?character_id=")) return { character_list: [
+            { character_id: "11", faction_id: "1", w: { world_id: "10" } },
+            { character_id: "22", faction_id: "3", w: { world_id: "1" } },
+            { character_id: "33", faction_id: "2", w: { world_id: "1" } } ] };
+          return { error: "stub" };
+        };
+        const panel = mountDuels(s, { getJson, baseOf: () => "https://x/get/ps2:v2/", catalog: async () => null, pairApi: async () => { apiCalls++; return { v: 1, events: [], rev: 1, done: true, fights: 0, kills: 0, pages: 0, blocks: 0 }; } });
+        const F = { cid: "11", display: "Fantom220TR", rows: [{ name: "Sarleyy", kills: 120, deaths: 90, kpm: 1 }] };
+        panel.setPlayers([F, { cid: "22", display: "Sarleyy" }, { cid: "33", display: "BlackRodger" }]);
+        let done = null;
+        for (let i = 0; i < 60 && !done; i++) {
+          await sleep(100);
+          if (status().includes("disagree")) done = {
+            rows: [...s.querySelectorAll(".duel-table tbody tr")].map((tr) => [...tr.cells].map((c) => c.textContent)),
+            titles: [...s.querySelectorAll(".duel-table tbody tr")].map((tr) => [...tr.cells].map((c) => c.title)),
+          };
+        }
+        return { ...done, apiCalls };
+      })()`);
+      assert.ok(r.rows, "multi table settles");
+      assert.equal(r.apiCalls, 0, "pair cache never asked for a cross-server opponent");
+      assert.match(r.rows[0][3], /52%/, "ladder column still works cross-server");
+      assert.equal(r.rows[0][4], "—", "pairwise column is — cross-server");
+      assert.match(r.titles[0][4], /different servers/, "pairwise — explains the server gate");
+    });
+  });
+
+  it("too few infantry kills: pairwise shows the floor message, ladder still shows", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
+    await withPage(async ({ ev, nav }) => {
+      await nav("index.html");
+      const r = await ev(`(async () => {
+        ${fixture}
+        const { mountDuels } = await import("/duels-panel.mjs");
+        const t = 1792000000;
+        const few = { v: 1, events: [[t, 1, "22", 1, 0, 2, 0, 0, 0], [t - 100, 1, "22", 1, 0, 2, 0, 0, 0], [t - 200, 0, "22", 1, 0, 2, 0, 0, 0], [t - 300, 1, "22", 1, 0, 2, 0, 0, 0], [t - 400, 0, "22", 1, 0, 2, 0, 0, 0]], rev: 1, lo: t - 400, hi: t, done: true, fights: 1, kills: 5, pages: 1, blocks: 1 };
+        const getJson = async (u) => {
+          if (u.includes("character/?character_id=")) return { character_list: [
+            { character_id: "11", faction_id: "1", w: { world_id: "10" } },
+            { character_id: "22", faction_id: "3", w: { world_id: "10" } },
+            { character_id: "33", faction_id: "2", w: { world_id: "10" } } ] };
+          return { error: "stub" };
+        };
+        const panel = mountDuels(s, { getJson, baseOf: () => "https://x/get/ps2:v2/", catalog: async () => null, pairApi: async (args) => (args.q === "22" ? few : { v: 1, events: [], rev: 1, done: true, fights: 0, kills: 0, pages: 0, blocks: 0 }) });
+        const F = { cid: "11", display: "Fantom220TR", rows: [
+          { name: "Sarleyy", kills: 120, deaths: 90, kpm: 1 },
+          { name: "BlackRodger", kills: 80, deaths: 70, kpm: 1 } ] };
+        panel.setPlayers([F, { cid: "22", display: "Sarleyy" }, { cid: "33", display: "BlackRodger" }]);
+        let done = null;
+        for (let i = 0; i < 60 && !done; i++) {
+          await sleep(100);
+          if (status().includes("disagree")) done = { rows: [...s.querySelectorAll(".duel-table tbody tr")].map((tr) => [...tr.cells].map((c) => c.textContent)) };
+        }
+        return done;
+      })()`);
+      assert.ok(r.rows, "multi table settles");
+      assert.match(r.rows[0][4], /too few infantry kills/, "5 kills is below the 20-kill floor");
+      assert.match(r.rows[0][3], /52%/, "ladder column unaffected by the floor");
+      assert.equal(r.rows[0][5], "—", "no last fight below the floor");
+    });
+  });
+
+  it("a subject with no ladder rating shows — there, but still gets a pairwise verdict", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
+    await withPage(async ({ ev, nav }) => {
+      await nav("index.html");
+      const r = await ev(`(async () => {
+        ${fixture}
+        const { mountDuels } = await import("/duels-panel.mjs");
+        const t = 1792000000;
+        const replyFor = (q) => {
+          const evs = [];
+          for (let i = 0; i < 25; i++) evs.push([t - i * 100, i < 20 ? 1 : 0, String(q), 1, 0, 2, 0, 0, 0]);
+          return { v: 1, events: evs, rev: 1, lo: t - 2400, hi: t, done: true, fights: 1, kills: 25, pages: 1, blocks: 1 };
+        };
+        const getJson = async (u) => {
+          if (u.includes("character/?character_id=")) return { character_list: [
+            { character_id: "44", faction_id: "1", w: { world_id: "10" } },
+            { character_id: "11", faction_id: "3", w: { world_id: "10" } } ] };
+          return { error: "stub" };
+        };
+        const panel = mountDuels(s, { getJson, baseOf: () => "https://x/get/ps2:v2/", catalog: async () => null, pairApi: async (args) => replyFor(args.q) });
+        // TolyaNo has not played since 2026-10-08, so the tip's ladder.json (built 2026-11-06,
+        // ~5 days of stored kills) carries no rating for him — the ladder cell must be —.
+        const T = { cid: "44", display: "TolyaNo", rows: [{ name: "Fantom220TR", kills: 537, deaths: 794, kpm: 1 }] };
+        panel.setPlayers([T, { cid: "11", display: "Fantom220TR" }, { cid: "22", display: "Sarleyy" }]);
+        let done = null;
+        for (let i = 0; i < 60 && !done; i++) {
+          await sleep(100);
+          if (status().includes("disagree")) done = { rows: [...s.querySelectorAll(".duel-table tbody tr")].map((tr) => [...tr.cells].map((c) => c.textContent)) };
+        }
+        return done;
+      })()`);
+      assert.ok(r.rows, "multi table settles");
+      assert.match(r.rows[0][2], /537–794/, "kills cell is the real killboard split");
+      assert.equal(r.rows[0][3], "—", "no ladder rating for TolyaNo in the tip's ladder.json");
+      assert.match(r.rows[0][4], /1,\d{3} ±\d+ · \d+%/, "pairwise verdict still renders from the head-to-head history");
+    });
+  });
+
+  it("mode switch: 6 names hide the section, 2 names still open the pair view, 1 name the crowd", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
+    await withPage(async ({ ev, nav }) => {
+      await nav("index.html");
+      const r = await ev(`(async () => {
+        ${fixture}
+        const { mountDuels } = await import("/duels-panel.mjs");
+        const t = 1792000000;
+        const replyFor = (q) => {
+          const evs = [];
+          for (let i = 0; i < 25; i++) evs.push([t - i * 100, i < 20 ? 1 : 0, String(q), 1, 0, 2, 0, 0, 0]);
+          return { v: 1, events: evs, rev: 1, lo: t - 2400, hi: t, done: true, fights: 1, kills: 25, pages: 1, blocks: 1 };
+        };
+        const getJson = async (u) => {
+          if (u.includes("character/?character_id=")) return { character_list: [
+            { character_id: "11", faction_id: "1", w: { world_id: "10" } },
+            { character_id: "22", faction_id: "3", w: { world_id: "10" } },
+            { character_id: "33", faction_id: "2", w: { world_id: "10" } },
+            { character_id: "44", faction_id: "1", w: { world_id: "10" } },
+            { character_id: "55", faction_id: "2", w: { world_id: "10" } },
+            { character_id: "66", faction_id: "3", w: { world_id: "10" } } ] };
+          return { error: "stub" };
+        };
+        const panel = mountDuels(s, { getJson, baseOf: () => "https://x/get/ps2:v2/", catalog: async () => null, pairApi: async (args) => replyFor(args.q) });
+        const F = { cid: "11", display: "Fantom220TR", rows: [
+          { name: "Sarleyy", kills: 120, deaths: 90, kpm: 1 },
+          { name: "BlackRodger", kills: 80, deaths: 70, kpm: 1 } ] };
+        const S = { cid: "22", display: "Sarleyy" }, B = { cid: "33", display: "BlackRodger" };
+        panel.setPlayers([F, S, B]);
+        let multi = null;
+        for (let i = 0; i < 60 && !multi; i++) { await sleep(100); if (status().includes("disagree")) multi = s.querySelector(".duel-table").classList.contains("duel-multi"); }
+        panel.setPlayers([F, S, B, { cid: "44", display: "Cepn" }, { cid: "55", display: "Frag38ruVS" }, { cid: "66", display: "Buzdovan" }]);
+        await sleep(200);
+        const sixHidden = s.hidden;
+        panel.setPlayers([F, S]);
+        let pair = null;
+        for (let i = 0; i < 60 && !pair; i++) { await sleep(100); if (summary().includes("Sarleyy")) pair = { cmp: !s.querySelector(".duel-cmp-wrap").hidden, glk: s.querySelector(".duel-cmp").textContent.includes("📈"), multiClass: s.querySelector(".duel-table").classList.contains("duel-multi") }; }
+        panel.setPlayers([F]);
+        let crowd = null;
+        for (let i = 0; i < 60 && !crowd; i++) { await sleep(100); if (s.querySelectorAll(".duel-table tbody tr").length) crowd = s.querySelector(".duel-table").classList.contains("duel-crowd"); }
+        return { multi, sixHidden, pair, crowd };
+      })()`);
+      assert.equal(r.multi, true, "3 names open the multi table");
+      assert.equal(r.sixHidden, true, "6 names hide the section");
+      assert.ok(r.pair, "2 names open the pair view");
+      assert.equal(r.pair.cmp, true, "pair comparison shows");
+      assert.equal(r.pair.glk, true, "pair view keeps its 📈 Glicko row");
+      assert.equal(r.pair.multiClass, false, "pair view drops the duel-multi class");
+      assert.equal(r.crowd, true, "1 name opens the crowd view");
     });
   });
 });

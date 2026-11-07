@@ -210,11 +210,14 @@ test("≈ shots / hits per kill: lifetime weapon stats of both players in 2 Cens
   assert.equal(s.b.kills, 0);
 });
 
-test("tab wiring: both rooms, one or two players, translated, shared table look", () => {
+test("tab wiring: both rooms, one, two or 3–5 players, translated, shared table look", () => {
   const st = readFileSync(new URL("../stats-table.mjs", import.meta.url), "utf8");
   assert.match(st, /duelsPanel\.setPlayers\(\$\.LIVE_MODE \? \[\] : list \|\| \[\]\)/);
   const panel = readFileSync(new URL("../duels-panel.mjs", import.meta.url), "utf8");
-  assert.match(panel, /ok\.length === 1 \? "crowd" : ok\.length === 2 \? "pair" : null/);
+  assert.match(panel, /ok\.length === 1 \? "crowd" : ok\.length === 2 \? "pair" : ok\.length >= 3 && ok\.length <= 5 \? "multi" : null/);
+  assert.match(panel, /function renderMulti\(run\)/, "1-vs-many table (#113) renders one row per opponent");
+  assert.match(panel, /loadPairFor\(a, opp, false,/, "each opponent loads through the same pair path as the pair view");
+  assert.match(panel, /ladderPair\(ladder, a, opp\)/, "ladder column reads the same lookup as the pair view's ladder line");
   assert.match(panel, /pages: more \? Infinity : AUTO_PAGES/, "\"Read further back\" reads to the end of the history in one press");
   assert.doesNotMatch(panel, /MORE_PAGES/, "no per-click page chunk left");
   assert.match(panel, /className = "spinner"/, "small spinner while the history loads");

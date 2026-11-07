@@ -2,6 +2,8 @@
  * 🤺 Duels tab (owner 2026-10-28, both rooms): one player → that player vs the crowd (killboard
  * the page already has, nemesis / favourite target; no Census call); two players → head-to-head:
  * a comparison of both sides and every kill between them, cut into fights (▸ opens a fight).
+ * Three to five players → 1-vs-many (#113): one row per opponent with the 🌐 ladder win% and
+ * the 📈 pairwise Glicko win% side by side; the first name is the subject, the rest are opponents.
  * Logic in duels.mjs. Head-to-head data on first open: up to 5 Census pages of one player's
  * kills & deaths (the whole history on "Read further back"), plus 2 calls for the weapons' lifetime shots / hits.
  * A small spinner sits in the status line while a load runs.
@@ -49,19 +51,13 @@ function personHtml(full) {
   return `${tag ? `<span class="kf-tag">[${esc(tag)}]</span> ` : ""}<button type="button" class="kf-name" data-name="${esc(nm)}" title="${esc(tr("kf.addTip", "Add {name} to the names", { name: nm }))}">${esc(nm)}</button>`;
 }
 
-// 🎬 Replay links (#102): PC only, hidden in the PlayStation room (the replay
-// page reads PC shards; #111 brings the PS room its own replay data later).
-const replayHref = (aName, bName) => `replay/?name=${encodeURIComponent(aName)}&vs=${encodeURIComponent(bName)}`;
-const replayDuelHtml = (ps, aName, bName) => {
-  if (ps) return "";
-  const label = tr("duel.replayDuel", "🎬 Replay this duel");
-  return ` <a class="replay-link" href="${replayHref(aName, bName)}" title="${esc(label)}" aria-label="${esc(label)}">${esc(label)}</a>`;
-};
-const replayVsHtml = (ps, aName, bName) => {
-  if (ps) return "";
-  const label = tr("duel.replayVs", "Replay this duel vs {name}", { name: bName });
-  return ` <a class="replay-link" href="${replayHref(aName, bName)}" title="${esc(label)}" aria-label="${esc(label)}">🎬</a>`;
-};
+// 🎬 Duel replay links (#102) hidden for now (owner 2026-11-07): the
+// replayDuelHtml / replayVsHtml helpers were removed with their call sites
+// below. The solo 🎬 in stats-table.mjs / rankings.mjs and the scrim-row 🎬
+// in scrims-panel.mjs are hidden too (same day, same reason: whole replay
+// system to be redesigned). The replay/ page stays, and the
+// duel.replayDuel / duel.replayVs keys stay in i18n/en.json so this is a
+// one-commit revert.
 
 const fightResLabel = (res, a, b) => (res === "won" ? tr("duel.won", "{name} won", { name: a }) : res === "lost" ? tr("duel.won", "{name} won", { name: b }) : tr("scr.draw", "Draw"));
 
@@ -114,25 +110,33 @@ export function mountDuels(section, o = {}) {
   ladderEl.className = "duel-ladder";
   ladderEl.hidden = true;
   section.insertBefore(ladderEl, status);
-  let ladder = null, ladderP = null;
+  let ladder = null, ladderP = null, ladderKnown = false;
   function ensureLadder() {
-    if (isPS) return Promise.resolve(null);
-    if (!ladderP) ladderP = fetch(`${dataDir}ladder.json`).then((r) => (r.ok ? r.json() : null)).then((d) => { ladder = d && d.v === 1 && d.p ? d : null; return ladder; }).catch(() => null);
+    if (isPS) { ladderKnown = true; return Promise.resolve(null); } // PS room: no ladder.json at all
+    if (!ladderP) ladderP = fetch(`${dataDir}ladder.json`).then((r) => (r.ok ? r.json() : null)).then((d) => { ladder = d && d.v === 1 && d.p ? d : null; ladderKnown = true; return ladder; }).catch(() => { ladderKnown = true; return null; });
     return ladderP;
   }
+  /** Ladder ratings [subject, opponent] from data/ladder.json, or null when either has too few recent infantry kills. */
+  function ladderPair(L, p, q) {
+    if (!L) return null;
+    const rp = L.p[bareName(p.display).toLowerCase()], rq = L.p[bareName(q.display).toLowerCase()];
+    return rp && rq ? [rp, rq] : null;
+  }
+
   function renderLadder() {
     ladderEl.hidden = true;
     if (mode !== "pair" || !a || !b) return;
     const want = pairKey();
     ensureLadder().then((L) => {
       if (!L || mode !== "pair" || pairKey() !== want) return;
-      const ra = L.p[bareName(a.display).toLowerCase()], rb = L.p[bareName(b.display).toLowerCase()];
-      if (!ra || !rb) {
+      const rs = ladderPair(L, a, b);
+      if (!rs) {
         ladderEl.textContent = tr("duel.lad.none", "🌐 Infantry ladder: not enough recent infantry kills for one of them.");
         ladderEl.title = "";
         ladderEl.hidden = false;
         return;
       }
+      const [ra, rb] = rs;
       const p = pairChance(rating(ra[0], ra[1], 0.02), rating(rb[0], rb[1], 0.02));
       ladderEl.textContent = tr("duel.lad.line", "🌐 Infantry ladder: {a} {ra} ±{da} · {b} {rb} ±{db} → next kill {pa} – {pb}", {
         a: bareName(a.display), b: bareName(b.display), ra: int(ra[0]), rb: int(rb[0]), da: int(ra[1]), db: int(rb[1]), pa: pct0(p), pb: pct0(1 - p) });
@@ -166,7 +170,7 @@ export function mountDuels(section, o = {}) {
   wrap.parentNode.insertBefore(flatBtn, wrap);
   const pairs = new Map(); // "cidA|cidB" → { st, stats, need, pIsA, … }
   let catP = null;
-  let mode = null, a = null, b = null, shownKey = "";
+  let mode = null, a = null, b = null, shownKey = "", listKey = "";
   let sortKey = "share", sortDir = "desc";
   const opened = new Set();
   let busyKey = null, runId = 0, stopAsked = false;
@@ -289,7 +293,7 @@ export function mountDuels(section, o = {}) {
   function renderCrowd() {
     const rows = crowdRows(a);
     const s = crowdSummary(rows);
-    table.classList.remove("duel-pair"); table.classList.add("duel-crowd");
+    table.classList.remove("duel-pair", "duel-multi"); table.classList.add("duel-crowd");
     count.textContent = rows.length ? `(${rows.length.toLocaleString(lang())})` : "";
     if (!rows.length) { setStatus(tr("duel.crowdNone", "No killboard for this player yet.")); return; }
     const who = bareName(a.display);
@@ -317,7 +321,7 @@ export function mountDuels(section, o = {}) {
     const preyRow = preyEntry ? rows.find((r) => bareName(r.name).toLowerCase() === bareName(preyEntry[0]).toLowerCase()) : null;
     const badge = (r) => (r === s.nemesis ? ` <span class="scr-group duel-nem" title="${esc(tr("duel.nemesisTip", "Killed this player the most."))}">😈</span>` : r === s.target ? ` <span class="scr-group duel-tgt" title="${esc(tr("duel.targetTip", "This player killed them the most."))}">🎯</span>` : r === preyRow ? ` <span class="scr-group duel-prey" title="${esc(tr("duel.preyTip", "This player is their favourite target."))}">🪦</span>` : "");
     table.querySelector("tbody").innerHTML = list.map((r, i) =>
-      `<tr><td class="rk-num">${i + 1}</td><td class="duel-name">${personHtml(r.name)}${replayVsHtml(isPS, who, bareName(r.name))}${iviHtml(r)}${badge(r)}</td>` +
+      `<tr><td class="rk-num">${i + 1}</td><td class="duel-name">${personHtml(r.name)}${iviHtml(r)}${badge(r)}</td>` +
       `<td class="duel-kills">${int(r.kills)}</td><td>${int(r.deaths)}</td><td>${kdTxt(r.kd)}</td><td>${r.kpm == null ? "–" : r.kpm.toFixed(2)}</td><td>${pct(r.share)}</td></tr>`).join("");
     wrap.hidden = false;
     if (!iviMap) ensureIvi().then(() => {
@@ -334,17 +338,19 @@ export function mountDuels(section, o = {}) {
 
   /* ---------- two players: head-to-head */
   const pairKey = () => `${a.cid}|${b.cid}`;
+  const pairKeyFor = (p, q) => `${p.cid}|${q.cid}`;
 
-  async function loadPair(more, onProgress, onCached) {
-    const key = pairKey();
+  /** Load one pair's history (pair mode's loadPair, plus the 1-vs-many table's per-opponent loads). */
+  async function loadPairFor(p, q, more, onProgress, onCached) {
+    const key = pairKeyFor(p, q);
     let job = pairs.get(key);
     let restored = false;
     if (!job) {
-      const base = baseOf(a);
-      if (baseOf(b) !== base) { job = { servers: true }; pairs.set(key, job); return job; }
-      const P = pagerOf(a, b), Q = P === a ? b : a;
+      const base = baseOf(p);
+      if (baseOf(q) !== base) { job = { servers: true }; pairs.set(key, job); return job; }
+      const P = pagerOf(p, q), Q = P === p ? q : p;
       const need = expectedCount(P, Q) ?? expectedCount(Q, P);
-      job = { base, pid: String(P.cid), pIsA: P === a, need, fl: pairFloor(a, b), st: { pid: String(P.cid), qid: String(Q.cid), all: [], cursor: 0, done: false, pages: 0 }, stats: new Map(), asked: new Set() };
+      job = { base, pid: String(P.cid), pIsA: P === p, need, fl: pairFloor(p, q), st: { pid: String(P.cid), qid: String(Q.cid), all: [], cursor: 0, done: false, pages: 0 }, stats: new Map(), asked: new Set() };
       const entry = readCacheMap()[key];
       if (entry && duelCacheRestore(entry, job)) restored = true;
       pairs.set(key, job);
@@ -353,8 +359,8 @@ export function mountDuels(section, o = {}) {
     if (job.servers) return job;
     // Faction / server lookup runs alongside (never in front of the cached head-to-head); the warning shows when it lands.
     if (!job.infoP) {
-      job.infoP = Promise.resolve().then(() => getJson(charInfoUrl(job.base, [a.cid, b.cid]))).then(parseCharInfo, () => new Map())
-        .then((m) => { job.info = m; if (mode === "pair" && pairs.get(pairKey()) === job) renderWarn(job); });
+      job.infoP = Promise.resolve().then(() => getJson(charInfoUrl(job.base, [p.cid, q.cid]))).then(parseCharInfo, () => new Map())
+        .then((m) => { job.info = m; if (mode === "pair" && pairs.get(key) === job) renderWarn(job); });
     }
     // Cross-server gate (owner 2026-10-28, temporary until servers merge): players on
     // different worlds never meet, so no pair history is fetched for them at all. The one
@@ -364,7 +370,7 @@ export function mountDuels(section, o = {}) {
     {
       await job.infoP; // resolves to undefined: the lookup chain stores the map on job.info, not on the promise
       const info = job.info;
-      const x = info && info.get(String(a.cid)), y = info && info.get(String(b.cid));
+      const x = info && info.get(String(p.cid)), y = info && info.get(String(q.cid));
       if (x && y && x.world && y.world && x.world !== y.world) { job.servers = true; return job; }
     }
     let fromApi = false;
@@ -389,9 +395,9 @@ export function mountDuels(section, o = {}) {
           job.st.oldest = r.lo || (job.st.all.length ? job.st.all[job.st.all.length - 1][0] : 0);
           // The server's creation dates win (same Census source; the files can be older).
           if (Array.isArray(r.created) && Math.max(...r.created) > 0) {
-            const [cp, cq] = r.created.map(Number), pA = job.st.pid === String(a.cid);
+            const [cp, cq] = r.created.map(Number), pA = job.st.pid === String(p.cid);
             const ca = pA ? cp : cq, cb = pA ? cq : cp;
-            job.fl = { floor: Math.max(ca, cb) - DUEL_GAP, created: Math.max(ca, cb), newer: ca >= cb ? a : b };
+            job.fl = { floor: Math.max(ca, cb) - DUEL_GAP, created: Math.max(ca, cb), newer: ca >= cb ? p : q };
           }
           if (onProgress) onProgress(job);
           if (r.done || (!more && r.fights >= FIRST_FIGHTS)) break;
@@ -410,13 +416,18 @@ export function mountDuels(section, o = {}) {
     const items = [...new Set(pe.map((e) => String(e.w)).filter((w) => w !== "0" && !job.asked.has(w)))];
     if (items.length) {
       try {
-        const u = weaponShotUrls(job.base, [a.cid, b.cid], items.slice(0, 100));
+        const u = weaponShotUrls(job.base, [p.cid, q.cid], items.slice(0, 100));
         const [plain, kills] = await Promise.all([getJson(u.plain), getJson(u.kills)]);
         if (plain && kills && !plain.error && !kills.error) { parseShotStats(plain, kills, job.stats); items.forEach((w) => job.asked.add(w)); }
       } catch (_) { /* the ≈ columns stay "–" */ }
     }
     saveCache(key, job);
     return job;
+  }
+
+  /** Pair mode's loader: the current two players. */
+  async function loadPair(more, onProgress, onCached) {
+    return loadPairFor(a, b, more, onProgress, onCached);
   }
 
   function cmpHtml(s, items, aName, bName, pe = []) {
@@ -497,7 +508,7 @@ export function mountDuels(section, o = {}) {
   function renderPair(job, items) {
     const aName = bareName(a.display), bName = bareName(b.display);
     renderWarn(job);
-    table.classList.remove("duel-crowd"); table.classList.add("duel-pair");
+    table.classList.remove("duel-crowd", "duel-multi"); table.classList.add("duel-pair");
     const pe = pairEvents(job.st.all, job.st.qid, job.pIsA);
     const fights = fightsOf(pe, job.st.all, job.st.pid, DUEL_GAP);
     const s = pairSummary(pe, fights, job.stats, a.cid, b.cid);
@@ -520,7 +531,7 @@ export function mountDuels(section, o = {}) {
     }
     sum.innerHTML = esc(tr("duel.summary", "{a} {ka} – {kb} {b} · fights: {fights} (1v1: {ones}) · first {first} · last {last}", {
       a: aName, b: bName, ka: int(s.a.kills), kb: int(s.b.kills), fights: int(s.fights), ones: int(s.ones), first: dateOnly(s.first), last: dateOnly(s.last),
-    })) + replayDuelHtml(isPS, aName, bName);
+    }));
     sum.hidden = false;
     setStatus(read);
     cmp.innerHTML = cmpHtml(s, items, aName, bName, pe);
@@ -591,8 +602,106 @@ export function mountDuels(section, o = {}) {
     if (on) opened.add(Number(i)); else opened.delete(Number(i));
   }
 
+  /* ---------- 3–5 players: 1-vs-many (#113) — one row per opponent, ladder + pairwise side by side */
+  let multiList = [], multiRun = 0;
+  const multiErr = new Set(); // pair keys whose history could not be read at all
+
+  /** One opponent row's numbers, or nulls while the data is still coming. */
+  function multiRow(opp) {
+    const kb = crowdRows(a).find((r) => bareName(r.name).toLowerCase() === bareName(opp.display).toLowerCase());
+    const row = { opp, kb, lad: null, ladTitle: "", glk: null, glkTitle: "", last: null, done: false };
+    const rs = ladderPair(ladder, a, opp);
+    if (ladder && rs) {
+      const [ra, rb] = rs;
+      const p = pairChance(rating(ra[0], ra[1], 0.02), rating(rb[0], rb[1], 0.02));
+      row.lad = `${int(ra[0])} ±${int(ra[1])} · ${pct0(p)}`;
+      row.ladTitle = tr("duel.lad.line", "🌐 Infantry ladder: {a} {ra} ±{da} · {b} {rb} ±{db} → next kill {pa} – {pb}", {
+        a: bareName(a.display), b: bareName(opp.display), ra: int(ra[0]), rb: int(rb[0]), da: int(ra[1]), db: int(rb[1]), pa: pct0(p), pb: pct0(1 - p) });
+    } else if (ladderKnown) {
+      row.lad = "—";
+      row.ladTitle = tr("duel.lad.none", "🌐 Infantry ladder: not enough recent infantry kills for one of them.");
+    }
+    const key = pairKeyFor(a, opp);
+    const job = pairs.get(key);
+    if (job && job.servers) {
+      row.glk = "—";
+      row.glkTitle = tr("duel.servers", "These two play on different servers: they never meet.");
+      row.done = true;
+    } else if (multiErr.has(key)) {
+      row.glk = "—";
+      row.glkTitle = tr("duel.multi.err", "The kills between these two could not be read.");
+      row.done = true;
+    } else if (job && job.st && iviMap && duelFit) {
+      const pe = pairEvents(job.st.all, job.st.qid, job.pIsA);
+      const g = duelGlickoFromIvi(pe, iviOf(a), iviOf(opp), duelFit, vehOf(a), vehOf(opp), { now: Date.now() / 1000 });
+      if (g) {
+        row.glk = `${int(g.aNow.mu)} ±${int(g.aNow.phi)} · ${pct0(g.p)}${g.stale ? ` (${tr("duel.glk.stale", "old")})` : ""}`;
+        row.glkTitle = tr("duel.multi.glkTitle", "Next kill {p} · {k} counted infantry kills since {d} · ratings {a} ±{da} vs {b} ±{db}", {
+          p: pct0(g.p), k: int(g.n), d: dateOnly(g.last), a: int(g.aNow.mu), da: int(g.aNow.phi), b: int(g.bNow.mu), db: int(g.bNow.phi) });
+        row.last = dateOnly(g.last);
+        row.done = job.st.done;
+      } else if (job.st.done) {
+        row.glk = tr("duel.glk.few", "too few infantry kills");
+        row.done = true;
+      }
+    }
+    return row;
+  }
+
+  function renderMulti(run) {
+    if (mode !== "multi" || run !== multiRun) return;
+    const aName = bareName(a.display);
+    table.classList.remove("duel-crowd", "duel-pair");
+    table.classList.add("duel-multi");
+    colgroup(["num", "name", "n", "wide", "wide", "date"]);
+    const ladTip = ladder
+      ? tr("duel.multi.ladTip", "Chance {a} gets the next kill, from the ladder rating: every infantry kill of the last {days} days against everyone, not only each other.", { a: aName, days: int(ladder.days) })
+      : tr("duel.multi.ladTip", "Chance {a} gets the next kill, from the ladder rating: every infantry kill of the last {days} days against everyone, not only each other.", { a: aName, days: 30 });
+    table.querySelector("thead").innerHTML = `<tr><th class="rk-num" scope="col">#</th>` +
+      `<th scope="col">${esc(tr("duel.multi.opp", "Opponent"))}</th>` +
+      `<th scope="col" title="${esc(tr("duel.multi.killsTip", "Kills on each other — {a} first, then the opponent.", { a: aName }))}">${esc(tr("duel.multi.kills", "Kills"))}</th>` +
+      `<th scope="col" title="${esc(ladTip)}">${esc(tr("duel.multi.lad", "🌐 Ladder"))}</th>` +
+      `<th scope="col" title="${esc(tr("duel.multi.glkTip", "Chance {a} gets the next kill, from just the kills between these two, replayed oldest first. Infantry kills only.", { a: aName }))}">${esc(tr("duel.multi.glk", "📈 Pairwise"))}</th>` +
+      `<th scope="col">${esc(tr("duel.multi.last", "Last fight"))}</th></tr>`;
+    const data = multiList.map((opp) => multiRow(opp));
+    const rows = data.map((r, i) => {
+      const kills = r.kb ? `${int(r.kb.kills)}–${int(r.kb.deaths)}` : "—";
+      const killsTitle = r.kb ? tr("duel.multi.killsTip", "Kills on each other — {a} first, then the opponent.", { a: aName }) : tr("duel.multi.noKb", "No kills between them in this killboard.");
+      return `<tr><td class="rk-num">${i + 1}</td>` +
+        `<td class="duel-name">${personHtml(r.opp.display)}${iviHtml({ name: r.opp.display })}</td>` +
+        `<td title="${esc(killsTitle)}">${kills}</td>` +
+        `<td title="${esc(r.ladTitle)}">${r.lad == null ? "…" : esc(r.lad)}</td>` +
+        `<td title="${esc(r.glkTitle)}">${r.glk == null ? "…" : esc(r.glk)}</td>` +
+        `<td>${r.last == null ? "—" : esc(r.last)}</td></tr>`;
+    });
+    table.querySelector("tbody").innerHTML = rows.join("");
+    wrap.hidden = false;
+    if (ladderKnown && data.every((r) => r.done)) setStatus(tr("duel.multi.note", "One row per opponent: the 🌐 ladder says how {a} does against everyone, the 📈 pairwise replay says how {a} does against this opponent. When they disagree, that is the interesting bit.", { a: aName }));
+  }
+
+  async function showMulti() {
+    const run = ++multiRun;
+    ladderEl.hidden = true;
+    clear();
+    count.textContent = `(${multiList.length})`;
+    sum.textContent = tr("duel.multi.sum", "{a} vs {n} opponents", { a: bareName(a.display), n: multiList.length });
+    sum.hidden = false;
+    setStatus(tr("duel.multi.loading", "Reading the kills against each opponent…"));
+    renderMulti(run);
+    ensureLadder().then(() => { if (mode === "multi" && run === multiRun) renderMulti(run); });
+    Promise.all([ensureIvi(), ensureFit()]).then(() => { if (mode === "multi" && run === multiRun) renderMulti(run); });
+    for (const opp of multiList) {
+      loadPairFor(a, opp, false,
+        () => { if (mode === "multi" && run === multiRun) renderMulti(run); },
+        () => { if (mode === "multi" && run === multiRun) renderMulti(run); })
+        .then(() => { if (mode === "multi" && run === multiRun) renderMulti(run); })
+        .catch(() => { multiErr.add(pairKeyFor(a, opp)); if (mode === "multi" && run === multiRun) renderMulti(run); });
+    }
+  }
+
   async function show(more = false) {
     if (!section.open || !mode) return;
+    if (mode === "multi") { showMulti(); return; }
     if (mode === "crowd") {
       ladderEl.hidden = true;
       if (shownKey === `c:${a.cid}`) return;
@@ -696,15 +805,15 @@ export function mountDuels(section, o = {}) {
   }
 
   return {
-    /** Loaded players on the page: one → vs the crowd, two → head-to-head, else hidden. */
+    /** Loaded players on the page: one → vs the crowd, two → head-to-head, 3–5 → 1-vs-many, else hidden. */
     setPlayers(list) {
       const ok = (list || []).filter((p) => p && p.cid);
-      const next = ok.length === 1 ? "crowd" : ok.length === 2 ? "pair" : null;
+      const next = ok.length === 1 ? "crowd" : ok.length === 2 ? "pair" : ok.length >= 3 && ok.length <= 5 ? "multi" : null;
       section.hidden = !next;
-      if (!next) { mode = null; a = b = null; shownKey = ""; return; }
-      const na = ok[0], nb = ok[1] || null;
-      if (mode === next && a && a.cid === na.cid && (b ? b.cid : null) === (nb ? nb.cid : null)) { a = na; b = nb; return; }
-      mode = next; a = na; b = nb; shownKey = "";
+      const key = ok.map((p) => p.cid).join("|");
+      if (!next) { mode = null; a = b = null; multiList = []; shownKey = ""; listKey = ""; return; }
+      if (mode === next && listKey === key) { a = ok[0]; if (next === "pair") b = ok[1]; if (next === "multi") multiList = ok.slice(1); return; }
+      mode = next; a = ok[0]; b = next === "pair" ? ok[1] : null; multiList = next === "multi" ? ok.slice(1) : []; listKey = key; shownKey = "";
       if (next === "crowd") { sortKey = "share"; sortDir = "desc"; }
       opened.clear();
       clear();
