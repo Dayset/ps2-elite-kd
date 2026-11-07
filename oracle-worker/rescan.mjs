@@ -77,6 +77,8 @@ export function rescanAlert(a, frames) {
   if (!hasTree(a.zone) || !latticeFor(a.zone)) return { key: a.key, skip: "no model" };
   const kind = alertKind(a.event_id);
   if (kind === "meltdown") return { key: a.key, skip: "meltdown" };
+  // #114: one faction held the whole map (game lock after a facility alert): outside the trees.
+  if ([].concat(a.flags || []).includes("degenerate") || String(a.flags || "").includes("\"degenerate\"")) return { key: a.key, skip: "degenerate" };
   const snaps = snapsFromFrames(frames || [], a.zone);
   if (snaps.length < 10) return { key: a.key, skip: "few frames" };
   const getBin = binGetter(a.zone);

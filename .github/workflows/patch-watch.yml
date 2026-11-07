@@ -1,0 +1,42 @@
+name: Patch watch
+
+# #114: Daybreak's patch notes (Steam) and Census metagame event ids, checked after the usual
+# maintenance hours and every 6 h. Anything that touches alerts, the lattice or captures, and any
+# metagame event id the Oracle doesn't know, opens one GitHub issue (label patch-watch; GitHub
+# emails the owner). Same scanner as the Oracle page's notice (oracle-worker/src/maintenance.js).
+
+on:
+  schedule:
+    - cron: "23 */6 * * *"
+    - cron: "53 15-21 * * 2,3,4"   # patch days: Daybreak's maintenance is usually 6 am PT (13-14 UTC)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: patch-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            scripts/patch-watch.mjs
+            oracle-worker/src
+            oracle/backend
+            package.json
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - name: Watch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CENSUS_PROXY: ${{ vars.CENSUS_PROXY || 'https://ps2-elite-kd-cache.dayset.workers.dev' }}
+          CENSUS_PROXY_KEY: ${{ secrets.CENSUS_PROXY_KEY }}
+        run: node scripts/patch-watch.mjs

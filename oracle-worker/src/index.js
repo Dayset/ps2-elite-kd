@@ -16,7 +16,7 @@
  * Self-service removal (Bearer, #61): GET /privacy/me, POST /privacy/remove, POST /privacy/restore
  */
 import {
-  WORLDS, ZONES, WORLD_NAMES, ZONE_NAMES, TERRITORY_ALERTS, SUDDEN_DEATH, FACS, alertKind,
+  WORLDS, ZONES, WORLD_NAMES, ZONE_NAMES, TERRITORY_ALERTS, SUDDEN_DEATH, OTHER_ALERTS, knownEvent, FACS, alertKind,
   buildState, forecast, liveZone, territory, sliceMinutes, brier, scoreWinner, popAdjusted,
 } from "./engine.js";
 import { binGetter, hasTree, regionMap, latticeFor, captureModel, resistanceModel, heatModel } from "./models.js";
@@ -42,7 +42,7 @@ const planSw = new PlanSwitch();
 import { alertFrames, archiveAlert, nextToArchive, putBundle, validBundle } from "./archive.js";
 export { AuthWatcher } from "./auth-watcher.js";
 import { isEarly, endedEarlyS, silenceVerdict, SILENT_FROM_S, DECIDE_BY_S } from "./interrupt.js";
-import { parseWorldStates, serverStatus, holdFinals, serversHint, STEAM_NEWS_URL, pickSchedule, schedDue, schedHint } from "./maintenance.js";
+import { parseWorldStates, serverStatus, holdFinals, serversHint, STEAM_NEWS_URL, pickSchedule, schedDue, schedHint, PATCH_NEWS_URL, patchFlags, patchDue, patchHint } from "./maintenance.js";
 
 const CENSUS = "https://census.daybreakgames.com";
 const UA = "ps2-elite-kd-oracle/1.0 (+https://github.com/Dayset/ps2-elite-kd; contact: github.com/Dayset)";
@@ -106,7 +106,38 @@ export function parseMetagame(j) {
       state: e.metagame_event_state_name, ts: +e.timestamp,
       vs: num(e.faction_vs), nc: num(e.faction_nc), tr: num(e.faction_tr),
     }))
-    .filter((e) => TERRITORY_ALERTS[e.event_id] || SUDDEN_DEATH[e.event_id]);
+    .filter((e) => TERRITORY_ALERTS[e.event_id] || SUDDEN_DEATH[e.event_id] || OTHER_ALERTS[e.event_id]);
+}
+
+/** Metagame ids in this poll that no table knows (#114: a patch added alerts and we missed them for 3 days). */
+export function unknownEvents(j) {
+  const out = {};
+  for (const e of (j && j.world_event_list) || []) {
+    if (e.event_type !== "MetagameEvent" || knownEvent(+e.metagame_event_id)) continue;
+    const k = +e.metagame_event_id;
+    (out[k] ||= { event_id: k, zones: [] });
+    const wz = `${+e.world_id}-${+e.zone_id}`;
+    if (!out[k].zones.includes(wz)) out[k].zones.push(wz);
+    out[k].last_ts = Math.max(out[k].last_ts || 0, +e.timestamp || 0);
+  }
+  return Object.values(out);
+}
+
+/** Non-territory alerts running now (#114): no odds, no votes, no benchmark; shown as their own card. */
+export function otherLive(rows, now) {
+  const by = new Map();
+  for (const r of rows) {
+    const o = OTHER_ALERTS[r.event_id];
+    if (!o) continue;
+    const key = `${r.world}-${r.zone}-${r.instance_id}`;
+    const a = by.get(key) || { key, world: r.world, zone: r.zone, world_name: WORLD_NAMES[r.world] || null, zone_name: ZONE_NAMES[r.zone & 0xffff] || null, event_id: r.event_id, type: o.type, sub: o.sub, dur: o.dur };
+    if (r.state === "started") a.start_ts = r.ts;
+    else if (r.state === "ended" || r.state === "canceled") a.ended = true;
+    by.set(key, a);
+  }
+  // Unknown length (Maximum Pressure): give up after 2 h without an end row.
+  return [...by.values()].filter((a) => a.start_ts && !a.ended && now - a.start_ts < ((a.dur || 120) + 5) * 60)
+    .sort((x, y) => x.start_ts - y.start_ts);
 }
 
 export function parseFlips(j) {
@@ -155,8 +186,14 @@ async function getMeta(db, k) {
  *                           not checked for Meltdowns, which lock most of the map by design
  *   map_frozen              zone map identical to 10+ min ago while 2+ captures happened
  *   map_stale               no fresh map for 5+ min
+ *   one_faction:<FAC>       one faction holds >= ONE_FACTION_PCT of the territory (#114: Indar 100 % NC
+ *                           for a whole 90-min alert right after a Dome Domination lock). The trees never
+ *                           saw such a map, so the alert is treated as decided: commander held, voting
+ *                           paused, kept out of the benchmark. Not for Meltdowns (locked map by design).
  */
-export function dataSuspect(zNow, nowTs, s10, zone, flipsIn10, now, kind = "territory") {
+export const ONE_FACTION_PCT = 98;
+export const DEGENERATE_BY_MIN = 10;
+export function dataSuspect(zNow, nowTs, s10, zone, flipsIn10, now, kind = "territory", tMin = 0, dur = Infinity) {
   const out = [];
   const terr = territory(zNow);
   const owned = terr.VS + terr.NC + terr.TR;
@@ -164,6 +201,8 @@ export function dataSuspect(zNow, nowTs, s10, zone, flipsIn10, now, kind = "terr
   const z10 = s10 && s10.zones[String(zone)];
   if (z10 && now - s10.ts <= 900 && flipsIn10 >= 2 && JSON.stringify(z10) === JSON.stringify(zNow)) out.push("map_frozen");
   if (now - nowTs > 300) out.push("map_stale");
+  // Not in the last minute or after the clock: the winner's continent lock at the end is normal (1-6-49454 at t 90.4).
+  if (kind !== "meltdown" && tMin < dur - 1) { const top = FACS.find((f) => terr[f] >= ONE_FACTION_PCT); if (top) out.push(`one_faction:${top}`); }
   return out;
 }
 
@@ -252,6 +291,22 @@ export async function runCycle(env, nowMs = Date.now()) {
     await setMeta(db, "maint_sched", sched).catch(() => {});
   }
   report.sched = schedHint(sched, now);
+  // #114: after maintenance (and every 6 h) read the patch notes in full and flag alert / lattice /
+  // capture changes. Own meta row; a failed read keeps the last answer.
+  const patchMeta = await getMeta(db, "patch_watch").catch(() => null);
+  let patch = patchMeta;
+  if (patchDue(patchMeta, servers, now)) {
+    try {
+      const r = await fetch(PATCH_NEWS_URL, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(8000) });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      patch = { checked: now, flags: patchFlags(await r.json(), now).slice(0, 3) };
+    } catch (e) {
+      patch = { checked: now, flags: (patchMeta && patchMeta.flags) || [], err: String((e && e.message) || e).slice(0, 120) };
+      (report.notes ||= []).push(`patch notes: ${patch.err}`);
+    }
+    await setMeta(db, "patch_watch", patch).catch(() => {});
+  }
+  report.patch = patchHint(patch, now);
 
   // 2) Store.
   const stmts = [];
@@ -350,8 +405,23 @@ export async function runCycle(env, nowMs = Date.now()) {
         cutSnap: (sn) => cutAwareSnap(sn, a.zone).snap,
       });
       if (!(a.world in snap10)) snap10[a.world] = await latestSnap(db, a.world, now - 600);
-      const suspect = dataSuspect(zNow, snapNow.ts, snap10[a.world], a.zone, flips10.get(`${a.world}-${a.zone}`) || 0, now, alertKind(a.event_id));
+      const suspect = dataSuspect(zNow, snapNow.ts, snap10[a.world], a.zone, flips10.get(`${a.world}-${a.zone}`) || 0, now, alertKind(a.event_id), (now - startTs) / 60, dur);
       if (suspect.length) { state.suspect = suspect; (report.suspect ||= {})[a.key] = suspect; }
+      // #114: a one-faction map is decided, not a forecast. The header shows the holder at 100 %
+      // (elimination law: never a probability the position has already decided); the tree's
+      // guess stays in win_tree. Sticky flag: the alert never enters the benchmark.
+      const prevFlags = prev && prev.flags ? JSON.parse(prev.flags) : [];
+      const oneFac = suspect.find((x) => x.startsWith("one_faction:"));
+      // Sticky (out of the benchmark) only when the alert STARTED that way; a late lock (e.g. a map
+      // frozen by a server going down, 10-2-46537 at t 77.5) is shown as decided but still scored.
+      const degenerate = (!!oneFac && (now - startTs) / 60 <= DEGENERATE_BY_MIN) || prevFlags.includes("degenerate");
+      if (oneFac) {
+        const top = oneFac.split(":")[1];
+        state.win_tree = state.win;
+        state.win = Object.fromEntries(FACS.map((f) => [f, { ...state.win[f], pct: f === top ? 100 : 0 }]));
+        state.decided = top;
+        delete state.win_popadj;
+      }
       // Bases cut off from their warpgate (the game stops scoring them). Logged as the
       // "_cut" benchmark variant; the live odds switch only if the rescan backs it.
       const kindNow = alertKind(a.event_id);
@@ -382,7 +452,7 @@ export async function runCycle(env, nowMs = Date.now()) {
         state.spawn_map = fx.spawns; // 🚐 live spawn points per base and faction: Solo orders attack only where there is one (#87)
         fightRows.push({ key: a.key, ts: now, t: Math.round(((now - startTs) / 60) * 10) / 10, data: JSON.stringify(fightRow(fx)) });
       }
-      out.push({ ...base, status: "live", state });
+      out.push({ ...base, status: "live", state, ...(degenerate ? { flags: ["degenerate"] } : {}) });
       live++;
       (report.live_keys ||= []).push(a.key);
       ticks.push({ key: a.key, ts: now, t: Math.round(((now - startTs) / 60) * 10) / 10, terr: JSON.stringify(state.territory),
@@ -402,11 +472,11 @@ export async function runCycle(env, nowMs = Date.now()) {
           const pa = state.pop_source ? popAdjusted(f0.win, state.pop, Math.max(t, 0)) : null;
           if (pa) slices.t0_pop = sliceOf(pa, t);
         } else if (t <= m + 5) {
-          slices[label] = sliceOf(state.win, t);
+          slices[label] = sliceOf(state.win_tree || state.win, t); // #114: the tree's own number, not the one-faction override
           if (cutNow) {
             const c15 = z15 ? cutAwareSnap(z15, a.zone) : null;
             const fc = cutNow.cut.length || (c15 && c15.cut.length)
-              ? forecast({ getBin: binGetter(a.zone), kind: kindNow, snapNow: cutNow.snap, snap15: c15 ? c15.snap : null, t, dur }).win : state.win;
+              ? forecast({ getBin: binGetter(a.zone), kind: kindNow, snapNow: cutNow.snap, snap15: c15 ? c15.snap : null, t, dur }).win : state.win_tree || state.win;
             slices[label + "_cut"] = sliceOf(fc, t);
           }
           if (state.win_raw) { slices[label + "_raw"] = sliceOf(state.win_raw, t); slices[label + "_v0"] = sliceOf(state.win_v0, t); }
@@ -415,7 +485,7 @@ export async function runCycle(env, nowMs = Date.now()) {
         } else continue;
         changed = true;
       }
-      if (changed) benchUp.push({ key: a.key, dur, slices: JSON.stringify(slices) });
+      if (changed && !degenerate) benchUp.push({ key: a.key, dur, slices: JSON.stringify(slices) });
       continue;
     }
 
@@ -524,7 +594,10 @@ export async function runCycle(env, nowMs = Date.now()) {
     out.push({ ...rec, status: "settled", winner, basis });
     settled++;
     const slices = benchRows.get(a.key);
-    if (slices) {
+    if (slices && flags.includes("degenerate")) {
+      // #114: decided-at-start map, outside what the trees know: closed without a score.
+      benchSettle.push(db.prepare("UPDATE bench SET winner=?, brier=NULL, settled_ts=? WHERE key=?").bind(winner, now, a.key));
+    } else if (slices) {
       const b = {};
       if (FACS.includes(winner)) for (const [k, p] of Object.entries(slices)) b[k] = Math.round(brier(p, winner) * 10000) / 10000;
       benchSettle.push(db.prepare("UPDATE bench SET winner=?, brier=?, settled_ts=? WHERE key=?").bind(winner, JSON.stringify(b), now, a.key));
@@ -532,6 +605,11 @@ export async function runCycle(env, nowMs = Date.now()) {
   }
 
   // 4) Write: alert upserts (only rows that changed), ticks, benchmark — one batch.
+  // #114: "degenerate" survives every status change (settling rows build their own flags).
+  for (const r of out) {
+    const p = known.get(r.key);
+    if (p && p.flags && p.flags.includes('"degenerate"') && !(r.flags || []).includes("degenerate")) r.flags = [...(r.flags || []), "degenerate"];
+  }
   const changedRows = out.filter((r) => {
     const p = known.get(r.key);
     return !p || r.status === "live" || p.status !== r.status || (r.checks || 0) !== p.checks;
@@ -579,6 +657,12 @@ export async function runCycle(env, nowMs = Date.now()) {
   }
 
   report.metagame = mgRows.length;
+  const other = otherLive(all, now);
+  if (other.length) report.other = other;
+  if (!(mg instanceof Error)) {
+    const unk = unknownEvents(mg);
+    if (unk.length) report.unknown_events = unk;
+  }
   report.live = live;
   report.settled = settled;
   report.ms = Date.now() - t0;
@@ -864,7 +948,8 @@ async function handle(request, env) {
     const rows = (res && res.results) || [];
     // Cycle hint: lets the page fetch right after the next cycle lands (and drop its /health poll).
     const cycle = last ? { ts: last.ts, ms: last.ms ?? null, age_s: now - last.ts, ok_age_s: lastOk ? now - lastOk : null,
-      errors: (last.errors || []).length, commander_ts: lastCmd ? lastCmd.ts : null, servers: serversHint(last.servers), sched: last.sched || null } : null;
+      errors: (last.errors || []).length, commander_ts: lastCmd ? lastCmd.ts : null, servers: serversHint(last.servers), sched: last.sched || null,
+      other: last.other || null, patch: last.patch || null } : null;
     return json({ now, worlds: WORLD_NAMES, alerts: rows.map(parseRow), cycle });
   }
 
@@ -895,7 +980,10 @@ async function handle(request, env) {
   if (url.pathname === "/history") {
     const days = Math.min(30, Math.max(1, +url.searchParams.get("days") || 7));
     const rows = (await db.prepare(`SELECT a.key, a.world, a.zone, a.instance_id, a.event_id, a.start_ts, a.dur, a.status, a.end_ts, a.checks, a.winner, a.basis, a.final, a.flags, NULL AS state, NULL AS commander, ${REPORT_COLS} FROM alert a LEFT JOIN report r ON r.key = a.key WHERE a.start_ts > ? AND a.status IN ('settled','canceled','unresolved','interrupted') ORDER BY a.start_ts DESC`).bind(now - days * 86400).all()).results || [];
-    const bench = (await db.prepare("SELECT key, dur, slices, winner, brier FROM bench WHERE settled_ts IS NOT NULL AND brier IS NOT NULL").all()).results || [];
+    // #114: decided-at-start alerts never count (their bench row is closed with brier NULL; the
+    // flag test also drops one scored before the guard existed).
+    const bench = (await db.prepare(`SELECT b.key, b.dur, b.slices, b.winner, b.brier FROM bench b LEFT JOIN alert a ON a.key = b.key
+      WHERE b.settled_ts IS NOT NULL AND b.brier IS NOT NULL AND COALESCE(a.flags, '') NOT LIKE '%"degenerate"%'`).all()).results || [];
     const agg = {};
     for (const b of bench) {
       const br = JSON.parse(b.brier);

@@ -153,3 +153,59 @@ export function schedHint(meta, now) {
   if (!s || now < s.start - 24 * 3600 || now > s.end + 12 * 3600) return null;
   return { start: s.start, end: s.end, hours: s.hours, url: s.url, src: "Daybreak" };
 }
+
+// ---------------------------------------------------------------- patch-notes watch (#114)
+// The 2026-11-04 patch brought back facility alerts and changed what a continent looks like
+// at alert start; we only noticed 3 days later. After every maintenance (a server came back)
+// and otherwise every 6 h, read Daybreak's latest Steam posts in full and flag the ones that
+// touch what the oracle models: alerts, the lattice / territory, captures. The page shows the
+// newest flagged post for 3 days; .github/workflows/patch-watch.yml opens a GitHub issue for it.
+export const PATCH_NEWS_URL = `https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/?appid=${STEAM_APP}&count=5&maxlength=0&feeds=steam_community_announcements`;
+export const PATCH_EVERY_S = 6 * 3600;
+export const PATCH_AFTER_BACK_S = 3 * 3600;   // after a server returns: check every 30 min for 3 h
+export const PATCH_SHOW_S = 3 * 86400;
+export const PATCH_TOPICS = {
+  alerts: /\balerts?\b|metagame|meltdown|sudden death|lock(?:s|ed)? the continent|continent lock|domination|power rush|technological advancement|aerial anomal|maximum pressure/,
+  lattice: /\blattice\b|warp ?gates?|territory|new (?:base|facility|facilities)|base (?:layout|rework|redesign)|(?:removed|added) (?:the )?(?:base|facility|link)|links? between/,
+  capture: /capture (?:timer|time|point|rules?)|cap(?:ture)? timers?|control points?|facility (?:capture|control)/,
+};
+
+/** One Steam post -> { gid, title, date, url, topics: [...], lines: [matched sentences, max 4] } or null. */
+export function patchScan(item) {
+  if (!item || !item.contents) return null;
+  const title = String(item.title || "");
+  const isPatch = /patch|hotfix|update|maintenance|notes/i.test(title) || /patch notes|hotfix/i.test(String(item.contents).slice(0, 400));
+  if (!isPatch) return null;
+  const text = String(item.contents).replace(/\[\/?[a-z0-9*]+(?:=[^\]]*)?\]/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+  const low = text.toLowerCase();
+  const topics = Object.keys(PATCH_TOPICS).filter((k) => PATCH_TOPICS[k].test(low));
+  if (!topics.length) return null;
+  const lines = [];
+  for (const s of text.split(/(?<=[.!?])\s+|\s[-•*]\s/)) {
+    const l = s.toLowerCase();
+    if (Object.values(PATCH_TOPICS).some((re) => re.test(l))) lines.push(s.trim().slice(0, 160));
+    if (lines.length >= 4) break;
+  }
+  return { gid: String(item.gid || ""), title: title.slice(0, 120), date: +item.date || null,
+    url: item.gid ? `https://store.steampowered.com/news/app/${STEAM_APP}/view/${item.gid}` : item.url || null, topics, lines };
+}
+
+/** Steam news JSON -> flagged posts from the last 14 days, newest first. */
+export function patchFlags(j, now) {
+  const items = (j && j.appnews && j.appnews.newsitems) || [];
+  return items.map(patchScan).filter((p) => p && (!p.date || p.date >= now - 14 * 86400)).sort((a, b) => (b.date || 0) - (a.date || 0));
+}
+
+/** Due for a full patch-notes read? */
+export function patchDue(meta, servers, now) {
+  if (!meta || !meta.checked) return true;
+  const back = servers && Object.values(servers).some((s) => s && s.back && now - s.back < PATCH_AFTER_BACK_S);
+  return now - meta.checked >= (back ? SCHED_EVERY_S : PATCH_EVERY_S);
+}
+
+/** Page hint: the newest flagged post, for PATCH_SHOW_S after it was posted. */
+export function patchHint(meta, now) {
+  const p = meta && meta.flags && meta.flags[0];
+  if (!p || !p.date || now - p.date > PATCH_SHOW_S) return null;
+  return { title: p.title, date: p.date, url: p.url, topics: p.topics };
+}

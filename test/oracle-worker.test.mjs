@@ -662,3 +662,61 @@ test("cron cycle + archive pick: no full scans of growing tables", { skip }, asy
   assert.ok(seen.size >= 8, `recorded ${seen.size} queries`);
   assert.deepEqual(bad, []);
 });
+
+test("#114: one-faction map is decided, kept out of the benchmark; facility alerts and unknown ids are reported", { skip }, async () => {
+  const { runCycle, dataSuspect, default: worker } = await import("../oracle-worker/src/index.js");
+  const DB = fakeD1();
+  const env = { DB, ORACLE_KEY: "k" };
+  const T0 = 1_793_900_000;
+  const census = { map: { 2: REGIONS.length }, metagame: [], flips: [] };
+  installCensus(census);
+  await runCycle(env, (T0 - 1200) * 1000);
+  // A Dome Domination on Hossin just ended, a territory alert starts on the locked map,
+  // an Aerial Anomalies runs on world 10 and Census sends an id nobody knows.
+  census.metagame = [mg(600, 10, "started", T0 - 2760, 0, 0, 0), mg(600, 10, "ended", T0 - 60, 0, 3, 0),
+    mg(601, 153, "started", T0, 0, 100, 0), mg(602, 229, "started", T0 - 300, 0, 0, 0, 10, 4), mg(603, 999, "started", T0, 0, 0, 0)];
+  let rep = await runCycle(env, (T0 + 60) * 1000);
+  assert.deepEqual(rep.suspect["1-4-601"], ["one_faction:NC"]);
+  assert.deepEqual(rep.other.map((o) => [o.key, o.type, o.zone_name]), [["10-4-602", "aerial", "Hossin"]], "ended Dome Domination is gone, the aerial one runs");
+  assert.deepEqual(rep.unknown_events.map((e) => e.event_id), [999]);
+  let row = DB.raw.prepare("SELECT flags, state FROM alert WHERE key='1-4-601'").get();
+  assert.deepEqual(JSON.parse(row.flags), ["degenerate"]);
+  const st = JSON.parse(row.state);
+  assert.equal(st.decided, "NC");
+  assert.deepEqual([st.win.VS.pct, st.win.NC.pct, st.win.TR.pct], [0, 100, 0]);
+  assert.ok(st.win_tree, "tree guess kept for reference");
+  for (const m of [15, 30, 60]) await runCycle(env, (T0 + m * 60) * 1000);
+  assert.equal(DB.raw.prepare("SELECT COUNT(*) n FROM bench WHERE key='1-4-601'").get().n, 0, "no benchmark slices for a decided alert");
+  // Ends with NC 100: settles, never scored.
+  census.metagame.push(mg(601, 153, "ended", T0 + 5400, 0, 100, 0));
+  for (const s of [60, 330, 630, 960]) await runCycle(env, (T0 + 5400 + s) * 1000);
+  row = DB.raw.prepare("SELECT status, winner, flags FROM alert WHERE key='1-4-601'").get();
+  assert.equal(row.status, "settled"); assert.equal(row.winner, "NC");
+  assert.ok(JSON.parse(row.flags).includes("degenerate"), "flag survives settling");
+  const hist = await (await worker.fetch(new Request("https://x/history"), env)).json();
+  assert.deepEqual(hist.benchmark, {});
+  // A healthy 30/30/28 map never trips the new flag; Meltdowns are exempt.
+  assert.deepEqual(dataSuspect({ ...Object.fromEntries(REGIONS.slice(0, 5).map((r) => [r, 2])) }, T0, null, 4, 0, T0, "meltdown").filter((x) => x.startsWith("one_faction")), []);
+});
+
+test("#114: the winner's continent lock at the end and a late lock are not 'decided at start'", { skip }, async () => {
+  const { runCycle, dataSuspect } = await import("../oracle-worker/src/index.js");
+  const all = Object.fromEntries(REGIONS.map((r) => [r, 1]));
+  // End lock (t 90.4 of 90): never flagged.
+  assert.deepEqual(dataSuspect(all, 100, null, 4, 0, 100, "territory", 90.4, 90), []);
+  assert.deepEqual(dataSuspect(all, 100, null, 4, 0, 100, "territory", 89.2, 90), []);
+  assert.deepEqual(dataSuspect(all, 100, null, 4, 0, 100, "territory", 40, 90), ["one_faction:VS"]);
+  // Late lock mid-alert: shown, but the alert stays in the benchmark.
+  const DB = fakeD1();
+  const env = { DB };
+  const T0 = 1_794_000_000;
+  const census = { map: { 1: 30, 2: 30, 3: 28 }, metagame: [], flips: [] };
+  installCensus(census);
+  await runCycle(env, (T0 - 1200) * 1000);
+  census.metagame = [mg(700, 153, "started", T0)];
+  await runCycle(env, (T0 + 60) * 1000);
+  census.map = { 1: REGIONS.length };
+  const rep = await runCycle(env, (T0 + 40 * 60) * 1000);
+  assert.deepEqual(rep.suspect["1-4-700"], ["one_faction:VS"]);
+  assert.equal(DB.raw.prepare("SELECT flags FROM alert WHERE key='1-4-700'").get().flags, null);
+});

@@ -130,7 +130,7 @@ function install(c) {
   globalThis.fetch = async (url) => {
     const u = String(url);
     let body;
-    if (u.includes("api.steampowered.com")) { c.steamCalls = (c.steamCalls || 0) + 1; body = c.steam || { appnews: { newsitems: [] } }; }
+    if (u.includes("api.steampowered.com")) { if (u.includes("maxlength=0")) c.patchCalls = (c.patchCalls || 0) + 1; else c.steamCalls = (c.steamCalls || 0) + 1; body = c.steam || { appnews: { newsitems: [] } }; }
     else if (u.includes("/world/?")) body = { world_list: [1, 10, 40].map((w) => ({ world_id: String(w), state: c.locked ? "locked" : "online" })) };
     else if (u.includes("/map/")) {
       if (c.locked) return new Response(JSON.stringify({ errorCode: "SERVER_ERROR" }), { status: 200 });
@@ -166,6 +166,7 @@ test("maintenance: no 'delayed', no snapshots from locked worlds, live alert nev
   assert.equal(maintNotice(live.cycle.servers, live.worlds).all, true);
   assert.equal(live.cycle.servers[1].last_up, T0 + 60, "last online = last minute seen up");
   assert.equal(c.steamCalls, 4, "Steam read at most every 10 min while down (5 cycles, the last one 5 min after the previous)");
+  assert.ok(c.patchCalls >= 1, "#114: patch notes read in full after the servers return");
   assert.equal(live.cycle.sched.start, Date.UTC(2026, 9, 27, 13) / 1000, "Daybreak's window reaches the page");
   assert.equal(schedState(live.cycle.sched, maintNotice(live.cycle.servers, live.worlds), T0 + 125 * 60).key, "eta");
 
@@ -201,4 +202,36 @@ test("maintenance: an alert 'ended' by the shutdown is held until the server is 
   // Ended 60 min early while the server was down: a crash, not a result (t818s2880).
   const fin = DB.raw.prepare("SELECT status, winner, flags FROM alert").get();
   assert.equal(fin.status, "interrupted"); assert.equal(fin.winner, null); assert.match(fin.flags, /interrupted:server_down/);
+});
+
+test("#114 patch-notes watch: flags alert / lattice / capture changes, ignores the rest", async () => {
+  const { patchScan, patchFlags, patchDue, patchHint, PATCH_EVERY_S, SCHED_EVERY_S: E } = await import("../oracle-worker/src/maintenance.js");
+  const T = 1_793_800_000;
+  const nov4 = { gid: "555", title: "Nov 4 Patch Notes", date: T - 3 * 3600, contents: "[h2]Alerts[/h2][list][*]Capture Facility Alerts are back: Dome Domination, Power Rush and Technological Advancement. The first faction, who controls all 3 facilities of the Alert type, will win the Alert and lock the continent.[*]Fixed a weapon sound.[/list]" };
+  const sale = { gid: "556", title: "Weekend Sale", date: T - 3600, contents: "All bundles 30% off this weekend." };
+  const weapons = { gid: "557", title: "Hotfix", date: T - 1800, contents: "Patch notes: Reduced recoil on the Gauss SAW." };
+  const p = patchScan(nov4);
+  assert.deepEqual(p.topics, ["alerts"]);
+  assert.ok(p.lines.some((l) => /lock the continent/.test(l)));
+  assert.equal(p.url, "https://store.steampowered.com/news/app/218230/view/555");
+  assert.equal(patchScan(sale), null); assert.equal(patchScan(weapons), null);
+  const flags = patchFlags({ appnews: { newsitems: [sale, weapons, nov4] } }, T);
+  assert.deepEqual(flags.map((x) => x.gid), ["555"]);
+  assert.equal(patchDue(null, null, T), true);
+  assert.equal(patchDue({ checked: T - 60 }, null, T), false);
+  assert.equal(patchDue({ checked: T - E }, { 1: { back: T - 600 } }, T), true, "every 30 min for 3 h after a server returns");
+  assert.equal(patchDue({ checked: T - PATCH_EVERY_S }, null, T), true);
+  assert.equal(patchHint({ flags }, T).title, "Nov 4 Patch Notes");
+  assert.equal(patchHint({ flags }, T + 4 * 86400), null, "shown for 3 days");
+});
+
+test("#114 info strip lines (other alerts, patch notes)", async () => {
+  const { otherAlertsLine, patchLine } = await import("../oracle/js/other.js");
+  const T = 1_793_800_000;
+  const l = otherAlertsLine([{ world: 10, zone: 2, world_name: "Wainwright", zone_name: "Indar", type: "facility", sub: "biolab", dur: 45, start_ts: T - 600 }], {}, T);
+  assert.match(l.text, /Wainwright · Indar: Dome Domination \(hold all 3 Biolabs\), 35 min left/);
+  assert.equal(otherAlertsLine([], {}, T), null);
+  const pl = patchLine({ title: "Nov 4", url: "https://evil.example/x", topics: ["alerts", "lattice"] });
+  assert.match(pl.text, /changes alerts, the lattice/);
+  assert.equal(pl.url, null, "only Steam links");
 });

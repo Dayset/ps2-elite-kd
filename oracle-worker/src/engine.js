@@ -33,6 +33,22 @@ export const TERRITORY_ALERTS = {
 // trained on 90-min territory alerts only, so odds for these are unvalidated.
 export const MELTDOWN = new Set([176, 177, 178, 179, 186, 187, 188, 189, 190, 191, 192, 193, 248, 249, 250]);
 export const alertKind = (eventId) => (MELTDOWN.has(+eventId) ? "meltdown" : "territory");
+// Non-territory alerts (#114). Back with the 2026-11-04 patch: Capture Facility Alerts
+// ("hold all 3 Biolabs / AMP Stations / Tech Plants", the winner locks the continent) plus
+// Aerial Anomalies and Maximum Pressure. Their score is not territory %, so the territory
+// trees don't apply: owner decision 2026-11-07 = shown live as their own card, NO odds,
+// NO votes, never in the benchmark pools. dur = minutes measured live (null = not measured).
+const FAC_ALERT = (sub, ids, dur) => Object.fromEntries(ids.map((i) => [i, { type: "facility", sub, dur }]));
+export const OTHER_ALERTS = {
+  ...FAC_ALERT("biolab", [7, 10, 13, 16], 45),   // Dome Domination (10 = Indar, 45:00 measured)
+  ...FAC_ALERT("tech", [8, 11, 17, 164], 45),    // Technological Advancement
+  ...FAC_ALERT("amp", [9, 12, 14, 18], 45),      // Power Rush
+  ...Object.fromEntries([167, 172, 173, 174, 225, 228, 229, 230, 231, 232].map((i) => [i, { type: "aerial", sub: null, dur: 30 }])), // 229 = Hossin, 30 min measured
+  ...Object.fromEntries([198, 199, 200, 201, 233].map((i) => [i, { type: "pressure", sub: null, dur: null }])),                     // Maximum Pressure
+};
+// Ids we know and deliberately skip (227 OUTFIT WARS). Anything else unknown is reported (#114).
+export const IGNORED_EVENTS = new Set([227]);
+export const knownEvent = (id) => !!(TERRITORY_ALERTS[id] || SUDDEN_DEATH[id] || OTHER_ALERTS[id] || IGNORED_EVENTS.has(+id));
 // Kill-based overtime after a territory draw (Census: "Sudden Death", 15 min; 240 is 10 min).
 // Matched to the alert by the row's own world+zone, not by event id.
 export const SUDDEN_DEATH = { 236: 15, 237: 15, 238: 15, 239: 15, 240: 10 };
