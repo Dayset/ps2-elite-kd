@@ -363,7 +363,8 @@ export async function runCycle(env, nowMs = Date.now()) {
 
   for (const a of groupAlerts(all)) {
     const prev = known.get(a.key);
-    if (prev && FINAL.includes(prev.status)) continue;
+    // #114: an early-won facility / score-race alert taken for a crash before the fix gets settled again.
+    if (prev && FINAL.includes(prev.status) && !(OTHER_ALERTS[a.event_id] && prev.status === "interrupted" && prev.flags && !prev.flags.includes('"server_down"') && !prev.flags.includes("interrupted:server_down"))) continue;
     const dur = durOf(a.event_id);
     const startTs = a.start.ts;
     const other = OTHER_ALERTS[a.event_id] || null; // #114: facility / aerial / pressure alerts
@@ -509,7 +510,8 @@ export async function runCycle(env, nowMs = Date.now()) {
     const finalOk = FACS.every((f) => final[f] !== null && final[f] !== undefined && Number.isFinite(+final[f]));
     // Cut short by a server crash / shutdown (t818s2880, thresholds in interrupt.js): ended 3+ min
     // early AND the server was seen down around the end or went silent right after it.
-    const earlyS = isEarly(startTs, dur, endTs) ? endedEarlyS(startTs, dur, endTs) : 0;
+    // #114: facility (all 3 held) and score-race (10,000 points) alerts end early by design: not a crash.
+    const earlyS = !other && isEarly(startTs, dur, endTs) ? endedEarlyS(startTs, dur, endTs) : 0;
     let earlyNote = null;
     if (earlyS) {
       const pf = prev && prev.flags ? JSON.parse(prev.flags) : [];
@@ -535,6 +537,7 @@ export async function runCycle(env, nowMs = Date.now()) {
     const checks = Math.min(3, 1 + Math.floor(Math.max(0, now - endTs) / 300));
     const flags = prev && prev.flags ? JSON.parse(prev.flags) : [];
     for (const f of earlyNote || []) if (!flags.includes(f)) flags.push(f);
+    if (other) for (let i = flags.length - 1; i >= 0; i--) if (flags[i].startsWith("interrupted:")) flags.splice(i, 1);
     if (finalCorrupt && !flags.some((f) => f.startsWith("final_corrupt"))) flags.push(`final_corrupt:${finalSum(final).toFixed(1)}`);
     // Cross-check: our own last pre-end snapshot (never a post-end one).
     if (!flags.includes("checked") && other) flags.push("checked"); // facility counts / race points: no territory cross-check

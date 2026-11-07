@@ -772,3 +772,21 @@ test("#114: a Dome Domination runs as an alert: facility odds and orders, benchm
   const live = await (await worker.fetch(new Request("https://x/alert?key=1-4-800"), env)).json();
   assert.equal(live.alert.kind, "facility");
 });
+
+test("#114: an Aerial Anomalies that ends early at 10,000 points settles (not a crash)", { skip }, async () => {
+  const { runCycle } = await import("../oracle-worker/src/index.js");
+  const DB = fakeD1();
+  const env = { DB };
+  const T0 = 1_794_200_000;
+  const census = { map: { 1: 30, 2: 30, 3: 28 }, metagame: [], flips: [] };
+  installCensus(census);
+  await runCycle(env, (T0 - 1200) * 1000);
+  census.metagame = [mg(900, 231, "started", T0, 0, 0, 0, 1, 8), mg(900, 231, "ended", T0 + 940, 140, 10000, 258, 1, 8)];
+  for (const s of [960, 1260, 1560, 1900]) await runCycle(env, (T0 + s) * 1000);
+  const row = DB.raw.prepare("SELECT status, winner, flags FROM alert WHERE key='1-8-900'").get();
+  assert.deepEqual([row.status, row.winner], ["settled", "NC"], row.flags);
+  // A row marked interrupted by the old rule is settled again.
+  DB.raw.prepare("UPDATE alert SET status='interrupted', winner=NULL, flags='[\"interrupted:server_silent\",\"ended_early:14\"]' WHERE key='1-8-900'").run();
+  await runCycle(env, (T0 + 2000) * 1000);
+  assert.equal(DB.raw.prepare("SELECT status FROM alert WHERE key='1-8-900'").get().status, "settled");
+});
