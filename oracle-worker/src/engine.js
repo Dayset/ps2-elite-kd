@@ -47,11 +47,18 @@ export const OTHER_ALERTS = {
   ...Object.fromEntries([198, 199, 200, 201, 233].map((i) => [i, { type: "pressure", sub: null, dur: null }])),                     // Maximum Pressure
 };
 // Ids we know and deliberately skip (227 OUTFIT WARS). Anything else unknown is reported (#114).
-export const IGNORED_EVENTS = new Set([227]);
+// #116 (Census inventory 2026-11-07): retired 2013-2019 alerts (1-4 Feeling the Heat etc., 106 Conquest,
+// 123-134 45-min continent alerts, 180-183 Gaining Ground), side events that are not alerts (159-162
+// Warpgates Stabilizing, 168/175 storm events, 170 The Bending, 194-197 Refine and Refuel, 242-246
+// Forgotten Fleet Carrier, 251-255 Nanite Storm, 216-221 PAYLOAD) and every OUTFIT WARS id.
+export const IGNORED_EVENTS = new Set([227, 1, 2, 3, 4, 106, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134,
+  159, 160, 161, 162, 168, 170, 175, 180, 181, 182, 183, 194, 195, 196, 197, 204, 205, 206, 207, 216, 217, 218, 219, 220, 221,
+  234, 235, 242, 243, 244, 245, 246, 251, 252, 253, 254, 255]);
 export const knownEvent = (id) => !!(TERRITORY_ALERTS[id] || SUDDEN_DEATH[id] || OTHER_ALERTS[id] || IGNORED_EVENTS.has(+id));
 // Kill-based overtime after a territory draw (Census: "Sudden Death", 15 min; 240 is 10 min).
 // Matched to the alert by the row's own world+zone, not by event id.
-export const SUDDEN_DEATH = { 236: 15, 237: 15, 238: 15, 239: 15, 240: 10 };
+// 241 (15 min) and 260 (5 min) are also "Sudden Death" in Census (#116); matched the same way.
+export const SUDDEN_DEATH = { 236: 15, 237: 15, 238: 15, 239: 15, 240: 10, 241: 15, 260: 5 };
 
 // Elimination constants (live_oracle.py; Hossin's 88 facilities are used
 // for every continent there too — kept identical for parity).
