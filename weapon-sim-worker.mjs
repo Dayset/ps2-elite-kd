@@ -9,7 +9,7 @@
 //   burst -> burstAnalysis() rows, ranges -> [{ range, best: { median, burst } | null }]
 //
 // A newer `gen` makes every older job stale: stale jobs are dropped, and a long class/ranges job stops between slices.
-import { compareBursts, burstAnalysis } from "./weapon-sim.mjs?v=20261107-merge1";
+import { compareBursts, burstAnalysis } from "./weapon-sim.mjs?v=20261108-tidy1";
 
 let latest = 0;
 const queue = [];

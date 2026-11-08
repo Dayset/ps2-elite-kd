@@ -9,16 +9,24 @@
  * Speed (owner 2026-11-06 "page is very slow"): every control change only marks what is stale and draws once per
  * animation frame; time-to-kill curves are cached per weapon and setting; the simulator runs in a worker that
  * drops stale work, and its results are cached per weapon, attachments and settings.
+ *
+ * Tidy-up (owner 2026-11-08 "flooded with text, spaghetti logic"): one loadout per weapon (attachments picked on
+ * the weapon's card) feeds EVERY number on the page (table, graphs, simulator); one aim rule everywhere (headshot
+ * rate = share of shots aimed at the head, the rest at the chest); no repeated blocks; the deep dive is folded and
+ * only works while open; all simulator jobs of one draw go to the worker in one message.
  */
 import { t as tr, currentLang, ready } from "./i18n.mjs";
 import { paletteColor } from "./palette.mjs";
 import { toProfile } from "./replay/weapons.mjs";
 import {
-  HP_PRESETS, ttkDistribution, quantileMs, dps, rangeAxis, ttkCurve, winnerStrip, slowerPct, withCadence,
-  FPS_LIMIT, fpsFireRateDrop, withFpsLimit, deepBands, ttkHistogram, stkHistogram, minShots,
+  HP_PRESETS, ttkDistribution, quantileMs, rangeAxis, ttkCurve, winnerStrip, slowerPct, withCadence,
+  FPS_LIMIT, fpsFireRateDrop, withFpsLimit, deepBands, minShots,
 } from "./weapons-model.mjs?v=20261107-merge1";
-import { METRICS, GROUPS, GROUP_EN, statValues, bestOf, rank, classBests } from "./weapon-stats.mjs?v=20261107-merge1";
-import { simParams, compareBursts, burstAnalysis, deepTimings, sprayPattern, attEffects, SLOTS, slotOf, canon, TARGET, STANCES } from "./weapon-sim.mjs?v=20261107-merge1";
+import { METRICS, GROUPS, GROUP_EN, statValues, bestOf, rank, classBests, rowAllSame } from "./weapon-stats.mjs?v=20261108-tidy1";
+import {
+  simParams, compareBursts, burstAnalysis, deepTimings, sprayPattern, attEffects, SLOTS, slotOf, canon, TARGET, STANCES,
+  stylesFor, loadoutEffects, loadoutProfile, loadoutRec,
+} from "./weapon-sim.mjs?v=20261108-tidy1";
 
 export const MAX_WEAPONS = 4;
 export const MAX_RANGE = 500;        // hard cap (the 500 m option); the chart shows 100 / 200 / 500, see viewMax()
@@ -29,6 +37,7 @@ const DEFAULT_IDS = [4, 14, 20];          // NC1 Gauss Rifle, T1 Cycler, Pulsar 
 const MODE_EN = { auto: "Automatic", semi: "Semi-auto", burst: "Burst", bolt: "Bolt action" };
 const FACTION = { 0: "NS", 1: "VS", 2: "NC", 3: "TR" };
 const OPEN_KEY = "ps2-elite-kd-wc-open";
+const DIFF_KEY = "ps2-elite-kd-wc-diff";   // "0" = show the rows that are the same for every chosen weapon
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const nf = (v, d = 0) => Number(v).toLocaleString(currentLang(), { maximumFractionDigits: d, minimumFractionDigits: d });
@@ -51,8 +60,23 @@ export function parseState(search, known = () => true) {
     fps: Math.round(num("fps", FPS_LIMIT.min, FPS_LIMIT.max, FPS_LIMIT.def)),
     fpsOn: q.has("fps"),
     hasW: q.has("w"),
+    att: parseAtt(q, ids),
   };
 }
+
+// attachments per weapon in the link: a<itemId>=Name,Name (at most one per slot, so three)
+function parseAtt(q, ids) {
+  const out = {};
+  for (const [k, v] of q) {
+    const m = /^a(\d+)$/.exec(k);
+    if (!m || !ids.includes(+m[1])) continue;
+    const names = v.split(",").map((x) => x.trim()).filter(Boolean).slice(0, 3);
+    if (names.length) out[+m[1]] = names;
+  }
+  return out;
+}
+/** Attachment names of one weapon from either form: a list, or { slot: name }. */
+export const attList = (a) => (Array.isArray(a) ? a : Object.values(a || {})).filter(Boolean);
 
 /** Build the ?w=… query for a state (pure, tested). Defaults are left out. */
 export function stateToSearch(s) {
@@ -64,6 +88,7 @@ export function stateToSearch(s) {
   if (s.hp !== DEFAULTS.hp) q.set("hp", String(s.hp));
   if (s.far) q.set("max", "500");
   if (s.fpsOn) q.set("fps", String(s.fps ?? FPS_LIMIT.def));
+  for (const id of s.ids) { const a = attList(s.att && s.att[id]); if (a.length) q.set("a" + id, a.join(",")); }
   const str = q.toString();
   return str ? "?" + str : "";
 }
@@ -94,6 +119,16 @@ export function styleParts(shots, burstN = 1) {
   return burstN > 1 ? { pulls: Math.round(shots / burstN), shots } : { shots };
 }
 
+/**
+ * How many shots of a burst analysis are worth showing (pure, tested): up to two past the last shot that still
+ * hits at least `floor` of the time, never fewer than `min` — the long tail of 0 % rows is dropped.
+ */
+export function burstRowsShown(rows, floor = 0.01, min = 6) {
+  let last = -1;
+  rows.forEach((r, i) => { if (r.total >= floor) last = i; });
+  return Math.min(rows.length, Math.max(min, last + 3));
+}
+
 /** Fresh random seed for the spray pictures (each draw shows new sprays, owner 2026-11-06). */
 export const newSeed = () => 1 + Math.floor(Math.random() * 2 ** 30);
 
@@ -120,7 +155,7 @@ async function boot() {
     return;
   }
   $("wcStatus").hidden = true;
-  let recoil = null;           // assets/weapons/recoil.json: loaded after the first draw; the rows and the simulator wait for it
+  let recoil = null;           // assets/weapons/recoil.json: loaded after the first draw; the rows, attachments and the simulator wait for it
   const recoilOf = (id) => {
     const r = recoil && recoil.weapons[id];
     if (!r) return null;
@@ -147,6 +182,10 @@ async function boot() {
 
   const st = parseState(location.search, (id) => weapons.has(id));
   if (!st.hasW) st.ids = DEFAULT_IDS.filter((id) => weapons.has(id));
+  // attachments: { itemId: { slot: name } } — the one loadout every number on the page uses
+  const linkAtt = st.att;
+  st.att = {};
+  for (const [id, names] of Object.entries(linkAtt)) for (const n of names) { const sl = slotOf(n); if (sl) (st.att[id] ||= {})[sl] = n; }
 
   // ------------------------------------------------------------ controls --
   const cats = [...byCat.keys()].sort();
@@ -188,7 +227,7 @@ async function boot() {
     input.value = ""; msg("");
     invalidate("all");
   }
-  const removeId = (id) => { st.ids = st.ids.filter((x) => x !== id); msg(""); invalidate("all"); };
+  const removeId = (id) => { st.ids = st.ids.filter((x) => x !== id); delete st.att[id]; msg(""); invalidate("all"); };
   $("wcSearch").addEventListener("change", addByLabel);
   $("wcSearch").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); addByLabel(); } });
   $("wcSearch").addEventListener("input", () => { if (byLabel.has($("wcSearch").value.trim().toLowerCase())) addByLabel(); });
@@ -207,12 +246,23 @@ async function boot() {
   $("wcFpsRange").addEventListener("input", () => { st.fps = +$("wcFpsRange").value; paintFps(); invalidate("range"); });
   window.addEventListener("resize", () => { clearTimeout(boot.rt); boot.rt = setTimeout(() => invalidate("charts"), 120); });
   window.addEventListener("ps2-lang", () => { fillCats(); fillHp(); paintSeg(); invalidate("all"); });
+  // the weapon cards: ✕ removes, the slot menus set the loadout
   $("wcChips").addEventListener("click", (e) => { const b = e.target.closest("button[data-id]"); if (b) removeId(+b.dataset.id); });
-  $("wcCards").addEventListener("click", (e) => {
-    const x = e.target.closest("button[data-rm]");
-    if (x) { removeId(+x.dataset.rm); return; }
-    const g = e.target.closest("button[data-g]");
-    if (g) { toggleGroup(g.dataset.g); }
+  $("wcChips").addEventListener("change", (e) => {
+    const sel = e.target.closest("select[data-w]");
+    if (!sel) return;
+    const id = Number(sel.dataset.w);
+    st.att[id] = { ...(st.att[id] || {}), [sel.dataset.slot]: sel.value };
+    invalidate("range");
+  });
+  $("wcCards").addEventListener("click", (e) => { const g = e.target.closest("button[data-g]"); if (g) toggleGroup(g.dataset.g); });
+  let onlyDiff = true;
+  try { onlyDiff = localStorage.getItem(DIFF_KEY) !== "0"; } catch {}
+  $("wcDiff").checked = onlyDiff;
+  $("wcDiff").addEventListener("change", () => {
+    onlyDiff = $("wcDiff").checked;
+    try { localStorage.setItem(DIFF_KEY, onlyDiff ? "1" : "0"); } catch {}
+    invalidate("range");
   });
 
   function paintLabels() {
@@ -245,22 +295,64 @@ async function boot() {
   function flush() {
     frame = 0;
     const all = dirty.has("all"), acc = all || dirty.has("acc"), range = acc || dirty.has("range");
-    const sim = range || dirty.has("sim"), charts = range || dirty.has("charts");
+    const sim = range || dirty.has("sim"), charts = range || dirty.has("charts"), cards = all || dirty.has("cards");
     dirty.clear();
-    if (all) renderChips();
+    if (cards) renderCards();
     if (range || !calc) compute();
     if (range) renderTable();
-    if (charts) { drawTtk(); drawCdf(); drawDps(); }
-    if (sim || charts) { drawSim(); drawDeep(); }
+    if (charts) { drawTtk(); drawCdf(); }
+    // every simulator job this draw needs goes to the worker in ONE message (a second message would make the
+    // first one's jobs stale in the worker)
+    if (sim || charts) postJobs([...drawSim(), ...drawDeep()]);
     try { history.replaceState(null, "", location.pathname + stateToSearch(st)); } catch {}
   }
 
-  function renderChips() {
+  // ------------------------------------------------------------- loadout --
+  // attachments the weapon can mount, by slot: { barrel: [names], rail: [...], ammo: [...] } (recoil.json v2: atts / descs / att)
+  const partsOf = (id) => ((recoil && recoil.att && recoil.att[id]) || []).map((i) => recoil.atts[i]).filter(Boolean);
+  const attsOf = (id) => {
+    const out = {};
+    for (const [name] of partsOf(id)) { const slot = slotOf(name); if (slot && !(out[slot] ||= []).includes(name)) out[slot].push(name); }
+    // a part Census lists under two names (Muzzle Brake beside Compensator) is shown once
+    for (const sl of Object.keys(out)) out[sl] = out[sl].filter((n) => canon(n) === n || !out[sl].includes(canon(n)));
+    return out;
+  };
+  // name -> Census description of THIS weapon's version of the attachment (it carries the weapon's own numbers)
+  const descsOf = (id) => {
+    const out = {};
+    for (const [name, d] of partsOf(id)) if (!out[name] && d >= 0) out[name] = recoil.descs[d];
+    return out;
+  };
+  const chosenAtt = (id) => attList(st.att[id]);
+  const hipAim = () => simState.aim === "hip";
+  const effectsOf = (w) => (recoil ? loadoutEffects(chosenAtt(w.id), descsOf(w.id), w.name, hipAim()) : []);
+  const fpsP = (p) => (st.fpsOn ? withFpsLimit(p, st.fps) : p);
+  // once recoil.json is in, attachments the weapon cannot mount (an old or edited link) are dropped
+  function pruneAtt() {
+    for (const id of Object.keys(st.att)) {
+      const have = attsOf(+id);
+      for (const [sl, n] of Object.entries(st.att[id])) if (n && !(have[sl] || []).includes(n)) delete st.att[id][sl];
+    }
+  }
+  const SLOT_EN = { barrel: "Barrel", rail: "Rail", ammo: "Ammo" };
+
+  // the picker's weapon cards: picture, name, ✕ and one menu per attachment slot
+  function renderCards() {
     $("wcChips").innerHTML = selected().map((w, i) => {
       const tip = esc(tr("wc.remove", "Click to remove {name}", { name: w.name }));
-      return `<button type="button" class="wc-chip" role="listitem" data-id="${w.id}" style="--c:${color(i)}" title="${tip}" aria-label="${tip}">`
-        + `<img src="assets/weapons/${w.img}.webp" alt="" width="40" height="20" loading="lazy" onerror="this.style.visibility='hidden'" />`
-        + `<span class="wc-chip-n">${esc(w.name)}</span><span class="wc-wmeta">${esc(FACTION[w.fac] ?? "")}</span><span class="wc-x" aria-hidden="true">✕</span></button>`;
+      const have = recoil ? attsOf(w.id) : {};
+      const mine = st.att[w.id] || {};
+      const slots = SLOTS.filter((sl) => have[sl]).map((sl) => `<label class="wc-att"><span title="${esc(tr("wc.sim.slot." + sl, SLOT_EN[sl]))}">${esc(tr("wc.sim.slot." + sl, SLOT_EN[sl]))}</span><select data-w="${w.id}" data-slot="${sl}"><option value="">${esc(tr("wc.sim.noAtt", "none"))}</option>${have[sl].map((n) => {
+        const fx = attEffects(n, descsOf(w.id)[n], w.name, hipAim());
+        const note = fx ? (Object.keys(fx).length ? "" : " · " + tr("wc.sim.noCombat", "no effect on killing")) : " · " + tr("wc.sim.noEffect", "not modelled");
+        return `<option value="${esc(n)}" ${mine[sl] === n ? "selected" : ""}>${esc(n + note)}</option>`;
+      }).join("")}</select></label>`).join("");
+      return `<div class="wc-wcard" role="listitem" style="--c:${color(i)}"><div class="wc-wtop">`
+        + `<img src="assets/weapons/${w.img}.webp" alt="" width="56" height="28" loading="lazy" onerror="this.style.visibility='hidden'" />`
+        + `<div class="wc-wtxt"><b>${esc(w.name)}</b><span class="wc-wmeta">${esc(FACTION[w.fac] ?? "")} · ${esc(w.cat)}</span></div>`
+        + `<button type="button" class="wc-rm" data-id="${w.id}" title="${tip}" aria-label="${tip}">✕</button></div>`
+        + (slots ? `<div class="wc-atts">${slots}</div>` : recoil ? "" : `<p class="wc-dim wc-attwait">${esc(tr("wc.sim.wait", "Loading recoil data…"))}</p>`)
+        + `</div>`;
     }).join("");
   }
 
@@ -268,26 +360,25 @@ async function boot() {
   let calc = null;
   const curveCache = new Map();
   function compute() {
-    // with the FPS limit on, every weapon's profile carries the slower fire rate, so TTK, DPS,
-    // the table and the simulator all slow down together from this one adjusted profile
-    const ws = st.fpsOn ? selected().map((w) => ({ ...w, p: withFpsLimit(w.p, st.fps) })) : selected();
+    // the loadout's profile (attachments), slowed by the FPS limit when it is on: TTK, the table and the
+    // class comparison all read this one profile; the simulator applies the same numbers itself
+    const ws = selected().map((w) => ({ ...w, p: fpsP(loadoutProfile(w.p, effectsOf(w), w.cat)), base: fpsP(w.p) }));
     const maxR = viewMax(ws.map((w) => w.p), st.far);
     $("wcRange").max = maxR;
     if (st.range > maxR) { st.range = maxR; paintLabels(); }
     $("wcRange").value = st.range;
     const xs = rangeAxis(maxR, rangeStep(maxR));
     const opt = { acc: st.acc / 100, hsr: st.hsr / 100, hp: st.hp };
-    const okey = `${opt.acc}|${opt.hsr}|${opt.hp}|${maxR}|${st.fpsOn ? st.fps : 0}`;
+    const okey = `${opt.acc}|${opt.hsr}|${opt.hp}|${maxR}|${st.fpsOn ? st.fps : 0}|${simState.aim}`;
     if (curveCache.size > 200) curveCache.clear();
     const cs = ws.map((w) => {
-      const k = w.id + "|" + okey;
+      const k = w.id + "|" + chosenAtt(w.id).join("+") + "|" + okey;
       if (!curveCache.has(k)) curveCache.set(k, ttkCurve(w.p, xs, opt));
       return curveCache.get(k);
     });
     const dists = ws.map((w) => ttkDistribution(w.p, { ...opt, range: st.range }));
     const med = dists.map((d) => quantileMs(d, 0.5));
-    const dp = ws.map((w) => dps(w.p, { range: st.range }));
-    calc = { maxR, ws, xs, curves: cs, dists, med, dp, winners: winnerStrip(cs) };
+    calc = { maxR, ws, xs, curves: cs, dists, med, winners: winnerStrip(cs) };
   }
 
   // ------------------------------------------------------------ the table --
@@ -306,14 +397,14 @@ async function boot() {
       default: return nf(v);
     }
   };
-  // best of the whole class (category) per range / hp: cached
+  // best of the whole class (category) per range / hp, stock weapons: cached
   const classCache = new Map();
   function classBestFor(cat) {
     const key = `${cat}|${st.range}|${st.hp}|${recoil ? 1 : 0}|${st.fpsOn ? st.fps : 0}`;
     if (!classCache.has(key)) {
       if (classCache.size > 100) classCache.clear();
       // the class best is judged on the same slowed profiles as the chosen weapons
-      classCache.set(key, classBests((byCat.get(cat) || []).map((w) => statValues({ p: st.fpsOn ? withFpsLimit(w.p, st.fps) : w.p, rec: recoilOf(w.id), range: st.range, hp: st.hp }))));
+      classCache.set(key, classBests((byCat.get(cat) || []).map((w) => statValues({ p: fpsP(w.p), rec: recoilOf(w.id), range: st.range, hp: st.hp }))));
     }
     return classCache.get(key);
   }
@@ -326,14 +417,16 @@ async function boot() {
     const body = $("wcCards").querySelector(`tbody[data-g="${g}"]`);
     if (body) { body.classList.toggle("open", openGroups.has(g)); body.querySelector("button[data-g]").setAttribute("aria-expanded", String(openGroups.has(g))); }
   }
-  const SLOT_EN = { barrel: "Barrel", rail: "Rail", ammo: "Ammo" };
 
   function renderTable() {
     const { ws, med } = calc;
     const box = $("wcCards");
-    $("wcKey").innerHTML = ws.length ? `<span class="good">■</span> ${esc(tr("wc.goodTip", "Best of the chosen weapons"))} <span class="gold">■</span> ${esc(tr("wc.goldKey", "Best of the whole class"))}` : "";
+    const anyAtt = ws.some((w) => chosenAtt(w.id).length);
+    $("wcKey").innerHTML = ws.length ? `<span><span class="good">■</span> ${esc(tr("wc.goodTip", "Best of the chosen weapons"))}</span> <span><span class="gold">■</span> ${esc(tr("wc.goldKey", "Best of the whole class"))}</span>`
+      + (anyAtt ? ` <span><span class="wc-mod">123</span> ${esc(tr("wc.modKey", "changed by attachments"))}</span>` : "") : "";
     if (!ws.length) { box.innerHTML = `<p class="wc-dim wc-empty">${esc(tr("wc.search", "Type a weapon name…"))}</p>`; return; }
-    const vals = ws.map((w) => statValues({ p: w.p, rec: recoilOf(w.id), range: st.range, hp: st.hp }));
+    const vals = ws.map((w) => statValues({ p: w.p, rec: loadoutRec(recoilOf(w.id), effectsOf(w), hipAim()), range: st.range, hp: st.hp }));
+    const stock = ws.map((w) => (chosenAtt(w.id).length ? statValues({ p: w.base, rec: recoilOf(w.id), range: st.range, hp: st.hp }) : null));
     const chosenBest = {};
     for (const m of METRICS) chosenBest[m.key] = bestOf(vals.map((v) => v[m.key]), m.dir);
     const best = bestOf(med, -1) ?? (med.filter((v) => v != null).length ? Math.min(...med.filter((v) => v != null)) : null);
@@ -343,46 +436,41 @@ async function boot() {
 
     let h = `<table class="ranks-table wc-table" style="--n:${ws.length}"><colgroup><col class="wc-lab-col" />${ws.map(() => "<col />").join("")}</colgroup><thead><tr><th class="wc-lab"></th>`;
     h += ws.map((w, i) => {
-      const tip = esc(tr("wc.remove", "Click to remove {name}", { name: w.name }));
+      const mode = tr("wc.mode." + w.p.mode, MODE_EN[w.p.mode] || w.p.mode) + (w.p.pellets > 1 ? " · " + tr("wc.pellets", "{n} pellets", { n: nf(w.p.pellets) }) : "");
       return `<th scope="col" class="wc-wh" style="--c:${color(i)}"><div class="wc-whead"><img src="assets/weapons/${w.img}.webp" alt="" width="56" height="28" loading="lazy" onerror="this.style.visibility='hidden'" />`
-        + `<span class="wc-wname">${esc(w.name)}</span><span class="wc-wmeta">${esc(FACTION[w.fac] ?? "")} · ${esc(w.cat)}</span>`
-        + `<button type="button" class="wc-rm" data-rm="${w.id}" title="${tip}" aria-label="${tip}">✕</button></div></th>`;
+        + `<span class="wc-wname">${esc(w.name)}</span><span class="wc-wmeta">${esc(FACTION[w.fac] ?? "")} · ${esc(w.cat)}</span><span class="wc-wmeta">${esc(mode)}</span></div></th>`;
     }).join("") + "</tr></thead>";
 
-    // headline: median kill time at the chosen range, with how much slower than the best
+    // headline: the kill time at the chosen range two ways — the exact maths (no recoil) and the simulator's best
+    // firing style (recoil, cone and bloom on); the simulator cells fill in as its results arrive (drawSim)
     h += `<tbody class="wc-top open">`;
-    h += row(esc(tr("wc.med", "Median kill at {m} m", { m: nf(st.range) })), ws.map((w, i) => {
+    h += row(esc(tr("wc.medExact", "Median kill at {m} m, no recoil", { m: nf(st.range) })), ws.map((w, i) => {
       const slower = slowerPct(med[i], best);
       const cmp = med[i] == null || ws.length < 2 || best == null ? "" : slower === 0 || slower == null
         ? tr("wc.fastest", "fastest") : tr("wc.slower", "{pct}% slower", { pct: nf(slower, slower < 10 ? 1 : 0) });
       return td(`wc-med ${rank(med[i], -1, best, null)}`, `<b>${esc(fmtMs(med[i]))}</b>${cmp ? `<span class="wc-cmp">${esc(cmp)}</span>` : ""}`);
     }).join(""), "wc-hl");
-    h += row(esc(tr("wc.mode", "Fire mode")), ws.map((w) => td("", esc(tr("wc.mode." + w.p.mode, MODE_EN[w.p.mode] || w.p.mode)) + (w.p.pellets > 1 ? " · " + esc(tr("wc.pellets", "{n} pellets", { n: nf(w.p.pellets) })) : ""))).join(""));
+    h += row(esc(tr("wc.medSim", "With recoil: best way to fire")), ws.map((w, i) => `<td class="wc-med" data-sim="${i}"><b>…</b></td>`).join(""), "wc-hl");
     h += "</tbody>";
 
     for (const g of GROUPS) {
-      const ms = METRICS.filter((m) => m.group === g && vals.some((v) => v[m.key] != null));
+      const ms = METRICS.filter((m) => m.group === g && vals.some((v) => v[m.key] != null) && !(onlyDiff && rowAllSame(vals, m.key)));
       if (!ms.length) continue;
       const open = openGroups.has(g);
       h += `<tbody data-g="${g}" class="${open ? "open" : ""}"><tr class="wc-grp"><th colspan="${ws.length + 1}"><button type="button" data-g="${g}" aria-expanded="${open}"><span class="wc-caret" aria-hidden="true"></span>${esc(tr("wc.g." + g, GROUP_EN[g]))}</button></th></tr>`;
       for (const m of ms) {
         h += row(esc(tr("wc.k." + m.key, m.en)), ws.map((w, i) => {
           const v = vals[i];
-          const cls = rank(v[m.key], m.dir, chosenBest[m.key], cbs[i][m.key]);
+          let cls = rank(v[m.key], m.dir, chosenBest[m.key], cbs[i][m.key]);
           let tip = cls === "gold" ? tr("wc.goldTip", "Best of all {cat}", { cat: w.cat }) : cls === "good" ? tr("wc.goodTip", "Best of the chosen weapons") : "";
           if (m.key === "windup" && w.p.delayHand) tip = tr("wc.windupHand", "Not in Census: typed in by hand");
+          const s0 = stock[i];
+          if (s0 && (s0[m.key] !== v[m.key] || s0[m.key + ":max"] !== v[m.key + ":max"])) {
+            cls += " wc-mod";
+            tip = tr("wc.modTip", "Changed by the attachments. Without them: {v}", { v: fmtUnit(m.unit, s0[m.key], s0[m.key + ":max"]) }) + (tip ? " · " + tip : "");
+          }
           return td(cls, esc(fmtUnit(m.unit, v[m.key], v[m.key + ":max"])) + (m.key === "windup" && w.p.delayHand ? " ✍️" : ""), tip);
         }).join(""));
-      }
-      h += "</tbody>";
-    }
-    const atts = ws.map((w) => attsOf(w.id));
-    if (atts.some((a) => SLOTS.some((sl) => a[sl]))) {
-      const open = openGroups.has("att");
-      h += `<tbody data-g="att" class="${open ? "open" : ""}"><tr class="wc-grp"><th colspan="${ws.length + 1}"><button type="button" data-g="att" aria-expanded="${open}"><span class="wc-caret" aria-hidden="true"></span>${esc(tr("wc.g.att", "Attachments"))}</button></th></tr>`;
-      for (const sl of SLOTS) {
-        if (!atts.some((a) => a[sl])) continue;
-        h += row(esc(tr("wc.sim.slot." + sl, SLOT_EN[sl])), atts.map((a) => td("wc-attv", a[sl] ? a[sl].map(esc).join(", ") : "–")).join(""));
       }
       h += "</tbody>";
     }
@@ -391,6 +479,7 @@ async function boot() {
 
   // -------------------------------------------------------------- charts --
   const svgOpen = (W, H, aria) => `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${esc(aria)}" xmlns="http://www.w3.org/2000/svg">`;
+  const plotBg = (L, T, W, H) => `<rect class="plot" x="${L}" y="${T}" width="${Math.max(0, W).toFixed(1)}" height="${Math.max(0, H).toFixed(1)}"/>`;
   const legend = () => `<div class="wc-legend">${calc.ws.map((w, i) => `<span><span class="sw" style="background:${color(i)}"></span>${esc(w.name)}</span>`).join("")}</div>`;
   const chartWidth = (el) => Math.max(280, Math.floor(el.clientWidth || el.parentElement.clientWidth || 600));
   const CH = 280;   // both line charts share one height, so the two panels side by side match
@@ -405,7 +494,7 @@ async function boot() {
     const yt = niceTicks(yMax, 5), yTop = yt[yt.length - 1];
     const X = (r) => L + (r / maxR) * (W - L - R);
     const Y = (v) => T + (1 - v / yTop) * (H - T - B);
-    let s = svgOpen(W, H, tr("wc.ariaTtk", "Graph: time to kill by range for the chosen weapons"));
+    let s = svgOpen(W, H, tr("wc.ariaTtk", "Graph: time to kill by range for the chosen weapons")) + plotBg(L, T, W - L - R, H - T - B);
     for (const v of yt) s += `<line class="grid" x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}"/><text class="ax" x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${nf(v)}</text>`;
     for (const r of niceTicks(maxR, 5)) s += `<line class="grid" x1="${X(r)}" x2="${X(r)}" y1="${T}" y2="${H - B}"/><text class="ax" x="${X(r)}" y="${H - B + 14}" text-anchor="middle">${nf(r)}</text>`;
     s += `<text class="ax" x="${W - R}" y="${H - 2}" text-anchor="end">${esc(tr("wc.xRange", "Range (m)"))}</text>`;
@@ -425,7 +514,7 @@ async function boot() {
       s += `<rect x="${x.toFixed(1)}" y="${H - B + 20}" width="${(x2 - x).toFixed(1)}" height="${STRIP - 4}" fill="${w < 0 ? "var(--border)" : color(w)}"/>`;
     });
     s += `<text class="ax" x="${L}" y="${H - 2}" text-anchor="start">${esc(tr("wc.winner", "Fastest at each range"))}</text>`;
-    s += `<line class="mark" x1="${X(st.range)}" x2="${X(st.range)}" y1="${T}" y2="${H - B}"/><text class="ax mark-t" x="${Math.min(W - R, X(st.range) + 5)}" y="${T + 10}" ${X(st.range) > W - 70 ? 'text-anchor="end" dx="-10"' : ""}>${esc(fmtM(st.range))}</text>`;
+    s += `<line class="mark" x1="${X(st.range)}" x2="${X(st.range)}" y1="${T}" y2="${H - B}"/><text class="ax mark-t" x="${Math.min(W - R, X(st.range) + 5)}" y="${T + 12}" ${X(st.range) > W - 70 ? 'text-anchor="end" dx="-10"' : ""}>${esc(fmtM(st.range))}</text>`;
     s += `<line class="cursor" id="wcCur" x1="0" x2="0" y1="${T}" y2="${H - B}" visibility="hidden"/></svg>`;
     el.innerHTML = s + `<div class="wc-legend">${calc.ws.map((w, i) => `<span><span class="sw" style="background:${color(i)}"></span>${esc(w.name)}</span>`).join("")}<span><span class="sw" style="background:var(--border)"></span>${esc(tr("wc.tie", "tie / no kill"))}</span></div>`;
     const svg = el.querySelector("svg"), cur = el.querySelector("#wcCur"), out = $("wcReadout");
@@ -452,7 +541,7 @@ async function boot() {
 
   function drawCdf() {
     const el = $("wcCdf");
-    $("wcCdfNote").textContent = tr("wc.cdfNote", "At {m} m. Higher and further left is better. The dots mark the 50% point.", { m: nf(st.range) });
+    $("wcCdfNote").textContent = tr("wc.cdfNote2", "At {m} m. Further left is better; the dot marks the median.", { m: nf(st.range) });
     const { ws, dists, med } = calc;
     if (!ws.length) { el.innerHTML = ""; return; }
     const W = chartWidth(el), H = CH, L = 56, R = 16, T = 10, B = 30;
@@ -461,7 +550,7 @@ async function boot() {
     const xt = niceTicks(xMax, 6), xTop = xt[xt.length - 1];
     const X = (v) => L + (v / xTop) * (W - L - R);
     const Y = (p) => T + (1 - p) * (H - T - B);
-    let s = svgOpen(W, H, tr("wc.ariaCdf", "Graph: chance of having killed by a given time"));
+    let s = svgOpen(W, H, tr("wc.ariaCdf", "Graph: chance of having killed by a given time")) + plotBg(L, T, W - L - R, H - T - B);
     for (const p of [0, 0.25, 0.5, 0.75, 1]) s += `<line class="grid" x1="${L}" x2="${W - R}" y1="${Y(p)}" y2="${Y(p)}"/><text class="ax" x="${L - 6}" y="${Y(p) + 4}" text-anchor="end">${nf(p * 100)}%</text>`;
     for (const v of xt) s += `<line class="grid" x1="${X(v)}" x2="${X(v)}" y1="${T}" y2="${H - B}"/><text class="ax" x="${X(v)}" y="${H - B + 14}" text-anchor="middle">${nf(v)}</text>`;
     s += `<text class="ax" x="${(L + W - R) / 2}" y="${H - 2}" text-anchor="middle">${esc(tr("wc.xMs", "Time (ms)"))}</text>`;
@@ -480,48 +569,17 @@ async function boot() {
     el.innerHTML = s + "</svg>" + legend();
   }
 
-  function drawDps() {
-    const el = $("wcDps");
-    $("wcDpsNote").textContent = tr("wc.dpsNote", "At {m} m, body hits, every pellet lands. Burst = the magazine's firing time only. Sustained = reloads counted.", { m: nf(st.range) })
-      + (st.fpsOn ? " " + tr("wc.dpsNoteFps", "Fire rate reduced by the FPS limit in the footer.") : "");
-    const { ws, dp } = calc;
-    if (!ws.length) { el.innerHTML = ""; return; }
-    const max = Math.max(1, ...dp.flatMap((d) => [d.burst, d.sustained]));
-    const bar = (i, k, v, op) => `<div class="wc-dpsrow"><span class="lab">${esc(tr("wc." + k, k === "burst" ? "Burst" : "Sustained"))}</span><span class="wc-meter"><i style="width:${Math.max(0.5, v / max * 100).toFixed(1)}%;background:${color(i)};opacity:${op}"></i></span><span class="v">${nf(v)}</span></div>`;
-    el.innerHTML = `<div class="wc-dpsgrid" role="img" aria-label="${esc(tr("wc.ariaDps", "Graph: damage per second of the chosen weapons"))}">` + ws.map((w, i) =>
-      `<div class="wc-dpsw" style="--c:${color(i)}"><div class="wc-dpsname">${esc(w.name)}</div>${bar(i, "burst", dp[i].burst, 1)}${bar(i, "sustained", dp[i].sustained, 0.55)}</div>`).join("") + "</div>";
-  }
-
   // ------------------------------------------------------ recoil simulator --
-  // aim point in cm from the chest centre (sideways: + right; height: + up); the headshot chance lands on the other point
-  const simState = { aim: "ads", stance: "crouchStill", att: {}, comp: 0, compX: 0, aimX: 0, aimY: 0, seed: newSeed() };
-  const aimM = () => ({ x: simState.aimX / 100, y: simState.aimY / 100 });
-  // the preset button that matches the aim point (Head: 0 / 45 cm, Torso: 0 / 0 cm), if any
-  const sprayTarget = () => (simState.aimX === 0 && simState.aimY === 45 ? "head" : simState.aimX === 0 && simState.aimY === 0 ? "body" : null);
-  const settingsKey = () => [simState.aim, simState.stance, simState.comp, simState.compX, simState.aimX, simState.aimY, st.acc, st.hsr, st.range, st.hp, st.fpsOn ? st.fps : 0].join("|");
-  const simOpts = () => ({ stance: simState.stance, aim: simState.aim, comp: simState.comp / 100, compX: simState.compX / 100, aimX: simState.aimX / 100, aimY: simState.aimY / 100, acc: st.acc / 100, hsr: st.hsr / 100 });
-  // attachments the weapon can mount, by slot: { barrel: [names], rail: [...], ammo: [...] } (recoil.json v2: atts / descs / att)
-  const partsOf = (id) => ((recoil && recoil.att && recoil.att[id]) || []).map((i) => recoil.atts[i]).filter(Boolean);
-  const attsOf = (id) => {
-    const out = {};
-    for (const [name] of partsOf(id)) { const slot = slotOf(name); if (slot && !(out[slot] ||= []).includes(name)) out[slot].push(name); }
-    // a part Census lists under two names (Muzzle Brake beside Compensator) is shown once
-    for (const sl of Object.keys(out)) out[sl] = out[sl].filter((n) => canon(n) === n || !out[sl].includes(canon(n)));
-    return out;
-  };
-  // name -> Census description of THIS weapon's version of the attachment (it carries the weapon's own numbers)
-  const descsOf = (id) => {
-    const out = {};
-    for (const [name, d] of partsOf(id)) if (!out[name] && d >= 0) out[name] = recoil.descs[d];
-    return out;
-  };
-  const chosenAtt = (id) => Object.values(simState.att[id] || {}).filter(Boolean);
+  // One aim rule (owner 2026-11-08): each shot is aimed at the head with the headshot rate, else at the chest; it
+  // lands on that point with the accuracy, else it misses clearly; cone, bloom and recoil come on top.
+  const simState = { aim: "ads", stance: "crouchStill", comp: 0, compX: 0, seed: newSeed() };
+  const settingsKey = () => [simState.aim, simState.stance, simState.comp, simState.compX, st.acc, st.hsr, st.range, st.hp, st.fpsOn ? st.fps : 0].join("|");
+  const simOpts = () => ({ stance: simState.stance, aim: simState.aim, comp: simState.comp / 100, compX: simState.compX / 100, acc: st.acc / 100, hsr: st.hsr / 100 });
   const paramsOf = (w, att) => {
     const x = recoilOf(w.id);
     if (!x || !x.fm) return null;
-    // the simulator takes the raw Census profile and applies the FPS limit itself (simParams
-    // scales the shot gaps from the raw fire_refire_ms, which the adjusted profile cannot reach),
-    // so the drop is counted once, never twice
+    // the simulator takes the raw Census profile and applies the attachments and the FPS limit itself (simParams
+    // scales the shot gaps from the raw fire_refire_ms, which the adjusted profile cannot reach), so each is counted once
     const raw = (weapons.get(w.id) || w).p;
     return simParams(raw, x.fm, x.states, { ...simOpts(), fpsDrop: st.fpsOn ? fpsFireRateDrop(st.fps, raw.rpm) : 0, attachments: att, attDesc: descsOf(w.id), adsFm: x.adsFm, adsStates: x.adsStates, cat: w.cat, weaponName: w.name });
   };
@@ -534,19 +592,22 @@ async function boot() {
   // results: weapon key -> compareBursts result; class key -> best median of the class (gold)
   const simCache = new Map(), classSim = new Map(), deepCache = new Map();   // deep dive: "burst|<key>" and "ranges|<key>"
   const lastShown = new Map();     // weapon id -> last result drawn (kept on screen, dimmed, while a new one is computed)
-  let gen = 0, worker = null;
+  let gen = 0, worker = null, posted = new Set();
   try {
-    worker = new Worker(new URL("weapon-sim-worker.mjs?v=20261107-merge1", import.meta.url), { type: "module" });
+    worker = new Worker(new URL("weapon-sim-worker.mjs?v=20261108-tidy1", import.meta.url), { type: "module" });
     worker.onmessage = (e) => {
       const { key, kind, result } = e.data || {};
       (kind === "class" ? classSim : kind === "burst" || kind === "ranges" ? deepCache : simCache).set(key, result);
       if (simCache.size > 300) simCache.clear();
       invalidate("sim");
     };
-    worker.onerror = () => { worker = null; invalidate("sim"); };
+    worker.onerror = () => { worker = null; posted = new Set(); invalidate("sim"); };
   } catch { worker = null; }
-  function runJobs(jobs) {
-    if (!jobs.length) return;
+  // send the jobs one draw needs, all in one message, and only when something new is needed (the worker keeps the
+  // latest message's jobs and drops older ones, so the full list goes every time)
+  function postJobs(jobs) {
+    if (!jobs.length || jobs.every((j) => posted.has(j.key))) return;
+    posted = new Set(jobs.map((j) => j.key));
     gen++;
     if (worker) { worker.postMessage({ gen, jobs }); return; }
     // no worker: run on the main thread in small slices (same results, the page just stays a little busier)
@@ -565,12 +626,23 @@ async function boot() {
     setTimeout(step, 0);
   }
 
+  // the shared key for every spray picture (drawn once, above the cards)
+  function paintSimLegend() {
+    const c = "var(--text)", U = 12;
+    const dot = (zone) => `<svg viewBox="0 0 ${U} ${U}" width="${U}" height="${U}" aria-hidden="true">${shotDot({ x: 0, y: 0, zone }, U / 2, U / 2, 1, c, 1, true)}</svg>`;
+    const cross = `<svg viewBox="0 0 ${U} ${U}" width="${U}" height="${U}" aria-hidden="true"><path class="wc-aimx" d="M1 6H11M6 1V11"/></svg>`;
+    $("wcSimLegend").innerHTML = [
+      [dot("head"), tr("wc.deep.head", "Head")], [dot("body"), tr("wc.deep.body", "Body")], [dot("leg"), tr("wc.deep.leg", "Leg")],
+      [dot(null), tr("wc.sim.miss", "miss")], [cross, tr("wc.sim.aimPt", "aim point")],
+    ].map(([i, t]) => `<span>${i} ${esc(t)}</span>`).join("") + `<span class="wc-dim">${esc(tr("wc.sim.ghostKey", "faint dots: {n} more sprays", { n: nf(GHOST_SPRAYS) }))}</span>`;
+  }
+
   function drawSim() {
-    const el = $("wcSim"), sum = $("wcSimSum");
-    if (!calc || !calc.ws.length) { el.innerHTML = ""; sum.innerHTML = ""; return; }
-    if (!recoil) { el.innerHTML = `<p class="wc-dim">${esc(tr("wc.sim.wait", "Loading recoil data…"))}</p>`; sum.innerHTML = ""; return; }
-    $("wcSimNote").textContent = tr("wc.sim.note3", "Target at {m} m with {hp} health. Each shot is aimed at the head with the headshot rate, else at the body, and lands on the aim point with the accuracy (else it misses clearly); the cone and recoil come on top. Times count from the trigger pull, so a wind-up is included. Recoil compensation pulls that share of the vertical kick back, a simple pulldown. Each style is tried 300 times.", { m: nf(st.range), hp: nf(st.hp) });
-    paintSeg();
+    const el = $("wcSim");
+    if (!calc || !calc.ws.length) { el.innerHTML = ""; return []; }
+    if (!recoil) { el.innerHTML = `<p class="wc-dim">${esc(tr("wc.sim.wait", "Loading recoil data…"))}</p>`; return []; }
+    $("wcSimNote").textContent = tr("wc.sim.note4", "{m} m, {hp} health, your accuracy and headshot rate, with cone, bloom and recoil. Each firing style is tried 300 times.", { m: nf(st.range), hp: nf(st.hp) });
+    paintSeg(); paintSimLegend();
     const sk = settingsKey(), jobs = [];
     const res = calc.ws.map((w) => {
       const att = chosenAtt(w.id), key = `${w.id}|${att.join("+")}|${sk}`;
@@ -586,15 +658,19 @@ async function boot() {
       const Ps = (byCat.get(cat) || []).map((w) => paramsOf(w, [])).filter(Boolean);
       jobs.push({ key: classKey(cat), kind: "class", Ps, distance: st.range, hp: st.hp, runs: SIM_RUNS });
     }
-    if (jobs.length && jobs.some((j) => !pending.has(j.key))) { pending = new Set([...pending, ...jobs.map((j) => j.key)]); runJobs(jobs); }
 
-    const meds = res.map((x) => (x.r && x.r.best ? x.r.best.median : null)), rates = res.map((x) => (x.r && x.r.best ? x.r.best.killRate : null));
-    const bestMed = bestOf(meds, -1), bestRate = bestOf(rates, 1);
+    const meds = res.map((x) => (x.r && x.r.best ? x.r.best.median : null));
+    const bestMed = bestOf(meds, -1);
     const cls = (v, w) => { const cb = classSim.get(classKey(w.cat)); return v != null && cb != null && v <= cb * (1 + 1e-9) ? "gold" : v != null && v === bestMed ? "good" : ""; };
-    sum.innerHTML = calc.ws.length > 1 ? `<ul class="wc-simsum">${calc.ws.map((w, i) => {
-      const b = res[i].r && res[i].r.best;
-      return `<li style="--c:${color(i)}"><b>${esc(w.name)}</b><span class="${b ? cls(b.median, w) : ""}">${b ? esc(styleLabel(b.burst, w.p.burstN)) + " · " + esc(fmtMs(b.median)) : res[i].busy ? "" : esc(tr("wc.never", "no kill"))}</span><span class="${b && b.killRate === bestRate ? "good" : ""}">${b ? nf(b.killRate * 100) + "%" : ""}</span></li>`;
-    }).join("")}</ul>` : "";
+    // the table's "with recoil" row
+    for (const cell of document.querySelectorAll("#wcCards td[data-sim]")) {
+      const i = +cell.dataset.sim, x = res[i], w = calc.ws[i];
+      if (!x || !w) continue;
+      const b = x.r && x.r.best;
+      cell.className = `wc-med ${b ? cls(b.median, w) : ""}${x.busy ? " wc-busy" : ""}`;
+      cell.innerHTML = x.none ? "–" : b ? `<b>${esc(fmtMs(b.median))}</b><span class="wc-cmp">${esc(styleLabel(b.burst, w.p.burstN))}</span>`
+        : x.r ? `<b>${esc(tr("wc.never", "no kill"))}</b>` : "<b>…</b>";
+    }
 
     // one scale for every spray picture, so the patterns can be compared by eye
     const sprays = calc.ws.map((w, i) => { const P = !res[i].none && paramsOf(w, chosenAtt(w.id)); return P ? sprayData(w, P) : null; });
@@ -606,82 +682,61 @@ async function boot() {
       const rows = (x.r && x.r.rows) || [], best = x.r && x.r.best;
       const worst = Math.max(1, ...rows.map((r) => r.median ?? 0));
       const bars = rows.map((r) => `<li class="${best && r.burst === best.burst ? "best" : ""}"><span class="lab">${esc(styleLabel(r.burst, w.p.burstN))}</span><span class="wc-meter"><i style="width:${r.median == null ? 0 : Math.max(2, r.median / worst * 100).toFixed(1)}%;background:${color(i)}"></i></span><span class="v">${r.median == null ? esc(tr("wc.never", "no kill")) : esc(fmtMs(r.median))} · ${nf(r.killRate * 100)}%</span></li>`).join("");
-      const head = best
-        ? `<span class="${cls(best.median, w)}">` + esc(tr("wc.sim.best", "Best: {style}, median {ms}", { style: styleLabel(best.burst, w.p.burstN), ms: fmtMs(best.median) })) + "</span>"
-        : x.r ? esc(tr("wc.sim.nobest", "Cannot kill reliably at this range with this setup")) : "";
-      const have = attsOf(w.id);
-      const chips = SLOTS.filter((sl) => have[sl]).map((sl) => `<label class="wc-att"><span>${esc(tr("wc.sim.slot." + sl, SLOT_EN[sl]))}</span><select data-w="${w.id}" data-slot="${sl}"><option value="">${esc(tr("wc.sim.noAtt", "none"))}</option>${have[sl].map((n) => `<option value="${esc(n)}" ${(simState.att[w.id] || {})[sl] === n ? "selected" : ""}>${esc(n)}${((fx) => (fx ? (Object.keys(fx).length ? "" : " · " + esc(tr("wc.sim.noCombat", "no effect on killing"))) : " · " + esc(tr("wc.sim.noEffect", "not modelled"))))(attEffects(n, descsOf(w.id)[n], w.name, simState.aim === "hip"))}</option>`).join("")}</select></label>`).join("");
-      return `<article class="wc-sim" style="--c:${color(i)}"><div class="wc-simhead"><b>${esc(w.name)}</b><span class="wc-best">${head}</span></div>
-        <div class="wc-simbody"><ul class="wc-bars">${bars}</ul>${sprayFigure(sprays[i], S, i)}</div>${chips ? `<div class="wc-atts">${chips}</div>` : ""}</article>`;
+      const att = chosenAtt(w.id);
+      const sub = !x.r ? esc(tr("wc.sim.busy", "simulating…")) : !best ? esc(tr("wc.sim.nobest", "Cannot kill reliably at this range with this setup")) : att.length ? esc(att.join(" · ")) : "";
+      return `<article class="wc-sim${x.busy ? " wc-busy" : ""}" style="--c:${color(i)}"><div class="wc-simhead"><b>${esc(w.name)}</b><span class="wc-dim">${sub}</span></div>
+        <div class="wc-simbody"><div><div class="wc-barhead"><span>${esc(tr("wc.sim.style", "Firing style"))}</span><span>${esc(tr("wc.sim.medRate", "median · kills"))}</span></div><ul class="wc-bars">${bars}</ul></div>${sprayFigure(sprays[i], S, i)}</div></article>`;
     }).join("");
+    return jobs;
   }
+
   // ------------------------------------------------------------ deep dive --
-  // Dorf's workbook tables, rebuilt from our own numbers: the Burst Analysis (per-shot hit chances
-  // over a burst, from the simulator), the distance charts (time to kill and best burst length from
-  // the simulator, kills per magazine and shots to kill exact, on a log distance axis) and the
-  // Results Browser (exact TTK and STK histograms from the exact distribution, plus TTK and STK per
-  // burst length from the simulator). One weapon at a time — the first selected, or the one picked
-  // in the select. The Advanced Timings tables (recoil / CoF recovery, pulldown in degrees and
-  // pixels) follow once his formulas are read out of the workbook.
+  // Dorf's workbook tables, rebuilt from our own numbers, for one weapon (the first chosen, or the one picked here):
+  // the Burst Analysis (per-shot hit chances), time to kill / best burst / kills per magazine over distance (log
+  // axis, with his reference bands) and the Advanced Timings. Perfect aim at the chest throughout, so the weapon's
+  // own cone, recoil and falloff are what shows. Folded by default; nothing is computed while it is closed.
   let deepId = null;
   const deepInputs = { fps: 150, resY: 2160, fov: 74, zoom: 1.35 };   // timings inputs, Dorf's saved values
   const DEEP_GRID = [1, 2, 5, 10, 15, 20, 30, 40, 50, 75, 100, 150, 200];
   const deepGrid = (maxR) => { const g = DEEP_GRID.filter((r) => r <= maxR); if (g[g.length - 1] !== maxR) g.push(maxR); return g; };
   const DEEP_RUNS = 150;   // the best-burst-vs-distance chart: fewer trials, it is a trend, not a verdict
+  const DW = 300, DH = 150, DL = 44, DR = 12, DT = 10, DB = 24;   // one size for every small chart
 
-  // plain bar chart: [{ label, v }] as columns, y from 0 to `max`
-  function deepBars(vals, { w = 280, h = 130, max = null, col = "var(--text)", yfmt = (v) => nf(v, 1) } = {}) {
-    const L = 40, R = 8, T = 8, B = 22;
-    const yMax = Math.max(1e-9, max ?? Math.max(1e-9, ...vals.map((v) => v.v)));
-    const X = (i) => L + (i + 0.5) * ((w - L - R) / vals.length);
-    const Y = (v) => T + (1 - v / yMax) * (h - T - B);
-    const bw = ((w - L - R) / vals.length) * 0.7;
-    let s = svgOpen(w, h, "");
-    for (const v of niceTicks(yMax, 3)) s += `<line class="grid" x1="${L}" x2="${w - R}" y1="${Y(v)}" y2="${Y(v)}"/><text class="ax" x="${L - 4}" y="${Y(v) + 4}" text-anchor="end">${yfmt(v)}</text>`;
-    for (let i = 0; i < vals.length; i++) {
-      const v = vals[i];
-      s += `<rect x="${(X(i) - bw / 2).toFixed(1)}" y="${Y(v.v).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0, h - B - Y(v.v)).toFixed(1)}" fill="${col}"><title>${esc(v.label)}: ${yfmt(v.v)}</title></rect>`;
-      if (i % Math.max(1, Math.ceil(vals.length / 6)) === 0) s += `<text class="ax" x="${X(i).toFixed(1)}" y="${h - 6}" text-anchor="middle">${esc(v.label)}</text>`;
-    }
-    return s + "</svg>";
-  }
-
-  // stacked bars for the chance to hit: body / head / leg segments per shot in the burst
-  function deepStack(rows, { w = 280, h = 130 } = {}) {
-    const L = 40, R = 8, T = 8, B = 22;
-    const X = (i) => L + (i + 0.5) * ((w - L - R) / rows.length);
-    const Y = (v) => T + (1 - v) * (h - T - B);
-    const bw = ((w - L - R) / rows.length) * 0.7;
-    let s = svgOpen(w, h, "");
-    for (const v of [0, 0.25, 0.5, 0.75, 1]) s += `<line class="grid" x1="${L}" x2="${w - R}" y1="${Y(v)}" y2="${Y(v)}"/><text class="ax" x="${L - 4}" y="${Y(v) + 4}" text-anchor="end">${nf(v * 100)}%</text>`;
+  // stacked bars for the chance to hit: body / head / leg per shot in the burst
+  function deepStack(rows) {
+    const X = (i) => DL + (i + 0.5) * ((DW - DL - DR) / rows.length);
+    const Y = (v) => DT + (1 - v) * (DH - DT - DB);
+    const bw = ((DW - DL - DR) / rows.length) * 0.7;
+    let s = svgOpen(DW, DH, tr("wc.deep.hitChart", "Chance to hit, by shot in the burst")) + plotBg(DL, DT, DW - DL - DR, DH - DT - DB);
+    for (const v of [0, 0.5, 1]) s += `<line class="grid" x1="${DL}" x2="${DW - DR}" y1="${Y(v)}" y2="${Y(v)}"/><text class="ax" x="${DL - 4}" y="${Y(v) + 4}" text-anchor="end">${nf(v * 100)}%</text>`;
+    const every = Math.max(1, Math.ceil(rows.length / 8));
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i], x = X(i) - bw / 2;
       const seg = (v0, v1, fill) => `<rect x="${x.toFixed(1)}" y="${Y(v1).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0, Y(v0) - Y(v1)).toFixed(1)}" fill="${fill}"/>`;
-      s += seg(0, r.body, color(0)) + seg(r.body, r.body + r.head, "#c9a227") + seg(r.body + r.head, r.total, "#8a8f98");
-      if (i % 4 === 0) s += `<text class="ax" x="${X(i).toFixed(1)}" y="${h - 6}" text-anchor="middle">${r.shot}</text>`;
+      s += seg(0, r.body, "var(--accent)") + seg(r.body, r.body + r.head, "var(--wc-gold)") + seg(r.body + r.head, r.total, "var(--dim)");
+      if (i % every === 0) s += `<text class="ax" x="${X(i).toFixed(1)}" y="${DH - 6}" text-anchor="middle">${r.shot}</text>`;
     }
     return s + "</svg>";
   }
 
-  // line chart on a log distance axis (1 m to `xMax`): [{ x, y }]; `bands` = [{ upto: (r) => ms, fill }]
-  // paints the recommendation bands as stepped polygons underneath the line
-  function deepLine(pts, { w = 280, h = 140, xMax = 200, ymax = null, bands = null, step = false, yfmt = (v) => nf(v) } = {}) {
-    const L = 44, R = 10, T = 8, B = 22;
-    const yMax = Math.max(1e-9, ymax ?? Math.max(1e-9, ...pts.map((p) => p.y)) * 1.05);
-    const X = (r) => L + (Math.log10(Math.max(1, r)) / Math.log10(Math.max(2, xMax))) * (w - L - R);
-    const Y = (v) => T + (1 - Math.min(1, v / yMax)) * (h - T - B);
-    let s = svgOpen(w, h, "");
+  // line chart on a log distance axis (1 m to `xMax`): [{ x, y }]; `bands` = [{ upto: (r) => ms, fill }] paints the
+  // reference bands under the line
+  function deepLine(pts, { xMax = 200, ymax = null, bands = null, step = false, yfmt = (v) => nf(v), aria = "" } = {}) {
+    const yt = niceTicks(Math.max(1e-9, ymax ?? Math.max(1e-9, ...pts.map((p) => p.y))), 4), yMax = yt[yt.length - 1];
+    const X = (r) => DL + (Math.log10(Math.max(1, r)) / Math.log10(Math.max(2, xMax))) * (DW - DL - DR);
+    const Y = (v) => DT + (1 - Math.min(1, v / yMax)) * (DH - DT - DB);
+    let s = svgOpen(DW, DH, aria) + plotBg(DL, DT, DW - DL - DR, DH - DT - DB);
     if (bands) {
       let lo = () => 0;
       for (const b of bands) {
         const top = b.upto;
-        s += `<path d="M${pts.map((p) => `${X(p.x).toFixed(1)} ${Y(top(p.x)).toFixed(1)}`).join("L")}L${X(pts[pts.length - 1].x).toFixed(1)} ${Y(lo(pts[pts.length - 1].x)).toFixed(1)}L${pts.map((p) => `${X(p.x).toFixed(1)} ${Y(lo(p.x)).toFixed(1)}`).reverse().join("L")}Z" fill="${b.fill}" opacity="0.25"/>`;
+        s += `<path d="M${pts.map((p) => `${X(p.x).toFixed(1)} ${Y(top(p.x)).toFixed(1)}`).join("L")}L${X(pts[pts.length - 1].x).toFixed(1)} ${Y(lo(pts[pts.length - 1].x)).toFixed(1)}L${pts.map((p) => `${X(p.x).toFixed(1)} ${Y(lo(p.x)).toFixed(1)}`).reverse().join("L")}Z" fill="${b.fill}" opacity="0.28"/>`;
         lo = top;
       }
     }
-    for (const v of niceTicks(yMax, 4)) s += `<line class="grid" x1="${L}" x2="${w - R}" y1="${Y(v)}" y2="${Y(v)}"/><text class="ax" x="${L - 4}" y="${Y(v) + 4}" text-anchor="end">${yfmt(v)}</text>`;
-    for (const r of [1, 10, 100].filter((r) => r < xMax)) s += `<text class="ax" x="${X(r).toFixed(1)}" y="${h - 6}" text-anchor="middle">${nf(r)}</text>`;
-    s += `<text class="ax" x="${X(xMax).toFixed(1)}" y="${h - 6}" text-anchor="middle">${nf(xMax)}</text>`;
+    for (const v of yt) s += `<line class="grid" x1="${DL}" x2="${DW - DR}" y1="${Y(v)}" y2="${Y(v)}"/><text class="ax" x="${DL - 4}" y="${Y(v) + 4}" text-anchor="end">${yfmt(v)}</text>`;
+    for (const r of [1, 10, 100].filter((r) => r < xMax * 0.8)) s += `<line class="grid" x1="${X(r)}" x2="${X(r)}" y1="${DT}" y2="${DH - DB}"/><text class="ax" x="${X(r).toFixed(1)}" y="${DH - 8}" text-anchor="${r === 1 ? "start" : "middle"}">${nf(r)}</text>`;
+    s += `<text class="ax" x="${DW - DR}" y="${DH - 8}" text-anchor="end">${esc(fmtM(xMax))}</text>`;
     let d = "";
     pts.forEach((p, i) => {
       d += `${i === 0 ? "M" : "L"}${X(p.x).toFixed(1)} ${Y(p.y).toFixed(1)}`;
@@ -693,81 +748,63 @@ async function boot() {
 
   function drawDeep() {
     const el = $("wcDeep");
-    if (!calc || !calc.ws.length || !recoil) { el.innerHTML = ""; return; }
+    if (!calc || !calc.ws.length) { el.innerHTML = ""; return []; }
+    if (!$("wcDeepBox").open) return [];
+    if (!recoil) { el.innerHTML = `<p class="wc-dim">${esc(tr("wc.sim.wait", "Loading recoil data…"))}</p>`; return []; }
     if (!deepId || !calc.ws.some((w) => w.id === deepId)) deepId = calc.ws[0].id;
-    const wi = calc.ws.findIndex((w) => w.id === deepId), w = calc.ws[wi];
+    const w = calc.ws.find((x) => x.id === deepId);
     const att = chosenAtt(w.id), sk = settingsKey();
     const key = `${w.id}|${att.join("+")}|${sk}`;
     const P = paramsOf(w, att);
     const jobs = [];
     if (P && !deepCache.has("burst|" + key)) jobs.push({ key: "burst|" + key, kind: "burst", P, distance: st.range, hp: st.hp, runs: SIM_RUNS });
     if (P && !deepCache.has("ranges|" + key)) jobs.push({ key: "ranges|" + key, kind: "ranges", P: { ...P, acc: 1, hsr: 0 }, ranges: deepGrid(calc.maxR), hp: st.hp, runs: DEEP_RUNS });
-    if (jobs.length && jobs.some((j) => !pending.has(j.key))) { pending = new Set([...pending, ...jobs.map((j) => j.key)]); runJobs(jobs); }
+    if (!P) { el.innerHTML = `<p class="wc-dim">${esc(tr("wc.sim.none", "No recoil data for this weapon."))}</p>`; return jobs; }
 
     const burst = deepCache.get("burst|" + key), ranges = deepCache.get("ranges|" + key);
-    const dist = calc.dists[wi];
-    const simRows = (lastShown.get(w.id) && lastShown.get(w.id).rows) || [];
-    const busy = `<p class="wc-dim">${esc(tr("wc.deep.busy", "Working the simulator…"))}</p>`;
-    const sel = `<label class="wc-deeppick">${esc(tr("wc.deep.weapon", "Weapon"))} <select id="wcDeepW">${calc.ws.map((x) => `<option value="${x.id}" ${x.id === deepId ? "selected" : ""}>${esc(x.name)}</option>`).join("")}</select></label>`;
+    const busy = `<p class="wc-dim">${esc(tr("wc.sim.busy", "simulating…"))}</p>`;
+    const fig = (cap, body, extra = "") => `<figure><figcaption>${esc(cap)}</figcaption><div class="wc-chart">${body}</div>${extra}</figure>`;
+    const sel = `<label class="wc-field wc-deeppick"><span>${esc(tr("wc.deep.weapon", "Weapon"))}</span><select id="wcDeepW">${calc.ws.map((x) => `<option value="${x.id}" ${x.id === deepId ? "selected" : ""}>${esc(x.name)}</option>`).join("")}</select></label>`;
+    let h = `<div class="wc-deephead">${sel}<p class="wc-note">${esc(tr("wc.deep.note", "Perfect aim at the chest: only the weapon's cone, recoil and damage falloff count here. {m} m, {hp} health.", { m: nf(st.range), hp: nf(st.hp) }))}</p></div><div class="wc-deepgrid">`;
 
-    // Burst Analysis: one row per shot in a 20-shot burst, from the simulator
-    let burstHtml = `<h3>${esc(tr("wc.deep.burst", "Burst analysis"))}</h3><p class="wc-note">${esc(tr("wc.deep.burstNote", "300 bursts of 20 shots, geometry only: every shot is aimed at the chest centre, so the cone and the recoil decide the hit. At {m} m, {hp} health.", { m: nf(st.range), hp: nf(st.hp) }))}</p>`;
-    if (!burst) burstHtml += busy;
-    else {
-      const pct = (v) => nf(v * 100, 1) + "%";
-      burstHtml += `<div class="ranks-table-wrap"><table class="wc-deep-t"><thead><tr><th>${esc(tr("wc.deep.shot", "Shot"))}</th><th>${esc(tr("wc.deep.body", "Body"))}</th><th>${esc(tr("wc.deep.head", "Head"))}</th><th>${esc(tr("wc.deep.leg", "Leg"))}</th><th>${esc(tr("wc.deep.hit", "Hit"))}</th><th>${esc(tr("wc.deep.dmg", "Damage"))}</th><th>${esc(tr("wc.deep.cumul", "Total"))}</th></tr></thead><tbody>`
-        + burst.map((r) => `<tr><td>${r.shot}</td><td>${pct(r.body)}</td><td>${pct(r.head)}</td><td>${pct(r.leg)}</td><td>${pct(r.total)}</td><td>${nf(r.expDmg, 1)}</td><td>${nf(r.cumul, 1)}</td></tr>`).join("") + `</tbody></table></div>`
-        + `<div class="wc-deepgrid"><figure><figcaption>${esc(tr("wc.deep.hitChart", "Chance to hit, by shot in the burst"))}</figcaption>${deepStack(burst)}<div class="wc-legend"><span><span class="sw" style="background:${color(0)}"></span>${esc(tr("wc.deep.body", "Body"))}</span><span><span class="sw" style="background:#c9a227"></span>${esc(tr("wc.deep.head", "Head"))}</span><span><span class="sw" style="background:#8a8f98"></span>${esc(tr("wc.deep.leg", "Leg"))}</span></div></figure>`
-        + `<figure><figcaption>${esc(tr("wc.deep.dmgChart", "Expected damage per shot"))}</figcaption>${deepBars(burst.map((r) => ({ label: String(r.shot), v: r.expDmg })), { yfmt: (v) => nf(v) })}</figure></div>`;
-    }
-
-    // Over distance: TTK and best burst from the simulator, kills per magazine and shots to kill exact
-    const grid = deepGrid(calc.maxR);
+    // 1) hit chance by shot in a long burst, shots that never hit cut off
+    const sw = (c, t) => `<span><span class="sw" style="background:${c}"></span>${esc(t)}</span>`;
+    h += fig(tr("wc.deep.hitChart", "Chance to hit, by shot in the burst"), burst ? deepStack(burst.slice(0, burstRowsShown(burst))) : busy,
+      burst ? `<div class="wc-legend">${sw("var(--accent)", tr("wc.deep.body", "Body"))}${sw("var(--wc-gold)", tr("wc.deep.head", "Head"))}${sw("var(--dim)", tr("wc.deep.leg", "Leg"))}</div>` : "");
+    // 2) over distance
     const ttkPts = (ranges || []).filter((r) => r.best).map((r) => ({ x: r.range, y: r.best.median }));
     const burstPts = (ranges || []).filter((r) => r.best).map((r) => ({ x: r.range, y: r.best.burst }));
-    const stkPts = grid.map((r) => ({ x: r, y: minShots(w.p, { hp: st.hp, range: r }) })).filter((p) => p.y != null);
+    const stkPts = deepGrid(calc.maxR).map((r) => ({ x: r, y: minShots(w.p, { hp: st.hp, range: r }) })).filter((p) => p.y != null);
     const kpmPts = stkPts.map((p) => ({ x: p.x, y: w.p.mag / p.y }));
-    const bands = [{ upto: (r) => deepBands(r).green, fill: "#3a9e4d" }, { upto: (r) => deepBands(r).yellow, fill: "#c9a227" }, { upto: () => Math.max(...ttkPts.map((p) => p.y), 1) * 1.1, fill: "#c0392b" }];
-    let distHtml = `<h3>${esc(tr("wc.deep.dist", "Over distance"))}</h3><p class="wc-note">${esc(tr("wc.deep.bands", "Green: inside the fastest 15% of Dorf's 40-weapon reference set, yellow: the set's average, pink: slower than average."))} ${esc(tr("wc.deep.geoNote", "Geometry only, like the burst analysis: every shot is aimed at the chest centre, so the accuracy slider does not apply here — the charts show the weapon's own falloff and recoil, not your aim."))}</p><div class="wc-deepgrid">`;
-    distHtml += `<figure><figcaption>${esc(tr("wc.deep.ttk", "Time to kill"))}</figcaption>${ranges && ttkPts.length ? deepLine(ttkPts, { xMax: calc.maxR, bands, yfmt: (v) => nf(v) }) : busy}</figure>`;
-    distHtml += `<figure><figcaption>${esc(tr("wc.deep.bestBurst", "Best burst length"))}</figcaption>${ranges && burstPts.length ? deepLine(burstPts, { xMax: calc.maxR, ymax: 20, step: true, yfmt: (v) => nf(v) }) : busy}</figure>`;
-    distHtml += `<figure><figcaption>${esc(tr("wc.deep.kpm", "Kills per magazine"))}</figcaption>${deepLine(kpmPts, { xMax: calc.maxR, yfmt: (v) => nf(v, 1) })}</figure>`;
-    distHtml += `<figure><figcaption>${esc(tr("wc.deep.stk", "Shots to kill"))}</figcaption>${deepLine(stkPts, { xMax: calc.maxR, yfmt: (v) => nf(v) })}</figure></div>`;
+    const bands = [{ upto: (r) => deepBands(r).green, fill: "var(--wc-band-g)" }, { upto: (r) => deepBands(r).yellow, fill: "var(--wc-band-y)" }, { upto: () => Math.max(...ttkPts.map((p) => p.y), 1) * 1.1, fill: "var(--wc-band-r)" }];
+    h += fig(tr("wc.deep.ttk", "Time to kill"), ranges && ttkPts.length ? deepLine(ttkPts, { xMax: calc.maxR, bands, aria: tr("wc.deep.ttk", "Time to kill") }) : busy,
+      `<div class="wc-legend">${sw("var(--wc-band-g)", tr("wc.deep.bandG", "fastest 15%"))}${sw("var(--wc-band-y)", tr("wc.deep.bandY", "average"))}${sw("var(--wc-band-r)", tr("wc.deep.bandR", "slower"))}</div>`);
+    h += fig(tr("wc.deep.bestBurst", "Best burst length"), ranges && burstPts.length ? deepLine(burstPts, { xMax: calc.maxR, ymax: Math.max(4, ...burstPts.map((p) => p.y)), step: true, aria: tr("wc.deep.bestBurst", "Best burst length") }) : busy);
+    h += fig(tr("wc.deep.kpm", "Kills per magazine"), deepLine(kpmPts, { xMax: calc.maxR, yfmt: (v) => nf(v, 1), aria: tr("wc.deep.kpm", "Kills per magazine") }));
+    h += `</div><p class="wc-dim">${esc(tr("wc.deep.bands2", "Bands: EmperorDorf's 40 reference weapons at the same range."))}</p>`;
 
-    // Results Browser at the current range: exact histograms, plus TTK / STK per burst length
-    const th = ttkHistogram(dist), sh = stkHistogram(dist);
-    const ttkBurst = simRows.filter((r) => r.median != null).map((r) => ({ label: styleLabel(r.burst, w.p.burstN), v: r.median }));
-    const stkBurst = simRows.filter((r) => r.medianShots != null).map((r) => ({ label: styleLabel(r.burst, w.p.burstN), v: r.medianShots }));
-    const W = Math.max(280, chartWidth(el));
-    let browHtml = `<h3>${esc(tr("wc.deep.browser", "Results at {m} m", { m: nf(st.range) }))}</h3><div class="wc-deepgrid">`;
-    browHtml += `<figure><figcaption>${esc(tr("wc.deep.ttkHist", "Time to kill, how often"))}</figcaption>${deepBars(th.map((b, i) => ({ label: i === th.length - 1 ? ">" + nf(3000) : String(b.t), v: b.p * 100 })), { w: W, max: Math.max(5, ...th.map((b) => b.p * 100)), yfmt: (v) => nf(v) + "%" })}</figure>`;
-    browHtml += `<figure><figcaption>${esc(tr("wc.deep.stkHist", "Shots to kill, how often"))}</figcaption>${deepBars(sh.map((b, i) => ({ label: i === sh.length - 1 ? ">" + nf(25) : String(b.k), v: b.p * 100 })), { w: W, max: Math.max(5, ...sh.map((b) => b.p * 100)), yfmt: (v) => nf(v) + "%" })}</figure>`;
-    browHtml += `<figure><figcaption>${esc(tr("wc.deep.ttkBurst", "Time to kill by burst length"))}</figcaption>${ttkBurst.length ? deepBars(ttkBurst, { yfmt: (v) => nf(v) }) : busy}</figure>`;
-    browHtml += `<figure><figcaption>${esc(tr("wc.deep.stkBurst", "Shots to kill by burst length"))}</figcaption>${stkBurst.length ? deepBars(stkBurst, { yfmt: (v) => nf(v) }) : busy}</figure></div>`;
-
-    // Advanced Timings: hold, release and cycle per burst length, and the pulldown per shot
-    const T = P ? deepTimings(P, deepInputs) : null;
-    let timHtml = "";
-    if (T) {
-      const numIn = (id, label, v, min, max, step) => `<label class="wc-deeppick">${esc(label)} <input id="${id}" type="number" value="${v}" min="${min}" max="${max}" step="${step}"></label>`;
-      const timeTable = (title, rows) => `<figure><figcaption>${esc(title)}</figcaption><div class="ranks-table-wrap"><table class="wc-deep-t"><thead><tr><th>${esc(tr("wc.deep.burstN", "Burst"))}</th><th>${esc(tr("wc.deep.down", "Hold"))}</th><th>${esc(tr("wc.deep.release", "Release"))}</th><th>${esc(tr("wc.deep.total", "Cycle"))}</th></tr></thead><tbody>`
-        + rows.map((r) => `<tr><td>${r.n}</td><td>${nf(r.down, 1)}</td><td>${nf(r.release)}</td><td>${nf(r.total, 1)}</td></tr>`).join("") + `</tbody></table></div></figure>`;
-      const pullTable = `<figure><figcaption>${esc(tr("wc.deep.pull", "Vertical recoil counteraction"))} · ${esc(tr("wc.deep.angle", "Pull angle {deg}°", { deg: nf(T.pull[0].angle, 1) }))}</figcaption><div class="ranks-table-wrap"><table class="wc-deep-t"><thead><tr><th>${esc(tr("wc.deep.shot", "Shot"))}</th><th>${esc(tr("wc.deep.deg", "Degrees"))}</th><th>${esc(tr("wc.deep.px", "Pixels"))}</th><th>${esc(tr("wc.deep.speed", "Speed"))}</th></tr></thead><tbody>`
-        + T.pull.map((p) => `<tr><td>${p.shot}</td><td>${nf(p.deg, 2)}</td><td>${nf(p.px, 1)}</td><td>${nf(p.speed)}</td></tr>`).join("") + `</tbody></table></div></figure>`;
-      timHtml = `<h3>${esc(tr("wc.deep.timings", "Advanced timings and recoil control"))}</h3><p class="wc-note">${esc(tr("wc.deep.timingsNote", "Perfect bursting: how long to hold the trigger, how long to let go, and how far to pull down. His formulas, our numbers."))}</p>`
-        + `<div>${numIn("wcDeepFps", tr("wc.deep.fps", "Frame rate (1% lows)"), deepInputs.fps, 30, 500, 1)} ${numIn("wcDeepResY", tr("wc.deep.resY", "Screen height (px)"), deepInputs.resY, 720, 4320, 1)} ${numIn("wcDeepFov", tr("wc.deep.fov", "Field of view"), deepInputs.fov, 40, 120, 1)} ${numIn("wcDeepZoom", tr("wc.deep.zoom", "Optical zoom"), deepInputs.zoom, 1, 4, 0.05)}</div>`
-        + `<div class="wc-deepgrid">${timeTable(tr("wc.deep.recoil", "Perfect recoil recovery"), T.recoil)}${timeTable(tr("wc.deep.cof", "Perfect CoF recovery"), T.cof)}${pullTable}</div>`;
-    }
-
-    el.innerHTML = `<div class="wc-deep">${sel}${burstHtml}${distHtml}${browHtml}${timHtml}</div>`;
+    // 3) Advanced Timings: one row per firing style the simulator tries, the pulldown as first shot + every next one
+    const T = deepTimings(P, deepInputs);
+    const styles = new Set(stylesFor(P).filter((n) => n <= 20));
+    const rec = T.recoil.filter((r) => styles.has(r.n)), cof = new Map(T.cof.map((r) => [r.n, r]));
+    const numIn = (id, label, v, min, max, step) => `<label class="wc-field"><span>${esc(label)}</span><input id="${id}" type="number" value="${v}" min="${min}" max="${max}" step="${step}"></label>`;
+    const th = (t) => `<th>${esc(t)}</th>`;
+    h += `<h3>${esc(tr("wc.deep.timings", "Advanced timings and recoil control"))}</h3><p class="wc-note">${esc(tr("wc.deep.timingsNote", "Perfect bursting: how long to hold the trigger, how long to let go, and how far to pull down. His formulas, our numbers."))}</p>`
+      + `<div class="wc-deepin">${numIn("wcDeepFps", tr("wc.deep.fps", "Frame rate (1% lows)"), deepInputs.fps, 30, 500, 1)}${numIn("wcDeepResY", tr("wc.deep.resY", "Screen height (px)"), deepInputs.resY, 720, 4320, 1)}${numIn("wcDeepFov", tr("wc.deep.fov", "Field of view"), deepInputs.fov, 40, 120, 1)}${numIn("wcDeepZoom", tr("wc.deep.zoom", "Optical zoom"), deepInputs.zoom, 1, 4, 0.05)}</div>`
+      + `<div class="wc-deepgrid wc-deepgrid2"><figure><figcaption>${esc(tr("wc.deep.msCap", "Times in ms"))}</figcaption><div class="ranks-table-wrap wc-table-wrap"><table class="ranks-table wc-deep-t"><thead><tr>${th(tr("wc.sim.style", "Firing style"))}${th(tr("wc.deep.down", "Hold"))}${th(tr("wc.deep.relRecoil", "Let go: recoil"))}${th(tr("wc.deep.relCof", "Let go: cone"))}</tr></thead><tbody>`
+      + rec.map((r) => `<tr><td>${esc(styleLabel(r.n, P.burstN))}</td><td>${nf(r.down)}</td><td>${nf(r.release)}</td><td>${nf(cof.get(r.n).release)}</td></tr>`).join("") + `</tbody></table></div></figure>`
+      + `<figure><figcaption>${esc(tr("wc.deep.pull", "Vertical recoil counteraction"))} · ${esc(tr("wc.deep.angle", "Pull angle {deg}°", { deg: nf(T.pull[0].angle, 1) }))}</figcaption><div class="ranks-table-wrap wc-table-wrap"><table class="ranks-table wc-deep-t"><thead><tr>${th(tr("wc.deep.shot", "Shot"))}${th(tr("wc.deep.deg", "Degrees"))}${th(tr("wc.deep.px", "Pixels"))}${th(tr("wc.deep.speed", "Speed"))}</tr></thead><tbody>`
+      + [[tr("wc.deep.first", "First shot"), T.pull[0]], [tr("wc.deep.next", "Each next shot"), T.pull[1]]].filter(([, p]) => p).map(([t, p]) => `<tr><td>${esc(t)}</td><td>${nf(p.deg, 2)}</td><td>${nf(p.px, 1)}</td><td>${nf(p.speed)}</td></tr>`).join("") + `</tbody></table></div></figure></div>`;
+    el.innerHTML = `<div class="wc-deep">${h}</div>`;
+    return jobs;
   }
+  $("wcDeepBox").addEventListener("toggle", () => invalidate("sim"));
   $("wcDeep").addEventListener("change", (e) => {
     if (e.target.id === "wcDeepW") { deepId = Number(e.target.value); invalidate("sim"); return; }
     const map = { wcDeepFps: "fps", wcDeepResY: "resY", wcDeepFov: "fov", wcDeepZoom: "zoom" };
     const k = map[e.target.id];
     if (k) { const v = Number(e.target.value); if (Number.isFinite(v) && v > 0) { deepInputs[k] = v; invalidate("sim"); } }
   });
-  let pending = new Set();
   let lastSprays = null;
 
   // zoom: the same spray, drawn large in a dialog (Esc or Close to leave)
@@ -786,26 +823,30 @@ async function boot() {
 
   // the spray picture: one full spray drawn bright (later shots fainter) and GHOST_SPRAYS more, each with new random numbers
   function sprayData(w, P) {
-    const n = Math.min(30, P.mag), aim = aimM();
+    const n = Math.min(30, P.mag);
     const seed = (simState.seed + w.id * 7919) % 2147483647;
     const main = sprayPattern(P, { distance: st.range, seed, shots: n });
     const ghosts = [];
     for (let g = 1; g <= GHOST_SPRAYS; g++) ghosts.push(...sprayPattern(P, { distance: st.range, seed: seed + g * 104723, shots: n }));
-    const reach = Math.max(Math.abs(aim.x), Math.abs(aim.y), 0, ...[...main, ...ghosts].map((s) => Math.max(Math.abs(s.x), Math.abs(s.y))));
+    // the aim points: the chest unless every shot goes to the head, the head when any does
+    const aims = [];
+    if (st.hsr < 100) aims.push({ x: 0, y: 0 });
+    if (st.hsr > 0) aims.push({ x: TARGET.headX, y: TARGET.headY });
+    const reach = Math.max(0, ...[...main, ...ghosts].map((s) => Math.max(Math.abs(s.x), Math.abs(s.y))));
     // what the bullets hit, over every spray drawn: head, body, legs, or a miss
     const all = [...main, ...ghosts], tot = all.length || 1;
-    const heads = all.filter((s) => s.zone === "head").length, bodies = all.filter((s) => s.zone === "body").length, legs = all.filter((s) => s.zone === "leg").length;
-    const stats = { hit: (heads + bodies + legs) / tot, hs: heads / (heads + bodies + legs || 1), miss: 1 - (heads + bodies + legs) / tot };
-    return { n, main, ghosts, aim, reach, stats };
+    const heads = all.filter((s) => s.zone === "head").length, hits = all.filter((s) => s.zone).length;
+    const stats = { hit: hits / tot, hs: heads / (hits || 1) };
+    return { n, main, ghosts, aims, reach, stats };
   }
   // one bullet: a filled dot if it hit the head, a ring if the body, a diamond if the legs, a grey dot if it missed
-  const shotDot = (s, cx, cy, U, c, op, big) => {
+  function shotDot(s, cx, cy, U, c, op, big) {
     const x = (cx + s.x * U).toFixed(1), y = (cy - s.y * U).toFixed(1);
     if (s.zone === "head") return `<circle cx="${x}" cy="${y}" r="${big ? 2.6 : 1.4}" fill="${c}" fill-opacity="${op.toFixed(2)}"/>`;
     if (s.zone === "body") return `<circle cx="${x}" cy="${y}" r="${big ? 2.6 : 1.4}" fill="none" stroke="${c}" stroke-width="1.2" stroke-opacity="${op.toFixed(2)}"/>`;
-    if (s.zone === "leg") { const r = big ? 2.4 : 1.3, nx = parseFloat(x), ny = parseFloat(y); return `<path d="M${nx.toFixed(1)} ${(ny - r).toFixed(1)}L${(nx + r).toFixed(1)} ${ny.toFixed(1)}L${nx.toFixed(1)} ${(ny + r).toFixed(1)}L${(nx - r).toFixed(1)} ${ny.toFixed(1)}Z" fill="${c}" fill-opacity="${op.toFixed(2)}"/>`; }
-    return `<circle class="wc-miss" cx="${x}" cy="${y}" r="${big ? 1.6 : 1}" fill-opacity="${(op * 0.7).toFixed(2)}"/>`;
-  };
+    if (s.zone === "leg") { const r = big ? 2.8 : 1.3, nx = parseFloat(x), ny = parseFloat(y); return `<path d="M${nx.toFixed(1)} ${(ny - r).toFixed(1)}L${(nx + r).toFixed(1)} ${ny.toFixed(1)}L${nx.toFixed(1)} ${(ny + r).toFixed(1)}L${(nx - r).toFixed(1)} ${ny.toFixed(1)}Z" fill="${c}" fill-opacity="${op.toFixed(2)}"/>`; }
+    return `<circle class="wc-miss" cx="${x}" cy="${y}" r="${big ? 1.8 : 1}" fill-opacity="${(op * 0.7).toFixed(2)}"/>`;
+  }
   function sprayFigure(d, S, i, Z = 240) {
     if (!d) return "";
     const U = (Z / 2) / S, cx = Z / 2, cy = Z / 2;
@@ -813,28 +854,21 @@ async function boot() {
     svg += `<rect class="wc-tgt" x="${cx - TARGET.halfW * U}" y="${cy - TARGET.top * U}" width="${2 * TARGET.halfW * U}" height="${(TARGET.top - TARGET.bottom) * U}"/>`;
     svg += `<line class="wc-tgt" x1="${cx - TARGET.halfW * U}" y1="${cy - TARGET.legTop * U}" x2="${cx + TARGET.halfW * U}" y2="${cy - TARGET.legTop * U}"/>`;
     svg += `<circle class="wc-tgt" cx="${cx + TARGET.headX * U}" cy="${cy - TARGET.headY * U}" r="${TARGET.headR * U}"/>`;
-    const ax = cx + d.aim.x * U, ay = cy - d.aim.y * U, k = 5;   // the aim point
-    svg += `<path class="wc-aimx" d="M${(ax - k).toFixed(1)} ${ay.toFixed(1)}H${(ax + k).toFixed(1)}M${ax.toFixed(1)} ${(ay - k).toFixed(1)}V${(ay + k).toFixed(1)}"/>`;
     svg += d.ghosts.map((s) => shotDot(s, cx, cy, U, color(i), 0.25, Z !== 240)).join("");
     svg += d.main.map((s) => shotDot(s, cx, cy, U, color(i), 0.4 + 0.6 * (1 - s.i / d.n), Z !== 240)).join("");
+    for (const a of d.aims) {                     // the aim points, drawn last so they stay visible
+      const ax = cx + a.x * U, ay = cy - a.y * U, k = 5;
+      svg += `<path class="wc-aimx" d="M${(ax - k).toFixed(1)} ${ay.toFixed(1)}H${(ax + k).toFixed(1)}M${ax.toFixed(1)} ${(ay - k).toFixed(1)}V${(ay + k).toFixed(1)}"/>`;
+    }
     svg += "</svg>";
-    const cap = `${esc(tr("wc.sim.scale", "Weapon spray only, {m} m wide at {d} m", { m: nf(2 * S, 1), d: nf(st.range) }))} · ${esc(tr("wc.sim.ghostKey", "faint dots: {n} more sprays", { n: nf(GHOST_SPRAYS) }))}`;
-    const hits = `<span class="wc-hits">${esc(tr("wc.sim.hitStats", "Hits {h} % · headshots {hs} % of hits · misses {m} %", { h: nf(d.stats.hit * 100), hs: nf(d.stats.hs * 100), m: nf(d.stats.miss * 100) }))}</span> <span class="wc-dim">${esc(tr("wc.sim.legend", "Filled dot: head · ring: body · diamond: leg · grey: miss"))}</span>`;
-    const fig = `<figure class="wc-spray">${svg}<figcaption class="wc-dim">${cap}</figcaption><figcaption class="wc-hitline">${hits}</figcaption></figure>`;
-    if (Z !== 240) return fig;
-    return fig + `<button type="button" class="wc-btn wc-zoombtn" data-zoom="${i}"><span aria-hidden="true">🔍</span> <span>${esc(tr("wc.sim.zoom", "Zoom"))}</span></button>`;
+    const cap = tr("wc.sim.hitLine", "{h}% hit · {hs}% of hits on the head · {w} m across", { h: nf(d.stats.hit * 100), hs: nf(d.stats.hs * 100), w: nf(2 * S, 1) });
+    const zoom = Z === 240 ? `<button type="button" class="wc-zoombtn" data-zoom="${i}" title="${esc(tr("wc.sim.zoom", "Zoom"))}" aria-label="${esc(tr("wc.sim.zoom", "Zoom"))}"><span aria-hidden="true">🔍</span></button>` : "";
+    return `<figure class="wc-spray"><div class="wc-sprayimg">${svg}${zoom}</div><figcaption class="wc-hitline">${esc(cap)}</figcaption></figure>`;
   }
 
-  $("wcSim").addEventListener("change", (e) => {
-    const sel = e.target.closest("select[data-w]");
-    if (!sel) return;
-    const id = Number(sel.dataset.w);
-    simState.att[id] = { ...(simState.att[id] || {}), [sel.dataset.slot]: sel.value };
-    invalidate("sim");
-  });
   $("wcReroll").addEventListener("click", () => { simState.seed = newSeed(); invalidate("sim"); });
 
-  // icon buttons: aim (ADS / hip), stance (4), what the spray picture is aimed at (torso / head)
+  // icon buttons: aim (ADS / hip) and stance (4)
   const ico = (body) => `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
   const stand = '<circle cx="12" cy="4.5" r="2.3"/><path d="M12 7.5v8M12 9.5l-4 4M12 9.5l4 4M12 15.5l-3 6.5M12 15.5l3 6.5"/>';
   const crouch = '<circle cx="11" cy="8" r="2.3"/><path d="M11 11l-1 5.5M11 12.5l5 1.5M10 16.5l6 1.5-1 4M10 16.5l-3 5"/>';
@@ -844,25 +878,13 @@ async function boot() {
     hip: ico('<path d="M2.5 13h12l2-2.5h5v4h-4.5l-1 4h-3l-.8-4H2.5z"/>'),
     crouchStill: ico(crouch), standStill: ico(stand),
     crouchMove: ico(crouch + speed), standMove: ico(stand + speed),
-    body: ico('<circle cx="12" cy="4.5" r="2.3" opacity=".45"/><rect x="8" y="8" width="8" height="12" fill="currentColor" fill-opacity=".35"/>'),
-    head: ico('<circle cx="12" cy="6" r="3.8" fill="currentColor" fill-opacity=".35"/><rect x="8" y="12" width="8" height="9" opacity=".45"/>'),
   };
   const STANCE_EN = { crouchStill: "Crouched, still", standStill: "Standing, still", crouchMove: "Crouched, moving", standMove: "Standing, moving" };
+  // aim (hip / ADS) also changes which attachments count (hip-only parts), so it redraws everything; stance is simulator-only
   const SEGS = [
-    ["wcSimAim", [["ads", "Aiming down sights", "wc.sim.ads"], ["hip", "Hip fire", "wc.sim.hip"]], () => simState.aim, (k) => { simState.aim = k; }],
-    ["wcSimStance", STANCES.map((k) => [k, STANCE_EN[k], "wc.sim.st." + k]), () => simState.stance, (k) => { simState.stance = k; }],
-    ["wcSimTarget", [["body", "Torso", "wc.sim.tgtBody"], ["head", "Head", "wc.sim.tgtHead"]], () => sprayTarget(), (k) => { simState.aimX = 0; simState.aimY = k === "head" ? 45 : 0; syncAim(); }],
+    ["wcSimAim", [["ads", "Aiming down sights", "wc.sim.ads"], ["hip", "Hip fire", "wc.sim.hip"]], () => simState.aim, (k) => { simState.aim = k; }, ["range", "cards"]],
+    ["wcSimStance", STANCES.map((k) => [k, STANCE_EN[k], "wc.sim.st." + k]), () => simState.stance, (k) => { simState.stance = k; }, ["sim"]],
   ];
-  // the aim sliders (cm): they show the aim point and follow the Head / Torso presets
-  const aimXEl = $("wcSimAimX"), aimYEl = $("wcSimAimY");
-  function syncAim() {
-    aimXEl.value = simState.aimX; aimYEl.value = simState.aimY;
-    $("wcSimAimXV").textContent = nf(simState.aimX) + " cm";
-    $("wcSimAimYV").textContent = nf(simState.aimY) + " cm";
-    paintSeg();
-  }
-  aimXEl.addEventListener("input", () => { simState.aimX = +aimXEl.value; syncAim(); invalidate("sim"); });
-  aimYEl.addEventListener("input", () => { simState.aimY = +aimYEl.value; syncAim(); invalidate("sim"); });
   function paintSeg() {
     for (const [id, items, get] of SEGS) {
       const box = $(id), cur = get();
@@ -870,16 +892,16 @@ async function boot() {
       if (box.innerHTML !== html) box.innerHTML = html;
     }
   }
-  for (const [id, , , set] of SEGS) $(id).addEventListener("click", (e) => { const b = e.target.closest("button[data-k]"); if (!b) return; set(b.dataset.k); paintSeg(); invalidate("sim"); });
+  for (const [id, , , set, what] of SEGS) $(id).addEventListener("click", (e) => { const b = e.target.closest("button[data-k]"); if (!b) return; set(b.dataset.k); paintSeg(); for (const x of what) invalidate(x); });
   const cp = $("wcSimComp");
   cp.addEventListener("input", () => { simState.comp = +cp.value; $("wcSimCompV").textContent = nf(simState.comp) + "%"; invalidate("sim"); });
   const cpx = $("wcSimCompX");
   cpx.addEventListener("input", () => { simState.compX = +cpx.value; $("wcSimCompXV").textContent = nf(simState.compX) + "%"; invalidate("sim"); });
 
-  paintLabels(); paintSeg(); syncAim();
+  paintLabels(); paintSeg();
   invalidate("all");
-  // recoil data after the first draw (it is the biggest file); the table rows and the simulator fill in when it lands
+  // recoil data after the first draw (it is the biggest file); the rows, the attachment menus and the simulator fill in when it lands
   fetch("assets/weapons/recoil.json").then((r) => (r.ok ? r.json() : null)).then((j) => {
-    if (j && j.weapons && j.atts) { recoil = j; classCache.clear(); invalidate("range"); invalidate("sim"); }
+    if (j && j.weapons && j.atts) { recoil = j; pruneAtt(); classCache.clear(); invalidate("all"); }
   }).catch(() => {});
 }

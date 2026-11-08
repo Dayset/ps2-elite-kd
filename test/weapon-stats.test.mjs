@@ -71,3 +71,15 @@ test("a best value most of the class shares is not gold", () => {
   vals[9].rpm = 700;
   assert.equal(classBests(vals).rpm, 700);
 });
+
+test("rank: an attachment that beats the stock class best is still gold; equal rows are found", async () => {
+  const { rank, rowAllSame } = await import("../weapon-stats.mjs");
+  assert.equal(rank(6, 1, 6, 5), "gold");
+  assert.equal(rank(4, -1, 4, 5), "gold");
+  assert.equal(rank(6, -1, 6, 5), "good");
+  assert.equal(rowAllSame([{ a: 2 }, { a: 2 }], "a"), true);
+  assert.equal(rowAllSame([{ a: 2 }, { a: 3 }], "a"), false);
+  assert.equal(rowAllSame([{ a: 2 }, { a: null }], "a"), false);
+  assert.equal(rowAllSame([{ a: 2 }], "a"), false, "one weapon: nothing is hidden");
+  assert.equal(rowAllSame([{ c: 1, "c:max": 2 }, { c: 1, "c:max": 3 }], "c"), false, "cones compare both ends");
+});

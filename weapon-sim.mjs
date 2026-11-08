@@ -143,6 +143,63 @@ export function attEffects(name, desc, weaponName, hip = false) {
   return { ...d, ...(st || {}) };
 }
 
+/** Effects of the chosen attachments on one weapon, in order (parts with no known effect are dropped). */
+export function loadoutEffects(names, descs, weaponName, hip = false) {
+  return (names || []).filter(Boolean).map((n) => attEffects(n, descs && descs[n], weaponName, hip)).filter(Boolean);
+}
+
+/**
+ * The time-to-kill profile with the attachments on, the same numbers simParams uses: damage, falloff ranges,
+ * headshot / leg multipliers, pellets, magazine, reload and fire rate. The exact time to kill, the stat table and
+ * the simulator then all agree on one loadout. `A` = loadoutEffects(...). Same object back when nothing changes.
+ */
+export function loadoutProfile(profile, A, cat) {
+  if (!profile || !A || !A.length) return profile;
+  const sumA = (k) => A.reduce((m, a) => m + (a[k] || 0), 0), mul = (k) => A.reduce((m, a) => m * (a[k] ?? 1), 1);
+  const pset = A.find((a) => a.pelletsSet != null);
+  const pellets = pset ? pset.pelletsSet : Math.max(1, profile.pellets + sumA("pelletAdd"));
+  const out = { ...adjustRanges(profile, A, cat), pellets };
+  out.mag = Math.max(1, Math.round((profile.mag + sumA("magAdd")) * mul("magMul")));
+  out.reloadMs = Math.max(0, profile.reloadMs + sumA("reloadAdd"));
+  const rof = mul("rofMul");
+  if (rof !== 1) {
+    out.rpm = profile.rpm * rof;
+    if (profile.autoMs) out.autoMs = profile.autoMs / rof;
+    if (profile.refireMs) out.refireMs = profile.refireMs / rof;
+  }
+  const same = ["pellets", "mag", "reloadMs", "rpm", "dmgMax", "dmgMin", "rangeMaxDmg", "rangeMinDmg", "hsMult", "legMult"].every((k) => out[k] === profile[k]);
+  return same ? profile : out;
+}
+
+/**
+ * Census recoil / cone rows with the attachments on (recoil.json shape: { fm, adsFm, states, adsStates, ... }),
+ * by the same multipliers simParams applies, so the stat table shows the loadout's numbers.
+ */
+export function loadoutRec(rec, A, hip = false) {
+  if (!rec || !A || !A.length) return rec;
+  const sumA = (k) => A.reduce((m, a) => m + (a[k] || 0), 0), mul = (k) => A.reduce((m, a) => m * (a[k] ?? 1), 1);
+  const f = (o, k, fn) => { if (o && Number.isFinite(o[k])) o[k] = fn(o[k]); };
+  const fire = (fm, isHip) => {
+    if (!fm) return fm;
+    const o = { ...fm }, r = isHip ? mul("hipRecoil") : 1;
+    const v = mul("vRecoil") * (isHip ? 1 : mul("adsVRecoil")) * r, h = mul("hRecoil") * r;
+    for (const k of ["recoil_magnitude_min", "recoil_magnitude_max"]) f(o, k, (x) => x * v);
+    for (const k of ["recoil_horizontal_min", "recoil_horizontal_max", "recoil_horizontal_tolerance"]) f(o, k, (x) => x * h);
+    f(o, "recoil_angle_min", (x) => x * h * mul("angleMul") - sumA("angleAdd"));
+    f(o, "recoil_angle_max", (x) => x * h * mul("angleMul") + sumA("angleAdd"));
+    f(o, "recoil_first_shot_modifier", (x) => Math.max(0, x * mul("firstShot")));
+    f(o, "cof_recoil", (x) => x * (isHip ? mul("hipBloom") : mul("adsBloom")));
+    return o;
+  };
+  const rows = (list, fn) => (list || []).map((r) => { const o = { ...r }; fn(o); if (Number.isFinite(o.cof_max) && Number.isFinite(o.cof_min) && o.cof_max < o.cof_min) o.cof_max = o.cof_min; return o; });
+  const hipCof = mul("hipMinCof"), zero = A.some((a) => a.adsZeroCof);
+  return {
+    ...rec, fm: fire(rec.fm, true), adsFm: fire(rec.adsFm, false),
+    states: hipCof === 1 ? rec.states : rows(rec.states, (o) => f(o, "cof_min", (x) => x * hipCof)),
+    adsStates: zero ? rows(rec.adsStates, (o) => { if (Number.isFinite(o.cof_min)) o.cof_min = 0; }) : rec.adsStates,
+  };
+}
+
 /** Strategies: shots per burst (holding the trigger down is not offered: it is never the practical choice). */
 export const BURSTS = Object.freeze([1, 2, 3, 4, 6, 8, 12]);
 /** Shots per pause offered for one weapon: a burst weapon fires whole bursts (1-4 trigger pulls, then 6), others BURSTS. */

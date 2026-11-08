@@ -323,3 +323,33 @@ test("deep timings: Dorf's click-down, release delays and pulldown", () => {
   near(Tf.pull[0].deg, -0.75);
   near(Tf.pull[1].deg, -0.5);
 });
+
+test("loadout: the exact-maths profile and the stat rows take the same attachment numbers as the simulator", async () => {
+  const { loadoutEffects, loadoutProfile, loadoutRec } = await import("../weapon-sim.mjs");
+  assert.equal(loadoutProfile(AR, loadoutEffects([], {}, "x")), AR, "no attachments: the same profile");
+  assert.equal(loadoutProfile(AR, loadoutEffects(["Compensator"], {}, "x")), AR, "a recoil-only part leaves the profile alone");
+  const soft = loadoutProfile(AR, loadoutEffects(["Soft Point Ammunition"], {}, "x"));
+  assert.equal(soft.rangeMaxDmg, AR.rangeMaxDmg + 5);
+  const sim = simParams(AR, FM, STATES, { aim: "ads", attachments: ["Soft Point Ammunition"] });
+  assert.equal(sim.profile.rangeMaxDmg, soft.rangeMaxDmg, "same falloff as the simulator");
+  const ext = loadoutProfile(AR, loadoutEffects(["Extended Magazine"], { "Extended Magazine": "Increases magazine size by 10 rounds." }, "x"));
+  assert.equal(ext.mag, AR.mag + 10);
+  const sabot = loadoutProfile(AR, loadoutEffects(["Sabot Ammunition"], {}, "x"));
+  assert.ok(Math.abs(sabot.rpm - AR.rpm * 0.9) < 1e-9);
+  const rec = { fm: { ...FM }, adsFm: { ...FM, cof_recoil: 0.06 }, states: STATES, adsStates: STATES };
+  const A = loadoutEffects(["Compensator", "Heavy Barrel"], {}, "x");
+  const r = loadoutRec(rec, A, false);
+  assert.ok(Math.abs(r.adsFm.recoil_magnitude_min - FM.recoil_magnitude_min * 0.7) < 1e-9);
+  assert.ok(Math.abs(r.adsFm.cof_recoil - 0.06 * 0.8) < 1e-9);
+  assert.ok(Math.abs(r.states[0].cof_min - STATES[0].cof_min * 1.15) < 1e-9, "Compensator widens the minimum hip cone");
+  assert.equal(rec.adsFm.cof_recoil, 0.06, "the Census rows are not changed in place");
+  const P = simParams(AR, FM, STATES, { aim: "ads", adsFm: rec.adsFm, adsStates: STATES, attachments: ["Compensator", "Heavy Barrel"] });
+  assert.ok(Math.abs(P.vMin - r.adsFm.recoil_magnitude_min) < 1e-9 && Math.abs(P.bloom - r.adsFm.cof_recoil) < 1e-9, "the table and the simulator agree");
+});
+
+test("aim rule: headshot rate 0 aims every shot at the chest, 1 at the head (no separate aim point)", () => {
+  const P = { ...simParams(AR, FM, STATES, { aim: "ads", acc: 1, hsr: 0 }), cofMin: 0, cofMax: 0, bloom: 0, vMin: 0, vMax: 0, hMin: 0, hMax: 0, angMin: 0, angMax: 0 };
+  const zones = (hsr) => sprayPattern({ ...P, hsr }, { distance: 10, seed: 3, shots: 20 }).map((s) => s.zone);
+  assert.ok(zones(0).every((z) => z === "body"), "0 %: chest only");
+  assert.ok(zones(1).every((z) => z === "head"), "100 %: head only");
+});

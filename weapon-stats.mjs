@@ -108,12 +108,26 @@ export function bestOf(values, dir) {
 
 const same = (a, b) => Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(a));
 
-/** "gold" (best of the class), "good" (best of the chosen weapons) or "" for one value. */
+/**
+ * "gold" (best of the class, or better: an attachment can beat the stock class best), "good" (best of the chosen
+ * weapons) or "" for one value.
+ */
 export function rank(v, dir, chosenBest, classBest) {
   if (!dir || !Number.isFinite(v)) return "";
-  if (same(v, classBest)) return "gold";
+  if (same(v, classBest) || (Number.isFinite(classBest) && dir * (v - classBest) > 0)) return "gold";
   if (same(v, chosenBest)) return "good";
   return "";
+}
+
+/**
+ * True when a row says nothing to tell the chosen weapons apart: two or more weapons and every one has the same
+ * value (a missing value counts as different from a number). Cone rows compare both ends (key and key + ":max").
+ */
+export function rowAllSame(allValues, key) {
+  if (allValues.length < 2) return false;
+  const eq = (a, b) => (a == null && b == null) || same(a, b);
+  const first = allValues[0];
+  return allValues.every((v) => eq(v[key], first[key]) && eq(v[key + ":max"], first[key + ":max"]));
 }
 
 /**

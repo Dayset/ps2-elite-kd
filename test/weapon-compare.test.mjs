@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { parseState, stateToSearch, niceTicks, viewMax, rangeStep, MAX_WEAPONS, MAX_RANGE } from "../weapon-compare.mjs";
+import { parseState, stateToSearch, niceTicks, viewMax, rangeStep, MAX_WEAPONS, MAX_RANGE, attList, burstRowsShown } from "../weapon-compare.mjs";
 
 const read = (p) => readFileSync(new URL("../" + p, import.meta.url), "utf8");
 
@@ -39,7 +39,7 @@ test("niceTicks starts at 0, ends at or above the max and is short", () => {
 
 test("the page is wired: stylesheet, module, language menu, footer link, credits", () => {
   const html = read("weapon-compare.html");
-  for (const id of ["wcSearch", "wcChips", "wcAcc", "wcHsr", "wcRange", "wcHp", "wcTtk", "wcCdf", "wcDps", "langSelect", "wcFps", "wcFpsRange", "wcFpsNote"]) assert.match(html, new RegExp(`id="${id}"`), id);
+  for (const id of ["wcSearch", "wcChips", "wcAcc", "wcHsr", "wcRange", "wcHp", "wcTtk", "wcCdf", "wcDiff", "wcSimLegend", "wcDeepBox", "langSelect", "wcFps", "wcFpsRange", "wcFpsNote"]) assert.match(html, new RegExp(`id="${id}"`), id);
   assert.match(html, /<footer[^>]*wc-foot/);
   assert.match(html, /weapon-compare\.css\?v=/);
   assert.match(html, /weapon-compare\.mjs\?v=/);
@@ -76,4 +76,27 @@ test("the 500 m option survives the link", () => {
   assert.equal(stateToSearch(s), "?w=4&r=300&max=500");
   assert.equal(parseState("?w=4&r=300&max=500").far, true);
   assert.equal(parseState("?w=4").far, false);
+});
+
+test("loadout in the link: a<id>=Name,Name, only for chosen weapons, at most three parts", () => {
+  const s = parseState("?w=4,14&a4=Compensator,Forward%20Grip&a99=Suppressor&a14=A,B,C,D");
+  assert.deepEqual(s.att, { 4: ["Compensator", "Forward Grip"], 14: ["A", "B", "C"] });
+  const back = stateToSearch({ ids: [4, 14], acc: 20, hsr: 20, range: 20, hp: 1000, att: { 4: { barrel: "Compensator", rail: "", ammo: "Soft Point Ammunition" } } });
+  assert.equal(back, "?w=4%2C14&a4=Compensator%2CSoft+Point+Ammunition");
+  assert.deepEqual(parseState(back).att, { 4: ["Compensator", "Soft Point Ammunition"] });
+  assert.deepEqual(attList({ barrel: "", rail: "Forward Grip" }), ["Forward Grip"]);
+});
+
+test("one aim rule on the page: no separate aim point, no DPS block repeating the table, the deep dive is folded", () => {
+  const html = read("weapon-compare.html");
+  for (const gone of ["wcSimAimX", "wcSimAimY", "wcSimTarget", "wcDps", "wcSimSum"]) assert.doesNotMatch(html, new RegExp(`id="${gone}"`), gone);
+  assert.match(html, /<details class="[^"]*dist-section[^"]*" id="wcDeepBox">/);
+  assert.doesNotMatch(html, /<details[^>]*id="wcDeepBox"[^>]* open/);
+});
+
+test("burst analysis keeps only the shots that still hit, plus two", () => {
+  const rows = [1, 1, 0.5, 0.2, 0.05, 0, 0, 0, 0, 0, 0, 0].map((total) => ({ total }));
+  assert.equal(burstRowsShown(rows), 7);
+  assert.equal(burstRowsShown(rows.map(() => ({ total: 0 }))), 6);
+  assert.equal(burstRowsShown(rows.map(() => ({ total: 1 }))), rows.length);
 });
