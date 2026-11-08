@@ -22,6 +22,8 @@ await i18nReady;
 export * from "./live-model.mjs?v=20261108-neg2"; // #66: the pure part (tests import it from here)
 import { VICTIM_LINES, classifyDeath, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, median, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, assistShare, xpMultAt, KILL_BASE_XP, cashTotals, cashFormula, combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad, tierLabel, tierVoiceLine, TIER_VOICE_LINES, cidNameEntry } from "./live-model.mjs?v=20261108-neg2";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
+import { liveLuck, luckPush, luckFill, luckText, LIVE_LUCK_MIN } from "./live-luck.mjs?v=20261108-luck1";
+import { DUEL_FIT_V1, duelFitKind } from "./duels.mjs?v=20261102-luck5";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { traitPools, zergScore } from "./trait-scores.mjs?v=20261027-z79";
@@ -113,6 +115,12 @@ function start() {
   // #80: cid → name map (data/cid-names.json, ~0.6 MB, rebuilt by every refresh run). Fetched at once, so a known
   // victim's name shows with no Census call; a failed or missing file is just an empty map (Census fallback).
   const cidNamesP = getJson("data/cid-names.json").then((j) => (j && typeof j === "object" ? j : {}), () => ({}));
+  // 🎲 Live luck (owner 2026-11-08): the Duels fit, fetched the same way the Duels panel does;
+  // DUEL_FIT_V1 until it lands (same fallback). luckEvents = last 100 fights {cid, iv, won}.
+  let duelFit = DUEL_FIT_V1;
+  let luckEvents = [], luckDirty = true, lastLuck = null;
+  const rawAdjs = (p) => (p && p.cached && Number.isFinite(p.cached.adjs) ? p.cached.adjs : null);
+  getJson("data/duel-ivi-fit.json").then((d) => { if (duelFitKind(d)) { duelFit = d; luckDirty = true; } }).catch(() => {});
   let ranksP = null;
   function loadRanks() { return ranksP || (ranksP = loadRanksOnce()); }
   async function loadRanksOnce() {
@@ -597,6 +605,7 @@ function start() {
       const st = list && list[0] && list[0].online_status;
       if (st === "1") setOnline("online"); else if (st === "0") setOnline("offline");
     } catch { /* keep the last state */ }
+    luckDirty = true; // 🎲 Live luck re-checks on the minute tick, even with no new kills
   }
   setInterval(pollOnline, 60000);
 
@@ -617,6 +626,8 @@ function start() {
   if ($("liveDpsLabel")) $("liveDpsLabel").textContent = tr("live.dps", "Damage");
   const cashAvgEl = $("liveCashAvgVal");
   if ($("liveCashAvgLabel")) $("liveCashAvgLabel").textContent = tr("live.cashAvg", "Enemy avg ivi");
+  const luckEl = $("liveLuckVal");
+  if ($("liveLuckLabel")) $("liveLuckLabel").textContent = tr("live.luck", "🎲 Live luck");
   // Owner 2026-10-26 (session-adaptive scale): the bar's full point fits
   // the player's own pace twice over — a floor from their estimated DPM
   // (twice estDPM from adjs via the KPM regression, kills + assists damage
@@ -1056,6 +1067,20 @@ function start() {
         lastCash = key;
       }
     }
+    // 🎲 Live luck (owner 2026-11-08): raw value, no rounding — watch it move.
+    if (luckDirty) {
+      const myIvi = me && me.cached && me.cached.adjs;
+      const r = liveLuck(luckEvents, myIvi, duelFit);
+      const text = r ? luckText(r.gapPp) : "–";
+      if (luckEl && text !== lastLuck) {
+        luckEl.textContent = text;
+        luckEl.title = r
+          ? tr("live.luckTip", "Kills vs what your iVi predicted over your last {n} fights: got {act}%, expected {exp}%. Positive = luckier than expected. Raw value, no rounding.", { n: r.n, act: (r.act * 100).toFixed(1), exp: (r.exp * 100).toFixed(1) })
+          : tr("live.luckFew", "Too few fights yet — the number shows after {n} fights.", { n: LIVE_LUCK_MIN });
+        lastLuck = text;
+      }
+      luckDirty = false;
+    }
     // Owner 2026-10-26 (session trace-back line): duration from the first
     // event this page saw, kills and deaths across all runs (current pot
     // plus banked runs), session Σ and avg over known-iVi kills. Hidden
@@ -1125,6 +1150,7 @@ function start() {
         p.cached = liveRowFromPlayer(player, p.name);
         // a victim whose iVi was unknown at kill time pays out now
         for (const e of cashKills) if (e.cid === cid && !Number.isFinite(e.iv)) e.iv = cashIv(p);
+        if (luckFill(luckEvents, cid, rawAdjs(p))) luckDirty = true; // 🎲 same late iVi, same window
         maybeFireObsClip(); // late iVi can push the run over the OBS clip threshold
         render();
         drainPendingSpeech(); // and a queued tier line speaks now, if its tier is known
@@ -1275,7 +1301,7 @@ function start() {
       // exactly the old clear plus the new run's early lines.
       if (wasStreak === 0) st = { ...st, victims: st.victims.filter((r) => r.seq === seq || pendingSeq.has(r.seq)) };
       // DPM at the event's own time: a commit deferred behind a slow lookup doesn't shift the decay
-      const iv = cashIv(p); cashKills.push({ cid: ev.opp, iv }); maybeFireObsClip(); dpsTick(); sfx("victory", { event: true }); if (iv > 0) sfx("chaChing", { event: true }); speakTier(p);
+      const iv = cashIv(p); cashKills.push({ cid: ev.opp, iv }); luckEvents = luckPush(luckEvents, { cid: ev.opp, iv: rawAdjs(p), won: true }); luckDirty = true; maybeFireObsClip(); dpsTick(); sfx("victory", { event: true }); if (iv > 0) sfx("chaChing", { event: true }); speakTier(p);
     }
     // Owner 2026-10-25: ANY death dims the killed list and the observed
     // player's own name to 50% — you are dead, the feed shows it — until
@@ -1294,6 +1320,7 @@ function start() {
     // re-stamps it and the bar refills over a fresh median. DPM/DPH
     // untouched: the spike list and freeze clock are not touched here.
     if (ev.kind === "death") { sessionDeaths++; lastSpikeEff = null; liftFreeze(ev.at); deathTimes.push(ev.at); freezeStart = ev.at; freezeFor = spawnRunHoldMs(deathTimes, spikeTimes()); }
+    if (ev.kind === "death") { luckEvents = luckPush(luckEvents, { cid: ev.opp, iv: rawAdjs(p), won: false }); luckDirty = true; }
     if (ev.kind === "death" && wasStreak > 0 && bountyStreak === 0) {
       // Owner 2026-10-25: the death that ends a run banks it and resets
       // the pot for the new run — the pot shows 0 until the next kill.
