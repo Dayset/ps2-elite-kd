@@ -119,7 +119,7 @@ test("pin chain: g-score at 20261108-g2f1, rankings + stats + live chains at 202
   assert.match(read("app.js"), /shared-index\.mjs\?v=20261108-neg2/);
   assert.match(read("app.js"), /stats-table\.mjs\?v=20261108-neg2/);
   assert.match(read("index.html"), /app\.js\?v=20261108-neg2/);
-  assert.match(read("columns.html"), /columns-example\.mjs\?v=20261108-g2f1/);
+  assert.match(read("columns.html"), /columns-example\.mjs\?v=20261108-neg2/);
   assert.match(read("live.html"), /app\.js\?v=20261108-neg2/);
   assert.match(read("live.mjs"), /live-model\.mjs\?v=20261108-neg2/);
   assert.match(read("live.html"), /live\.mjs\?v=20261108-neg2/);

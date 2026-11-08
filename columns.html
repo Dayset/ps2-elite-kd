@@ -90,6 +90,9 @@
     .cx-row th a:hover { color: var(--accent); text-decoration: underline; }
     .cx-row td { font-weight: 600; background: var(--row-alt, transparent); }
     .cx-note { font-size: 0.82rem; margin: 2px 0 0; }
+    /* Owner 2026-11-08: the 🚜 / 🪳 emoji in the worked example are links;
+       an underline under a lone emoji reads as an underscore beneath it. */
+    #exCard a { text-decoration: none; }
     .cx-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; margin-bottom: 12px; }
     .cx-grid > .st-card { margin-bottom: 0; }
     @media (max-width: 760px) { .cx-grid { grid-template-columns: 1fr; } }
@@ -140,7 +143,7 @@
       <p class="st-dim" id="exMsg" role="status" hidden></p>
       <div class="cx-scroll"><table class="cx-row">
         <thead><tr><th><a href="#ivi">⚔️ iVi</a></th><th><a href="#activity">🏃 Activity</a></th><th><a href="#brave">🦁 Brave</a></th><th><a href="#resist">🛡️ Resist</a></th><th><a href="#matchup-kd">☠️ K/D</a></th><th><a href="#const">⚡ Const</a></th><th><a href="#luck" data-i18n="col.luck">🎲 Luck</a></th><th><a href="#assists" data-i18n="col.assists">🤝 Assists</a></th><th><a href="#zerg" data-i18n="col.zerg">🪳 Zerg</a></th><th><a href="#pureivi" data-i18n="col.pureivi">🧘‍♂️ Pure iVi</a></th><th><a href="#g" data-i18n="col.g">🌈 G</a></th><th><a href="#infantry" data-i18n="col.infantry">🪖 Infantry</a></th></tr></thead>
-        <tbody><tr><td data-ex="adjs">424</td><td data-ex="act">0.45</td><td data-ex="pvs">1.09</td><td data-ex="rf">0.77</td><td data-ex="rkd">0.804</td><td data-ex="cons">75%</td><td data-ex="luck">—</td><td data-ex="apk">0.53</td><td data-ex="zerg">67</td><td data-ex="pureivi">321</td><td data-ex="g">19.50%</td><td data-ex="inf">54.1%</td></tr></tbody>
+        <tbody><tr><td data-ex="adjs">416</td><td data-ex="act">0.45</td><td data-ex="pvs">1.09</td><td data-ex="rf">0.77</td><td data-ex="rkd">0.804</td><td data-ex="cons">75%</td><td data-ex="luck">—</td><td data-ex="apk">0.60</td><td data-ex="zerg">79</td><td data-ex="pureivi">298</td><td data-ex="g">21.44%</td><td data-ex="inf">54.2%</td></tr></tbody>
       </table></div>
       <p class="st-dim cx-note" data-i18n="cp.rowNote">Type any cached name. Tap a column to see what it means.</p>
     </div>
@@ -169,7 +172,7 @@
     <h2 class="st-section" id="adjusted" data-i18n="cp.secAdjusted">✨ Adjusted (the default columns)</h2>
     <div class="cx-grid">
     <div class="st-card cx-col">
-      <div class="cx-top"><h3 id="ivi" data-i18n="cp.iviH">⚔️ iVi — your overall rating</h3><span class="cx-val" data-ex="adjs">424</span></div>
+      <div class="cx-top"><h3 id="ivi" data-i18n="cp.iviH">⚔️ iVi — your overall rating</h3><span class="cx-val" data-ex="adjs">416</span></div>
       <div class="cx-pct" data-ex-pct="adjs"><b><i style="width:59%"></i></b><span>better than 59% of players</span></div>
       <p data-i18n="cp.iviP">How good you are, once your opponents’ strength is counted.</p>
       <ul class="st-hl">
@@ -251,14 +254,14 @@
     </div>
 
     <div class="st-card cx-col">
-      <div class="cx-top"><h3 id="assists" data-i18n="col.assists">🤝 Assists</h3><span class="cx-val" data-ex="apk">0.53</span></div>
-      <div class="cx-pct" data-ex-pct="apk"><b><i style="width:67%"></i></b><span>better than 67% of players</span></div>
+      <div class="cx-top"><h3 id="assists" data-i18n="col.assists">🤝 Assists</h3><span class="cx-val" data-ex="apk">0.60</span></div>
+      <div class="cx-pct" data-ex-pct="apk"><b><i style="width:79%"></i></b><span>better than 79% of players</span></div>
       <p data-i18n="tip.apk">Assists per kill in recent Honu sessions: how often you help teammates get kills.</p>
     </div>
 
     <div class="st-card cx-col">
-      <div class="cx-top"><h3 id="zerg" data-i18n="cp.zergH">🪳 Zerg — riding a big group</h3><span class="cx-val" data-ex="zerg">67</span></div>
-      <div class="cx-pct" data-ex-pct="zerg"><b><i style="width:32%"></i></b><span>better than 32% of players</span></div>
+      <div class="cx-top"><h3 id="zerg" data-i18n="cp.zergH">🪳 Zerg — riding a big group</h3><span class="cx-val" data-ex="zerg">79</span></div>
+      <div class="cx-pct" data-ex-pct="zerg"><b><i style="width:20%"></i></b><span>better than 20% of players</span></div>
       <p data-i18n="cp.zergP">The lower of two percentiles: 🎈 Inflation (your K/D lifted by easy fights) and 🤝 Assists (kills shared with teammates). 0–99. Shown from 100 kills in recent Honu sessions (“—” until then).</p>
       <ul class="st-hl">
         <li data-i18n-html="cp.zergHigh"><span class="down">High:</span> easy fights and lots of shared kills, at the same time. Lower is better.</li>
@@ -272,7 +275,7 @@
     </div>
 
     <div class="st-card cx-col">
-      <div class="cx-top"><h3 id="pureivi" data-i18n="cp.pureiviH">🧘‍♂️ Pure iVi — your true solo ability</h3><span class="cx-val" data-ex="pureivi">321</span></div>
+      <div class="cx-top"><h3 id="pureivi" data-i18n="cp.pureiviH">🧘‍♂️ Pure iVi — your true solo ability</h3><span class="cx-val" data-ex="pureivi">298</span></div>
       <div class="cx-pct" data-ex-pct="pureivi" hidden><b><i></i></b><span></span></div>
       <p data-i18n="cp.pureiviP">What your rating would be if every fight counted as if you fought alone. A high iVi on a zerg surfer says: you have it only because of crowd efforts. Pure iVi says: this is your true ability as a solo player.</p>
       <details class="cx-more"><summary data-i18n="cp.more">How it’s measured</summary>
@@ -299,7 +302,7 @@
     </div>
 
     <div class="st-card cx-col">
-      <div class="cx-top"><h3 id="infantry" data-i18n="cp.infH">🪖 Infantry — kills made on foot</h3><span class="cx-val" data-ex="inf">54.1%</span></div>
+      <div class="cx-top"><h3 id="infantry" data-i18n="cp.infH">🪖 Infantry — kills made on foot</h3><span class="cx-val" data-ex="inf">54.2%</span></div>
       <div class="cx-pct" data-ex-pct="inf" hidden><b><i></i></b><span></span></div>
       <p data-i18n="cp.infP">% of your lifetime kills made with infantry weapons. MAX counts as infantry here; vehicles, turrets and roadkills don’t. Shown from 100 kills (“—” until measured). Hover for your MAX and vehicle shares.</p>
       <details class="cx-more"><summary data-i18n="cp.more">How it’s measured</summary>
@@ -371,17 +374,18 @@
 
     <h2 class="st-section" id="worked-example"><span data-i18n="cp.exTitle">Example:</span> 👉 <span data-ex-name>YuigahamaYui</span></h2>
     <div class="st-card" id="exCard">
-      <p><b>What trackers show:</b> <span class="st-num">KD 1.71 · IvI 217</span>, which looks below average.</p>
+      <p><b>What trackers show:</b> <span class="st-num">KD 1.71 · IvI 216</span>, which looks below average.</p>
       <p><b>What the site sees:</b></p>
       <ol class="st-list st-num">
         <li>Their 200 most-fought opponents kill at 0.96 per minute (a typical player’s opponents: ~0.35). Very hard opposition.</li>
-        <li>☠️ K/D against them: 826 ÷ 1025 = <b>0.81</b></li>
-        <li>🛡️ Resist: 0.81 × 0.96 = <b>0.776</b></li>
-        <li>Rating: 600 × (1 + log₂(0.776 ÷ 0.6)) = <b>823</b></li>
-        <li>Slow pace (own KPM 0.57, under 0.8): × 0.87 → ⚔️ iVi <b>713</b></li>
-        <li><a href="#vehicle-cut">🚜</a> vehicle kills 46%: −36% → ⚔️ iVi <b>457</b></li>
+        <li>☠️ K/D against them: 826 ÷ 1027 = <b>0.80</b></li>
+        <li>🛡️ Resist: 0.80 × 0.96 = <b>0.773</b></li>
+        <li>Rating: 600 × (1 + log₂(0.773 ÷ 0.6)) = <b>819</b></li>
+        <li>Slow pace (own KPM 0.56, under 0.8): × 0.86 → ⚔️ iVi <b>708</b></li>
+        <li><a href="#vehicle-cut">🚜</a> vehicle kills 46%: −36% → ⚔️ iVi <b>455</b></li>
+        <li><a href="#zerg-adj">🪳</a> Zerg 79, evened out to the average crowd (🪳 26.8) → ⚔️ iVi <b>416</b></li>
       </ol>
-      <p><b>Result:</b> 457, better than 59% of tracked players (median 305). The public IvI said 217. Same sample: 🏃 Activity 0.46 · 🦁 Brave 1.10 · ⚡ Const 0.66.</p>
+      <p><b>Result:</b> 416, better than 59% of tracked players (median 278). The public IvI said 216. Same sample: 🏃 Activity 0.45 · 🦁 Brave 1.09 · ⚡ Const 0.66.</p>
     </div>
 
     <hr class="st-debug-sep" />
@@ -420,7 +424,7 @@
   </main>
   <button id="toTop" class="st-totop" aria-label="Back to top" title="Back to top" data-i18n-aria-label="cp.top" data-i18n-title="cp.top">↑</button>
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="columns-example.mjs?v=20261108-g2f1"></script>
+  <script type="module" src="columns-example.mjs?v=20261108-neg2"></script>
   <script>
     // TOC jump into the collapsed debug section opens it first.
     document.querySelectorAll('.st-toc a[href^="#"]').forEach(function (a) {

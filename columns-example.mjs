@@ -72,7 +72,7 @@ export function rowCells(payload, row) {
   const g = gMap.get(gObjs.find((o) => o.slug === row.slug));
   const consP = pct("cons", row.cons);
   return [
-    { id: "adjs", text: fin(row.adjs) ? String(Math.max(0, Math.round(row.adjs))) : "—", pct: pct("adjs", row.adjs) },
+    { id: "adjs", text: fin(row.adjs) ? String(Math.round(row.adjs)) : "—", pct: pct("adjs", row.adjs) },
     { id: "act", text: f(row.act), pct: pct("act", row.act) },
     { id: "pvs", text: f(row.pvs), pct: pct("pvs", row.pvs) },
     { id: "rf", text: f(row.rf), pct: pct("rf", row.rf) },
@@ -146,7 +146,7 @@ function oppWords(ekpm) {
 
 /** Inner HTML of the example card (same layout as the static page), DOM-free. */
 export function exampleCard(x) {
-  const shown = fin(x.adjs) ? Math.max(0, x.adjs) : NaN;
+  const shown = fin(x.adjs) ? x.adjs : NaN;
   const own = f(x.own);
   let pace;
   if (x.own < SPEED_BAND_LOW && x.adj > 0) pace = tr("cx.paceSlow", "Slow pace (own KPM {own}, under {low}): × {factor} → ⚔️ iVi <b>{v}</b>", { own, low: SPEED_BAND_LOW, factor: f(x.slowFactor), v: fmtSigned(x.speed) });

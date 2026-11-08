@@ -29,7 +29,7 @@ test("example ⚔️ iVi equals the ranks.json value (main table) for the demo p
   const x = exampleFacts(raw, pools, { zerg: rowZerg(ranks, row) });
   assert.ok(Math.abs(x.adjs - row.adjs) < 0.06, `${x.adjs} vs ${row.adjs}`);
   const card = exampleCard(x);
-  assert.match(card, new RegExp(`<b>Result:</b> ${Math.round(Math.max(0, row.adjs))}, better than`));
+  assert.match(card, new RegExp(`<b>Result:</b> ${Math.round(row.adjs)}, better than`));
   if (row.vcut > 0) assert.match(card, /🚜/);
 });
 
@@ -46,7 +46,7 @@ test("example row: main-table columns, ranks.json values, cards and links on the
   const cells = rowCells(ranks, row);
   assert.deepEqual(cells.map((c) => c.id), ["adjs", "act", "pvs", "rf", "rkd", "cons", "luck", "apk", "zerg", "pureivi", "g", "inf"]);
   const by = Object.fromEntries(cells.map((c) => [c.id, c]));
-  assert.equal(by.adjs.text, String(Math.max(0, Math.round(row.adjs))));
+  assert.equal(by.adjs.text, String(Math.round(row.adjs)));
   assert.equal(by.rkd.text, row.rkd.toFixed(3));
   assert.equal(by.g.text, "21.44%", "demo G is the two-factor product score");
   assert.equal(by.g.pct, null, "G is a share, no better/worse bar");
@@ -59,4 +59,15 @@ test("example row: main-table columns, ranks.json values, cards and links on the
   for (const id of ["ivi", "activity", "brave", "resist", "matchup-kd", "const", "luck", "assists", "zerg", "pureivi", "g", "infantry"]) {
     assert.ok(html.includes(`href="#${id}"`) && html.includes(`id="${id}"`), id);
   }
+});
+
+// 2026-11-08: the static worked example is the fallback before JS loads — it must
+// show the same seven items the live card does (the 🪳 Zerg line was missing),
+// and the lone 🚜 / 🪳 emoji links carry no underline (it reads as an underscore).
+test("worked example: seven static items incl. the 🪳 Zerg line; emoji links not underlined", () => {
+  const ex = html.slice(html.indexOf('id="worked-example"'), html.indexOf('<hr class="st-debug-sep"'));
+  assert.equal((ex.match(/<li>/g) || []).length, 7, "static example has seven items");
+  assert.ok(ex.includes('<a href="#zerg-adj">🪳</a> Zerg'), "static example has the Zerg item");
+  assert.ok(ex.includes('<a href="#vehicle-cut">🚜</a> vehicle kills'), "static example has the vehicle item");
+  assert.match(html, /#exCard a \{ text-decoration: none; \}/, "emoji links in the example carry no underline");
 });
