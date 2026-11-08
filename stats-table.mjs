@@ -23,7 +23,7 @@ import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { t as tr } from "./i18n.mjs";
 import { AIMGAP_HINT, ZERG_HINT, ZERG_MISSING, zergCellTip, zergEstHtml, AIMGAP_MISSING, fmtSigned, aimGapCellTip, diffValueHtml } from "./trait-tips.mjs?v=20261024-crowd1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261023-short1";
-import { gScores } from "./g-score.mjs?v=20261108-grem1";
+import { gScores } from "./g-score.mjs?v=20261108-g2f1";
 import { THIN_MARK, THIN_NOTE_HEAD, playerMetrics, shownValue, THIN_METRICS, thinPlayerLine, isLegacySample, LEGACY_SAMPLE_TIP, LEGACY_SAMPLE_MARK } from "./player-metrics.mjs?v=20261027-z79";
 import { compareByCharName, columnRef, honuProfileUrl, pctFromRef, pctTitle, fmtPctFromRef } from "./analyze-run.mjs?v=20261101-bg1";
 import { dotSlot } from "./online-status.mjs?v=20261018-onl1";
@@ -97,7 +97,7 @@ export function createStatsTable($) {
   }
   const luckOf = (r) => (luckData && r && r.p ? playerLuck(luckData, slugKey(r.p.display)) : null);
 
-  // 🌈 G (owner 2026-11-08): population product score from the full ranks
+  // 🌈 G (owner 2026-11-08): two-factor product score from the full ranks
   // payload (ranks-lite has no rkd/pvs). Lazy, once, then the table redraws.
   let gBySlug = null, gLoad = null;
   function loadG() {
@@ -466,8 +466,8 @@ export function createStatsTable($) {
       { id: "pureivi", label: tr("col.pureivi", "🧘‍♂️ Pure iVi"), hint: tr("tip.pureivi", "Your true ability as a solo player: plain ⚔️ iVi with the uncentered 🪳 charge, adjs × (1 − 0.00436 × 🪳). High 🪳 drops hard — monitor column next to the evened-out ⚔️ iVi. After the slash, the same score before the 🚜 vehicle/MAX cuts and before any 🪳 charge."), digits: 0, thinTip: true, preVehCell: true,
         fn: (r) => { if ($.IS_PS) return NaN; const a = shownValue(r, "adjs"); if (!isFiniteNum(a)) return NaN; const z = traitP && r.p ? zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display)), rvpOf(r.p.display), crpOf(r.p.display)) : null; const v = z ? pureIvI(a, z.score) : null; return v == null ? NaN : v; } },
       // 🌈 G (owner 2026-11-08): one value per player — the share of all cached
-      // players beaten on K/D + Brave + Infantry at once. Most sit at 5–20%.
-      { id: "g", label: tr("col.g", "🌈 G"), hint: tr("tip.g", "Share of all cached players you beat on K/D, Brave and Infantry at once: (1 − K/D rank) × (1 − Brave rank) × (1 − Infantry rank). Most players sit at 5–20%; the cheesiest near 98%."), fn: (r) => (gBySlug && r.p ? gBySlug.get(slugKey(r.p.display)) : undefined), digits: 2, gCell: true },
+      // players beaten on K/D + Brave at once. Most sit at 10–23% (median 17.21%).
+      { id: "g", label: tr("col.g", "🌈 G"), hint: tr("tip.g", "Share of all cached players you beat on K/D and Brave at once: (1 − K/D rank) × (1 − Brave rank). Most players sit at 10–23% (median 17.21%); the cheesiest near 99.7%."), fn: (r) => (gBySlug && r.p ? gBySlug.get(slugKey(r.p.display)) : undefined), digits: 2, gCell: true },
       { id: "inf", label: tr("col.infantry", "🪖 Infantry"), hint: tr("tip.inf", INF_HINT), fn: (r) => { const e = infBySlug && r.p ? infBySlug.get(slugKey(r.p.display)) : undefined; return e ? e.inf : undefined; }, digits: 1, infCell: true },
     ];
     // Older debug columns: appended only when "show older debug stats" (footer) is ticked.

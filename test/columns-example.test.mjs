@@ -48,7 +48,7 @@ test("example row: main-table columns, ranks.json values, cards and links on the
   const by = Object.fromEntries(cells.map((c) => [c.id, c]));
   assert.equal(by.adjs.text, String(Math.max(0, Math.round(row.adjs))));
   assert.equal(by.rkd.text, row.rkd.toFixed(3));
-  assert.equal(by.g.text, "19.50%", "demo G is the population product score");
+  assert.equal(by.g.text, "21.44%", "demo G is the two-factor product score");
   assert.equal(by.g.pct, null, "G is a share, no better/worse bar");
   for (const c of cells) if (c.pct != null) assert.ok(c.pct >= 0 && c.pct <= 99, c.id + " percentile");
   assert.equal(by.inf.pct, null, "infantry is a share, no better/worse bar");

@@ -17,7 +17,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261031-fr1" />
+  <link rel="stylesheet" href="styles.css?v=20261108-g2f1" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: none; margin: 0 auto; padding: 0; } /* Dayset 2026-10-19: same width as the main page — body.site-page already carries max-width: var(--page-w) (#29, site-layout.css); the wrapper no longer narrows it */
@@ -286,15 +286,15 @@
     </div>
 
     <div class="st-card cx-col">
-      <div class="cx-top"><h3 id="g" data-i18n="cp.gH">🌈 G — how cheesy is this K/D?</h3><span class="cx-val" data-ex="g">19.50%</span></div>
+      <div class="cx-top"><h3 id="g" data-i18n="cp.gH">🌈 G — how cheesy is this K/D?</h3><span class="cx-val" data-ex="g">21.44%</span></div>
       <div class="cx-pct" data-ex-pct="g" hidden><b><i></i></b><span></span></div>
-      <p data-i18n="cp.gP">The share of all cached players you beat on K/D, Brave and Infantry at once. A high K/D alone doesn't do it — you also need a collapsed 🦁 Brave and barely any 🪖 Infantry.</p>
+      <p data-i18n="cp.gP">The share of all cached players you beat on K/D and Brave at once. A high K/D alone doesn't do it — you also need a collapsed 🦁 Brave. 🪖 Infantry doesn't score anymore: it only lives in the gate — the cheesy set is Brave under 1.7 and Infantry under 50%. The 1.7 is the trimmed mean 🦁 Brave of the top 100 by K/D — the typical Brave of a top-K/D player (the raw mean, 6.68, is wrecked by two outliers at 461 and 41).</p>
       <details class="cx-more"><summary data-i18n="cp.more">How it’s measured</summary>
         <ul class="st-list">
-          <li data-i18n-html="cp.gL1"><b>Formula:</b> (1 − K/D rank) × (1 − Brave rank) × (1 − Infantry rank), ranks over all cached players. Each factor is the share of players you beat on that one dimension.</li>
-          <li data-i18n-html="cp.gL2"><b>Example:</b> Tepe8756 — K/D 4.03 (rank 129 of 18,571), Brave 0.024 (rank 226), Infantry 1.4% (rank 13): 0.9931 × 0.9878 × 0.9993 ≈ <b>98.03%</b>.</li>
+          <li data-i18n-html="cp.gL1"><b>Formula:</b> (1 − K/D rank) × (1 − Brave rank), ranks over all cached players. Each factor is the share of players you beat on that one dimension.</li>
+          <li data-i18n-html="cp.gL2"><b>Example:</b> Tepe8756 — K/D 4.03 (rank 129 of 18,571), Brave 0.024 (rank 226): 0.9931 × 0.9878 ≈ <b>98.10%</b>.</li>
         </ul>
-        <p data-i18n="cp.gNote">Most players sit at 5–20% (median 7.18%); 90% are under 21.63%. The top 100 start at 50.18% — a different world from the rest.</p>
+        <p data-i18n="cp.gNote">Most players sit at 10–23% (median 17.21%); 90% are under 28.95%. The top 100 start at 70.09%. — a different world from the rest.</p>
       </details>
     </div>
 
@@ -420,7 +420,7 @@
   </main>
   <button id="toTop" class="st-totop" aria-label="Back to top" title="Back to top" data-i18n-aria-label="cp.top" data-i18n-title="cp.top">↑</button>
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="columns-example.mjs?v=20261108-grem1"></script>
+  <script type="module" src="columns-example.mjs?v=20261108-g2f1"></script>
   <script>
     // TOC jump into the collapsed debug section opens it first.
     document.querySelectorAll('.st-toc a[href^="#"]').forEach(function (a) {

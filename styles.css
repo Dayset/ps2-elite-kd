@@ -2274,7 +2274,7 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   .rk-pos-wrap::-webkit-scrollbar { display: none; }
 }
 .rk-pos-table { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
-.rk-pos-table th, .rk-pos-table td { padding: 0.35rem 0.4rem; border-bottom: 1px solid var(--row-border); white-space: nowrap; text-align: right; background: var(--panel); }
+.rk-pos-table th, .rk-pos-table td { padding: 0.35rem 0.4rem; border-bottom: 1px solid var(--row-border); white-space: nowrap; text-align: right; background: var(--panel); vertical-align: top; }
 .rk-pos-table tbody tr:last-child th, .rk-pos-table tbody tr:last-child td { border-bottom: none; }
 .rk-pos-table thead th { color: var(--text); font-weight: 600; }
 .rk-pos-table .rk-pos-name { text-align: left; position: sticky; left: 2.6rem; z-index: 1; font-weight: 600; box-shadow: 4px 0 8px -4px var(--shadow); }
@@ -2399,6 +2399,11 @@ html[data-theme="light"] .rk-filter-row input#ranksSearch { color-scheme: light;
   border-bottom: 1px solid var(--row-border);
   white-space: nowrap; text-align: center;
   background: var(--panel);
+  /* Owner 2026-11-08: top, like .stats-table td — on phones the pct tag stacks
+     to a second line, so a lone-value cell (🎲 Luck, 🌈 G, 🪖 Infantry, 🪳 Zerg
+     without its pct) would sit midway down the row instead of sharing the
+     value line. */
+  vertical-align: top;
 }
 .ranks-table th.rk-name, .ranks-table td.rk-name,
 .ranks-table th.rk-pick, .ranks-table td.rk-pick { text-align: left; }

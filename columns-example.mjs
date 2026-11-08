@@ -19,7 +19,7 @@ import { traitPools, zergScore } from "./trait-scores.mjs?v=20261027-z79";
 import { zergChargedAdjs, ZERG_CHARGE, zergFresh } from "./zerg-charge.mjs?v=20261029-zadj2";
 import { pureIvI } from "./pure-ivi.mjs?v=20261029-purevis1";
 import { loadLuckData, playerLuck, luckCellHtml } from "./luck-col.mjs?v=20261102-luck5";
-import { gScores } from "./g-score.mjs?v=20261108-grem1";
+import { gScores } from "./g-score.mjs?v=20261108-g2f1";
 
 export const DEMO_NAME = "YuigahamaYui";
 
@@ -66,7 +66,7 @@ export function rowCells(payload, row) {
   };
   const zerg = rowZerg(payload, row);
   const pure = pureIvI(fin(row.adjs0) ? row.adjs0 : row.adjs, zerg);
-  // 🌈 G: population product score over the whole cache (g-score.mjs).
+  // 🌈 G: two-factor product score (K/D × Brave) over the whole cache (g-score.mjs); Infantry is gate-only.
   const gObjs = payload.rows.map((r) => { const o = Object.fromEntries(payload.cols.map((c, j) => [c, r[j]])); return { slug: o.slug, rkd: o.rkd, pvs: o.pvs, inf: o.inf }; });
   const gMap = gScores(gObjs);
   const g = gMap.get(gObjs.find((o) => o.slug === row.slug));
