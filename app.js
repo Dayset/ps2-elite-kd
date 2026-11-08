@@ -37,12 +37,12 @@ import {
 import { formatClock, fmtNum, slugKey, bareName, parseNames, namesEqualIgnoreCase, namesSetKey, niceLinTicks, niceNum, niceLogTicks, formatTick, escapeHtml, makeAbortError, isAbortError, checkAborted, readJsonLS, writeJsonLS } from "./app-util.mjs?v=20261027-z79";
 import { createAnalyze } from "./analyze.mjs?v=20261101-bg1";
 import { createShareAdd } from "./share-add.mjs?v=20261027-z79";
-import { createSharedIndex } from "./shared-index.mjs?v=20261108-gcol1";
+import { createSharedIndex } from "./shared-index.mjs?v=20261108-grem1";
 import { createNamesField } from "./names-field.mjs?v=20261102-pending1";
 import { initFactionPanel } from "./faction-panel.mjs?v=20261031-fr4";
 import { initServerPanel } from "./server-panel.mjs?v=20261031-sr2";
 import { createOutfitRoster, canTakeName as canTakeNameRule, OUTFIT_MAX_NAMES } from "./outfit-tags.mjs?v=20261101-osrv1";
-import { createStatsTable } from "./stats-table.mjs?v=20261108-gcol1";
+import { createStatsTable } from "./stats-table.mjs?v=20261108-grem1";
 import { createChartWave } from "./chart-wave.mjs?v=20261029-puregraph1";
 import { createChart } from "./chart.mjs?v=20261030-hs1";
 import { createLoader } from "./loader.mjs?v=20261101-osrv1";
@@ -136,7 +136,7 @@ import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
 import "./name-peek.mjs?v=20261025-loc1";
 import { sfx, recentGesture, mountSfxToggle } from "./sfx.mjs?v=20261026-sfx2";
-import { mountNameSuggest } from "./name-suggest.mjs?v=20261024-br1";
+import { mountNameSuggest } from "./name-suggest.mjs?v=20261108-shr1";
 import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette.mjs?v=20261010-sav1";
 // ⬆ / ⬇ floating quick jumps (same buttons as ranks.html).
 import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261020-i18n2";
