@@ -123,8 +123,8 @@ test("pin chain: g-score at 20261108-g2f1, neg2 chains, rankings chain at 202611
   assert.match(read("columns.html"), /columns-example\.mjs\?v=20261108-neg2/);
   assert.match(read("live.html"), /app\.js\?v=20261108-avg1/);
   assert.match(read("live.mjs"), /live-model\.mjs\?v=20261108-neg2/);
-  assert.match(read("live.html"), /live\.mjs\?v=20261108-sess1/);
-  assert.match(read("scripts/build-live.mjs"), /live\.mjs\?v=20261108-sess1/);
+  assert.match(read("live.html"), /live\.mjs\?v=20261108-anch1/);
+  assert.match(read("scripts/build-live.mjs"), /live\.mjs\?v=20261108-anch1/);
 });
 
 test("rankings + positions tables: lone-value cells (Luck, Zerg, G, Infantry) sit on the value line", () => {

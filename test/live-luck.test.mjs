@@ -3,7 +3,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { DUEL_FIT_V1 } from "../duels.mjs";
-import { LIVE_LUCK_MAX, LIVE_LUCK_MIN, luckPush, luckFill, liveLuck, luckText } from "../live-luck.mjs";
+import { LIVE_LUCK_MAX, LIVE_LUCK_MIN, LUCK_ANCHOR_W, luckPush, luckFill, liveLuck, liveLuckRaw, anchorGap, luckText } from "../live-luck.mjs";
 
 const fit = DUEL_FIT_V1;
 const ev = (cid, iv, won) => ({ cid, iv, won });
@@ -64,4 +64,27 @@ test("luckText: explicit sign, raw value, dash when no number", () => {
   assert.equal(luckText(-1.47374738393).slice(0, 1), "-");
   assert.equal(luckText(null), "–");
   assert.equal(luckText(NaN), "–");
+});
+
+test("liveLuckRaw: the gap from the first scorable fight, no floor", () => {
+  const events = [ev("a", 1000, true)];
+  const r = liveLuckRaw(events, 1000, fit);
+  assert.equal(r.n, 1);
+  assert.ok(Math.abs(r.gapPp - 50) < 1e-9, `gapPp ${r.gapPp}`); // won 1 of 1, expected 0.5
+  assert.equal(liveLuck(events, 1000, fit), null); // the floored version still waits for 10
+});
+
+test("anchorGap: lifetime gap counts as W fights, first fight moves it ~1/(W+1)", () => {
+  assert.equal(LUCK_ANCHOR_W, 100);
+  // Lifetime +2pp, session gap +50pp over 1 fight → (100×2 + 1×50)/101 ≈ 2.475.
+  const a = anchorGap(50, 1, 2);
+  assert.ok(Math.abs(a - (100 * 2 + 50) / 101) < 1e-12, `anchored ${a}`);
+  // A bad death vs a weak opponent early: session gap −90pp over 1 fight, lifetime 0 → −90/101 ≈ −0.89, not −90.
+  const b = anchorGap(-90, 1, 0);
+  assert.ok(Math.abs(b - -90 / 101) < 1e-12, `anchored ${b}`);
+  // At the anchor alone (no session fight yet) there is no number.
+  assert.equal(anchorGap(50, 0, 2), null);
+  assert.equal(anchorGap(50, 1, null), null);
+  // As the session grows the anchor washes out: 100 session fights at +50pp → (100×2 + 100×50)/200 = 26.
+  assert.ok(Math.abs(anchorGap(50, 100, 2) - 26) < 1e-12);
 });

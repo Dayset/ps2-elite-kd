@@ -22,9 +22,9 @@ await i18nReady;
 export * from "./live-model.mjs?v=20261108-neg2"; // #66: the pure part (tests import it from here)
 import { VICTIM_LINES, classifyDeath, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, median, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, assistShare, xpMultAt, KILL_BASE_XP, cashTotals, cashFormula, combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad, tierLabel, tierVoiceLine, TIER_VOICE_LINES, cidNameEntry } from "./live-model.mjs?v=20261108-neg2";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
-import { liveLuck, luckPush, luckFill, luckText, LIVE_LUCK_MIN } from "./live-luck.mjs?v=20261108-luck1";
-import { SESS_MIN_KILLS, sessionReady, sessionKd, sessionInf, sessionApk, sessionInflation, sessionBrave, sessionZerg, sessionG, sessText } from "./live-session.mjs?v=20261108-sess1";
-import { DUEL_FIT_V1, duelFitKind } from "./duels.mjs?v=20261102-luck5";
+import { liveLuck, liveLuckRaw, luckPush, luckFill, luckText, anchorGap, LIVE_LUCK_MIN } from "./live-luck.mjs?v=20261108-anch1";
+import { SESS_MIN_KILLS, SESS_ANCHOR_W, sessionReady, sessionKd, sessionInf, sessionApk, sessionInflation, sessionBrave, sessionZerg, sessionG, sessText, anchorValue } from "./live-session.mjs?v=20261108-anch1";
+import { DUEL_FIT_V1, duelFitKind, playerLuck } from "./duels.mjs?v=20261102-luck5";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { traitPools, zergScore } from "./trait-scores.mjs?v=20261027-z79";
@@ -127,6 +127,17 @@ function start() {
   let sessAssists = 0, sessWeapons = [], sessFights = [], sessDirty = true, sessTp = null;
   const rawAdjs = (p) => (p && p.cached && Number.isFinite(p.cached.adjs) ? p.cached.adjs : null);
   getJson("data/duel-ivi-fit.json").then((d) => { if (duelFitKind(d)) { duelFit = d; luckDirty = true; } }).catch(() => {});
+  // 🎲 Live luck anchor (owner 2026-11-08): the lifetime luck gap, from the
+  // same file the tables read (duel-ivi-player.json, playerLuck — gap in
+  // share points, shrunk as the tables show it). Stored as the file; the gap
+  // is resolved per render, so a followed name that lands late still anchors.
+  let luckData = null;
+  const lifeLuckGapPp = () => {
+    if (!luckData || !me || !me.name) return null;
+    const l = playerLuck(luckData, slugKey(me.name));
+    return l && Number.isFinite(l.gap) ? l.gap * 100 : null;
+  };
+  getJson("data/duel-ivi-player.json").then((d) => { luckData = d; luckDirty = true; sessDirty = true; }).catch(() => {});
   let ranksP = null;
   function loadRanks() { return ranksP || (ranksP = loadRanksOnce()); }
   async function loadRanksOnce() {
@@ -134,7 +145,7 @@ function start() {
       const j = await getJson("data/ranks.json");
       const ci = (c) => j.cols.indexOf(c);
       const iS = ci("slug"), iN = ci("name");
-      const idx = LIVE_COLS.map((c) => [c.id, ci(c.id)]).concat([["vcut", ci("vcut")], ["infVeh", ci("infVeh")], ["infMax", ci("infMax")]]);
+      const idx = LIVE_COLS.map((c) => [c.id, ci(c.id)]).concat([["vcut", ci("vcut")], ["infVeh", ci("infVeh")], ["infMax", ci("infMax")], ["apk", ci("apk")]]); // apk: the session 🤝 anchor
       ranks = new Map(j.rows.map((r) => {
         const o = { name: r[iN] };
         for (const [id, i] of idx) o[id] = i >= 0 ? r[i] : null;
@@ -1023,27 +1034,47 @@ function start() {
     const ready = sessionReady(sKills);
     const myIvi = me && me.cached && me.cached.adjs;
     const mins = sessionStartMs ? (Date.now() - sessionStartMs) / 60000 : 0;
-    const kd = ready ? sessionKd(sKills, sessionDeaths) : null;
-    const inf = ready ? sessionInf(sessWeapons, catalog) : null;
-    const apk = ready ? sessionApk(sessAssists, sKills) : null;
-    const infl = ready ? sessionInflation(myIvi, sessFights) : null;
-    const brave = ready ? sessionBrave(sKills, mins, sessFights.map((f) => f.act)) : null;
-    const zerg = ready ? sessionZerg(sessTp, infl, apk) : null;
-    const kdPct = ready && kd != null && pools.rkd ? percentileOf(pools.rkd, kd) / 100 : null;
-    const bravePct = ready && brave != null && pools.pvs ? percentileOf(pools.pvs, brave) / 100 : null;
-    const g = ready ? sessionG(kdPct, bravePct) : null;
+    const started = sKills >= 1;
+    // Lifetime anchors (owner 2026-11-08, W=100): the values start at the
+    // lifetime numbers and creep with each fight — no waiting for a window.
+    // The "100" is just the anchor weight, not a threshold. ranks inf is a %.
+    const c = me && me.cached;
+    const lifeKd = c && Number.isFinite(c.rkd) ? c.rkd : null;
+    const lifeInf = c && Number.isFinite(c.inf) ? c.inf / 100 : null;
+    const lifeApk = c && Number.isFinite(c.apk) ? c.apk : null;
+    const lifeZerg = c && Number.isFinite(c.zerg) ? c.zerg : null;
+    const lifeG = (c && Number.isFinite(c.rkd) && Number.isFinite(c.pvs) && pools.rkd && pools.pvs)
+      ? sessionG(percentileOf(pools.rkd, c.rkd) / 100, percentileOf(pools.pvs, c.pvs) / 100) : null;
+    const kd = sessionKd(sKills, sessionDeaths);
+    const inf = sessionInf(sessWeapons, catalog);
+    const apk = sessionApk(sessAssists, sKills);
+    const infl = sessionInflation(myIvi, sessFights);
+    const brave = sessionBrave(sKills, mins, sessFights.map((f) => f.act));
+    const zerg = sessionZerg(sessTp, infl, apk);
+    const kdPct = kd != null && pools.rkd ? percentileOf(pools.rkd, kd) / 100 : null;
+    const bravePct = brave != null && pools.pvs ? percentileOf(pools.pvs, brave) / 100 : null;
+    const g = sessionG(kdPct, bravePct);
+    // Anchored values (shown from the first kill when the anchor exists);
+    // without an anchor, the plain session value, floored at 10 kills.
+    // 🪳 Zerg and 🌈 G are blends (the session score, weighted by kills).
+    const aKd = started && lifeKd != null ? anchorValue(lifeKd, sKills, sessionDeaths) : null;
+    const aInf = started && lifeInf != null ? anchorValue(lifeInf, inf ? inf.foot : 0, inf ? inf.total : 0) : null;
+    const aApk = started && lifeApk != null ? anchorValue(lifeApk, sessAssists, sKills) : null;
+    const aZerg = started && lifeZerg != null ? anchorValue(lifeZerg, zerg != null ? zerg * sKills : 0, sKills) : null;
+    const aG = started && lifeG != null ? anchorValue(lifeG, g != null ? g * sKills : 0, sKills) : null;
     const few = tr("live.sessFew", "Too few session kills yet — the numbers show after {n} kills.", { n: SESS_MIN_KILLS });
     const vals = {
-      kd: { text: sessText(kd), tip: ready ? tr("live.sessKdTip", "Kills ÷ deaths this session: {kills} ÷ {deaths}. Raw, no rounding.", { kills: sKills, deaths: sessionDeaths }) : few },
-      inf: { text: inf ? sessText(inf.share * 100) + "%" : "–", tip: ready ? tr("live.sessInfTip", "Foot kills ÷ classified kills this session: {foot} of {total}. Vehicle seats, MANA turrets and Glaive are not foot. Raw, no rounding.", { foot: inf ? inf.foot : 0, total: inf ? inf.total : 0 }) : few },
-      apk: { text: sessText(apk), tip: ready ? tr("live.sessApkTip", "Assists ÷ kills this session: {assists} ÷ {kills}. Same assist XP ids as 🤝 Assists. Raw, no rounding.", { assists: sessAssists, kills: sKills }) : few },
-      zerg: { text: sessText(zerg), tip: ready ? tr("live.sessZergTip", "Session 🪳 Zerg: the lower of session Inflation (your iVi ÷ the mean iVi of the enemies you met) and session Assists, ranked in the population pools. No revive data this session. Raw, no rounding.") : few },
-      g: { text: sessText(g), tip: ready ? tr("live.sessGTip", "Session 🌈 G: (share beaten on K/D) × (share beaten on Brave) × 100, session K/D and session Brave ranked in the population pools. Brave = session kills/min ÷ the fastest enemies' Activity. Raw, no rounding.") : few },
+      kd: { v: aKd != null ? aKd : (ready ? kd : null), anchored: aKd != null, tip: aKd != null ? tr("live.sessKdTip", "Lifetime K/D {life}, nudged by this session ({kills} kills, {deaths} deaths). Anchored — each fight moves it a little. Raw, no rounding.", { life: sessText(lifeKd), kills: sKills, deaths: sessionDeaths }) : ready ? tr("live.sessKdTipPlain", "Kills ÷ deaths this session: {kills} ÷ {deaths}. Raw, no rounding.", { kills: sKills, deaths: sessionDeaths }) : few },
+      inf: { v: aInf != null ? aInf : (ready && inf ? inf.share : null), anchored: aInf != null, tip: aInf != null ? tr("live.sessInfTip", "Lifetime Infantry {life}%, nudged by this session ({foot} foot of {total} classified kills). Vehicle seats, MANA turrets and Glaive are not foot. Anchored — each fight moves it a little. Raw, no rounding.", { life: sessText(lifeInf * 100), foot: inf ? inf.foot : 0, total: inf ? inf.total : 0 }) : ready ? tr("live.sessInfTipPlain", "Foot kills ÷ classified kills this session: {foot} of {total}. Vehicle seats, MANA turrets and Glaive are not foot. Raw, no rounding.", { foot: inf ? inf.foot : 0, total: inf ? inf.total : 0 }) : few },
+      apk: { v: aApk != null ? aApk : (ready ? apk : null), anchored: aApk != null, tip: aApk != null ? tr("live.sessApkTip", "Lifetime Assists {life}, nudged by this session ({assists} assists ÷ {kills} kills). Same assist XP ids as 🤝 Assists. Anchored — each fight moves it a little. Raw, no rounding.", { life: sessText(lifeApk), assists: sessAssists, kills: sKills }) : ready ? tr("live.sessApkTipPlain", "Assists ÷ kills this session: {assists} ÷ {kills}. Same assist XP ids as 🤝 Assists. Raw, no rounding.", { assists: sessAssists, kills: sKills }) : few },
+      zerg: { v: aZerg != null ? aZerg : (ready ? zerg : null), anchored: aZerg != null, tip: aZerg != null ? tr("live.sessZergTip", "Lifetime 🪳 Zerg {life}, nudged by this session's 🪳 Zerg. Session Zerg is the lower of session Inflation (your iVi ÷ the mean iVi of the enemies you met) and session Assists, ranked in the population pools. No revive data this session. Anchored — each fight moves it a little. Raw, no rounding.", { life: sessText(lifeZerg) }) : ready ? tr("live.sessZergTipPlain", "Session 🪳 Zerg: the lower of session Inflation (your iVi ÷ the mean iVi of the enemies you met) and session Assists, ranked in the population pools. No revive data this session. Raw, no rounding.") : few },
+      g: { v: aG != null ? aG : (ready ? g : null), anchored: aG != null, tip: aG != null ? tr("live.sessGTip", "Lifetime 🌈 G {life}, nudged by this session's 🌈 G. Session G is (share beaten on K/D) × (share beaten on Brave) × 100, session K/D and session Brave ranked in the population pools. Brave = session kills/min ÷ the fastest enemies' Activity. Anchored — each fight moves it a little. Raw, no rounding.", { life: sessText(lifeG) }) : ready ? tr("live.sessGTipPlain", "Session 🌈 G: (share beaten on K/D) × (share beaten on Brave) × 100, session K/D and session Brave ranked in the population pools. Brave = session kills/min ÷ the fastest enemies' Activity. Raw, no rounding.") : few },
     };
     for (const id of ["kd", "inf", "apk", "zerg", "g"]) {
       const el = sessValEls[id];
       if (!el) continue;
-      const text = `${sessLabel(id)} ${vals[id].text}`;
+      const v = vals[id].v;
+      const text = id === "inf" ? `${sessLabel(id)} ${v != null ? sessText(v * 100) + "%" : "–"}` : `${sessLabel(id)} ${sessText(v)}`;
       if (el.textContent !== text) el.textContent = text;
       el.title = vals[id].tip;
     }
@@ -1160,14 +1191,22 @@ function start() {
       }
     }
     // 🎲 Live luck (owner 2026-11-08): raw value, no rounding — watch it move.
+    // Anchored on the lifetime luck (W=100 fights): the value starts at the
+    // lifetime number and creeps with each fight, so a few deaths can't swing
+    // it ±8. Without an anchor it is the plain window value, floored at 10.
     if (luckDirty) {
       const myIvi = me && me.cached && me.cached.adjs;
-      const r = liveLuck(luckEvents, myIvi, duelFit);
+      const raw = liveLuckRaw(luckEvents, myIvi, duelFit);
+      const lifeGap = lifeLuckGapPp();
+      const gap = raw && lifeGap != null ? anchorGap(raw.gapPp, raw.n, lifeGap, SESS_ANCHOR_W) : null;
+      const r = gap != null ? { ...raw, gapPp: gap } : liveLuck(luckEvents, myIvi, duelFit);
       const text = r ? luckText(r.gapPp) : "–";
       if (luckEl && text !== lastLuck) {
         luckEl.textContent = text;
         luckEl.title = r
-          ? tr("live.luckTip", "Kills vs what your iVi predicted over your last {n} fights: got {act}%, expected {exp}%. Positive = luckier than expected. Raw value, no rounding.", { n: r.n, act: (r.act * 100).toFixed(1), exp: (r.exp * 100).toFixed(1) })
+          ? (gap != null
+            ? tr("live.luckTip", "Lifetime luck {life}; this session over your last {n} fights: got {act}%, expected {exp}%. Anchored — each fight moves it a little. Raw value, no rounding.", { life: luckText(lifeGap), n: r.n, act: (r.act * 100).toFixed(1), exp: (r.exp * 100).toFixed(1) })
+            : tr("live.luckTipPlain", "Kills vs what your iVi predicted over your last {n} fights: got {act}%, expected {exp}%. Positive = luckier than expected. Raw value, no rounding.", { n: r.n, act: (r.act * 100).toFixed(1), exp: (r.exp * 100).toFixed(1) }))
           : tr("live.luckFew", "Too few fights yet — the number shows after {n} fights.", { n: LIVE_LUCK_MIN });
         lastLuck = text;
       }

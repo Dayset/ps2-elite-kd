@@ -4,9 +4,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { traitPools } from "../trait-scores.mjs";
 import {
-  SESS_MIN_KILLS, sessionReady, sessionKd, isFootWeapon, sessionInf,
+  SESS_MIN_KILLS, SESS_ANCHOR_W, sessionReady, sessionKd, isFootWeapon, sessionInf,
   sessionApk, sessionInflation, quantile, sessionBrave, sessionZerg,
-  sessionG, sessText,
+  sessionG, sessText, anchorValue,
 } from "../live-session.mjs";
 
 // Catalog stub: items[id] = [name, category, ?, image].
@@ -113,4 +113,18 @@ test("sessText: raw shortest-round-trip string, ∞ stays ∞", () => {
   assert.equal(sessText(0.6000000000000001), "0.6000000000000001");
   assert.equal(sessText(Infinity), "∞");
   assert.equal(sessText(null), "–");
+});
+
+test("anchorValue: lifetime counts as W observations, first session observation moves it ~1/(W+1)", () => {
+  assert.equal(SESS_ANCHOR_W, 100);
+  // K/D: lifetime 2.0, session 10 kills / 0 deaths → (100×2 + 10)/100 = 2.1 (finite — no ∞).
+  assert.ok(Math.abs(anchorValue(2, 10, 0) - 2.1) < 1e-12);
+  // K/D: lifetime 2.0, session 10 kills / 10 deaths → (200 + 10)/110 ≈ 1.909.
+  assert.ok(Math.abs(anchorValue(2, 10, 10) - 210 / 110) < 1e-12);
+  // Infantry share: lifetime 0.9, session 3 foot of 4 → (90 + 3)/104 ≈ 0.894.
+  assert.ok(Math.abs(anchorValue(0.9, 3, 4) - 93 / 104) < 1e-12);
+  // As the session grows the anchor washes out: 100 session deaths at K/D 1 → (200 + 100)/200 = 1.5.
+  assert.ok(Math.abs(anchorValue(2, 100, 100) - 1.5) < 1e-12);
+  assert.equal(anchorValue(null, 10, 10), null);
+  assert.equal(anchorValue(2, 10, -1), null);
 });

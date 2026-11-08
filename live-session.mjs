@@ -33,6 +33,33 @@ import { zergScore } from "./trait-scores.mjs?v=20261027-z79";
 
 export const SESS_MIN_KILLS = 10;
 
+// Anchor weight, in observations — the same W as the 🎲 luck (LUCK_ANCHOR_W
+// in live-luck.mjs): the lifetime value counts as this many observations
+// already played, so the first session observation moves the displayed value
+// by ~1/(W+1) of the way. No waiting for a window to fill — the value shows
+// from the first fight, starting at the lifetime number, and the session's
+// own performance takes over as it grows. The "100" is just the anchor, not
+// a threshold: nothing waits for 100 live kills.
+export const SESS_ANCHOR_W = 100;
+
+/**
+ * Anchor a live value on its lifetime value: (weight × lifetime + sessionSum)
+ * ÷ (weight + sessionN). lifetime = the player's stored value, sessionSum =
+ * the session's accumulated numerator, sessionN = the session's denominator
+ * (observation count). For ratios this is the pseudo-count form — the
+ * lifetime ratio counts as `weight` pseudo-observations (e.g. K/D: the
+ * lifetime K/D counts as W pseudo-deaths with W×K/D pseudo-kills, so an
+ * undefeated session stays finite). For scores (🪳 Zerg, 🌈 G) it is a blend:
+ * pass sessionSum = sessionValue × sessionN. Returns null on a missing
+ * anchor or non-finite inputs; the caller decides when the session has
+ * started contributing.
+ */
+export function anchorValue(lifetime, sessionSum, sessionN, weight = SESS_ANCHOR_W) {
+  if (!Number.isFinite(lifetime) || !Number.isFinite(sessionSum) || !Number.isFinite(sessionN)) return null;
+  if (!Number.isFinite(weight) || weight < 0 || sessionN < 0) return null;
+  return (weight * lifetime + sessionSum) / (weight + sessionN);
+}
+
 export function sessionReady(kills) {
   return Number.isFinite(kills) && kills >= SESS_MIN_KILLS;
 }
