@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { slotOf, canon, SLOTS, BURSTS, simParams, simulate, compareBursts, sprayPattern, rng, burstStats, ADS_DEFAULT, ATTACHMENTS, descEffects, attEffects } from "../weapon-sim.mjs";
+import { slotOf, canon, SLOTS, BURSTS, simParams, simulate, compareBursts, sprayPattern, rng, burstStats, burstAnalysis, deepTimings, ADS_DEFAULT, ATTACHMENTS, descEffects, attEffects, hitZone, TARGET } from "../weapon-sim.mjs";
 import { fpsFireRateDrop } from "../weapons-model.mjs";
 import { toProfile } from "../replay/weapons.mjs";
 
@@ -162,6 +162,7 @@ test("more wiki attachments: MPL, Weighted Receiver, Smart-Choke, Heavy Magazine
   const hm = simParams(AR, FM, STATES, { aim: "hip", stance: "standStill", attachments: ["Heavy Magazine"] });
   assert.ok(Math.abs(hm.cofMin - base.cofMin * 1.2) < 1e-9);
   assert.equal(simParams(AR, FM, STATES, { attachments: ["KCAP Ammunition"] }).profile.hsMult, AR.hsMult - 0.5);
+  assert.equal(simParams(AR, FM, STATES, { attachments: ["KCAP Ammunition"] }).profile.legMult, 1.2, "KCAP flips legs to 1.2x");
   const sg = { ...FM, pellet_spread: 2 };
   assert.equal(simParams(AR, sg, STATES, { aim: "ads", attachments: ["Smart-Choke"] }).pelletSpread, 1.5);
   assert.equal(simParams(AR, sg, STATES, { aim: "hip", attachments: ["Smart-Choke"] }).pelletSpread, 2.5);
@@ -171,6 +172,28 @@ test("more wiki attachments: MPL, Weighted Receiver, Smart-Choke, Heavy Magazine
   assert.equal(simParams(AR, FM, STATES, { aim: "ads", attachments: ["Muzzle Brake"] }).vMin, simParams(AR, FM, STATES, { aim: "ads", attachments: ["Compensator"] }).vMin);
   assert.equal(slotOf("Heavy Magazine"), "ammo");
   assert.equal(slotOf("MPL"), "rail");
+});
+
+test("legs: the lower body box is a leg zone at 0.9x, KCAP flips it to 1.2x", () => {
+  assert.equal(TARGET.legTop, -0.3, "the waist splits torso from legs");
+  assert.equal(hitZone(0, 0.45), "head");
+  assert.equal(hitZone(0, 0), "body");
+  assert.equal(hitZone(0, -0.29), "body");    // just above the waist
+  assert.equal(hitZone(0, -0.31), "leg");     // just below it
+  assert.equal(hitZone(0, -1.2), "leg");
+  assert.equal(hitZone(0, -1.21), null);
+  assert.equal(hitZone(0.31, -0.8), null);
+  // a shot aimed at the legs deals leg damage: 7 shots at 10 m (7 x 150.3), where the torso takes 6
+  const still = { cofMin: 0, cofMax: 0, bloom: 0, vMin: 0, vMax: 0, hMin: 0, hMax: 0, angMin: 0, angMax: 0 };
+  const legP = { ...simParams(AR, FM, STATES, { aim: "ads", aimX: 0, aimY: -0.8 }), ...still };
+  const legRun = simulate(legP, { burst: 1, distance: 10, hp: 1000 }, rng(1), true);
+  assert.equal(legRun.fired, 7);
+  assert.ok(legRun.shots.every((s) => s.zone === "leg"));
+  const bodyP = { ...simParams(AR, FM, STATES, { aim: "ads" }), ...still };
+  assert.equal(simulate(bodyP, { burst: 1, distance: 10, hp: 1000 }, rng(1)).fired, 6);
+  // KCAP at the legs: 5 shots (5 x 200.4 = 1002)
+  const kcapP = { ...simParams(AR, FM, STATES, { aim: "ads", aimX: 0, aimY: -0.8, attachments: ["KCAP Ammunition"] }), ...still };
+  assert.equal(simulate(kcapP, { burst: 1, distance: 10, hp: 1000 }, rng(1)).fired, 5);
 });
 
 test("Unstable (1.2x headshot, bigger bullets) and Disruptor (20 % of the damage drained away)", () => {
@@ -213,7 +236,7 @@ test("aim: accuracy 0 never hits, hsr 1 aims all at the head, compensation shrin
   assert.ok(run({ acc: 0.0001, hsr: 0 }, 100).every((s) => !s.zone));          // a shot misses with probability 1 - accuracy
   assert.ok(run({ acc: 0.0001, hsr: 0 }, 1).every((s) => !s.zone));
   assert.ok(run({ acc: 1, hsr: 0, aimTarget: "head" }).every((s) => s.zone === "head"));   // aim at the head: every shot on it
-  assert.ok(run({ acc: 1, hsr: 0, aimY: -0.9 }).every((s) => s.zone === "body"));          // aim at the legs: the body box
+  assert.ok(run({ acc: 1, hsr: 0, aimY: -0.9 }).every((s) => s.zone === "leg"));           // aim at the legs: the leg zone
   assert.ok(run({ acc: 1, hsr: 0, aimX: 0.5, aimY: -0.9 }).every((s) => !s.zone));         // beside the body: misses
   assert.ok(run({ acc: 1, hsr: 1, aimY: -0.9 }).every((s) => s.zone === "head"));          // legs aimed, headshot chance: the head
   assert.ok(run({ acc: 0.7, hsr: 1 }, 20).some((s) => s.zone === "head"));    // head aim still lands heads with imperfect aim
@@ -236,4 +259,67 @@ test("Census descriptions give per-weapon magazine, slug, flechette and capsulat
   const c = simParams(P, {}, [], { attachments: ["Capsulate Ammunition"], attDesc: { "Capsulate Ammunition": "reduces magazine size by 4." } });
   assert.deepEqual([c.pellets, c.mag, c.profile.dmgMax], [2, 2, 360]);
   assert.equal(attEffects("Mystery Part", "does something", "X"), null);
+});
+
+test("burst analysis: 20 shots, zones sum to the total, expected damage adds up, later shots decay", () => {
+  const P = simParams(AR, FM, STATES, { aim: "ads", stance: "standMove" });
+  const rows = burstAnalysis(P, { distance: 10, runs: 300, seed: 1 });
+  assert.equal(rows.length, 20);
+  let cumul = 0;
+  for (let i = 0; i < 20; i++) {
+    const r = rows[i];
+    assert.equal(r.shot, i + 1);
+    assert.ok(Math.abs(r.body + r.head + r.leg - r.total) < 1e-12);
+    assert.ok(r.total <= 1 && r.total >= 0, `shot ${r.shot} total ${r.total}`);
+    assert.ok(Math.abs(r.expDmg - (r.body * 167 + r.head * 334 + r.leg * 150.3)) < 1e-9, `shot ${r.shot} expDmg ${r.expDmg}`);
+    cumul += r.expDmg;
+    assert.ok(Math.abs(r.cumul - cumul) < 1e-9, `shot ${r.shot} cumul ${r.cumul}`);
+  }
+  assert.ok(rows[0].total > 0.9, `first shot total ${rows[0].total}`);
+  assert.ok(rows[19].total < rows[0].total, `last ${rows[19].total} vs first ${rows[0].total}`);
+  assert.deepEqual(burstAnalysis(P, { distance: 10, runs: 300, seed: 1 }), rows, "same seed, same table");
+});
+
+test("burst stats carry the median shots to kill", () => {
+  const P = simParams(AR, FM, STATES, { aim: "ads", stance: "standMove", acc: 1, hsr: 0 });
+  const s = burstStats(P, { burst: 1, distance: 10, hp: 1000, runs: 60, seed: 1 });
+  assert.equal(typeof s.medianShots, "number");
+  assert.ok(s.medianShots >= 1 && s.medianShots <= 30, `medianShots ${s.medianShots}`);
+  const c = compareBursts(P, { distance: 10, hp: 1000, runs: 60, seed: 1 });
+  assert.ok(c.rows.every((r) => typeof r.medianShots === "number" || r.medianShots == null));
+});
+
+test("deep timings: Dorf's click-down, release delays and pulldown", () => {
+  const P = simParams(AR, FM, STATES, { aim: "ads", stance: "standMove" });
+  const T = deepTimings(P, { fps: 150, resY: 2160, fov: 74, zoom: 1.35 });
+  assert.equal(T.recoil.length, 20);
+  assert.equal(T.cof.length, 20);
+  assert.equal(T.pull.length, 20);
+  const near = (a, b, e = 1e-9) => assert.ok(Math.abs(a - b) <= e, `${a} vs ${b}`);
+  // click-down: one frame per shot (1000/150 ms) plus the gaps between them (100 ms at 600 rpm)
+  near(T.recoil[0].down, 1000 / 150);
+  near(T.recoil[1].down, 100 + 2 * 1000 / 150);
+  near(T.recoil[19].down, 19 * 100 + 20 * 1000 / 150);
+  for (let i = 0; i < 20; i++) {
+    near(T.recoil[i].total, T.recoil[i].down + T.recoil[i].release, 1e-9);
+    near(T.cof[i].total, T.cof[i].down + T.cof[i].release, 1e-9);
+    assert.equal(T.cof[i].down, T.recoil[i].down, "both tables share the click-down");
+    assert.ok(T.recoil[i].release >= 100, "the release delay includes the refire");
+    if (i) {
+      assert.ok(T.recoil[i].release >= T.recoil[i - 1].release, "recoil release never shrinks");
+      assert.ok(T.cof[i].release >= T.cof[i - 1].release, "CoF release never shrinks");
+    }
+  }
+  // the horizontal kicks of the first two shots are all that accumulate: the recoil release plateaus from burst 3
+  assert.equal(T.recoil[2].release, T.recoil[19].release);
+  assert.ok(T.recoil[1].release > T.recoil[0].release, "the second shot adds one horizontal kick");
+  // pulldown: the mean kick (0.5 deg here), the first shot's extra kick, pixels from screen/FOV/zoom, speed per second
+  near(T.pull[0].deg, -0.5);
+  near(T.pull[0].px, (2160 / 74) * 1.35 * -0.5, 1e-9);
+  near(T.pull[0].speed, T.pull[0].px / 0.1, 1e-9);
+  near(T.pull[0].angle, 0);
+  const fsr = simParams(AR, { ...FM, recoil_first_shot_modifier: 1.5 }, STATES, { aim: "ads", stance: "standMove" });
+  const Tf = deepTimings(fsr);
+  near(Tf.pull[0].deg, -0.75);
+  near(Tf.pull[1].deg, -0.5);
 });

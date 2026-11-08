@@ -20,7 +20,7 @@
   <link rel="preload" href="assets/weapons/catalog.json" as="fetch" crossorigin />
   <link rel="preload" href="assets/weapons/profiles.json" as="fetch" crossorigin />
   <link rel="stylesheet" href="styles.css?v=20261031-fr1" />
-  <link rel="stylesheet" href="weapon-compare.css?v=20261107-wcfps1" />
+  <link rel="stylesheet" href="weapon-compare.css?v=20261107-merge1" />
 </head>
 <body class="site-page">
   <main class="wc-wrap">
@@ -119,7 +119,12 @@
       </div>
       <div id="wcSimSum"></div>
       <div id="wcSim" class="wc-simlist"></div>
-      <p class="wc-dim" data-i18n="wc.sim.assume">Aiming uses each weapon's own aim-down-sights fire mode from Census: its cone per stance, bloom and recoil. Only one attachment per slot can be fitted (the wiki lists Heavy Barrel, Short Barrel, grips, lasers and Extended Magazine as rail attachments). Census has no attachment numbers: the effects (Compensator, Suppressor, grips, lasers, Heavy and Short Barrel, Soft Point, High Velocity) are typed in from the PlanetSide 2 wiki, patch 2023-02-08 or later. Bullet speed changes, Extended Magazine, slugs and flechettes are not modelled. The target is a head circle and a body box; the shot cone is filled evenly.</p>
+      <p class="wc-dim" data-i18n="wc.sim.assume">Aiming uses each weapon's own aim-down-sights fire mode from Census: its cone per stance, bloom and recoil. Only one attachment per slot can be fitted (the wiki lists Heavy Barrel, Short Barrel, grips, lasers and Extended Magazine as rail attachments). Census has no attachment numbers: the effects (Compensator, Suppressor, grips, lasers, Heavy and Short Barrel, Soft Point, High Velocity) are typed in from the PlanetSide 2 wiki, patch 2023-02-08 or later. Bullet speed changes, Extended Magazine, slugs and flechettes are not modelled. The target is a head circle, a body box and legs below it (legs take 0.9× damage); the shot cone is filled evenly.</p>
+    </section>
+
+    <section class="wc-panel" aria-labelledby="wcDeepH">
+      <div class="wc-panel-head"><h2 id="wcDeepH" data-i18n="wc.deep.title">Deep dive: one weapon, the way EmperorDorf's tables show it</h2></div>
+      <div id="wcDeep"></div>
     </section>
 
     <details class="wc-panel wc-how">
@@ -146,6 +151,6 @@
     <div class="wc-zoomhead"><b id="wcZoomH"></b><button type="button" class="wc-btn" id="wcZoomClose" data-i18n="wc.sim.zoomClose">Close</button></div>
     <div id="wcZoomBody"></div>
   </dialog>
-  <script type="module" src="weapon-compare.mjs?v=20261107-wcfps1"></script>
+  <script type="module" src="weapon-compare.mjs?v=20261107-merge1"></script>
 </body>
 </html>

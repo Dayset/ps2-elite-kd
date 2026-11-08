@@ -11,7 +11,7 @@
 // the cone is filled. Those are constants here, labelled on the page.
 //
 // Units: angles in degrees, distances in metres, time in ms.
-import { hitDamage } from "./weapons-model.mjs?v=20261107-wcfps1";
+import { hitDamage } from "./weapons-model.mjs?v=20261107-merge1";
 
 export const STANCES = Object.freeze(["crouchStill", "standStill", "crouchMove", "standMove"]);
 // Census player_state ids: 0 Standing, 1 Crouching, 2 Running, 5 CrouchWalking
@@ -21,7 +21,7 @@ export const STATE_ID = Object.freeze({ standStill: 0, crouchStill: 1, standMove
 export const ADS_DEFAULT = Object.freeze({ crouchStill: 0.15, standStill: 0.15, crouchMove: 0.35, standMove: 0.4, bloomRatio: 0.5 });
 
 /** Target: aim point = chest centre. Head circle + body rectangle, metres, y up. */
-export const TARGET = Object.freeze({ headX: 0, headY: 0.45, headR: 0.15, halfW: 0.3, top: 0.3, bottom: -1.2 });
+export const TARGET = Object.freeze({ headX: 0, headY: 0.45, headR: 0.15, halfW: 0.3, top: 0.3, legTop: -0.3, bottom: -1.2 });
 
 export const ASSUMPTIONS = Object.freeze([
   "target-size", "cone-uniform", "kick-after-shot", "horizontal-tolerance", "no-compensation",
@@ -90,7 +90,7 @@ export const ATTACHMENTS = Object.freeze({
   "Disruptor Ammunition": { dmgMul: 0.8 },                  // 20 % of the damage becomes a shield / energy drain (not modelled), so health damage x0.8
   "Explosive Ammunition": { dmgAdd: -125, splash: 100, splashR: 2 }, // direct damage -125, plus 100 splash within 2 m (no headshot bonus on the splash)
   "Sabot Ammunition": { rofMul: 0.9 },                      // rate of fire -10 % (piercing is not modelled)
-  "KCAP Ammunition": { hsDelta: -0.5 },                     // headshot multiplier 2x -> 1.5x (leg damage is not modelled)
+  "KCAP Ammunition": { hsDelta: -0.5, legSet: 1.2 },     // headshot multiplier 2x -> 1.5x; legs 0.9x -> 1.2x
   "Soft Point Ammunition": { maxRange: 5 },
   "High Velocity Ammunition": { maxRange: -2, minRange: 20 },
   "Single-Fire Barrel": { vRecoil: 0.8 },
@@ -162,11 +162,11 @@ function adjustRanges(profile, A, cat) {
   const sum = (k) => A.reduce((m, a) => m + (a[k] || 0), 0);
   const dMax = sum("maxRange");
   const dMin = A.reduce((m, a) => m + (cat === "SMG" && a.minRangeSmg != null ? a.minRangeSmg : a.minRange || 0), 0);
-  const dSet = A.find((a) => a.dmgSet != null), dAdd = sum("dmgAdd"), dHs = sum("hsDelta"), hsSet = A.find((a) => a.hsSet != null), dm = A.reduce((m, a) => m * (a.dmgMul ?? 1), 1);
-  if (!dMax && !dMin && !dHs && !hsSet && dm === 1 && !dAdd && !dSet && rm === 1) return profile;
+  const dSet = A.find((a) => a.dmgSet != null), dAdd = sum("dmgAdd"), dHs = sum("hsDelta"), hsSet = A.find((a) => a.hsSet != null), legSet = A.find((a) => a.legSet != null), dm = A.reduce((m, a) => m * (a.dmgMul ?? 1), 1);
+  if (!dMax && !dMin && !dHs && !hsSet && !legSet && dm === 1 && !dAdd && !dSet && rm === 1) return profile;
   const far = profile.rangeMinDmg > 0 ? Math.max(0, profile.rangeMinDmg + dMin) : profile.rangeMinDmg;
   const dSetMin = A.find((a) => a.dmgSetMin != null);
-  return { ...profile, rangeMaxDmg: Math.max(0, profile.rangeMaxDmg * rm + dMax), rangeMinDmg: far * rm, hsMult: hsSet ? hsSet.hsSet : Math.max(1, profile.hsMult + dHs), dmgMax: Math.max(1, (dSet ? dSet.dmgSet : profile.dmgMax) * dm + dAdd), dmgMin: Math.max(1, (dSetMin ? dSetMin.dmgSetMin : dSet ? dSet.dmgSet : profile.dmgMin) * dm + dAdd) };
+  return { ...profile, rangeMaxDmg: Math.max(0, profile.rangeMaxDmg * rm + dMax), rangeMinDmg: far * rm, hsMult: hsSet ? hsSet.hsSet : Math.max(1, profile.hsMult + dHs), legMult: legSet ? legSet.legSet : profile.legMult, dmgMax: Math.max(1, (dSet ? dSet.dmgSet : profile.dmgMax) * dm + dAdd), dmgMin: Math.max(1, (dSetMin ? dSetMin.dmgSetMin : dSet ? dSet.dmgSet : profile.dmgMin) * dm + dAdd) };
 }
 
 /**
@@ -249,10 +249,11 @@ export function rng(seed) {
 const RAD = Math.PI / 180;
 const rnd = (r, a, b) => a + (b - a) * r();
 
-function hitZone(x, y, r = 0) {
+export function hitZone(x, y, r = 0) {
   const dx = x - TARGET.headX, dy = y - TARGET.headY, hr = TARGET.headR + r;
   if (dx * dx + dy * dy <= hr * hr) return "head";
-  if (Math.abs(x) <= TARGET.halfW + r && y <= TARGET.top + r && y >= TARGET.bottom - r) return "body";
+  // the body box is the torso down to the waist (legTop) and the legs below it
+  if (Math.abs(x) <= TARGET.halfW + r && y <= TARGET.top + r && y >= TARGET.bottom - r) return y < TARGET.legTop ? "leg" : "body";
   return null;
 }
 
@@ -267,7 +268,7 @@ function hitZone(x, y, r = 0) {
  */
 export function simulate(P, { burst = Infinity, distance = 20, hp = 1000 }, r, keepShots = false, rv = r, rh = r) {
   distance = Math.max(0.5, distance);   // point-blank still has a distance (also keeps 0 m from dividing by zero)
-  const { body, head } = hitDamage(P.profile, distance);
+  const { body, head, leg } = hitDamage(P.profile, distance);
   const tan = Math.tan;
   const delay = P.delayMs || 0, burstN = P.burstN > 1 ? P.burstN : 1, refire = P.refireMs ?? P.gapMs;
   let t = delay, ox = 0, oy = 0, hx = 0, cof = P.cofMin, dealt = 0, inBurst = 0, inPull = 0, magLeft = P.mag, fired = 0;
@@ -305,7 +306,7 @@ export function simulate(P, { burst = Infinity, distance = 20, hp = 1000 }, r, k
       const x = distance * tan(ax * RAD), y = distance * tan(ay * RAD);
       const zone = hitZone(x, y, P.bulletRadius || 0);
       if (keepShots) shots.push({ i: fired, t, x, y, zone });
-      if (zone) dealt += (zone === "head" ? head : body) + (P.blastRatio ? body * P.blastRatio : 0);
+      if (zone) dealt += (zone === "head" ? head : zone === "leg" ? leg : body) + (P.blastRatio ? body * P.blastRatio : 0);
       if (P.splash && (zone || Math.hypot(x - TARGET.headX, y) <= P.splashR)) dealt += P.splash;
     }
     fired++; inBurst++; inPull++; magLeft--;
@@ -345,13 +346,79 @@ const quant = (sorted, q) => (sorted.length ? sorted[Math.min(sorted.length - 1,
 /** Monte Carlo over `runs` kills for one burst length. */
 export function burstStats(P, { burst, distance, hp, runs = 600, seed = 1 }) {
   const r = rng(seed * 7919 + (Number.isFinite(burst) ? burst : 99));
-  const kills = [];
+  const kills = [], fired = [];
   for (let i = 0; i < runs; i++) {
     const res = simulate(P, { burst, distance, hp }, r);
-    if (res.ttk != null) kills.push(res.ttk);
+    if (res.ttk != null) { kills.push(res.ttk); fired.push(res.fired); }
   }
-  kills.sort((a, b) => a - b);
-  return { burst, killRate: kills.length / runs, median: quant(kills, 0.5), p10: quant(kills, 0.1), p90: quant(kills, 0.9) };
+  kills.sort((a, b) => a - b); fired.sort((a, b) => a - b);
+  return { burst, killRate: kills.length / runs, median: quant(kills, 0.5), p10: quant(kills, 0.1), p90: quant(kills, 0.9), medianShots: quant(fired, 0.5) };
+}
+
+/**
+ * Dorf's Advanced Timings, from his workbook's formulas (Main rows 371-427, Weapon Surgeon rows 54-66):
+ * for each burst length 1..20, the click-down duration, the release delay for a full recoil recovery
+ * and for a full CoF recovery, and the total cycle time; plus, per shot, how far to pull down (degrees
+ * and pixels) and how fast to pull (px/s). The release delays assume perfect counteraction: the regular
+ * vertical kick is pulled back (his CounterRecoil = 1), so only the horizontal kicks of the first two
+ * shots accumulate (MaxKicks = 2), and the first shot's extra kick is not countered (CounterFSRM = 0).
+ * His pulldown numbers are one random draw per shot; ours are the expected values (the mean kick),
+ * which is the number a player can actually aim for. The `+ recRate` term in the recoil release delay
+ * is his sheet's own quirk (the recovery rate, in degrees per second, added as milliseconds) —
+ * reproduced, not fixed.
+ *
+ * Inputs: fps = the frame rate's 1% lows (one frame per shot in the click-down), resY / fov / zoom for
+ * the degrees-to-pixels conversion ((resY / fov) * zoom px per degree).
+ */
+export function deepTimings(P, { fps = 150, resY = 2160, fov = 74, zoom = 1.35 } = {}) {
+  const frame = 1000 / Math.max(1, fps);
+  const gap = P.gapMs;
+  const maxH = Math.max(Math.abs(P.hMax), Math.abs(P.hMin));
+  const meanV = (P.vMin + P.vMax) / 2;
+  const firstKick = Math.hypot(P.first * P.vMax, maxH) / P.recRate * 1000;
+  const recoil = [], cof = [], pull = [];
+  for (let n = 1; n <= 20; n++) {
+    // hold: the gaps between the shots (a burst weapon waits refireMs between bursts) plus one frame per shot
+    const down = (n - 1) * gap + Math.floor((n - 1) / P.burstN) * Math.max(0, P.refireMs - gap) + n * frame;
+    const relRecoil = Math.ceil(gap + P.recDelay + firstKick + Math.min(n - 1, 2) * maxH / P.recRate * 1000 + P.recRate);
+    const relCof = Math.ceil(gap + Math.min(n * P.bloom, P.cofMax - P.cofMin) / P.cofRecRate * 1000);
+    recoil.push({ n, down, release: relRecoil, total: down + relRecoil });
+    cof.push({ n, down, release: relCof, total: down + relCof });
+  }
+  const pxPerDeg = (resY / Math.max(1, fov)) * zoom;
+  const angle = (P.angMin + P.angMax) / 2;
+  for (let s = 1; s <= 20; s++) {
+    const deg = -(s === 1 ? meanV * P.first : meanV);
+    const px = pxPerDeg * deg;
+    pull.push({ shot: s, deg, px, angle, speed: px / (gap / 1000) });
+  }
+  return { recoil, cof, pull };
+}
+
+/**
+ * Per-shot hit chances over a burst fired in quick succession — Dorf's Burst Analysis, but from our
+ * simulator: `runs` bursts of 20 shots, geometry only (acc 1, hsr 0, so the cone and the recoil decide
+ * every hit), at `distance`, with the health so high no burst kills early. Each row is one shot in the
+ * burst: the share of bursts that hit body / head / leg, the share that hit at all, the expected damage
+ * of that shot (float hitDamage at the distance) and the cumulative expected damage. As the burst goes
+ * on, the kick and the bloom push the chances down and sideways — that decay is the table.
+ */
+export function burstAnalysis(P, { distance = 20, hp = 1e9, runs = 300, seed = 1, shots = 20 } = {}) {
+  const { body, head, leg } = hitDamage(P.profile, distance);
+  const geo = { ...P, acc: 1, hsr: 0 };
+  const counts = Array.from({ length: shots }, () => ({ body: 0, head: 0, leg: 0 }));
+  const r = rng(seed * 7919 + 7);
+  for (let b = 0; b < runs; b++) {
+    const res = simulate(geo, { burst: shots, distance, hp }, r, true);
+    for (const s of res.shots) if (s.i < shots && s.zone) counts[s.i][s.zone]++;
+  }
+  let cumul = 0;
+  return counts.map((c, i) => {
+    const pBody = c.body / runs, pHead = c.head / runs, pLeg = c.leg / runs;
+    const expDmg = pBody * body + pHead * head + pLeg * leg;
+    cumul += expDmg;
+    return { shot: i + 1, body: pBody, head: pHead, leg: pLeg, total: pBody + pHead + pLeg, expDmg, cumul };
+  });
 }
 
 /** All strategies; `best` = lowest median among those that kill at least half the time. */

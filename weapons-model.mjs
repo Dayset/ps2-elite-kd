@@ -57,21 +57,25 @@ export function effectiveRpm(p) {
 }
 
 /**
- * Low frame rates slow the fire rate. Fitted curve from measurements (fire rate 600 rpm in the
- * chart: 30 FPS -> -24.6 %, 60 FPS -> -13.5 %, 120 FPS -> -6.7 %, 210 FPS -> -5.3 %):
- *   decrease = b1 * e^(b2 * fps) + b3 * rpm
- * with b1 = 0.451, b2 = -0.028, b3 = 8.56e-5. The b3 term is the floor: faster weapons lose
- * more even at high frame rates (600 rpm -> 5.1 %, 1000 rpm -> 8.6 %). The fit covers ~30-210 FPS;
- * the slider clamps to 30-500 FPS, so outside the fitted range the curve is just extended flat.
+ * Low frame rates slow the fire rate. The chart's data ends at ~210 FPS, and the fitted
+ * exponential-plus-floor curve levels off at 5.1 % (600 rpm) — but a constant loss at
+ * arbitrarily high frame rates is physically implausible, and the flattening is treated as
+ * measurement error in the chart (the 95 % HDI band is too wide to tell it from a continued
+ * decline). The mechanism is frame quantisation: each shot waits for the next frame, so the
+ * fractional loss scales with the fire rate and inversely with the frame rate — a 1/fps law:
+ *   decrease = k * rpm / fps,  k = 0.0132
+ * fitted to the chart's mean curve at 600 rpm (least squares: loss % = 790 / fps).
+ * At 600 rpm: 30 FPS -> 26.4 %, 60 FPS -> 13.2 %, 120 FPS -> 6.6 %, 210 FPS -> 3.8 %,
+ * 500 FPS -> 1.6 % — the loss vanishes as the frame rate rises, as it should. The fps clamp
+ * below is only the slider's range (30-500); the law itself has no floor.
  */
-export const FPS_LIMIT = Object.freeze({ b1: 0.451, b2: -0.028, b3: 8.56e-5, min: 30, max: 500, def: 60 });
+export const FPS_LIMIT = Object.freeze({ k: 0.0132, min: 30, max: 500, def: 60 });
 
 /** Share of the fire rate lost at `fps` for a weapon firing `rpm` rounds per minute (0..0.9). */
 export function fpsFireRateDrop(fps, rpm) {
   if (!(fps > 0) || !(rpm > 0)) return 0;
   const f = Math.min(FPS_LIMIT.max, Math.max(FPS_LIMIT.min, fps));
-  const d = FPS_LIMIT.b1 * Math.exp(FPS_LIMIT.b2 * f) + FPS_LIMIT.b3 * rpm;
-  return Math.min(0.9, Math.max(0, d));
+  return Math.min(0.9, Math.max(0, FPS_LIMIT.k * rpm / f));
 }
 
 /**
@@ -114,11 +118,19 @@ export function damageAt(p, range) {
   return dmgMax + (dmgMin - dmgMax) * k;
 }
 
-/** Whole-number damage of a body / head hit at `range` (the game rounds each hit). */
+/** Legs take 0.9x damage (EmperorDorf's LSM); KCAP ammunition flips them to 1.2x (p.legMult). */
+export const LEG_MULT = 0.9;
+
+/** Damage of a body / head / leg hit at `range`, unrounded: the falloff value accumulates as a
+ * float, the way EmperorDorf's workbook does it. Rounding per hit invents shot-count errors at
+ * falloff boundaries — the Gauss at 56 m is 8 shots (7 x 142.85 = 999.95), not 7 — and the same
+ * boundary can bite any other gun, so nothing rounds. The Math.max guards only keep a hit at 1+. */
 export function hitDamage(p, range) {
-  const body = Math.max(1, Math.round(damageAt(p, range)));
-  const head = Math.max(body, Math.round(damageAt(p, range) * p.hsMult));
-  return { body, head };
+  const base = damageAt(p, range);
+  const body = Math.max(1, base);
+  const head = Math.max(body, base * p.hsMult);
+  const leg = Math.max(1, base * (p.legMult ?? LEG_MULT));
+  return { body, head, leg };
 }
 
 /**
@@ -238,8 +250,69 @@ export function rangeAxis(max = 100, step = 2) {
 }
 
 /**
- * Median-TTK curve over `ranges`. Distributions only change when the rounded
- * damage changes, so results are cached on (body, head).
+ * Histogram of the time to kill from an exact distribution (Dorf's TTK Histogram, exact instead of
+ * sampled): bins of `binMs` ms, each { t, p, cum } — the share of kills whose time falls in the bin
+ * and the cumulative share. The distribution is discrete over shot times, so a bin collects the shots
+ * whose time lands in it; the last bin holds everything past `maxMs` plus the share that never kills.
+ */
+export function ttkHistogram(dist, binMs = 125, maxMs = 3000) {
+  const n = Math.max(1, Math.ceil(maxMs / binMs));
+  const bins = Array.from({ length: n + 1 }, (_, i) => ({ t: i * binMs, p: 0, cum: 0 }));
+  let prev = 0;
+  for (let i = 0; i < dist.cdf.length; i++) {
+    const mass = dist.cdf[i] - prev; prev = dist.cdf[i];
+    const b = dist.ms[i] > maxMs ? n : Math.min(n - 1, Math.floor(dist.ms[i] / binMs));
+    bins[b].p += mass;
+  }
+  bins[n].p += 1 - (dist.cdf[dist.cdf.length - 1] ?? 0);
+  let cum = 0;
+  for (const b of bins) { cum += b.p; b.cum = cum; }
+  return bins;
+}
+
+/**
+ * Histogram of the shots to kill from an exact distribution: [{ k, p, cum }] for k = 1..maxK, plus a
+ * ">maxK" tail that holds the share needing more shots, including the share that never kills.
+ */
+export function stkHistogram(dist, maxK = 25) {
+  const bins = Array.from({ length: maxK + 1 }, (_, i) => ({ k: i + 1, p: 0, cum: 0 }));
+  let prev = 0;
+  for (let i = 0; i < dist.cdf.length; i++) {
+    const mass = dist.cdf[i] - prev; prev = dist.cdf[i];
+    const k = i + 1;
+    bins[k > maxK ? maxK : k - 1].p += mass;
+  }
+  bins[maxK].p += 1 - (dist.cdf[dist.cdf.length - 1] ?? 0);
+  let cum = 0;
+  for (const b of bins) { cum += b.p; b.cum = cum; }
+  return bins;
+}
+
+// Dorf's TTK bands (Weapon Surgeon): Green = the 15th-percentile TTK across his 40-weapon reference
+// set at each distance (CX34:CX55); Yellow = the geometric mean of the class-average TTKs (CW34:CW55 —
+// the live formula behind his stored Yellow values, which are stale past ~50 m and run to 12.8 s at
+// 200 m). The labels Recommended / Not recommended / Avoid are not in the workbook at all; they are
+// our reading of Green / Yellow / above Yellow. Linear interpolation between his 22 distances.
+const DEEP_BAND_RANGES = [1, 3, 5, 7, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100, 125, 150, 175, 200];
+const DEEP_BAND_GREEN = [449.8, 449.8, 449.8, 467.5, 480.0, 540.1, 599.6, 622.3, 656.1, 725.5, 765.1, 813.4, 901.0, 1027.3, 1094.5, 1197.4, 1289.1, 1311.9, 1311.9, 1311.9, 1311.9, 1311.9];
+const DEEP_BAND_YELLOW = [528.5, 528.5, 528.7, 591.7, 628.3, 716.5, 850.4, 944.6, 1044.5, 1167.2, 1316.6, 1455.4, 1579.2, 1801.6, 2047.9, 2228.9, 2379.4, 2497.6, 2849.3, 3407.2, 4177.5, 5878.4];
+export function deepBands(range) {
+  const interp = (arr) => {
+    if (range <= DEEP_BAND_RANGES[0]) return arr[0];
+    for (let i = 1; i < DEEP_BAND_RANGES.length; i++) {
+      if (range <= DEEP_BAND_RANGES[i]) {
+        const f = (range - DEEP_BAND_RANGES[i - 1]) / (DEEP_BAND_RANGES[i] - DEEP_BAND_RANGES[i - 1]);
+        return arr[i - 1] + f * (arr[i] - arr[i - 1]);
+      }
+    }
+    return arr[arr.length - 1];
+  };
+  return { green: interp(DEEP_BAND_GREEN), yellow: interp(DEEP_BAND_YELLOW) };
+}
+
+/**
+ * Median-TTK curve over `ranges`. Distributions only change when the damage changes,
+ * so results are cached on (body, head).
  */
 export function ttkCurve(p, ranges, { acc = 1, hsr = 0, hp = 500, q = 0.5 } = {}) {
   const cache = new Map();
