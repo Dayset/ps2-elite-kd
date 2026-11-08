@@ -17,14 +17,19 @@
 //     round, principled pick.
 // Every row also carries a 🌈 G score (owner 2026-11-08): the gate alone is
 // yes/no, so the order inside each block — and the #1 — comes from the
-// score. It is a rank-sum within the crowd: rank by rkd (high first) +
-// rank by Brave (low first) + rank by Infantry (low first), lowest sum
-// cheesiest. No magic constants, no explosion from Brave near zero (a
-// 0.004 vs 0.024 gap is rank 1 vs rank 8, not a 6x multiplier). It is
-// shown as G%: the share of the crowd with a worse sum — #1 is 99%
-// (cheesier than 99 of 100), the bottom row 0%. Tied sums share the
-// percentage; row order inside a tie is Brave, then rkd. Missing values
-// take the worst rank, so unknown never helps.
+// score. G is scored over the WHOLE population, not the crowd (owner
+// 2026-11-08: "Everyone should be scored with G"): with N the count of
+// players with a K/D and ranks 1 = best on each dimension (K/D high,
+// Brave low, Infantry low),
+//   G = (1 − rkdRank/N) × (1 − braveRank/N) × (1 − infRank/N) × 100,
+// the share of the population you beat on all three at once. Most players
+// sit at 5–20%; the cheesiest near 98%. No magic constants, no explosion
+// from Brave near zero (a 0.004 vs 0.024 gap is rank 1 vs rank 8, not a
+// 6x multiplier). It is shown as G% with two decimals. Ties in G are
+// broken by the rank-sum inside the crowd, then Brave, then rkd. Missing
+// values take the worst rank, so unknown never helps. The same score is
+// the visible 🌈 G column in both tables (after 🧘‍♂️ Pure iVi, before
+// 🪖 Infantry) — one value per player, no extra tag.
 // Means are reported next to medians because the same two Brave outliers
 // drag every mean up — the median is the honest average here.
 // Pure: rows are plain { name, rkd, pvs, inf } objects (rankings.mjs row shape).
@@ -59,6 +64,39 @@ function rankWithin(crowd, key, asc) {
   return ranks;
 }
 
+/**
+ * Population-wide 🌈 G for every row with a K/D: a Map row → g (0–100).
+ * Ranks 1 = best on each dimension — K/D high, Brave low, Infantry low —
+ * over all N rows, missing values taking the shared worst rank N.
+ * G = (1 − rkdRank/N) × (1 − braveRank/N) × (1 − infRank/N) × 100, the
+ * share of the population beaten on all three at once. Tied values get
+ * adjacent ranks (stable sort); the gap is ~1/N, so the score is stable
+ * to well under a hundredth of a percent.
+ */
+export function gScores(rows) {
+  const all = (Array.isArray(rows) ? rows : []).filter((r) => r && fin(r.rkd));
+  const out = new Map();
+  const n = all.length;
+  if (!n) return out;
+  const rankBy = (key, asc) => {
+    const sorted = all.slice().sort((a, b) => {
+      const va = fin(key(a)) ? key(a) : Infinity;
+      const vb = fin(key(b)) ? key(b) : Infinity;
+      return asc ? va - vb : vb - va;
+    });
+    const m = new Map();
+    sorted.forEach((r, i) => m.set(r, fin(key(r)) ? i + 1 : n));
+    return m;
+  };
+  const rkdRank = rankBy((r) => r.rkd, false);
+  const braveRank = rankBy((r) => r.pvs, true);
+  const infRank = rankBy((r) => r.inf, true);
+  for (const r of all) {
+    out.set(r, ((1 - rkdRank.get(r) / n) * (1 - braveRank.get(r) / n) * (1 - infRank.get(r) / n)) * 100);
+  }
+  return out;
+}
+
 /** In the double gate: Brave under the line AND Infantry under the line. Unknown values never pass. */
 export function inCheeseGate(r) {
   return !!r && fin(r.pvs) && r.pvs < CHEESE_BRAVE_OK && fin(r.inf) && r.inf < CHEESE_LOW_INF;
@@ -66,9 +104,10 @@ export function inCheeseGate(r) {
 
 /**
  * Top `top` rows by rkd, in-gate rows first, then the rest, each block
- * ordered by the 🌈 G score (rank-sum, lowest first; ties by Brave, then rkd).
+ * ordered by the 🌈 G score (population product, high first; ties by the
+ * rank-sum inside the crowd, then Brave, then rkd).
  * Returns { rows: [{ name, rkd, brave, inf, g }], edgeIndex, stats }.
- * g is the G% (integer 0–99): the share of the crowd with a worse sum.
+ * g is the population G% (float 0–100, two decimals at render).
  * edgeIndex is where the in-gate block ends (= stats.inCount); it is 0
  * when the gate catches nobody, so the divider always renders at the top.
  */
@@ -79,17 +118,15 @@ export function cheeseList(rows, { top = CHEESE_TOP_N } = {}) {
     .sort((a, b) => b.rkd - a.rkd)
     .slice(0, top);
   const n = crowd.length;
+  const gMap = gScores(all);
   const rkdRank = rankWithin(crowd, (r) => r.rkd, false);
   const braveRank = rankWithin(crowd, (r) => r.pvs, true);
   const infRank = rankWithin(crowd, (r) => r.inf, true);
   const sumOf = (r) => rkdRank.get(r) + braveRank.get(r) + infRank.get(r);
-  const sums = crowd.map(sumOf);
-  const gOf = (r) => {
-    if (!n) return 0;
-    const worse = sums.filter((s) => s > sumOf(r)).length;
-    return Math.floor((100 * worse) / n);
-  };
   const byScore = (a, b) => {
+    const ga = gMap.get(a) ?? 0;
+    const gb = gMap.get(b) ?? 0;
+    if (gb !== ga) return gb - ga;
     const d = sumOf(a) - sumOf(b);
     if (d) return d;
     const ba = fin(a.pvs) ? a.pvs : Infinity;
@@ -108,12 +145,13 @@ export function cheeseList(rows, { top = CHEESE_TOP_N } = {}) {
       rkd: r.rkd,
       brave: fin(r.pvs) ? r.pvs : null,
       inf: fin(r.inf) ? r.inf : null,
-      g: gOf(r),
+      g: gMap.get(r) ?? 0,
     })),
     edgeIndex: inGate.length,
     stats: {
       n: ordered.length,
       inCount: inGate.length,
+      popN: gMap.size,
       meanBrave: meanOf(braves),
       medianBrave: medianOf(braves),
       popMedianBrave: medianOf(popBraves),

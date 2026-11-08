@@ -44,17 +44,19 @@ test("not-cached note points to the main page and escapes the name", () => {
 test("example row: main-table columns, ranks.json values, cards and links on the page", () => {
   const row = findRanksRow(ranks, DEMO_NAME);
   const cells = rowCells(ranks, row);
-  assert.deepEqual(cells.map((c) => c.id), ["adjs", "act", "pvs", "rf", "rkd", "cons", "luck", "apk", "zerg", "pureivi", "inf"]);
+  assert.deepEqual(cells.map((c) => c.id), ["adjs", "act", "pvs", "rf", "rkd", "cons", "luck", "apk", "zerg", "pureivi", "g", "inf"]);
   const by = Object.fromEntries(cells.map((c) => [c.id, c]));
   assert.equal(by.adjs.text, String(Math.max(0, Math.round(row.adjs))));
   assert.equal(by.rkd.text, row.rkd.toFixed(3));
+  assert.equal(by.g.text, "19.50%", "demo G is the population product score");
+  assert.equal(by.g.pct, null, "G is a share, no better/worse bar");
   for (const c of cells) if (c.pct != null) assert.ok(c.pct >= 0 && c.pct <= 99, c.id + " percentile");
   assert.equal(by.inf.pct, null, "infantry is a share, no better/worse bar");
   for (const c of cells) {
     assert.ok(html.includes(`<td data-ex="${c.id}">`), "row cell " + c.id);
     assert.ok(html.includes(`class="cx-val" data-ex="${c.id}"`), "card value " + c.id);
   }
-  for (const id of ["ivi", "activity", "brave", "resist", "matchup-kd", "const", "luck", "assists", "zerg", "pureivi", "infantry"]) {
+  for (const id of ["ivi", "activity", "brave", "resist", "matchup-kd", "const", "luck", "assists", "zerg", "pureivi", "g", "infantry"]) {
     assert.ok(html.includes(`href="#${id}"`) && html.includes(`id="${id}"`), id);
   }
 });

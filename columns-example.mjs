@@ -19,6 +19,7 @@ import { traitPools, zergScore } from "./trait-scores.mjs?v=20261027-z79";
 import { zergChargedAdjs, ZERG_CHARGE, zergFresh } from "./zerg-charge.mjs?v=20261029-zadj2";
 import { pureIvI } from "./pure-ivi.mjs?v=20261029-purevis1";
 import { loadLuckData, playerLuck, luckCellHtml } from "./luck-col.mjs?v=20261102-luck5";
+import { gScores } from "./cheese-table.mjs?v=20261108-gcol1";
 
 export const DEMO_NAME = "YuigahamaYui";
 
@@ -65,6 +66,10 @@ export function rowCells(payload, row) {
   };
   const zerg = rowZerg(payload, row);
   const pure = pureIvI(fin(row.adjs0) ? row.adjs0 : row.adjs, zerg);
+  // 🌈 G: population product score over the whole cache (cheese-table.mjs).
+  const gObjs = payload.rows.map((r) => { const o = Object.fromEntries(payload.cols.map((c, j) => [c, r[j]])); return { slug: o.slug, rkd: o.rkd, pvs: o.pvs, inf: o.inf }; });
+  const gMap = gScores(gObjs);
+  const g = gMap.get(gObjs.find((o) => o.slug === row.slug));
   const consP = pct("cons", row.cons);
   return [
     { id: "adjs", text: fin(row.adjs) ? String(Math.max(0, Math.round(row.adjs))) : "—", pct: pct("adjs", row.adjs) },
@@ -77,6 +82,7 @@ export function rowCells(payload, row) {
     { id: "apk", text: f(row.apk), pct: pct("apk", row.apk) },
     { id: "zerg", text: zerg == null ? "—" : String(Math.round(zerg)), pct: zerg == null ? null : 99 - Math.round(zerg) },
     { id: "pureivi", text: pure == null ? "—" : String(Math.round(pure)), pct: null },
+    { id: "g", text: g == null ? "—" : g.toFixed(2) + "%", pct: null }, // a share of the whole population, not better or worse
     { id: "inf", text: fin(row.inf) ? row.inf.toFixed(1) + "%" : "—", pct: null }, // a share, not better or worse
   ];
 }

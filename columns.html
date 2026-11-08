@@ -139,8 +139,8 @@
       <h2 class="cx-rowh"><span data-i18n="cp.rowH">One row, like on the main page</span> 👉 <input id="exName" class="st-name-in" type="text" value="YuigahamaYui" aria-label="Character name for the example (type any cached name)" data-i18n-aria-label="cp.exNameAria" autocomplete="off" spellcheck="false" enterkeyhint="go" /></h2>
       <p class="st-dim" id="exMsg" role="status" hidden></p>
       <div class="cx-scroll"><table class="cx-row">
-        <thead><tr><th><a href="#ivi">⚔️ iVi</a></th><th><a href="#activity">🏃 Activity</a></th><th><a href="#brave">🦁 Brave</a></th><th><a href="#resist">🛡️ Resist</a></th><th><a href="#matchup-kd">☠️ K/D</a></th><th><a href="#const">⚡ Const</a></th><th><a href="#luck" data-i18n="col.luck">🎲 Luck</a></th><th><a href="#assists" data-i18n="col.assists">🤝 Assists</a></th><th><a href="#zerg" data-i18n="col.zerg">🪳 Zerg</a></th><th><a href="#pureivi" data-i18n="col.pureivi">🧘‍♂️ Pure iVi</a></th><th><a href="#infantry" data-i18n="col.infantry">🪖 Infantry</a></th></tr></thead>
-        <tbody><tr><td data-ex="adjs">424</td><td data-ex="act">0.45</td><td data-ex="pvs">1.09</td><td data-ex="rf">0.77</td><td data-ex="rkd">0.804</td><td data-ex="cons">75%</td><td data-ex="luck">—</td><td data-ex="apk">0.53</td><td data-ex="zerg">67</td><td data-ex="pureivi">321</td><td data-ex="inf">54.1%</td></tr></tbody>
+        <thead><tr><th><a href="#ivi">⚔️ iVi</a></th><th><a href="#activity">🏃 Activity</a></th><th><a href="#brave">🦁 Brave</a></th><th><a href="#resist">🛡️ Resist</a></th><th><a href="#matchup-kd">☠️ K/D</a></th><th><a href="#const">⚡ Const</a></th><th><a href="#luck" data-i18n="col.luck">🎲 Luck</a></th><th><a href="#assists" data-i18n="col.assists">🤝 Assists</a></th><th><a href="#zerg" data-i18n="col.zerg">🪳 Zerg</a></th><th><a href="#pureivi" data-i18n="col.pureivi">🧘‍♂️ Pure iVi</a></th><th><a href="#g" data-i18n="col.g">🌈 G</a></th><th><a href="#infantry" data-i18n="col.infantry">🪖 Infantry</a></th></tr></thead>
+        <tbody><tr><td data-ex="adjs">424</td><td data-ex="act">0.45</td><td data-ex="pvs">1.09</td><td data-ex="rf">0.77</td><td data-ex="rkd">0.804</td><td data-ex="cons">75%</td><td data-ex="luck">—</td><td data-ex="apk">0.53</td><td data-ex="zerg">67</td><td data-ex="pureivi">321</td><td data-ex="g">19.50%</td><td data-ex="inf">54.1%</td></tr></tbody>
       </table></div>
       <p class="st-dim cx-note" data-i18n="cp.rowNote">Type any cached name. Tap a column to see what it means.</p>
     </div>
@@ -286,6 +286,19 @@
     </div>
 
     <div class="st-card cx-col">
+      <div class="cx-top"><h3 id="g" data-i18n="cp.gH">🌈 G — how cheesy is this K/D?</h3><span class="cx-val" data-ex="g">19.50%</span></div>
+      <div class="cx-pct" data-ex-pct="g" hidden><b><i></i></b><span></span></div>
+      <p data-i18n="cp.gP">The share of all cached players you beat on K/D, Brave and Infantry at once. A high K/D alone doesn't do it — you also need a collapsed 🦁 Brave and barely any 🪖 Infantry.</p>
+      <details class="cx-more"><summary data-i18n="cp.more">How it’s measured</summary>
+        <ul class="st-list">
+          <li data-i18n-html="cp.gL1"><b>Formula:</b> (1 − K/D rank) × (1 − Brave rank) × (1 − Infantry rank), ranks over all cached players. Each factor is the share of players you beat on that one dimension.</li>
+          <li data-i18n-html="cp.gL2"><b>Example:</b> Tepe8756 — K/D 4.03 (rank 129 of 18,571), Brave 0.024 (rank 226), Infantry 1.4% (rank 13): 0.9931 × 0.9878 × 0.9993 ≈ <b>98.03%</b>.</li>
+        </ul>
+        <p data-i18n="cp.gNote">Most players sit at 5–20% (median 7.18%); 90% are under 21.63%. The top 100 start at 50.18% — a different world from the rest. The 🌈 G debug table shows the top 100 by K/D ordered by this score.</p>
+      </details>
+    </div>
+
+    <div class="st-card cx-col">
       <div class="cx-top"><h3 id="infantry" data-i18n="cp.infH">🪖 Infantry — kills made on foot</h3><span class="cx-val" data-ex="inf">54.1%</span></div>
       <div class="cx-pct" data-ex-pct="inf" hidden><b><i></i></b><span></span></div>
       <p data-i18n="cp.infP">% of your lifetime kills made with infantry weapons. MAX counts as infantry here; vehicles, turrets and roadkills don’t. Shown from 100 kills (“—” until measured). Hover for your MAX and vehicle shares.</p>
@@ -407,7 +420,7 @@
   </main>
   <button id="toTop" class="st-totop" aria-label="Back to top" title="Back to top" data-i18n-aria-label="cp.top" data-i18n-title="cp.top">↑</button>
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="columns-example.mjs?v=20261102-cx1"></script>
+  <script type="module" src="columns-example.mjs?v=20261108-gcol1"></script>
   <script>
     // TOC jump into the collapsed debug section opens it first.
     document.querySelectorAll('.st-toc a[href^="#"]').forEach(function (a) {

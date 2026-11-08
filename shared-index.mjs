@@ -268,7 +268,7 @@ export function createSharedIndex($) {
 
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261108-chz3")
+    rankingsLoading = import("./rankings.mjs?v=20261108-gcol1")
       .then((m) => {
         $.rankingsApi = m.initRankings(rankingsHost);
         return $.rankingsApi.ready;

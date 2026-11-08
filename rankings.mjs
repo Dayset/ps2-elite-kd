@@ -24,7 +24,7 @@ import { createDistCycler, createWheelSwiper } from "./dist-cycle.mjs?v=20261017
 import { sfx } from "./sfx.mjs?v=20261026-sfx2";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-flick1";
 import { mergeFreshRows } from "./rank-row.mjs?v=20261101-opsrv1";
-import { cheeseList, CHEESE_BRAVE_OK, CHEESE_LOW_INF } from "./cheese-table.mjs?v=20261108-chz3";
+import { cheeseList, gScores, CHEESE_BRAVE_OK, CHEESE_LOW_INF } from "./cheese-table.mjs?v=20261108-gcol1";
 import { readOutfitWorlds } from "./outfit-tags.mjs?v=20261101-osrv1";
 import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sav1";
 import { confirmedPadderSlugs } from "./padding.mjs?v=20261023-short1";
@@ -83,6 +83,9 @@ export function initRankings(host) {
     // 🧘‍♂️ Pure iVi (owner 2026-10-29): the uncentered 🪳 charge on the plain ⚔️ iVi, same formula as the ✨ Stats
     // column — separate from Claude's #84 evening-out. PC only; missing 🪳 → "—".
     { id: "pureivi", label: tr("col.pureivi", "🧘‍♂️ Pure iVi"), digits: 0, preVeh: true, tip: tr("tip.pureivi", "Your true ability as a solo player: plain ⚔️ iVi with the uncentered 🪳 charge, adjs × (1 − 0.00436 × 🪳). High 🪳 drops hard — monitor column next to the evened-out ⚔️ iVi. After the slash, the same score before the 🚜 vehicle/MAX cuts and before any 🪳 charge.") },
+    // 🌈 G (owner 2026-11-08): population product score — one value per player, the share of
+    // all cached players beaten on K/D + Brave + Infantry at once. Most sit at 5–20%.
+    { id: "g", label: tr("col.g", "🌈 G"), digits: 2, g: true, tip: tr("tip.g", "Share of all cached players you beat on K/D, Brave and Infantry at once: (1 − K/D rank) × (1 − Brave rank) × (1 − Infantry rank). Most players sit at 5–20%; the cheesiest near 98%.") },
     { id: "inf", label: tr("col.infantry", "🪖 Infantry"), digits: 1, inf: true, tip: INF_HINT },
   ];
   const DEBUG = [
@@ -378,6 +381,11 @@ export function initRankings(host) {
         pools[id] = rows.map((o) => o[id]).filter(fin).sort((a, b) => a - b);
         for (const o of rows) o.pcts[id] = pctOf(pools[id], o[id]);
       }
+      // 🌈 G (owner 2026-11-08): population product score over all rows with a K/D.
+      const gMap = gScores(rows);
+      for (const o of rows) o.g = gMap.get(o) ?? null;
+      pools.g = rows.map((o) => o.g).filter(fin).sort((a, b) => a - b);
+      for (const o of rows) o.pcts.g = pctOf(pools.g, o.g);
     }
     // t360u: new row objects carry no .rank yet → force assignRanks() to run again
     // (it skipped on an unchanged sort and left "undefined" ranks / a broken order).
@@ -556,6 +564,8 @@ export function initRankings(host) {
     if (c.aimgap) return fin(v) ? `<td title="${esc(aimGapCellTip(v, row._gap, data.pools.diff, row.infVeh))}">${fmtSigned(v)}${row.pcts.diff == null ? "" : `<span class="pct" title="${esc(tr("stats.pctile", "Population percentile: higher than {n}% of cached players", { n: row.pcts.diff }))}">p${row.pcts.diff}</span>`}</td>` : `<td title="${esc(tr("diff.missing", AIMGAP_MISSING))}">—</td>`;
     if (c.luck) return luckCellHtml(row._luck, luckData, esc);
     if (c.inf) return fin(v) ? `<td title="${esc(infTip(v, row.infMax, row.infVeh, row.pcts[c.id]))}">${fmt(v, 1)}%</td>` : `<td title="${esc(INF_PENDING_TIP)}">—</td>`;
+    // 🌈 G: one value, already a percentage — no pXX tag trailing it.
+    if (c.g) return fin(v) ? `<td title="${esc(c.tip)}">${fmt(v, 2)}%</td>` : `<td>—</td>`;
     if (!fin(v) && c.thinTip && row.thin) return `<td class="thin-sample" title="${esc(MIN_FIGHTS_TIP)}">—</td>`;
     if (!fin(v)) return `<td>—</td>`;
     const p = row.pcts[c.id];
@@ -948,11 +958,11 @@ export function initRankings(host) {
     const html = [];
     rows.forEach((r, i) => {
       if (i === edgeIndex) html.push(`<tr class="rk-sep" aria-hidden="true"><td colspan="6"><span>${esc(tr("rk.cheeseEdge", "Double gate ends here - Brave {brave} and Infantry {inf}%", { brave: CHEESE_BRAVE_OK.toFixed(1), inf: CHEESE_LOW_INF }))}</span></td></tr>`);
-      html.push(`<tr><td>${i + 1}</td><td>${esc(r.name)}</td><td>${r.g}%</td><td>${fmt(r.rkd, 2)}</td><td>${fmt(r.brave, 2)}</td><td>${r.inf == null ? "—" : fmt(r.inf, 1) + "%"}</td></tr>`);
+      html.push(`<tr><td>${i + 1}</td><td>${esc(r.name)}</td><td>${r.g.toFixed(2)}%</td><td>${fmt(r.rkd, 2)}</td><td>${fmt(r.brave, 2)}</td><td>${r.inf == null ? "—" : fmt(r.inf, 1) + "%"}</td></tr>`);
     });
     $("cheeseBody").innerHTML = html.join("");
     const note = $("cheeseNote");
-    if (note) note.textContent = tr("rk.cheeseNote", "Top {n} by ☠️ K/D, ordered by 🌈 G score. Double gate - 🦁 Brave under {brave} and 🪖 Infantry under {inf}%: {in} of {n} in. G% = share of the top {n} you out-cheese (ranks of K/D + Brave + Infantry summed); #1 is 99%. Median 🦁 Brave {median} (mean {mean}).", { n: stats.n, median: fmt(stats.medianBrave, 2), mean: fmt(stats.meanBrave, 2), in: stats.inCount, brave: CHEESE_BRAVE_OK.toFixed(1), inf: CHEESE_LOW_INF });
+    if (note) note.textContent = tr("rk.cheeseNote", "Top {n} by ☠️ K/D, ordered by 🌈 G score. Double gate - 🦁 Brave under {brave} and 🪖 Infantry under {inf}%: {in} of {n} in. G% = share of all {pop} players you beat on K/D + Brave + Infantry at once; most sit at 5–20%. Median 🦁 Brave {median} (mean {mean}).", { n: stats.n, median: fmt(stats.medianBrave, 2), mean: fmt(stats.meanBrave, 2), in: stats.inCount, brave: CHEESE_BRAVE_OK.toFixed(1), inf: CHEESE_LOW_INF, pop: stats.popN });
     const count = $("cheeseCount");
     if (count) count.textContent = `(${stats.n})`;
   }
