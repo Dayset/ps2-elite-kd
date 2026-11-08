@@ -24,6 +24,7 @@ import { createDistCycler, createWheelSwiper } from "./dist-cycle.mjs?v=20261017
 import { sfx } from "./sfx.mjs?v=20261026-sfx2";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-flick1";
 import { mergeFreshRows } from "./rank-row.mjs?v=20261101-opsrv1";
+import { cheeseList, CHEESE_BRAVE_OK, CHEESE_LOW_INF } from "./cheese-table.mjs?v=20261108-chz3";
 import { readOutfitWorlds } from "./outfit-tags.mjs?v=20261101-osrv1";
 import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sav1";
 import { confirmedPadderSlugs } from "./padding.mjs?v=20261023-short1";
@@ -930,6 +931,30 @@ export function initRankings(host) {
     }
     renderHead();
     renderBody();
+    renderCheese();
+  }
+
+  /* ---------- 🧀 Cheesiest players (debug table, owner 2026-11-08) ---------- */
+  let cheeseCache = null; // { data, result } — recompute only when the rows change
+  function renderCheese() {
+    const sec = $("cheeseSection");
+    if (!sec) return;
+    sec.hidden = !showDebug;
+    if (!showDebug || !data) return;
+    if (!cheeseCache || cheeseCache.data !== data) cheeseCache = { data, result: cheeseList(data.rows) };
+    const { rows, edgeIndex, stats } = cheeseCache.result;
+    const head = $("cheeseHead");
+    if (head) head.innerHTML = `<tr><th scope="col">#</th><th scope="col">${esc(tr("rk.player", "Player"))}</th><th scope="col">${esc(tr("rk.cheeseScore", "G%"))}</th><th scope="col">${esc(colById("rkd").label)}</th><th scope="col">${esc(colById("pvs").label)}</th><th scope="col">${esc(colById("inf").label)}</th></tr>`;
+    const html = [];
+    rows.forEach((r, i) => {
+      if (i === edgeIndex) html.push(`<tr class="rk-sep" aria-hidden="true"><td colspan="6"><span>${esc(tr("rk.cheeseEdge", "Double gate ends here - Brave {brave} and Infantry {inf}%", { brave: CHEESE_BRAVE_OK.toFixed(1), inf: CHEESE_LOW_INF }))}</span></td></tr>`);
+      html.push(`<tr><td>${i + 1}</td><td>${esc(r.name)}</td><td>${r.g}%</td><td>${fmt(r.rkd, 2)}</td><td>${fmt(r.brave, 2)}</td><td>${r.inf == null ? "—" : fmt(r.inf, 1) + "%"}</td></tr>`);
+    });
+    $("cheeseBody").innerHTML = html.join("");
+    const note = $("cheeseNote");
+    if (note) note.textContent = tr("rk.cheeseNote", "Top {n} by ☠️ K/D, ordered by 🌈 G score. Double gate - 🦁 Brave under {brave} and 🪖 Infantry under {inf}%: {in} of {n} in. G% = share of the top {n} you out-cheese (ranks of K/D + Brave + Infantry summed); #1 is 99%. Median 🦁 Brave {median} (mean {mean}).", { n: stats.n, median: fmt(stats.medianBrave, 2), mean: fmt(stats.meanBrave, 2), in: stats.inCount, brave: CHEESE_BRAVE_OK.toFixed(1), inf: CHEESE_LOW_INF });
+    const count = $("cheeseCount");
+    if (count) count.textContent = `(${stats.n})`;
   }
 
 
