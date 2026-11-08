@@ -6,7 +6,7 @@ import { t as tr } from "./i18n.mjs";
 import { slugKey, namesEqualIgnoreCase, namesSetKey, isAbortError, makeAbortError, escapeHtml } from "./app-util.mjs?v=20261027-z79";
 import { recentGesture, sfx } from "./sfx.mjs?v=20261026-sfx2";
 import { shouldShowGraphReady, loadEach, summarizeFailures, cancelledSkips, createPauseGate, requestWakeLock, releaseWakeLock } from "./analyze-run.mjs?v=20261101-bg1";
-import { mountNameSuggest } from "./name-suggest.mjs?v=20261024-br1";
+import { mountNameSuggest } from "./name-suggest.mjs?v=20261108-shr1";
 
 /**
  * $ = app.js state and functions this part uses, as live getters (and setters for state it changes), so app.js

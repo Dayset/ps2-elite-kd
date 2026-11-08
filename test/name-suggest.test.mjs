@@ -12,6 +12,7 @@ import {
   localMatches,
   mergeSuggestions,
   replaceFragment,
+  shouldRestoreSuggestions,
 } from "../name-suggest.mjs";
 
 describe("suggestFragment", () => {
@@ -241,5 +242,28 @@ describe("replaceFragment", () => {
     assert.equal(replaceFragment("simp", "Simplenubb"), "Simplenubb ");
     assert.equal(replaceFragment("Dayset, simp", "Simplenubb"), "Dayset, Simplenubb ");
     assert.equal(replaceFragment("Dayset simp", "Simplenubb"), "Dayset Simplenubb ");
+  });
+});
+
+describe("shouldRestoreSuggestions (owner 2026-11-08: hint lost after app-switch)", () => {
+  it("re-opens only a blur-closed list with a valid fragment still in the box", () => {
+    assert.equal(shouldRestoreSuggestions("beetler", true, true), true);
+    assert.equal(shouldRestoreSuggestions("Dayset, beetler", true, true), true);
+  });
+
+  it("never re-opens a list closed by a pick or Escape", () => {
+    assert.equal(shouldRestoreSuggestions("beetler", true, false), false);
+  });
+
+  it("never re-opens when the list is already showing", () => {
+    assert.equal(shouldRestoreSuggestions("beetler", false, true), false);
+  });
+
+  it("stays quiet without a valid fragment (too short, committed, or bad characters)", () => {
+    assert.equal(shouldRestoreSuggestions("bee", true, true), false);
+    assert.equal(shouldRestoreSuggestions("beetler ", true, true), false);
+    assert.equal(shouldRestoreSuggestions("beetler,", true, true), false);
+    assert.equal(shouldRestoreSuggestions("bee-tler", true, true), false);
+    assert.equal(shouldRestoreSuggestions("", true, true), false);
   });
 });

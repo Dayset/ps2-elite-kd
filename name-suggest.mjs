@@ -184,6 +184,17 @@ export function replaceFragment(value, name) {
   return `${head}${name} `;
 }
 
+/**
+ * Should the suggestion list come back when the user returns to the input?
+ * Only a list the blur handler closed re-opens — never one closed by a
+ * pick, Escape, or typing — and only with a valid fragment still in the
+ * box and the list currently hidden. (Owner 2026-11-08: switching apps
+ * blurs the input and the list never came back until the next keystroke.)
+ */
+export function shouldRestoreSuggestions(value, listHidden, closedByBlur) {
+  return !!closedByBlur && !!listHidden && suggestFragment(value) !== null;
+}
+
 /* ---------------- browser part ---------------- */
 
 /**
@@ -211,6 +222,8 @@ export function mountNameSuggest({ input, anchor, censusBase, ranksUrl = "data/r
   let timer = 0;
   let seq = 0;
   let ctrl = null;
+  let blurTimer = 0; // the 150 ms delayed close, so a mousedown pick lands first
+  let closedByBlur = false; // true only when the blur timeout actually closed the list
   const cache = new Map(); // fragment (lower) → census suggestions
   let localNames = null;
   let localLoad = null;
@@ -233,6 +246,18 @@ export function mountNameSuggest({ input, anchor, censusBase, ranksUrl = "data/r
     input.removeAttribute("aria-activedescendant");
   }
 
+  // Coming back to the input (focus, or the tab/app becoming visible again
+  // with the input still focused) re-shows a list the blur handler closed,
+  // from the cache when the fragment was already searched — no extra Census
+  // call. The decision is one-shot: once the return has been considered the
+  // flag is spent, so a later focus never re-opens a list closed by a pick,
+  // Escape, or typing.
+  function restore() {
+    const reopen = shouldRestoreSuggestions(input.value, list.hidden, closedByBlur);
+    closedByBlur = false;
+    if (reopen) update();
+  }
+
   function setActive(i) {
     active = items.length ? (i + items.length) % items.length : -1;
     [...list.children].forEach((li, j) => li.setAttribute("aria-selected", j === active ? "true" : "false"));
@@ -251,6 +276,7 @@ export function mountNameSuggest({ input, anchor, censusBase, ranksUrl = "data/r
     // A namesake's key (us-<cid> / eu-<cid>) picks that exact character;
     // everywhere else the key is the name itself.
     input.value = replaceFragment(input.value, it.query || it.name);
+    closedByBlur = false; // the focus() below must not re-open what the pick closed
     close();
     // app.js commits a token when the text ends with a separator.
     input.dispatchEvent(new Event("input", { bubbles: true }));
@@ -347,6 +373,8 @@ export function mountNameSuggest({ input, anchor, censusBase, ranksUrl = "data/r
 
   input.addEventListener("input", () => {
     clearTimeout(timer);
+    clearTimeout(blurTimer);
+    closedByBlur = false; // typing supersedes any blur close; the debounce below re-opens
     if (!suggestFragment(input.value)) {
       seq++;
       if (ctrl) ctrl.abort();
@@ -361,12 +389,12 @@ export function mountNameSuggest({ input, anchor, censusBase, ranksUrl = "data/r
     "keydown",
     (e) => {
       if (e.target !== input || list.hidden || !items.length) {
-        if (e.key === "Escape" && !list.hidden) close();
+        if (e.key === "Escape" && !list.hidden) { closedByBlur = false; close(); }
         return;
       }
       if (e.key === "ArrowDown") { e.preventDefault(); setActive(active + 1); }
       else if (e.key === "ArrowUp") { e.preventDefault(); setActive(active - 1); }
-      else if (e.key === "Escape") { e.preventDefault(); close(); }
+      else if (e.key === "Escape") { e.preventDefault(); closedByBlur = false; close(); }
       else if ((e.key === "Enter" || e.key === "Tab") && active >= 0) {
         e.preventDefault();
         e.stopPropagation();
@@ -376,6 +404,28 @@ export function mountNameSuggest({ input, anchor, censusBase, ranksUrl = "data/r
     true
   );
 
-  input.addEventListener("blur", () => setTimeout(close, 150));
+  // Blur closes after 150 ms so a mousedown pick lands before the list
+  // goes away; the timer id is kept so a fast return cancels the close
+  // instead of hiding a freshly re-opened list.
+  input.addEventListener("blur", () => {
+    clearTimeout(blurTimer);
+    blurTimer = setTimeout(() => {
+      blurTimer = 0;
+      closedByBlur = true;
+      close();
+    }, 150);
+  });
+
+  // Returning to the input re-shows a blur-closed list (owner 2026-11-08:
+  // switching apps left the hint gone until the next keystroke). Focus
+  // covers tapping back in; visibilitychange covers the app/tab coming back
+  // with the input still focused, where no new focus event fires.
+  input.addEventListener("focus", () => {
+    clearTimeout(blurTimer);
+    restore();
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && document.activeElement === input) restore();
+  });
   return { close, update };
 }
