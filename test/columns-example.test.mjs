@@ -67,7 +67,7 @@ test("example row: main-table columns, ranks.json values, cards and links on the
 test("docs: every public column has a 'How it's measured' section", () => {
   const en = JSON.parse(fs.readFileSync(new URL("../i18n/en.json", import.meta.url), "utf8"));
   for (const [id, keys] of [
-    ["luck", ["cp.luckL1", "cp.luckL2", "cp.luckNote"]],
+    ["luck", ["cp.luckSkill", "cp.luckL1", "cp.luckL2", "cp.luckNote"]],
     ["assists", ["cp.apkL1", "cp.apkL2", "cp.apkNote"]],
     ["infantry", ["cp.infL1", "cp.infL2"]],
     ["zerg", ["cp.zergNote"]],
