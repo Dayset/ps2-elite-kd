@@ -67,9 +67,9 @@ export function initRankings(host) {
   // the host getter: the debug option lifts the cap to Infinity (Dayset 2026-10-21).
   const maxNames = () => host.maxNames || 6;
 
-  // Column definitions: same ids / labels / digits / floorZero as app.js.
+  // Column definitions: same ids / labels / digits as app.js.
   const VISIBLE = [
-    { id: "adjs", label: "⚔️ iVi", digits: 0, floorZero: true, tip: "Rating vs the ~200 players you fight most. Stronger foes count more; fast kills add, slow safe play costs." },
+    { id: "adjs", label: "⚔️ iVi", digits: 0, tip: "Rating vs the ~200 players you fight most. Stronger foes count more; fast kills add, slow safe play costs." },
     { id: "act", label: "🏃 Activity", digits: 2, tip: "How much winning combat you put out: K/D vs your usual foes × how fast you kill." },
     { id: "pvs", label: "🦁 Brave", digits: 2, tip: "Stays high if you keep fighting well against the fastest-killing enemies you meet." },
     { id: "rf", label: "🛡️ Resist", digits: 2, tip: "How well you hold up vs strong players: K/D vs your usual foes, scaled by how fast they kill." },
@@ -554,9 +554,6 @@ export function initRankings(host) {
   function cellHtml(c, row) {
     const v = row[c.id];
     const vc = c.id === "adjs" ? vcutTip(row) : "";
-    if (c.floorZero && fin(v) && v < 0) {
-      return `<td class="below-scale" title="${esc("Below the rating scale" + (vc ? ". " + vc : ""))}">0</td>`;
-    }
     if (c.apk) return apkCell(v, row.pcts[c.id]);
     // 🪳 Zerg: score + pXX like 🤝 (t495u); 🔀 Diff: signed score + plain pXX (t497u); parts on hover.
     if (c.zerg) return fin(v) ? `<td title="${esc(zergCellTip(v, row._zerg, data.pools.zerg))}">${v}${apkPctTag(row.pcts.zerg)}</td>` : fin(row.zest) ? zergEstHtml(row.zest, esc) : `<td title="${esc(tr("zerg.missing", ZERG_MISSING))}">—</td>`;
@@ -1469,7 +1466,7 @@ export function initRankings(host) {
       t.addEventListener("click", () => { const touch = lastPointer === "touch" || lastPointer === "pen"; lastPointer = "mouse"; jumpToPlayer(r.query, { touch }); });
       t.addEventListener("keydown", (ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); jumpToPlayer(r.query); } });
       gm.appendChild(t);
-      const shown = col.floorZero && fin(v) && v < 0 ? tr("dist.zeroBelow", "0 (below scale)") : fin(v) ? (+v).toFixed(col.digits) : "—";
+      const shown = fin(v) ? (+v).toFixed(col.digits) : "—";
       const p = r.pcts[distMetric];
       gm.appendChild(svgEl("title", {}, tr("dist.dotTip", "{label}{mark}{poop}: {col} {shown}{p} · rank #{rank} (current sort){fresh}", { label: r.label, mark: r.mark ? ` (${r.markTip})` : "", poop: (r.poop ? ` (${POOP_TIP})` : "") + (r.hutMk ? ` (${hutMarkOf(r.hutMk).tip})` : ""), col: col.label, shown, p: p != null ? ` · p${p}` : "", rank: r.rank, fresh: r.freshAt ? tr("dist.freshTag", " · {mark} your fresh fetch", { mark: FRESH_MARK }) : "" })));
       marks.appendChild(gm);
@@ -1527,7 +1524,7 @@ export function initRankings(host) {
   }
 
   function binRangeText(b, h, col) {
-    if (b.kind === "under") return col.floorZero ? tr("dist.below0", "below 0 (below scale)") : tr("dist.below", "below {x}", { x: fmtEdge(h.lo, h) });
+    if (b.kind === "under") return tr("dist.below", "below {x}", { x: fmtEdge(h.lo, h) });
     if (b.kind === "over") return tr("dist.above", "above {x}", { x: fmtEdge(h.hi, h) });
     return `${fmtEdge(b.x0, h)}–${fmtEdge(b.x1, h)}`;
   }
