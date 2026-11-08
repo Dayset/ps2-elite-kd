@@ -23,6 +23,7 @@ export * from "./live-model.mjs?v=20261108-neg2"; // #66: the pure part (tests i
 import { VICTIM_LINES, classifyDeath, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, median, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, assistShare, xpMultAt, KILL_BASE_XP, cashTotals, cashFormula, combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad, tierLabel, tierVoiceLine, TIER_VOICE_LINES, cidNameEntry } from "./live-model.mjs?v=20261108-neg2";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { liveLuck, luckPush, luckFill, luckText, LIVE_LUCK_MIN } from "./live-luck.mjs?v=20261108-luck1";
+import { SESS_MIN_KILLS, sessionReady, sessionKd, sessionInf, sessionApk, sessionInflation, sessionBrave, sessionZerg, sessionG, sessText } from "./live-session.mjs?v=20261108-sess1";
 import { DUEL_FIT_V1, duelFitKind } from "./duels.mjs?v=20261102-luck5";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { percentileOf } from "./dist.mjs?v=20261010-sav1";
@@ -119,6 +120,11 @@ function start() {
   // DUEL_FIT_V1 until it lands (same fallback). luckEvents = last 100 fights {cid, iv, won}.
   let duelFit = DUEL_FIT_V1;
   let luckEvents = [], luckDirty = true, lastLuck = null;
+  // Live session values (owner 2026-11-08): raw, no rounding — ☠️ K/D, 🪖 Infantry,
+  // 🤝 Assists, 🪳 Zerg, 🌈 G over this session. sessFights = every fight
+  // {cid, iv, act, won} (never reset — cashKills resets per run); sessWeapons =
+  // one weapon id per session kill. sessTp = the traitPools for the session 🪳.
+  let sessAssists = 0, sessWeapons = [], sessFights = [], sessDirty = true, sessTp = null;
   const rawAdjs = (p) => (p && p.cached && Number.isFinite(p.cached.adjs) ? p.cached.adjs : null);
   getJson("data/duel-ivi-fit.json").then((d) => { if (duelFitKind(d)) { duelFit = d; luckDirty = true; } }).catch(() => {});
   let ranksP = null;
@@ -137,6 +143,7 @@ function start() {
       // 🪳 Zerg: same score as the Rankings table (rankings.mjs: traitPools over ranks.json, zergScore per row).
       const colOf = (id) => (ci(id) >= 0 ? j.rows.map((r) => r[ci(id)]) : []);
       const tp = traitPools({ adjs: colOf("adjs"), ivi: colOf("ivi"), inflation: colOf("inflation"), apk: colOf("apk") });
+      sessTp = tp; // Live session values: the session 🪳 ranks in the same pools.
       const iF = ci("inflation"), iA = ci("apk"), iR = ci("rvp"), iC = ci("crp");
       const zergOf = (r) => { const z = zergScore(tp, iF >= 0 ? r[iF] : null, iA >= 0 ? r[iA] : null, iR >= 0 ? r[iR] : null, iC >= 0 ? r[iC] : null); return z ? z.score : null; };
       const fin = (v) => typeof v === "number" && Number.isFinite(v);
@@ -372,7 +379,7 @@ function start() {
   let catalog = null;
   fetch("assets/weapons/catalog.json", { cache: "force-cache" })
     .then((r) => (r.ok ? r.json() : null))
-    .then((j) => { catalog = j; if (j && me && (st.killer || st.victims.length)) render(); })
+    .then((j) => { catalog = j; sessDirty = true; if (j && me && (st.killer || st.victims.length)) render(); })
     .catch(() => {});
   const HS_TIP = tr("live.hs", "Headshot");
   const HS_SVG = `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="0.5" y1="7" x2="15.5" y2="7" stroke="currentColor" stroke-width="1.2"/><circle cx="3.5" cy="7" r="1.4" fill="currentColor"/><path d="M12.5 4.5 15 2M12.5 9.5 15 12" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>`;
@@ -606,6 +613,7 @@ function start() {
       if (st === "1") setOnline("online"); else if (st === "0") setOnline("offline");
     } catch { /* keep the last state */ }
     luckDirty = true; // 🎲 Live luck re-checks on the minute tick, even with no new kills
+    sessDirty = true; // Live session values re-check too, so the KPM-based Brave moves with no new kills
   }
   setInterval(pollOnline, 60000);
 
@@ -628,6 +636,55 @@ function start() {
   if ($("liveCashAvgLabel")) $("liveCashAvgLabel").textContent = tr("live.cashAvg", "Enemy avg ivi");
   const luckEl = $("liveLuckVal");
   if ($("liveLuckLabel")) $("liveLuckLabel").textContent = tr("live.luck", "🎲 Live luck");
+  // Live session values (owner 2026-11-08): the values row + the per-value
+  // picker (checkboxes, remembered on-device, all on by default — max
+  // fidelity first, cut later). The 🎲 luck metric in the DPM row is picked here too.
+  const SESS_PICK_KEY = "ps2elite_live_sess_pick";
+  const SESS_IDS = ["kd", "inf", "apk", "zerg", "g", "luck"];
+  const SESS_LABELS = {
+    kd: ["live.sessKd", "☠️ K/D"], inf: ["live.sessInf", "🪖 Infantry"],
+    apk: ["live.sessApk", "🤝 Assists"], zerg: ["live.sessZerg", "🪳 Zerg"], g: ["live.sessG", "🌈 G"],
+  };
+  const sessLabel = (id) => tr(SESS_LABELS[id][0], SESS_LABELS[id][1]);
+  let sessPick = { kd: true, inf: true, apk: true, zerg: true, g: true, luck: true };
+  try {
+    const saved = JSON.parse(localStorage.getItem(SESS_PICK_KEY) || "null");
+    if (saved && typeof saved === "object") for (const id of SESS_IDS) if (typeof saved[id] === "boolean") sessPick[id] = saved[id];
+  } catch { /* keep the defaults */ }
+  const sessValsEl = $("liveSessVals");
+  const sessValEls = {};
+  if (sessValsEl) {
+    for (const id of ["kd", "inf", "apk", "zerg", "g"]) {
+      const s = document.createElement("span");
+      s.className = "live-metric";
+      s.dataset.sess = id;
+      s.textContent = `${sessLabel(id)} –`;
+      sessValsEl.appendChild(s);
+      sessValEls[id] = s;
+    }
+  }
+  function applySessPick() {
+    for (const id of ["kd", "inf", "apk", "zerg", "g"]) {
+      const el = sessValEls[id];
+      if (el) el.style.display = sessPick[id] ? "" : "none";
+    }
+    const luckMetric = luckEl && luckEl.closest ? luckEl.closest(".live-metric") : null;
+    if (luckMetric) luckMetric.style.display = sessPick.luck ? "" : "none";
+    if (sessValsEl) sessValsEl.style.display = ["kd", "inf", "apk", "zerg", "g"].some((id) => sessPick[id]) ? "" : "none";
+  }
+  const pickEl = $("liveSessPick");
+  if (pickEl) {
+    for (const box of pickEl.querySelectorAll("input[data-sess]")) {
+      const id = box.dataset.sess;
+      if (id in sessPick) box.checked = sessPick[id];
+      box.addEventListener("change", () => {
+        sessPick[id] = box.checked;
+        try { localStorage.setItem(SESS_PICK_KEY, JSON.stringify(sessPick)); } catch { /* private mode */ }
+        applySessPick();
+      });
+    }
+  }
+  applySessPick();
   // Owner 2026-10-26 (session-adaptive scale): the bar's full point fits
   // the player's own pace twice over — a floor from their estimated DPM
   // (twice estDPM from adjs via the KPM regression, kills + assists damage
@@ -957,6 +1014,41 @@ function start() {
   // every call, so the guard keeps the tick cheap and the dot blinking.
   const IDLE_AFTER_MS = 600000;
   let idleShown = false;
+  // Live session values (owner 2026-11-08): raw, no rounding — every value is
+  // the session's own number, so it moves with each kill, death and assist.
+  // Below the 10-kill floor every value is "–" with the same tip.
+  function renderSessVals() {
+    if (!sessValsEl) return;
+    const sKills = cashKills.length + cashHist.reduce((a, h) => a + (h.kills || 0), 0);
+    const ready = sessionReady(sKills);
+    const myIvi = me && me.cached && me.cached.adjs;
+    const mins = sessionStartMs ? (Date.now() - sessionStartMs) / 60000 : 0;
+    const kd = ready ? sessionKd(sKills, sessionDeaths) : null;
+    const inf = ready ? sessionInf(sessWeapons, catalog) : null;
+    const apk = ready ? sessionApk(sessAssists, sKills) : null;
+    const infl = ready ? sessionInflation(myIvi, sessFights) : null;
+    const brave = ready ? sessionBrave(sKills, mins, sessFights.map((f) => f.act)) : null;
+    const zerg = ready ? sessionZerg(sessTp, infl, apk) : null;
+    const kdPct = ready && kd != null && pools.rkd ? percentileOf(pools.rkd, kd) / 100 : null;
+    const bravePct = ready && brave != null && pools.pvs ? percentileOf(pools.pvs, brave) / 100 : null;
+    const g = ready ? sessionG(kdPct, bravePct) : null;
+    const few = tr("live.sessFew", "Too few session kills yet — the numbers show after {n} kills.", { n: SESS_MIN_KILLS });
+    const vals = {
+      kd: { text: sessText(kd), tip: ready ? tr("live.sessKdTip", "Kills ÷ deaths this session: {kills} ÷ {deaths}. Raw, no rounding.", { kills: sKills, deaths: sessionDeaths }) : few },
+      inf: { text: inf ? sessText(inf.share * 100) + "%" : "–", tip: ready ? tr("live.sessInfTip", "Foot kills ÷ classified kills this session: {foot} of {total}. Vehicle seats, MANA turrets and Glaive are not foot. Raw, no rounding.", { foot: inf ? inf.foot : 0, total: inf ? inf.total : 0 }) : few },
+      apk: { text: sessText(apk), tip: ready ? tr("live.sessApkTip", "Assists ÷ kills this session: {assists} ÷ {kills}. Same assist XP ids as 🤝 Assists. Raw, no rounding.", { assists: sessAssists, kills: sKills }) : few },
+      zerg: { text: sessText(zerg), tip: ready ? tr("live.sessZergTip", "Session 🪳 Zerg: the lower of session Inflation (your iVi ÷ the mean iVi of the enemies you met) and session Assists, ranked in the population pools. No revive data this session. Raw, no rounding.") : few },
+      g: { text: sessText(g), tip: ready ? tr("live.sessGTip", "Session 🌈 G: (share beaten on K/D) × (share beaten on Brave) × 100, session K/D and session Brave ranked in the population pools. Brave = session kills/min ÷ the fastest enemies' Activity. Raw, no rounding.") : few },
+    };
+    for (const id of ["kd", "inf", "apk", "zerg", "g"]) {
+      const el = sessValEls[id];
+      if (!el) continue;
+      const text = `${sessLabel(id)} ${vals[id].text}`;
+      if (el.textContent !== text) el.textContent = text;
+      el.title = vals[id].tip;
+    }
+  }
+
   function dpsTick() {
     if (!st.lastEv && openedAt && !idleShown && Date.now() - openedAt >= IDLE_AFTER_MS) {
       setState(`<span class="live-dot">●</span> ${tr("live.idleNote", "No kills or deaths in the last {min} min — this character may be offline or idle.", { min: 10 })}`, "on");
@@ -1081,6 +1173,12 @@ function start() {
       }
       luckDirty = false;
     }
+    // Live session values (owner 2026-11-08): raw, no rounding — re-checked
+    // on the minute tick too, so the KPM-based Brave moves with no new kills.
+    if (sessDirty) {
+      renderSessVals();
+      sessDirty = false;
+    }
     // Owner 2026-10-26 (session trace-back line): duration from the first
     // event this page saw, kills and deaths across all runs (current pot
     // plus banked runs), session Σ and avg over known-iVi kills. Hidden
@@ -1151,6 +1249,7 @@ function start() {
         // a victim whose iVi was unknown at kill time pays out now
         for (const e of cashKills) if (e.cid === cid && !Number.isFinite(e.iv)) e.iv = cashIv(p);
         if (luckFill(luckEvents, cid, rawAdjs(p))) luckDirty = true; // 🎲 same late iVi, same window
+        if (luckFill(sessFights, cid, rawAdjs(p))) sessDirty = true; // session values: same late iVi, same fights
         maybeFireObsClip(); // late iVi can push the run over the OBS clip threshold
         render();
         drainPendingSpeech(); // and a queued tier line speaks now, if its tier is known
@@ -1301,7 +1400,7 @@ function start() {
       // exactly the old clear plus the new run's early lines.
       if (wasStreak === 0) st = { ...st, victims: st.victims.filter((r) => r.seq === seq || pendingSeq.has(r.seq)) };
       // DPM at the event's own time: a commit deferred behind a slow lookup doesn't shift the decay
-      const iv = cashIv(p); cashKills.push({ cid: ev.opp, iv }); luckEvents = luckPush(luckEvents, { cid: ev.opp, iv: rawAdjs(p), won: true }); luckDirty = true; maybeFireObsClip(); dpsTick(); sfx("victory", { event: true }); if (iv > 0) sfx("chaChing", { event: true }); speakTier(p);
+      const iv = cashIv(p); cashKills.push({ cid: ev.opp, iv, w: ev.weapon }); luckEvents = luckPush(luckEvents, { cid: ev.opp, iv: rawAdjs(p), won: true }); sessWeapons.push(ev.weapon); sessFights.push({ cid: ev.opp, iv: rawAdjs(p), act: p && p.cached && Number.isFinite(p.cached.act) ? p.cached.act : null, won: true }); luckDirty = true; sessDirty = true; maybeFireObsClip(); dpsTick(); sfx("victory", { event: true }); if (iv > 0) sfx("chaChing", { event: true }); speakTier(p);
     }
     // Owner 2026-10-25: ANY death dims the killed list and the observed
     // player's own name to 50% — you are dead, the feed shows it — until
@@ -1320,7 +1419,7 @@ function start() {
     // re-stamps it and the bar refills over a fresh median. DPM/DPH
     // untouched: the spike list and freeze clock are not touched here.
     if (ev.kind === "death") { sessionDeaths++; lastSpikeEff = null; liftFreeze(ev.at); deathTimes.push(ev.at); freezeStart = ev.at; freezeFor = spawnRunHoldMs(deathTimes, spikeTimes()); }
-    if (ev.kind === "death") { luckEvents = luckPush(luckEvents, { cid: ev.opp, iv: rawAdjs(p), won: false }); luckDirty = true; }
+    if (ev.kind === "death") { luckEvents = luckPush(luckEvents, { cid: ev.opp, iv: rawAdjs(p), won: false }); sessFights.push({ cid: ev.opp, iv: rawAdjs(p), act: p && p.cached && Number.isFinite(p.cached.act) ? p.cached.act : null, won: false }); luckDirty = true; sessDirty = true; }
     if (ev.kind === "death" && wasStreak > 0 && bountyStreak === 0) {
       // Owner 2026-10-25: the death that ends a run banks it and resets
       // the pot for the new run — the pot shows 0 until the next kill.
@@ -1377,7 +1476,7 @@ function start() {
             if (!sessionStartMs) sessionStartMs = Date.now(); setOnline("online");
             const share = assistShare(amt, xid, xpMultAt(killXpRefs, Date.now()));
             const dmg = share == null ? DPS_ASSIST : Math.round(1000 * share);
-            dpsEvents.push({ t: Date.now(), dmg }); if (shownDps !== null) scrollQ.push(dpsNow([{ t: 0, dmg }], 0, dpmTauMs) * 60); liftFreeze(Date.now()); lastSpikeEff = dpsEvents[dpsEvents.length - 1].t - timeDebtMs; assistN++; sfx("assist", { event: true }); dpsTick(); render();
+            dpsEvents.push({ t: Date.now(), dmg }); if (shownDps !== null) scrollQ.push(dpsNow([{ t: 0, dmg }], 0, dpmTauMs) * 60); liftFreeze(Date.now()); lastSpikeEff = dpsEvents[dpsEvents.length - 1].t - timeDebtMs; assistN++; sessAssists++; sessDirty = true; sfx("assist", { event: true }); dpsTick(); render();
           }
         }
         return;

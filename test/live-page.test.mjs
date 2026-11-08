@@ -744,7 +744,7 @@ test("mobile names + legend + DPS (owner 2026-10-25): table 100% with a flexible
   assert.match(js, /DPS_ASSIST_XP\.has\(xid\)/);
   assert.match(js, /setInterval\(dpsTick, 100\)/);
   assert.match(js, /const trueDpm = dpsNow\(dpsEvents, effNow, dpmTauMs, holdMs\) \* 60;/);
-  assert.match(js, /const iv = cashIv\(p\); cashKills\.push\(\{ cid: ev\.opp, iv \}\);/); // one ledger entry per kill
+  assert.match(js, /const iv = cashIv\(p\); cashKills\.push\(\{ cid: ev\.opp, iv, w: ev\.weapon \}\);/); // one ledger entry per kill, weapon kept for the session 🪖
   assert.match(js, /for \(const e of cashKills\) if \(e\.cid === cid && !Number\.isFinite\(e\.iv\)\) e\.iv = cashIv\(p\);/); // late iVi finalizes in the list
   assert.match(js, /if \(\$\("liveCashAvgLabel"\)\) \$\("liveCashAvgLabel"\)\.textContent = tr\("live\.cashAvg", "Enemy avg ivi"\);/);
   assert.doesNotMatch(js, /liveCashSum/);
@@ -1048,7 +1048,7 @@ test("streamer mode (owner 2026-10-26): button switches to the chromakey overlay
   assert.match(css, /body\.live-stream #liveDpsVal:not\(\.live-dps-warm\) \{ -webkit-text-stroke: 4px #000; paint-order: stroke fill; \}/);
   assert.match(css, /body\.live-stream #liveDps > \.live-metric:first-child \{ display: flex; flex-direction: column; \}/);
   assert.match(css, /body\.live-stream #liveDpsVal \{ order: 3; \}/);
-  assert.match(css, /body\.live-stream #liveState, body\.live-stream #liveDpmTau, body\.live-stream #liveCashHist, body\.live-stream #liveShare, body\.live-stream #liveStreamBtn, body\.live-stream #liveSession \{ display: none; \}/);
+  assert.match(css, /body\.live-stream #liveState, body\.live-stream #liveDpmTau, body\.live-stream #liveCashHist, body\.live-stream #liveShare, body\.live-stream #liveStreamBtn, body\.live-stream #liveSession, body\.live-stream #liveSessVals, body\.live-stream #liveSessPick \{ display: none; \}/);
   assert.match(css, /--lv-nm: 14\.36rem;/);
   assert.match(css, /--lv-nm: 18\.59rem;/);
   assert.match(css, /--lv-nm: 6\.59rem;/);
@@ -1248,8 +1248,8 @@ test("obs clip wiring (live.mjs): threshold field, OBS client and both re-evalua
   const js = readFileSync(new URL("live.mjs", root), "utf8");
   assert.match(js, /from "\.\/obs-clip\.mjs\?v=20261106-obsclip1"/);
   assert.match(js, /const obsClip = createObsClipTrigger\(\);/);
-  assert.match(js, /const iv = cashIv\(p\); cashKills\.push\(\{ cid: ev\.opp, iv \}\); luckEvents = luckPush\(luckEvents, \{ cid: ev\.opp, iv: rawAdjs\(p\), won: true \}\); luckDirty = true; maybeFireObsClip\(\);/);
-  assert.match(js, /for \(const e of cashKills\) if \(e\.cid === cid && !Number\.isFinite\(e\.iv\)\) e\.iv = cashIv\(p\);\n\s+if \(luckFill\(luckEvents, cid, rawAdjs\(p\)\)\) luckDirty = true; \/\/ 🎲 same late iVi, same window\n\s+maybeFireObsClip\(\); \/\/ late iVi can push the run over the OBS clip threshold/);
+  assert.match(js, /const iv = cashIv\(p\); cashKills\.push\(\{ cid: ev\.opp, iv, w: ev\.weapon \}\); luckEvents = luckPush\(luckEvents, \{ cid: ev\.opp, iv: rawAdjs\(p\), won: true \}\); sessWeapons\.push\(ev\.weapon\); sessFights\.push\(\{ cid: ev\.opp, iv: rawAdjs\(p\), act: [^}]+, won: true \}\); luckDirty = true; sessDirty = true; maybeFireObsClip\(\);/);
+  assert.match(js, /for \(const e of cashKills\) if \(e\.cid === cid && !Number\.isFinite\(e\.iv\)\) e\.iv = cashIv\(p\);\n\s+if \(luckFill\(luckEvents, cid, rawAdjs\(p\)\)\) luckDirty = true; \/\/ 🎲 same late iVi, same window\n\s+if \(luckFill\(sessFights, cid, rawAdjs\(p\)\)\) sessDirty = true; \/\/ session values: same late iVi, same fights\n\s+maybeFireObsClip\(\); \/\/ late iVi can push the run over the OBS clip threshold/);
   assert.match(js, /cashKills\.length = 0;\n\s+obsClip\.resetRun\(\); \/\/ the run banked: the next run may clip again/);
   assert.match(js, /const OBS_CLIP_THRESHOLD_KEY = "ps2_live_obs_clip_threshold";/);
   assert.match(js, /localStorage\.getItem\(OBS_CLIP_THRESHOLD_KEY\)/);
@@ -1269,8 +1269,8 @@ test("obs clip wiring (build-live + live.html): the OBS block is generated, thre
     assert.match(src, /<input id="liveObsClipPassword" type="password"/);
     assert.match(src, /<span id="liveObsClipStatus" class="live-obs-clip-status"/);
   }
-  assert.match(swap, /export const LIVE_JS = "live\.mjs\?v=20261108-luck1";/);
-  assert.match(html, /<script type="module" src="live\.mjs\?v=20261108-luck1"><\/script>/);
+  assert.match(swap, /export const LIVE_JS = "live\.mjs\?v=20261108-sess1";/);
+  assert.match(html, /<script type="module" src="live\.mjs\?v=20261108-sess1"><\/script>/);
 });
 
 test("live luck wiring (owner 2026-11-08): raw 🎲 value in the feed row, same Duels model", () => {
@@ -1285,6 +1285,25 @@ test("live luck wiring (owner 2026-11-08): raw 🎲 value in the feed row, same 
     assert.match(src, /<span id="liveLuckLabel"><\/span> <span id="liveLuckVal">–<\/span>/);
   }
   for (const k of ["live.luck", "live.luckTip", "live.luckFew"]) assert.equal(typeof en[k], "string", `${k} is in en.json`);
+});
+
+test("live session values wiring (owner 2026-11-08): raw ☠️🪖🤝🪳🌈 + per-value picker", () => {
+  const js = readFileSync(new URL("live.mjs", root), "utf8");
+  const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
+  const html = readFileSync(new URL("live.html", root), "utf8");
+  const en = JSON.parse(readFileSync(new URL("i18n/en.json", root), "utf8"));
+  assert.match(js, /from "\.\/live-session\.mjs\?v=20261108-sess1"/);
+  assert.match(js, /sessWeapons\.push\(ev\.weapon\)/);
+  assert.match(js, /sessFights\.push\(\{ cid: ev\.opp, iv: rawAdjs\(p\), act:/);
+  assert.match(js, /sessAssists\+\+/);
+  assert.match(js, /renderSessVals\(\)/);
+  assert.match(js, /ps2elite_live_sess_pick/);
+  for (const src of [swap, html]) {
+    assert.match(src, /<div id="liveSessVals" class="live-sess-vals"><\/div>/);
+    assert.match(src, /<div id="liveSessPick" class="live-sess-pick">/);
+    for (const id of ["kd", "inf", "apk", "zerg", "g", "luck"]) assert.match(src, new RegExp(`<input type="checkbox" data-sess="${id}" checked>`));
+  }
+  for (const k of ["live.sessPick", "live.sessKd", "live.sessInf", "live.sessApk", "live.sessZerg", "live.sessG", "live.sessLuck", "live.sessFew", "live.sessKdTip", "live.sessInfTip", "live.sessApkTip", "live.sessZergTip", "live.sessGTip"]) assert.equal(typeof en[k], "string", `${k} is in en.json`);
 });
 
 test("obs clip i18n: every OBS clip key lives in en.json only and the live page uses tr() for status text", () => {

@@ -374,6 +374,8 @@
     <div id="liveDps" class="live-dps"><div class="live-metric"><div class="live-bar live-bar-fat" aria-hidden="true"><div id="liveDpsBar" class="live-bar-fill live-bar-dpm"></div><div id="liveDpmTickAvg" class="live-dpm-tick"></div><div id="liveDpmTickP90" class="live-dpm-tick"></div></div><span id="liveDpsLabel"></span> <span id="liveDpsVal">0.0</span></div><div class="live-metric"><span id="liveCashAvgLabel"></span> <span id="liveCashAvgVal">–</span></div><div class="live-metric"><span id="liveLuckLabel"></span> <span id="liveLuckVal">–</span></div><div class="live-metric"><span id="liveOnline" class="live-online" data-state="unknown"><i></i><span id="liveOnlineText">…</span></span></div></div>
     <div id="liveDbg" class="live-dbg"></div>
     <div id="liveSession" class="live-session"></div>
+    <div id="liveSessVals" class="live-sess-vals"></div>
+    <div id="liveSessPick" class="live-sess-pick"><span data-i18n="live.sessPick">Show:</span> <label><input type="checkbox" data-sess="kd" checked> <span data-i18n="live.sessKd">☠️ K/D</span></label> <label><input type="checkbox" data-sess="inf" checked> <span data-i18n="live.sessInf">🪖 Infantry</span></label> <label><input type="checkbox" data-sess="apk" checked> <span data-i18n="live.sessApk">🤝 Assists</span></label> <label><input type="checkbox" data-sess="zerg" checked> <span data-i18n="live.sessZerg">🪳 Zerg</span></label> <label><input type="checkbox" data-sess="g" checked> <span data-i18n="live.sessG">🌈 G</span></label> <label><input type="checkbox" data-sess="luck" checked> <span data-i18n="live.sessLuck">🎲 Luck</span></label></div>
     <div id="liveCaps" class="live-caps" hidden aria-live="polite"></div>
     <div id="liveStreamCard" class="live-stream-card"><div class="live-stream-kd">K/D <span id="liveStreamKd">–</span></div><div class="live-stream-session" id="liveStreamSession"></div></div>
     <button id="liveShare" class="live-share" type="button"></button><button id="liveStreamBtn" class="live-share" type="button"></button><button id="liveVoiceBtn" class="live-share" type="button"></button><button id="liveSfxBtn" class="live-share" type="button"></button>
@@ -692,6 +694,6 @@
       navigator.serviceWorker.register("sw.js").catch(function () {});
     }
   </script>
-  <script type="module" src="live.mjs?v=20261108-luck1"></script>
+  <script type="module" src="live.mjs?v=20261108-sess1"></script>
 </body>
 </html>

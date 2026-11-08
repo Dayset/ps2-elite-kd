@@ -197,6 +197,14 @@ col.lv-c-iv { width: var(--lv-iw); }
 #liveDpmTau { display: none; } /* owner 2026-10-26: τ locked at 60, adjuster hidden */
 /* Owner 2026-10-26: session trace-back line — small, dim, under the DPM block. */
 .live-session { margin-top: 0.25rem; font-size: 0.72rem; color: var(--dim); }
+/* Owner 2026-11-08: live session values — raw, no rounding — same size as the session line. */
+.live-sess-vals { margin-top: 0.25rem; font-size: 0.72rem; color: var(--dim); }
+.live-sess-vals .live-metric { margin-right: 0.75rem; }
+.live-sess-vals:empty { display: none; }
+/* Owner 2026-11-08: the per-value picker — small checkboxes, same size as the session line. */
+.live-sess-pick { margin-top: 0.25rem; font-size: 0.72rem; color: var(--dim); }
+.live-sess-pick label { margin-left: 0.5rem; cursor: pointer; white-space: nowrap; }
+.live-sess-pick input { accent-color: var(--text); }
 .live-share { margin-top: 0.25rem; font-size: 0.72rem; background: none; border: 1px solid var(--border); color: var(--text); border-radius: 0; padding: 0.1rem 0.5rem; cursor: pointer; font: inherit; }
 #liveStreamCard { display: none; }
 .live-stream-card { margin-top: 0.5rem; background: var(--panel); border: 1px solid var(--border); border-radius: 0; padding: 0.5rem 0.75rem; }
@@ -219,7 +227,7 @@ body.live-stream #liveDps > .live-metric:first-child { display: flex; flex-direc
 body.live-stream #liveDpsLabel { order: 1; }
 body.live-stream #liveDps > .live-metric:first-child .live-bar { order: 2; }
 body.live-stream #liveDpsVal { order: 3; }
-body.live-stream #liveState, body.live-stream #liveDpmTau, body.live-stream #liveCashHist, body.live-stream #liveShare, body.live-stream #liveStreamBtn, body.live-stream #liveSession { display: none; } /* owner 2026-10-26: stream shows the names list + DPM block + the card; no button back — the switch button hides with the rest */
+body.live-stream #liveState, body.live-stream #liveDpmTau, body.live-stream #liveCashHist, body.live-stream #liveShare, body.live-stream #liveStreamBtn, body.live-stream #liveSession, body.live-stream #liveSessVals, body.live-stream #liveSessPick { display: none; } /* owner 2026-10-26: stream shows the names list + DPM block + the card; no button back — the switch button hides with the rest */
 /* Owner 2026-10-28: the voice lines panel is settings UI, never overlay content. */
 body.live-stream #liveVoiceLines { display: none; }
 
