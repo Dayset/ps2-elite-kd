@@ -61,9 +61,27 @@ test("example row: main-table columns, ranks.json values, cards and links on the
   }
 });
 
-// 2026-11-08: the static worked example is the fallback before JS loads — it must
-// show the same seven items the live card does (the 🪳 Zerg line was missing),
-// and the lone 🚜 / 🪳 emoji links carry no underline (it reads as an underscore).
+// 2026-11-08: every public (non-debug) column has a full "How it's measured"
+// section, not just a one-line tip — 🎲 Luck, 🤝 Assists and 🪖 Infantry were
+// one-liners while 🪳 Zerg / 🧘‍♂️ Pure iVi / 🌈 G had formula + example + note.
+test("docs: every public column has a 'How it's measured' section", () => {
+  const en = JSON.parse(fs.readFileSync(new URL("../i18n/en.json", import.meta.url), "utf8"));
+  for (const [id, keys] of [
+    ["luck", ["cp.luckL1", "cp.luckL2", "cp.luckNote"]],
+    ["assists", ["cp.apkL1", "cp.apkL2", "cp.apkNote"]],
+    ["infantry", ["cp.infL1", "cp.infL2"]],
+    ["zerg", ["cp.zergNote"]],
+    ["pureivi", ["cp.pureiviL1", "cp.pureiviL2", "cp.pureiviL3"]],
+    ["g", ["cp.gL1", "cp.gL2", "cp.gNote"]],
+  ]) {
+    const card = html.slice(html.indexOf(`id="${id}"`));
+    assert.ok(card.includes("How it’s measured"), `${id} has a How it's measured section`);
+    for (const k of keys) {
+      assert.ok(card.includes(`data-i18n-html="${k}"`) || card.includes(`data-i18n="${k}"`), `${id} uses ${k}`);
+      assert.ok(typeof en[k] === "string" && en[k].length > 0, `${k} exists in en.json`);
+    }
+  }
+});
 test("worked example: seven static items incl. the 🪳 Zerg line; emoji links not underlined", () => {
   const ex = html.slice(html.indexOf('id="worked-example"'), html.indexOf('<hr class="st-debug-sep"'));
   assert.equal((ex.match(/<li>/g) || []).length, 7, "static example has seven items");

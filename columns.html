@@ -251,12 +251,26 @@
       <div class="cx-top"><h3 id="luck" data-i18n="col.luck">🎲 Luck</h3><span class="cx-val" data-ex="luck">—</span></div>
       <div class="cx-pct" data-ex-pct="luck" hidden><b><i></i></b><span></span></div>
       <p data-i18n="tip.luck">Wins more (+) or fewer (−) of the kills against the same opponents than ⚔️ iVi predicts. Not literally luck; vehicle kills are already adjusted.</p>
+      <details class="cx-more"><summary data-i18n="cp.more">How it’s measured</summary>
+        <ul class="st-list">
+          <li data-i18n-html="cp.luckL1"><b>Formula:</b> for each opponent with 10+ kills between you, take your actual share of those kills minus the share the ⚔️ iVi model predicts from the two ratings — then average over all such opponents. +9% means you won 9 points more of the kills than the model expected.</li>
+          <li data-i18n-html="cp.luckL2"><b>Example:</b> YuigahamaYui — gap −10‰ = <b>−1%</b> over 21 opponents (she beat 57% of them). About as expected, slightly unlucky.</li>
+        </ul>
+        <p data-i18n="cp.luckNote">Shrunk toward 0 for few opponents, so a player with only a handful of rivals never reads as wildly lucky or unlucky. The table marks it “a bit” past −48‰ / +64‰ and “much” past −71‰ / +150‰.</p>
+      </details>
     </div>
 
     <div class="st-card cx-col">
       <div class="cx-top"><h3 id="assists" data-i18n="col.assists">🤝 Assists</h3><span class="cx-val" data-ex="apk">0.60</span></div>
       <div class="cx-pct" data-ex-pct="apk"><b><i style="width:79%"></i></b><span>better than 79% of players</span></div>
       <p data-i18n="tip.apk">Assists per kill in recent Honu sessions: how often you help teammates get kills.</p>
+      <details class="cx-more"><summary data-i18n="cp.more">How it’s measured</summary>
+        <ul class="st-list">
+          <li data-i18n-html="cp.apkL1"><b>Formula:</b> assists ÷ kills in recent Honu sessions. An assist is a kill-assist XP tick (ids 2, 3, 371, 372) — you damaged the enemy and a teammate finished them.</li>
+          <li data-i18n-html="cp.apkL2"><b>Example:</b> YuigahamaYui — <b>0.60</b>, 60 assists per 100 kills, better than 79% of players.</li>
+        </ul>
+        <p data-i18n="cp.apkNote">Shown from 100 kills. Apr 1 – May 6, 2026 is skipped: a game bug recorded no assists then, so too few kills are left to measure. Higher means you share more kills with teammates — it feeds 🪳 Zerg, not ⚔️ iVi directly.</p>
+      </details>
     </div>
 
     <div class="st-card cx-col">
@@ -306,6 +320,10 @@
       <div class="cx-pct" data-ex-pct="inf" hidden><b><i></i></b><span></span></div>
       <p data-i18n="cp.infP">% of your lifetime kills made with infantry weapons. MAX counts as infantry here; vehicles, turrets and roadkills don’t. Shown from 100 kills (“—” until measured). Hover for your MAX and vehicle shares.</p>
       <details class="cx-more"><summary data-i18n="cp.more">How it’s measured</summary>
+        <ul class="st-list">
+          <li data-i18n-html="cp.infL1"><b>Formula:</b> foot kills ÷ all lifetime kills. Foot means kills with infantry weapons; MAX counts as infantry, vehicles, turrets and roadkills don’t.</li>
+          <li data-i18n-html="cp.infL2"><b>Example:</b> YuigahamaYui — <b>54.2%</b>, about 54 of every 100 kills made on foot.</li>
+        </ul>
         <p data-i18n="cp.infTractor">🚜 Vehicle: a 🚜 appears next to your name, like 🪦, when you mostly play in vehicles. It works like 🪳, and every line is taken from the data at each build: your infantry share is in the lowest quarter of all ranked players (below about 71.9%) and your Honu XP shows a lot of vehicle repairs or vehicle kills per minute (top quarter of players with 2+ hours of XP detail); or your infantry share is in the lowest 2% (below about 21.7%), even without XP detail. Hover it for the hint; the Infantry number itself does not change. On 🎥 LIVE the 🪖 turns into 🚜 below that infantry cut and fills: almost empty just under the cut, full (and shiny) at half the cut (about 36%) or less. Between the cut and the median (about 85.1%) the 🪖 stays empty; above the median it fills up to 100% infantry. Not the same as the 🚜 vehicle cut on ⚔️ iVi or the 🔀🚜 Diff reduction: this mark changes no number.</p>
       </details>
     </div>
