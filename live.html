@@ -664,6 +664,7 @@
           </label>
           <div class="foot-stats-block">
             <p id="ranksMeta" class="ranks-meta"></p>
+            <p id="avgPlanetman" class="ranks-meta" hidden></p>
             <p id="pageNameRate" class="ranks-meta" hidden></p>
             <p class="footer-thanks thanks-gap"><span data-i18n="foot.thanks">Data from the Daybreak Census API</span></p>
             <details id="psBaselineNote" class="footer-thanks ps-baseline-note" hidden><summary data-i18n="foot.psVsPc">PlayStation vs PC difference</summary><p id="psBaselineText"></p></details>
@@ -685,7 +686,7 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261108-neg2"></script>
+  <script type="module" src="app.js?v=20261108-avg1"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});

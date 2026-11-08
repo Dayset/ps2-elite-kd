@@ -107,20 +107,21 @@ test("distribution on the checked-in snapshot: median 17.21%, p90 28.95%, top-10
   assert.equal(vals.filter((v) => v >= 5 && v <= 20).length / n > 0.48, true); // bulk in 5–20%
 });
 
-test("pin chain: g-score at 20261108-g2f1, rankings + stats + live chains at 20261108-neg2", () => {
+test("pin chain: g-score at 20261108-g2f1, neg2 chains, rankings chain at 20261108-avg1", () => {
   assert.match(read("rankings.mjs"), /g-score\.mjs\?v=20261108-g2f1/);
   assert.match(read("stats-table.mjs"), /g-score\.mjs\?v=20261108-g2f1/);
   assert.match(read("columns-example.mjs"), /g-score\.mjs\?v=20261108-g2f1/);
+  assert.match(read("rankings.mjs"), /average-planetman\.mjs\?v=20261108-avg1/);
   assert.match(read("rankings.mjs"), /tiers\.mjs\?v=20261108-neg2/);
   assert.match(read("stats-table.mjs"), /tiers\.mjs\?v=20261108-neg2/);
   assert.match(read("stats-table.mjs"), /kill-feed\.mjs\?v=20261108-neg2/);
   assert.match(read("stats-table.mjs"), /duels-panel\.mjs\?v=20261108-neg2/);
-  assert.match(read("shared-index.mjs"), /rankings\.mjs\?v=20261108-neg2/);
-  assert.match(read("app.js"), /shared-index\.mjs\?v=20261108-neg2/);
+  assert.match(read("shared-index.mjs"), /rankings\.mjs\?v=20261108-avg1/);
+  assert.match(read("app.js"), /shared-index\.mjs\?v=20261108-avg1/);
   assert.match(read("app.js"), /stats-table\.mjs\?v=20261108-neg2/);
-  assert.match(read("index.html"), /app\.js\?v=20261108-neg2/);
+  assert.match(read("index.html"), /app\.js\?v=20261108-avg1/);
   assert.match(read("columns.html"), /columns-example\.mjs\?v=20261108-neg2/);
-  assert.match(read("live.html"), /app\.js\?v=20261108-neg2/);
+  assert.match(read("live.html"), /app\.js\?v=20261108-avg1/);
   assert.match(read("live.mjs"), /live-model\.mjs\?v=20261108-neg2/);
   assert.match(read("live.html"), /live\.mjs\?v=20261108-neg2/);
   assert.match(read("scripts/build-live.mjs"), /live\.mjs\?v=20261108-neg2/);
