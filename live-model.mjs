@@ -296,7 +296,7 @@ export function censusStats(ch) {
  * 🪖 Infantry is the ranks.json "inf" value; players without it get an empty (0%) 🪖 (owner t567u).
  */
 export const LIVE_COLS = Object.freeze([
-  { id: "adjs", label: "⚔️ iVi", tip: "iVi", digits: 0, floorZero: true, mode: "ivi" },
+  { id: "adjs", label: "⚔️ iVi", tip: "iVi", digits: 0, mode: "ivi" },
   { id: "act", label: "🏃 Activity", tip: "Activity", digits: 2, mode: "stack" },
   { id: "pvs", label: "🦁 Brave", tip: "Brave", digits: 2, mode: "stack" },
   { id: "rf", label: "🛡️ Resist", tip: "Resist", digits: 2, mode: "stack" },
@@ -310,7 +310,6 @@ export const LIVE_COLS = Object.freeze([
 /** Owner t584u hover text for one emoji / the iVi number: short label + the real value ("K/D 2.40", "Zerg 41", "Infantry 95.4%"), or "unknown". */
 export function tipText(col, v) {
   if (typeof v !== "number" || !Number.isFinite(v)) return `${col.tip} unknown`;
-  if (col.floorZero && v < 0) v = 0;
   const d = col.digits || 0;
   return `${col.tip} ${(Math.round(v * 10 ** d) / 10 ** d + 0).toFixed(d)}${col.unit || ""}`;
 }
@@ -597,7 +596,6 @@ export function shareDelay(now, lastSent, firstPendingAt, pending) {
 /** "1,357" / "2.80" / "—" for one cell. */
 export function cellText(col, v) {
   if (typeof v !== "number" || !Number.isFinite(v)) return "—";
-  if (col.floorZero && v < 0) v = 0;
   // Owner t557u: the small numbers under the emojis fit 4 characters ("0.63", "95.4"): bigger values drop decimals (100.0 → "100").
   let d = col.digits;
   if (col.mode === "stack") while (d > 0 && Math.abs(v).toFixed(d).length > 4) d--;

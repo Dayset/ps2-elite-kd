@@ -12,10 +12,10 @@ import { zergChargedAdjs, zergFresh } from "./zerg-charge.mjs?v=20261029-zadj2";
 import { pureIvI } from "./pure-ivi.mjs?v=20261029-purevis1";
 import { infMedian } from "./tractor.mjs?v=20261024-trac1";
 import { mountWeapons } from "./weapons.mjs?v=20261106-wplink1";
-import { mountKillFeed } from "./kill-feed.mjs?v=20261028-os2";
+import { mountKillFeed } from "./kill-feed.mjs?v=20261108-neg2";
 import { mountScrims } from "./scrims-panel.mjs?v=20261103-ps1";
 import { mountOldTabs } from "./old-tabs.mjs?v=20261028-duel1";
-import { mountDuels } from "./duels-panel.mjs?v=20261106-glk3";
+import { mountDuels } from "./duels-panel.mjs?v=20261108-neg2";
 import { playerLuck, loadLuckData, luckPoints, luckCellHtml, luckHint, luckLabel } from "./luck-col.mjs?v=20261102-luck5";
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
 import { PS_SERVERS, censusNsBase, roomLsKey } from "./rooms.mjs?v=20261022-ps1";
@@ -32,7 +32,7 @@ import { percentileOf } from "./dist.mjs?v=20261010-sav1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261025-loc1";
 import { statMark, isPenalizedPadder, POOP_TIP, POOP_MARK, markNote } from "./padding.mjs?v=20261023-short1";
 import { autoMarksHtml } from "./auto-marks.mjs?v=20261030-hs1";
-import { tierOf, IVI_TIERS, BELOW_TIER } from "./tiers.mjs?v=20261017-tier1";
+import { tierOf, IVI_TIERS, BELOW_TIER } from "./tiers.mjs?v=20261108-neg2";
 import { hiddenList, isConfirmedCheater as isOorHit } from "./hidden.mjs?v=20261025-oor1";
 import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261023-short1";
 
@@ -448,7 +448,7 @@ export function createStatsTable($) {
 
     // Column order is fixed (sort only reorders rows). Visible by default:
     const adjVisibleCols = [
-      { id: "adjs", label: "⚔️ iVi", hint: tr("tip.adjs", "Rating vs the ~200 players you fight most. Stronger foes count more; fast kills add, slow safe play costs."), fn: (r) => zAdjs(r), digits: 0, floorZero: true, thinTip: true },
+      { id: "adjs", label: "⚔️ iVi", hint: tr("tip.adjs", "Rating vs the ~200 players you fight most. Stronger foes count more; fast kills add, slow safe play costs."), fn: (r) => zAdjs(r), digits: 0, thinTip: true },
       { id: "act", label: "🏃 Activity", hint: tr("tip.act", "How much winning combat you put out: K/D vs your usual foes × how fast you kill."), fn: (r) => r.act, digits: 2 },
       { id: "pvs", label: "🦁 Brave", hint: tr("tip.pvs", "Stays high if you keep fighting well against the fastest-killing enemies you meet."), fn: (r) => r.pvs, digits: 2 },
       { id: "rf", label: "🛡️ Resist", hint: tr("tip.rf", "How well you hold up vs strong players: K/D vs your usual foes, scaled by how fast they kill."), fn: (r) => r.rf, digits: 2 },
@@ -486,7 +486,7 @@ export function createStatsTable($) {
       { id: "diff", label: tr("col.diff", "🔀 Diff"), hint: tr("tip.diff", AIMGAP_HINT), digits: 0, aimGapCell: true,
         fn: (r) => { const g = traitP ? aimGap(traitP, zAdjs(r), r.ivi, r.p ? $.hutOf(r.p.display) : null, r.p ? vdfOf(r.p.display) : null, r.p ? nbdOf(r.p.display, r.p) : null) : null; return g ? g.score : NaN; } },
       // ⚔️ iVi before the 🪳 Zerg evening-out (#84): the plain adjusted iVi, for comparison with the ⚔️ iVi column.
-      { id: "adjs0", label: tr("col.adjs0", "⚔️ iVi before 🪳"), hint: tr("tip.adjs0", "⚔️ iVi before it was evened out for 🪳 Zerg. The ⚔️ iVi column is the evened-out value."), digits: 0, floorZero: true, thinTip: true,
+      { id: "adjs0", label: tr("col.adjs0", "⚔️ iVi before 🪳"), hint: tr("tip.adjs0", "⚔️ iVi before it was evened out for 🪳 Zerg. The ⚔️ iVi column is the evened-out value."), digits: 0, thinTip: true,
         fn: (r) => shownValue(r, "adjs") },
     ];
     // Opponent-sample metrics: "—" below MIN_FIGHTS (player-metrics.mjs), so they
@@ -595,12 +595,9 @@ export function createStatsTable($) {
           const vals = cols
             .map((c) => {
               const v = c.fn(row);
-              // ⚡ ivi: below-zero values read as "0" (not rated); sort keeps true value so they stay lowest.
+              // ⚔️ iVi: true value, negatives included (owner 2026-11-08); sort keeps true value so they stay lowest.
               // 🚜 vehicle / MAX cut on ⚔️ iVi (vehicle-cut.mjs): no visible mark (owner), reason in the cell's hover.
               const vc = c.id === "adjs" ? [row.vehCut > 0 ? vehicleCutTip(row.vehOnly * 100, row.maxShare * 100, row.vehCut * 100) : "", zergAdjTip(row)].filter(Boolean).join(". ") : "";
-              if (c.floorZero && isFiniteNum(v) && v < 0) {
-                return `<td class="below-scale" title="${escapeHtml("Below the rating scale" + (vc ? ". " + vc : ""))}">0</td>`;
-              }
               // Opponent-sample metrics below MIN_FIGHTS: "—" with the reason on hover.
               if (c.thinTip && row.thin && !isFiniteNum(v)) {
                 return `<td class="thin-sample" title="${escapeHtml($.thinCellTip(row))}">—</td>`;

@@ -51,13 +51,13 @@ test("the block sits right above the Auraxium weapons, collapsed and hidden unti
   assert.doesNotMatch(kf, /transition|animation/);
 });
 
-test("opponent ⚔️ iVi from cached ranks only: number (≤0 → 0), padder marks, OOR, nothing when not cached", () => {
+test("opponent ⚔️ iVi from cached ranks only: number (negatives as-is), padder marks, OOR, nothing when not cached", () => {
   const row = { kill: true, name: "Vic", fac: "tr" };
   assert.doesNotMatch(rowHtml(row, Date.now(), () => null), /kf-ivi|kf-oor/);
   const h = rowHtml(row, Date.now(), () => ({ adjs: 1234.6, tier: "top5", tierLabel: "💎 Top 1–5%" }));
   assert.match(h, /<span class="kf-ivi kf-t-top5" title="⚔️ iVi 1,235 · 💎 Top 1–5%\. Rating vs/);
   assert.match(h, />💎\u2009?1,235<\/span>/);
-  assert.match(iviHtml({ adjs: -40, tier: "below", tierLabel: "Below the rating scale (iVi 0)" }), />0<\/span>/);
+  assert.match(iviHtml({ adjs: -40, tier: "below", tierLabel: "Below the rating scale" }), />-40<\/span>/);
   assert.match(iviHtml({ adjs: 900, mark: "*", markTip: "pad", poop: true, poopTip: "p" }), /<span class="kf-pad" title="pad">\*<\/span><span class="poop-mark" title="p">💩<\/span>/);
   assert.match(iviHtml({ oor: true, oorTip: "x" }), /<span class="kf-oor" title="x">OOR<\/span>/);
   assert.equal(iviHtml(null), "");

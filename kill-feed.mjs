@@ -93,12 +93,12 @@ export function relTime(ms, now = Date.now()) {
  * Opponent ⚔️ iVi next to the name (owner steering after t747u): only from data the
  * page already has (ranks.json / ranks-lite.json of this room, hidden.json), never a
  * new Census / Honu call. info = { adjs, tier, tierLabel, mark, markTip, poop, poopTip,
- * oor, oorTip } or null → nothing shown. Same number as the ✨ table: 0 digits, ≤ 0 → 0.
+ * oor, oorTip } or null → nothing shown. Same number as the ✨ table: 0 digits, true value (negatives stay negative).
  */
 export function iviHtml(info) {
   if (!info) return "";
   if (info.oor) return ` <span class="kf-oor" title="${esc(info.oorTip || "")}">OOR</span>`;
-  const n = typeof info.adjs === "number" && Number.isFinite(info.adjs) ? Math.round(Math.max(0, info.adjs)) : null;
+  const n = typeof info.adjs === "number" && Number.isFinite(info.adjs) ? Math.round(info.adjs) : null;
   const mark = info.mark ? `<span class="kf-pad" title="${esc(info.markTip || "")}">${esc(info.mark)}</span>` : "";
   const poop = info.poop ? `<span class="poop-mark" title="${esc(info.poopTip || "")}">💩</span>` : "";
   if (n == null) return mark || poop ? `${mark}${poop}` : "";

@@ -147,6 +147,7 @@ test("hover values (owner t584u): short label + the real value, 'unknown' when m
   assert.equal(tipText(col("zerg"), 41.2), "Zerg 41");
   assert.equal(tipText(col("inf"), 95.43), "Infantry 95.4%");
   assert.equal(tipText(col("adjs"), 1357.4), "iVi 1357");
+  assert.equal(tipText(col("adjs"), -20), "iVi -20");
   assert.equal(tipText(col("zerg"), null), "Zerg unknown");
   assert.equal(tipText(col("rkd"), NaN), "K/D unknown");
   for (const c of LIVE_COLS) assert.ok(c.tip && !/\p{Extended_Pictographic}/u.test(c.tip), c.id);
@@ -227,10 +228,10 @@ test("censusStats: K/D and KPM from stat_history", () => {
   assert.deepEqual(censusStats({}), { kd: null, kpm: null });
 });
 
-test("cellText: digits, floor at zero, missing", () => {
+test("cellText: digits, negative as-is, missing", () => {
   const adjs = LIVE_COLS.find((c) => c.id === "adjs");
   assert.equal(cellText(adjs, 1357.3), "1357"); // t564u: no comma
-  assert.equal(cellText(adjs, -20), "0");
+  assert.equal(cellText(adjs, -20), "-20");
   assert.equal(cellText(LIVE_COLS.find((c) => c.id === "inf"), null), "—"); // 🪖 missing → "—" in the hover title only; the cell is an empty 0% 🪖 (t567u)
   const pvs = LIVE_COLS.find((c) => c.id === "pvs");
   assert.equal(cellText(pvs, 0.634), "0.63");
@@ -722,7 +723,7 @@ test("tau locked (owner 2026-10-26): τ is 60s, adjuster hidden", () => {
 test("bounty (owner 2026-10-26): one ⚰️×streak, then one 💰×lives, weapon under the centre name", () => {
   const js = liveSrc();
   const css = cssSrc();
-  assert.match(js, /bountyNext[^}]*\} from "\.\/live-model\.mjs\?v=20261028-voice2"/);
+  assert.match(js, /bountyNext[^}]*\} from "\.\/live-model\.mjs\?v=20261108-neg2"/);
   assert.match(js, /const b = bountyNext\(\{ streak: bountyStreak, lives: bountyLives \}, ev\.kind === "kill"\);/);
   assert.match(js, /if \(bountyLives > 0\) return `<span class="lv-em">💰×\$\{bountyLives\}<\/span>`;/); // one bag + count, not one per life
   assert.match(js, /if \(bountyStreak > 0\) return `<span class="lv-em">⚰️×\$\{bountyStreak\}<\/span>`;/); // one coffin + count
@@ -810,7 +811,7 @@ test("hold meter (owner 2026-10-25): decay freezes on death, lifts on a spike or
   assert.ok(js.includes('killXpRefs.push([Date.now(), amt / kbase])'), "owner 2026-10-26: kill XP ratios feed the multiplier");
   assert.ok(js.includes('const share = assistShare(amt, xid, xpMultAt(killXpRefs, Date.now()));'), "owner 2026-10-26: assist share from amount / multiplier / base");
   assert.ok(js.includes('const dmg = share == null ? DPS_ASSIST : Math.round(1000 * share);'), "owner 2026-10-26: scaled spike, flat 500 fallback for spawn/invalid");
-  assert.match(js, /combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad, tierLabel, tierVoiceLine, TIER_VOICE_LINES, cidNameEntry \} from "\.\/live-model\.mjs\?v=20261028-voice2"/);
+  assert.match(js, /combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad, tierLabel, tierVoiceLine, TIER_VOICE_LINES, cidNameEntry \} from "\.\/live-model\.mjs\?v=20261108-neg2"/);
 });
 
 test("warm-up (owner 2026-10-25): the meter waits for its 3rd chunk — first two spikes only bump the count", () => {
@@ -925,7 +926,7 @@ test("scroll (owner 2026-10-25): gas-counter queue — one 700 ms ease-in scroll
   assert.match(js, /if \(scrollQ\.length\) startScroll\(\);/);
   assert.match(js, /if \(Math\.abs\(trueDpm - shownDps\) < 0\.05\) shownDps = trueDpm;/);
   assert.match(js, /shownDps \+= \(trueDpm - shownDps\) \* 0\.35;/);
-  assert.match(js, /easeInQuad, tierLabel, tierVoiceLine, TIER_VOICE_LINES, cidNameEntry \} from "\.\/live-model\.mjs\?v=20261028-voice2"/);
+  assert.match(js, /easeInQuad, tierLabel, tierVoiceLine, TIER_VOICE_LINES, cidNameEntry \} from "\.\/live-model\.mjs\?v=20261108-neg2"/);
 });
 
 test("past cashouts background (owner 2026-10-25): the history sits on the theme panel, not transparent", () => {
@@ -1268,8 +1269,8 @@ test("obs clip wiring (build-live + live.html): the OBS block is generated, thre
     assert.match(src, /<input id="liveObsClipPassword" type="password"/);
     assert.match(src, /<span id="liveObsClipStatus" class="live-obs-clip-status"/);
   }
-  assert.match(swap, /export const LIVE_JS = "live\.mjs\?v=20261106-obsclip1";/);
-  assert.match(html, /<script type="module" src="live\.mjs\?v=20261106-obsclip1"><\/script>/);
+  assert.match(swap, /export const LIVE_JS = "live\.mjs\?v=20261108-neg2";/);
+  assert.match(html, /<script type="module" src="live\.mjs\?v=20261108-neg2"><\/script>/);
 });
 
 test("obs clip i18n: every OBS clip key lives in en.json only and the live page uses tr() for status text", () => {

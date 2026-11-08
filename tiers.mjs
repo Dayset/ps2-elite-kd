@@ -16,8 +16,8 @@ export const IVI_TIERS = Object.freeze([
   { id: "top50", min: 0.5, label: "🥉 Top 25–50%" },
   { id: "lower", min: -Infinity, label: "Lower half" },
 ]);
-/** adjusted iVi ≤ 0: shown as 0, "below the rating scale". */
-export const BELOW_TIER = Object.freeze({ id: "below", label: "Below the rating scale (iVi 0)" });
+/** adjusted iVi ≤ 0: below the rating scale (tier grouping unchanged; the value itself now shows true). */
+export const BELOW_TIER = Object.freeze({ id: "below", label: "Below the rating scale" });
 /** No adjusted iVi (too few fights). */
 export const UNRATED_TIER = Object.freeze({ id: "unrated", label: "Unrated (too few fights)" });
 

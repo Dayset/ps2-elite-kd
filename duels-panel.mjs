@@ -230,7 +230,7 @@ export function mountDuels(section, o = {}) {
   /* ---------- one player: vs the crowd */
 
   /* ⚔️ iVi for crowd opponents, from the room's ranks-lite (same ⚔️ iVi as the
-   * skill tables: evened adjs, finite and > 0 only). Lazy: fetched on the first
+   * skill tables: evened adjs, finite only (negatives show as-is). Lazy: fetched on the first
    * crowd render, then cached for the page; a failed load just means no iVi
    * (never a broken table). Keyed by lowercased name and by slug, so a
    * killboard name matches either spelling. */
@@ -243,7 +243,7 @@ export function mountDuels(section, o = {}) {
         const ni = d.cols.indexOf("name"), si = d.cols.indexOf("slug"), ai = d.cols.indexOf("adjs"), vi = d.cols.indexOf("infVeh");
         for (const row of d.rows) {
           const v = row[ai];
-          if (!Number.isFinite(v) || v <= 0) continue;
+          if (!Number.isFinite(v)) continue;
           // Vehicle kill share (0…1) only feeds the 🎲 vs expected row.
           const vh = vi >= 0 && Number.isFinite(row[vi]) ? row[vi] / 100 : null;
           for (const k of [String(row[ni] || "").toLowerCase(), String(row[si] || "").toLowerCase()]) {
@@ -283,11 +283,11 @@ export function mountDuels(section, o = {}) {
     return duelFitP;
   }
   const vehOf = (p) => { const v = p && vehMap.get(bareName(p.display).toLowerCase()); return Number.isFinite(v) ? v : null; };
-  const iviOf = (p) => { const v = iviMap && p && iviMap.get(bareName(p.display).toLowerCase()); return Number.isFinite(v) && v > 0 ? v : null; };
+  const iviOf = (p) => { const v = iviMap && p && iviMap.get(bareName(p.display).toLowerCase()); return Number.isFinite(v) ? v : null; };
   const iviHtml = (r) => {
     if (!iviMap) return "";
     const v = iviMap.get(bareName(r.name).toLowerCase());
-    return Number.isFinite(v) && v > 0 ? ` <span class="duel-ivi">⚔️${int(v)}</span>` : "";
+    return Number.isFinite(v) ? ` <span class="duel-ivi">⚔️${int(v)}</span>` : "";
   };
 
   function renderCrowd() {
