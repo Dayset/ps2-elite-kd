@@ -22,7 +22,7 @@ await i18nReady;
 export * from "./live-model.mjs?v=20261108-neg2"; // #66: the pure part (tests import it from here)
 import { VICTIM_LINES, classifyDeath, censusStats, LIVE_COLS, tipText, FILL_DIM, HOLLOW_PX, HOLLOW_INK, goodPct, fillDriver, emojiFill, unknownFill, infUnit, OUTLINE_PX, unitGlow, LIVE_GLOWS, LIVE_FPS, liveFps, HALO_KEY, haloOn, easeFill, glowIn, BEAT, TIER_MOTION, haloAt, SHINE, shineFrame, beatSleep, weaponIcon, glowTier, eventAt, overlayPush, overlayRows, nextBgFetch, liveRowFromPlayer, ME_REFRESH_MS, median, mergeFresh, SHARE_MAX, shareDelay, cellText, slugKey, bountyNext, dpsNow, DPS_HP, DPS_ASSIST, DPS_ASSIST_XP, assistShare, xpMultAt, KILL_BASE_XP, cashTotals, cashFormula, combatHoldMs, holdGaps, combatRuns, spawnRunHoldMs, timeToCombatMs, timerBarPct, easeInQuad, tierLabel, tierVoiceLine, TIER_VOICE_LINES, cidNameEntry } from "./live-model.mjs?v=20261108-neg2";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
-import { liveLuck, liveLuckRaw, luckPush, luckFill, luckText, anchorGap, LIVE_LUCK_MIN } from "./live-luck.mjs?v=20261108-anch1";
+import { liveLuck, liveLuckRaw, luckPush, luckFill, luckText, anchorGap, luckChips, LIVE_LUCK_MIN } from "./live-luck.mjs?v=20261108-chip1";
 import { SESS_MIN_KILLS, SESS_ANCHOR_W, sessionReady, sessionKd, sessionInf, sessionApk, sessionInflation, sessionBrave, sessionZerg, sessionG, sessText, anchorValue } from "./live-session.mjs?v=20261108-anch1";
 import { DUEL_FIT_V1, duelFitKind, playerLuck } from "./duels.mjs?v=20261102-luck5";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
@@ -646,6 +646,7 @@ function start() {
   const cashAvgEl = $("liveCashAvgVal");
   if ($("liveCashAvgLabel")) $("liveCashAvgLabel").textContent = tr("live.cashAvg", "Enemy avg ivi");
   const luckEl = $("liveLuckVal");
+  const luckChipsEl = $("liveLuckChips");
   if ($("liveLuckLabel")) $("liveLuckLabel").textContent = tr("live.luck", "🎲 Live luck");
   // Live session values (owner 2026-11-08): the values row + the per-value
   // picker (checkboxes, remembered on-device, all on by default — max
@@ -1201,6 +1202,15 @@ function start() {
       const gap = raw && lifeGap != null ? anchorGap(raw.gapPp, raw.n, lifeGap, SESS_ANCHOR_W) : null;
       const r = gap != null ? { ...raw, gapPp: gap } : liveLuck(luckEvents, myIvi, duelFit);
       const text = r ? luckText(r.gapPp) : "–";
+      // Chips (owner 2026-11-08): the latest fight's chip and the session's
+      // chips added up, in fractions — the speed and the trend. Only when
+      // anchored (the chip is defined against the anchor weight).
+      const chips = gap != null ? luckChips(luckEvents, myIvi, duelFit, SESS_ANCHOR_W) : null;
+      const chipsText = chips ? `${luckText(chips.chip)} · Σ ${luckText(chips.sum)}` : "";
+      if (luckChipsEl && luckChipsEl.textContent !== chipsText) {
+        luckChipsEl.textContent = chipsText;
+        luckChipsEl.title = chips ? tr("live.luckChipsTip", "Last fight's chip {chip} — how much that fight moved the luck. Σ {sum} — all this session's chips added up: the trend, building up or chipping away. Both in fractions (the luck itself is in points).", { chip: luckText(chips.chip), sum: luckText(chips.sum) }) : "";
+      }
       if (luckEl && text !== lastLuck) {
         luckEl.textContent = text;
         luckEl.title = r

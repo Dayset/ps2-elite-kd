@@ -79,6 +79,48 @@ export function anchorGap(gapPp, n, anchorGapPp, weight = LUCK_ANCHOR_W) {
   return (weight * anchorGapPp + gapPp * n) / (weight + n);
 }
 
+/**
+ * The per-fight chip, in fractions (the same units as the gap before ×100):
+ * how much one fight moves the anchored luck. d = actual − expected for the
+ * fight (−1…1), n = scorable fights so far, weight = the anchor W.
+ * chip = d ÷ (weight + n). A +0.953 win at n=1, W=100 → +0.0094; a −0.267
+ * loss → −0.0026. Returns null when the fight can't be scored.
+ */
+export function luckChipFor(ev, myIvi, fit, n, weight = LUCK_ANCHOR_W) {
+  if (!ev || !fin(ev.iv) || ev.iv <= 0) return null;
+  if (!fin(myIvi) || myIvi <= 0) return null;
+  if (!fin(n) || n < 1) return null;
+  if (!fin(weight) || weight < 0) return null;
+  const p = duelExpected(myIvi, ev.iv, fit);
+  if (p == null) return null;
+  return ((ev.won ? 1 : 0) - p) / (weight + n);
+}
+
+/**
+ * Chips over the window: {n, chip, sum} or null. chip = the latest scorable
+ * fight's chip (the speed of the luck right now); sum = all the window's
+ * chips added up (the session's drift from the lifetime anchor — the trend).
+ * Both in fractions, raw, no rounding. n = scorable fights. The sum is the
+ * session's total contribution to the anchored gap: (anchored gap) −
+ * (weight × lifetime gap) ÷ (weight + n).
+ */
+export function luckChips(events, myIvi, fit, weight = LUCK_ANCHOR_W) {
+  if (!fin(myIvi) || myIvi <= 0) return null;
+  const scored = (events || []).filter((e) => e && fin(e.iv) && e.iv > 0);
+  const n = scored.length;
+  if (n < 1) return null;
+  let sum = 0;
+  for (const e of scored) {
+    const p = duelExpected(myIvi, e.iv, fit);
+    if (p == null) return null;
+    sum += ((e.won ? 1 : 0) - p) / (weight + n);
+  }
+  const last = scored[scored.length - 1];
+  const pLast = duelExpected(myIvi, last.iv, fit);
+  if (pLast == null) return null;
+  return { n, chip: ((last.won ? 1 : 0) - pLast) / (weight + n), sum };
+}
+
 /** The raw value with an explicit sign: "+0.73646", "-1.47374738393". No rounding — that's the point. */
 export function luckText(gapPp) {
   if (!fin(gapPp)) return "–";

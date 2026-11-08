@@ -3,7 +3,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { DUEL_FIT_V1 } from "../duels.mjs";
-import { LIVE_LUCK_MAX, LIVE_LUCK_MIN, LUCK_ANCHOR_W, luckPush, luckFill, liveLuck, liveLuckRaw, anchorGap, luckText } from "../live-luck.mjs";
+import { LIVE_LUCK_MAX, LIVE_LUCK_MIN, LUCK_ANCHOR_W, luckPush, luckFill, liveLuck, liveLuckRaw, anchorGap, luckChipFor, luckChips, luckText } from "../live-luck.mjs";
 
 const fit = DUEL_FIT_V1;
 const ev = (cid, iv, won) => ({ cid, iv, won });
@@ -72,6 +72,27 @@ test("liveLuckRaw: the gap from the first scorable fight, no floor", () => {
   assert.equal(r.n, 1);
   assert.ok(Math.abs(r.gapPp - 50) < 1e-9, `gapPp ${r.gapPp}`); // won 1 of 1, expected 0.5
   assert.equal(liveLuck(events, 1000, fit), null); // the floored version still waits for 10
+});
+
+test("luckChips: latest chip + session sum, in fractions, raw", () => {
+  // One win vs an equal (iVi 1000 vs 1000, expected 0.5) at n=1, W=100:
+  // chip = (1 − 0.5)/101 ≈ +0.00495; sum = the same (one fight).
+  const one = luckChips([ev("a", 1000, true)], 1000, fit);
+  assert.equal(one.n, 1);
+  assert.ok(Math.abs(one.chip - 0.5 / 101) < 1e-12, `chip ${one.chip}`);
+  assert.ok(Math.abs(one.sum - 0.5 / 101) < 1e-12, `sum ${one.sum}`);
+  // Two fights: win vs equal (+0.5) then loss vs equal (−0.5) → chips cancel,
+  // sum 0, latest chip −0.5/102 (n=2 now).
+  const two = luckChips([ev("a", 1000, true), ev("b", 1000, false)], 1000, fit);
+  assert.equal(two.n, 2);
+  assert.ok(Math.abs(two.chip - -0.5 / 102) < 1e-12, `chip ${two.chip}`);
+  assert.ok(Math.abs(two.sum) < 1e-12, `sum ${two.sum}`);
+  // luckChipFor: the user's examples — a +0.953 win and a −0.267 loss.
+  // (Built from the expected share: win vs iv where p ≈ 0.047, loss vs p ≈ 0.267.)
+  assert.ok(Math.abs(luckChipFor(ev("a", 1000, true), 1000, fit, 1) - 0.5 / 101) < 1e-12);
+  assert.equal(luckChipFor(ev("a", null, true), 1000, fit, 1), null); // unscorable
+  assert.equal(luckChips([], 1000, fit), null);
+  assert.equal(luckChips([ev("a", 1000, true)], 0, fit), null); // my iVi ≤ 0
 });
 
 test("anchorGap: lifetime gap counts as W fights, first fight moves it ~1/(W+1)", () => {

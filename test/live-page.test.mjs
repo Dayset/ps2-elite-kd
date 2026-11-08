@@ -739,7 +739,7 @@ test("mobile names + legend + DPS (owner 2026-10-25): table 100% with a flexible
   const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
   assert.match(css, /@media \(max-width: 600px\)[\s\S]*?\.live-table \{[^}]*width: 100%;/);
   assert.match(css, /@media \(max-width: 600px\)[\s\S]*?col\.lv-c-nm \{ width: auto; \}/);
-  assert.match(swap, /<div id="liveDps" class="live-dps"><div class="live-metric"><div class="live-bar live-bar-fat" aria-hidden="true"><div id="liveDpsBar" class="live-bar-fill live-bar-dpm"><\/div><div id="liveDpmTickAvg" class="live-dpm-tick"><\/div><div id="liveDpmTickP90" class="live-dpm-tick"><\/div><\/div><span id="liveDpsLabel"><\/span> <span id="liveDpsVal">0\.0<\/span><\/div><div class="live-metric"><span id="liveCashAvgLabel"><\/span> <span id="liveCashAvgVal">–<\/span><\/div><div class="live-metric"><span id="liveLuckLabel"><\/span> <span id="liveLuckVal">–<\/span><\/div><div class="live-metric"><span id="liveOnline" class="live-online" data-state="unknown"><i><\/i><span id="liveOnlineText">…<\/span><\/span><\/div><\/div>/);
+  assert.match(swap, /<div id="liveDps" class="live-dps"><div class="live-metric"><div class="live-bar live-bar-fat" aria-hidden="true"><div id="liveDpsBar" class="live-bar-fill live-bar-dpm"><\/div><div id="liveDpmTickAvg" class="live-dpm-tick"><\/div><div id="liveDpmTickP90" class="live-dpm-tick"><\/div><\/div><span id="liveDpsLabel"><\/span> <span id="liveDpsVal">0\.0<\/span><\/div><div class="live-metric"><span id="liveCashAvgLabel"><\/span> <span id="liveCashAvgVal">–<\/span><\/div><div class="live-metric"><span id="liveLuckLabel"><\/span> <span id="liveLuckVal">–<\/span> <span id="liveLuckChips"><\/span><\/div><div class="live-metric"><span id="liveOnline" class="live-online" data-state="unknown"><i><\/i><span id="liveOnlineText">…<\/span><\/span><\/div><\/div>/);
   assert.match(js, /eventNames: \["Death", "GainExperience_experience_id_1", "GainExperience_experience_id_278", "GainExperience_experience_id_279", "GainExperience_experience_id_2", "GainExperience_experience_id_3", "GainExperience_experience_id_371", "GainExperience_experience_id_372", "PlayerLogin", "PlayerLogout"\]/); // owner 2026-10-26: kill XP joins the subscribe
   assert.match(js, /DPS_ASSIST_XP\.has\(xid\)/);
   assert.match(js, /setInterval\(dpsTick, 100\)/);
@@ -1269,8 +1269,8 @@ test("obs clip wiring (build-live + live.html): the OBS block is generated, thre
     assert.match(src, /<input id="liveObsClipPassword" type="password"/);
     assert.match(src, /<span id="liveObsClipStatus" class="live-obs-clip-status"/);
   }
-  assert.match(swap, /export const LIVE_JS = "live\.mjs\?v=20261108-anch1";/);
-  assert.match(html, /<script type="module" src="live\.mjs\?v=20261108-anch1"><\/script>/);
+  assert.match(swap, /export const LIVE_JS = "live\.mjs\?v=20261108-chip1";/);
+  assert.match(html, /<script type="module" src="live\.mjs\?v=20261108-chip1"><\/script>/);
 });
 
 test("live luck wiring (owner 2026-11-08): raw 🎲 value in the feed row, same Duels model", () => {
@@ -1278,11 +1278,11 @@ test("live luck wiring (owner 2026-11-08): raw 🎲 value in the feed row, same 
   const swap = readFileSync(new URL("scripts/build-live.mjs", root), "utf8");
   const html = readFileSync(new URL("live.html", root), "utf8");
   const en = JSON.parse(readFileSync(new URL("i18n/en.json", root), "utf8"));
-  assert.match(js, /from "\.\/live-luck\.mjs\?v=20261108-anch1"/);
+  assert.match(js, /from "\.\/live-luck\.mjs\?v=20261108-chip1"/);
   assert.match(js, /from "\.\/duels\.mjs\?v=20261102-luck5"/);
   assert.match(js, /liveLuck\(luckEvents, myIvi, duelFit\)/);
   for (const src of [swap, html]) {
-    assert.match(src, /<span id="liveLuckLabel"><\/span> <span id="liveLuckVal">–<\/span>/);
+    assert.match(src, /<span id="liveLuckLabel"><\/span> <span id="liveLuckVal">–<\/span> <span id="liveLuckChips"><\/span>/);
   }
   for (const k of ["live.luck", "live.luckTip", "live.luckFew"]) assert.equal(typeof en[k], "string", `${k} is in en.json`);
 });
