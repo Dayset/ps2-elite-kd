@@ -25,7 +25,7 @@ import { sfx } from "./sfx.mjs?v=20261026-sfx2";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-flick1";
 import { mergeFreshRows } from "./rank-row.mjs?v=20261101-opsrv1";
 import { gScores } from "./g-score.mjs?v=20261108-g2f1";
-import { renderAvgPlanetman } from "./average-planetman.mjs?v=20261108-avg1";
+import { renderAvgPlanetman } from "./average-planetman.mjs?v=20261109-avg2";
 import { readOutfitWorlds } from "./outfit-tags.mjs?v=20261101-osrv1";
 import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sav1";
 import { confirmedPadderSlugs } from "./padding.mjs?v=20261023-short1";
@@ -865,7 +865,7 @@ export function initRankings(host) {
     }));
     $("ranksMeta").title = nFresh || nLocal ? `${FRESH_MARK} = stats from your own fetch on Analyze (this browser only); everyone else uses the shared copy.` : "";
     // Most average planetman (owner 2026-11-08): weekly pinned footer line.
-    renderAvgPlanetman($("avgPlanetman"), data.rows, data.pools);
+    renderAvgPlanetman($("avgPlanetman"), data.rows, data.pools, undefined, ROOM);
     syncPickedUi();
   }
 
