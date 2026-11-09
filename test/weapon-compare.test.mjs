@@ -1,7 +1,7 @@
 // weapon-compare.mjs pure helpers: link state round trip, axis ticks, page wiring.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { parseState, stateToSearch, niceTicks, viewMax, rangeStep, MAX_WEAPONS, MAX_RANGE, attList, burstRowsShown, resPresetFor } from "../weapon-compare.mjs";
 
 const read = (p) => readFileSync(new URL("../" + p, import.meta.url), "utf8");
@@ -46,7 +46,11 @@ test("the page is wired: stylesheet, module, language menu, footer link, credits
   assert.match(html, /Izubrr\/planetside_weapon_compare/);
   assert.match(html, /B4rrCH\/Ps2TtkCalculator/);
   assert.match(read("index.html"), /href="weapon-compare\.html"/);
-  assert.match(html, /href="weapon-adad\.html"/);
+  // the Ideal ADAD calculator is a folded section of this page; the old page only forwards here
+  assert.match(html, /<details class="[^"]*dist-section[^"]*" id="wcAdad">/);
+  assert.doesNotMatch(html, /<details[^>]*id="wcAdad"[^>]* open/);
+  for (const id of ["calcH", "gunName", "inStill", "wtable", "adadTbl"]) assert.match(html, new RegExp(`id="${id}"`), id);
+  assert.match(read("weapon-adad.html"), /weapon-compare\.html#adad/);
   assert.match(read("NOTICE"), /weapon-compare\.html/);
 });
 
@@ -114,4 +118,17 @@ test("screen-height presets: 1080p, 1440p, 2160p (4K); anything else is custom",
   assert.deepEqual([1080, 1440, 2160].map(resPresetFor), ["1080", "1440", "2160"]);
   assert.equal(resPresetFor(900), "custom");
   assert.equal(resPresetFor(4320), "custom");
+});
+
+test("beginner guides: one switch, a finder, and a link slot on every weapon card (veteran view hides them)", () => {
+  const html = read("weapon-compare.html"), mjs = read("weapon-compare.mjs"), css = read("weapon-compare.css");
+  assert.match(html, /id="wcGuides" type="checkbox" checked/);
+  assert.match(html, /<details class="wc-guidefind" id="wcGuideFind">/);
+  assert.doesNotMatch(html, /<details[^>]*id="wcGuideFind"[^>]* open/);
+  assert.match(mjs, /class="wc-guide" href=/);
+  assert.match(mjs, /wc-guide-soon/);
+  assert.match(mjs, /ps2-elite-kd-wc-guides/);
+  assert.match(css, /body\.wc-noguides \.wc-guide, body\.wc-noguides \.wc-guidefind \{ display: none; \}/);
+  // every guide the page links to exists as a file
+  for (const m of mjs.matchAll(/"(weapon-sage-[a-z0-9-]+\.html)"/g)) assert.ok(existsSync(new URL("../" + m[1], import.meta.url)), m[1]);
 });

@@ -10,9 +10,9 @@
 // ADS fire mode's own group (fire_mode_2.iron_sights = 1), as in Izubrr/planetside_weapon_compare.
 import { hitDamage, idealTtk, minShots, dps, effectiveRpm, timeOfShot } from "./weapons-model.mjs?v=20261107-merge1";
 
-export const GROUPS = Object.freeze(["kill", "damage", "magazine", "accuracyAds", "accuracyHip", "recoil", "handling"]);
+export const GROUPS = Object.freeze(["kill", "damage", "magazine", "strafe", "accuracyAds", "accuracyHip", "recoil", "handling"]);
 export const GROUP_EN = Object.freeze({
-  kill: "Killing", damage: "Damage", magazine: "Magazine and reload", accuracyAds: "Aim-down-sights cone (min / max)",
+  kill: "Killing", damage: "Damage", magazine: "Magazine and reload", strafe: "Strafing (ADAD)", accuracyAds: "Aim-down-sights cone (min / max)",
   accuracyHip: "Hip-fire cone (min / max)", recoil: "Recoil (aiming)", handling: "Handling",
 });
 
@@ -30,6 +30,20 @@ const cone = (group, key, en, which, id) => ({
   get: ({ rec }) => (rec ? cofMin(which === "ads" ? rec.adsStates : rec.states, id) : null),
   max: ({ rec }) => (rec ? cofMax(which === "ads" ? rec.adsStates : rec.states, id) : null),
 });
+
+/** The sentinel a weapon with no bloom gets for "free still shots": every still shot is free. */
+export const NO_BLOOM = 999;
+/**
+ * Free still shots (the Ideal ADAD count, same rule as weapon-adad.mjs nStill): floor((moving min - still min) / bloom)
+ * — how many shots you can fire standing still before strafing costs nothing. null = not computable, NO_BLOOM = no bloom.
+ */
+export function freeShots(still, move, bloom) {
+  if (![still, move, bloom].every(Number.isFinite)) return null;
+  if (bloom === 0) return NO_BLOOM;
+  const d = (move - still) / bloom;
+  return d <= 0 ? 0 : Math.floor(d + 1e-9);
+}
+const freeOf = (states, fm) => freeShots(cofMin(states, ST.stand), cofMin(states, ST.run), fm && fm.cof_recoil);
 
 /** Rows in display order. `unit` tells the page how to print the number. */
 export const METRICS = Object.freeze([
@@ -56,6 +70,9 @@ export const METRICS = Object.freeze([
   { key: "reload", group: "magazine", en: "Short reload", dir: -1, unit: "s", get: ({ p }) => p.reloadMs },
   { key: "reloadLong", group: "magazine", en: "Long reload", dir: -1, unit: "s", get: ({ p, rec }) => p.reloadMs + ((rec && rec.fm && rec.fm.reload_chamber_ms) || 0) },
   { key: "magTime", group: "magazine", en: "Time to empty the magazine", dir: 0, unit: "s", get: ({ p }) => timeOfShot(p, p.mag) },
+
+  { key: "freeAds", group: "strafe", en: "Free still shots, aiming", dir: 0, unit: "free", get: ({ rec }) => (rec && rec.adsFm ? freeOf(rec.adsStates, rec.adsFm) : null) },
+  { key: "freeHip", group: "strafe", en: "Free still shots, hip fire", dir: 0, unit: "free", get: ({ rec }) => (rec && rec.fm ? freeOf(rec.states, rec.fm) : null) },
 
   cone("accuracyAds", "adsCS", "Crouched, still", "ads", ST.crouch),
   cone("accuracyAds", "adsSS", "Standing, still", "ads", ST.stand),

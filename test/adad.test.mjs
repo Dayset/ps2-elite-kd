@@ -1,4 +1,4 @@
-// Ideal ADAD calculator (weapon-adad.html): the free-still-shot formula, the
+// Ideal ADAD calculator (a folded section of weapon-compare.html since 2026-11-09; weapon-adad.html forwards): the free-still-shot formula, the
 // 2018 Toolbox dataset, and the current Census derivation. No network.
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -544,10 +544,11 @@ test("applyAttachments: the acceptance numbers — Blitz hip 10 → 6 → 11, GD
   assert.equal(applyAttachments(null, "ads", new Set()), null);
 });
 
-test("the page is wired: ids, back link, and the link from weapon-compare", () => {
-  const html = read("../weapon-adad.html");
-  assert.match(html, /weapon-adad\.css\?v=20261109-adadux2/);
-  assert.match(html, /weapon-adad\.mjs\?v=20261109-adadux2/);
+test("the calculator is wired inside weapon-compare.html (weapon-adad.html only forwards there)", () => {
+  const html = read("../weapon-compare.html");
+  assert.match(read("../weapon-adad.html"), /weapon-compare\.html#adad/, "the old page forwards");
+  assert.match(html, /weapon-adad\.css\?v=20261109-merge1/);
+  assert.match(read("../weapon-compare.mjs"), /import\("\.\/weapon-adad\.mjs\?v=20261109-merge1"\)/, "started lazily, when the section is first opened");
   assert.match(html, /data-sort="loss35"/, "the 35 m loss header sorts");
   assert.match(html, /data-sort="loss60"/, "the 60 m loss header sorts");
   assert.match(html, /data-i18n="adad\.col\.loss35"/, "the 35 m loss header is translated");
@@ -557,7 +558,7 @@ test("the page is wired: ids, back link, and the link from weapon-compare", () =
   assert.match(html, /id="attBox"/, "the attachment toggles sit in the calculator");
   assert.match(html, /id="attRow"/);
   assert.match(html, /id="attNote"/);
-  assert.match(html, /adad-images\.json/, "the image map is preloaded");
+  assert.match(read("../weapon-adad.mjs"), /adad-images\.json/, "the image map is loaded when the section opens (not preloaded on every compare visit)");
   assert.match(html, /data-sort="name"/, "the name header sorts");
   assert.match(html, /data-sort="faction"/);
   assert.ok(!/data-sort="category"/.test(html), "no category column: every group header names its category");
@@ -570,13 +571,12 @@ test("the page is wired: ids, back link, and the link from weapon-compare", () =
   assert.match(read("../weapon-adad.css"), /\.row-toggle/, "the row toggle has its styles");
   assert.match(read("../weapon-adad.css"), /\.detail-box/, "the detail row has its styles");
   assert.match(read("../weapon-adad.css"), /\.sort-ind/, "the sort indicator has its styles");
-  assert.match(html, /href="weapon-compare\.html"/);
   assert.match(html, /Iridars-Toolbox-v6h\.zip/);
   assert.match(html, /Historical \(Toolbox v6h, Aug 2018\)/);
   for (const id of ["adadVerCur", "adadVerHist", "adadBanner", "gunName", "gunMeta", "btnAds", "btnHip", "btnStand", "btnCrouch", "inStill", "inMove", "inBloom", "inRpm", "inMax", "attBox", "attRow", "attNote", "nBig", "nWhat", "nFormula", "shotTable", "finals", "costBox", "costChart", "costLegend", "costAt", "costLoss", "costDist", "costDistVal", "costModeLoss", "costModeHits", "chart", "resetBox", "tblH", "q", "fFac", "catChips", "catToggleAll", "rowCount", "wtable", "langSelect"]) {
     assert.match(html, new RegExp(`id="${id}"`), id);
   }
-  assert.match(read("../weapon-compare.html"), /href="weapon-adad\.html"/);
+  assert.match(read("../weapon-compare.html"), /id="wcAdad"/, "the compare page holds the calculator");
   assert.match(read("../NOTICE"), /weapon-adad\.html/);
 });
 
@@ -623,7 +623,7 @@ test("groupByCategory: category order, every weapon in exactly one group", () =>
 });
 
 test("the page has the category groups, the faction chips and no filter dropdowns", () => {
-  const html = read("../weapon-adad.html");
+  const html = read("../weapon-compare.html");
   assert.ok(!/id="fCat"/.test(html), "no category dropdown: the table is grouped by category");
   assert.ok(!/<select id="fFac"/.test(html), "no faction dropdown: chips");
   assert.match(html, /data-fac="VS"/);

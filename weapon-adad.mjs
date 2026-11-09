@@ -1,5 +1,6 @@
 /**
- * weapon-adad.html: the Ideal ADAD calculator — Iridar's CoF stance rules as a
+ * The Ideal ADAD calculator (a folded section of weapon-compare.html since 2026-11-09; weapon-adad.html only
+ * forwards there) — Iridar's CoF stance rules as a
  * calculator: fire the first n shots standing still, then strafe, because once
  * the cone reaches the moving minimum, moving costs nothing.
  * Free still shots = floor((moving min - still min) / bloom).
@@ -793,6 +794,26 @@ async function loadJson(path) {
   return r.json();
 }
 
+let started = null;
+/** Start the calculator once (it lives inside weapon-compare.html's folded ADAD section, so the page only starts it
+ *  when the section is first opened or a weapon's 🎯 badge is clicked). Resolves when its data is loaded. */
+export function startAdad() {
+  if (!started) started = ready.then(init);
+  return started;
+}
+
+/** Load one weapon of the comparison page into the calculator. A weapon the 2018 Toolbox never had (newer guns) is
+ *  a stub row: its numbers come from the Census snapshot by item id, so the page switches to the current data. */
+export async function selectWeapon(w) {
+  await startAdad();
+  if (!data2018) return;
+  let row = data2018.weapons.find((x) => x.n === w.name);
+  if (!row) row = { n: w.name, f: w.fac, c: w.cat };
+  if (!itemIds[w.name]) itemIds[w.name] = w.id;
+  if (version !== "current" && recoil) setVersion("current");
+  applyWeapon(row);
+}
+
 async function init() {
   $("btnAds").addEventListener("click", () => setStance("ads"));
   $("btnHip").addEventListener("click", () => setStance("hip"));
@@ -894,4 +915,4 @@ async function init() {
   if (naginata) applyWeapon(naginata);
 }
 
-if (typeof document !== "undefined") ready.then(init);
+// No auto-start: weapon-compare.mjs calls startAdad() / selectWeapon() (weapon-adad.html now just forwards to the compare page).

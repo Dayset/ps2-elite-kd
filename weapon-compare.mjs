@@ -22,7 +22,7 @@ import {
   HP_PRESETS, ttkDistribution, quantileMs, rangeAxis, ttkCurve, winnerStrip, slowerPct, withCadence,
   FPS_LIMIT, fpsFireRateDrop, withFpsLimit, deepBands, minShots, hitDamage,
 } from "./weapons-model.mjs?v=20261107-merge1";
-import { METRICS, GROUPS, GROUP_EN, statValues, bestOf, rank, classBests, rowAllSame } from "./weapon-stats.mjs?v=20261108-tidy1";
+import { METRICS, GROUPS, GROUP_EN, NO_BLOOM, statValues, bestOf, rank, classBests, rowAllSame } from "./weapon-stats.mjs?v=20261109-merge1";
 import {
   simParams, compareBursts, burstAnalysis, deepTimings, sprayPattern, attEffects, SLOTS, slotOf, canon, TARGET, STANCES,
   stylesFor, loadoutEffects, loadoutProfile, loadoutRec,
@@ -39,6 +39,7 @@ const MODE_EN = { auto: "Automatic", semi: "Semi-auto", burst: "Burst", bolt: "B
 const FACTION = { 0: "NS", 1: "VS", 2: "NC", 3: "TR" };
 const OPEN_KEY = "ps2-elite-kd-wc-open";
 const DIFF_KEY = "ps2-elite-kd-wc-diff";   // "0" = show the rows that are the same for every chosen weapon
+const GUIDES_KEY = "ps2-elite-kd-wc-guides";   // "0" = hide every Sage guide link (the veteran view)
 const FOLLOW_KEY = "ps2-elite-kd-wc-deep-follow";   // "1" = the deep dive follows the page headshot rate instead of chest aim
 // item id -> sage guide page; the link shows when a loaded weapon has one
 const SAGE_GUIDES = new Map([
@@ -415,6 +416,15 @@ async function boot() {
   const msg = (text, err = false) => { const m = $("wcMsg"); m.textContent = text || ""; m.classList.toggle("err", !!err); };
   const selected = () => st.ids.map((id) => weapons.get(id)).filter(Boolean);
 
+  function addId(id) {
+    if (st.ids.includes(id)) { msg(""); return true; }
+    if (st.ids.length >= MAX_WEAPONS) { msg(tr("wc.max", "Four weapons at most. Remove one to add another."), true); return false; }
+    st.ids.push(id);
+    simState.seed = newSeed();
+    msg("");
+    invalidate("all");
+    return true;
+  }
   function addByLabel() {
     const input = $("wcSearch");
     const raw = input.value.trim().toLowerCase();
@@ -425,12 +435,7 @@ async function boot() {
       if (hits.length === 1) w = hits[0];
     }
     if (!w) { msg(tr("wc.notFound", "No weapon with that name."), true); return; }
-    if (st.ids.includes(w.id)) { input.value = ""; msg(""); return; }
-    if (st.ids.length >= MAX_WEAPONS) { msg(tr("wc.max", "Four weapons at most. Remove one to add another."), true); return; }
-    st.ids.push(w.id);
-    simState.seed = newSeed();
-    input.value = ""; msg("");
-    invalidate("all");
+    if (addId(w.id) || st.ids.includes(w.id)) input.value = "";
   }
   const removeId = (id) => { st.ids = st.ids.filter((x) => x !== id); delete st.att[id]; msg(""); invalidate("all"); };
   $("wcSearch").addEventListener("change", addByLabel);
@@ -450,7 +455,7 @@ async function boot() {
   $("wcFps").addEventListener("change", () => { st.fpsOn = $("wcFps").checked; paintFps(); invalidate("all"); });
   $("wcFpsRange").addEventListener("input", () => { st.fps = +$("wcFpsRange").value; paintFps(); invalidate("range"); });
   window.addEventListener("resize", () => { clearTimeout(boot.rt); boot.rt = setTimeout(() => invalidate("charts"), 120); });
-  window.addEventListener("ps2-lang", () => { fillCats(); fillHp(); paintSeg(); invalidate("all"); });
+  window.addEventListener("ps2-lang", () => { fillCats(); fillHp(); paintSeg(); renderGuideFinder(); invalidate("all"); });
   // the weapon cards: ✕ removes, the slot menus set the loadout
   $("wcChips").addEventListener("click", (e) => { const b = e.target.closest("button[data-id]"); if (b) removeId(+b.dataset.id); });
   $("wcChips").addEventListener("change", (e) => {
@@ -504,6 +509,7 @@ async function boot() {
     dirty.clear();
     if (cards) renderCards();
     if (range || !calc) compute();
+    if (range && !cards) paintCardMeta();
     if (range) renderTable();
     if (charts) { drawTtk(); drawCdf(); }
     // every simulator job this draw needs goes to the worker in ONE message (a second message would make the
@@ -541,7 +547,56 @@ async function boot() {
   }
   const SLOT_EN = { barrel: "Barrel", rail: "Rail", ammo: "Ammo" };
 
-  // the picker's weapon cards: picture, name, ✕ and one menu per attachment slot
+  // ---- beginner guides: a link on every weapon that has a Sage guide; one switch hides them all (veteran view) ----
+  let showGuides = true;
+  try { showGuides = localStorage.getItem(GUIDES_KEY) !== "0"; } catch {}
+  const paintGuides = () => { document.body.classList.toggle("wc-noguides", !showGuides); $("wcGuides").checked = showGuides; };
+  $("wcGuides").addEventListener("change", () => {
+    showGuides = $("wcGuides").checked;
+    try { localStorage.setItem(GUIDES_KEY, showGuides ? "1" : "0"); } catch {}
+    paintGuides();
+  });
+  paintGuides();
+  // the finder: every weapon that has a guide, by weapon type, one click to open it
+  function renderGuideFinder() {
+    const have = [...SAGE_GUIDES].map(([id, href]) => ({ w: weapons.get(id), href })).filter((x) => x.w);
+    $("wcGuideFind").hidden = !have.length;
+    $("wcGuideFindS").textContent = tr("wc.guide.find", "📖 New here? Beginner guides ({n} weapons)", { n: nf(have.length) });
+    const by = new Map();
+    for (const x of have) (by.get(x.w.cat) || by.set(x.w.cat, []).get(x.w.cat)).push(x);
+    $("wcGuideList").innerHTML = [...by.keys()].sort().map((cat) => `<div class="wc-gcat"><b>${esc(cat)}</b>`
+      + by.get(cat).sort((a, b) => a.w.name.localeCompare(b.w.name)).map((x) => `<a href="${esc(x.href)}">${esc(x.w.name)}</a>`).join("") + `</div>`).join("");
+  }
+
+  renderGuideFinder();
+
+  // ---- the ADAD badge: free still shots with this loadout; a click opens the calculator on this weapon ----
+  const FREE_ROW = (hip) => METRICS.find((m) => m.key === (hip ? "freeHip" : "freeAds"));
+  function adadBadge(w) {
+    if (!recoil) return { text: "", tip: "" };
+    const v = FREE_ROW(hipAim()).get({ rec: loadoutRec(recoilOf(w.id), effectsOf(w), hipAim()) });
+    if (!Number.isFinite(v)) return { text: "", tip: "" };
+    return {
+      text: v >= NO_BLOOM ? tr("wc.adad.noBloom", "🎯 no bloom") : tr("wc.adad.badge", "🎯 {n} free shots", { n: nf(v) }),
+      tip: tr("wc.adad.badgeTip", "Shots you can fire standing still before strafing costs nothing. Click for the ADAD calculator."),
+    };
+  }
+  const openAtt = new Set();            // weapons whose attachment menus are unfolded (kept through a redraw)
+  const attCount = (id) => chosenAtt(id).length;
+  const attSummary = (id) => attCount(id) ? tr("wc.attSumN", "Attachments ({n})", { n: attCount(id) }) : tr("wc.attSum", "Attachments");
+  // badge and attachment count follow the loadout without redrawing the cards
+  function paintCardMeta() {
+    for (const w of selected()) {
+      const card = $("wcChips").querySelector(`[data-card="${w.id}"]`);
+      if (!card) continue;
+      const b = adadBadge(w), btn = card.querySelector("button[data-adad]");
+      if (btn) { btn.textContent = b.text; btn.title = b.tip; btn.hidden = !b.text; }
+      const sum = card.querySelector("summary");
+      if (sum) sum.textContent = attSummary(w.id);
+    }
+  }
+
+  // the picker's weapon cards: picture, name, ✕, the guide and ADAD links, and the attachment menus (folded)
   function renderCards() {
     $("wcChips").innerHTML = selected().map((w, i) => {
       const tip = esc(tr("wc.remove", "Click to remove {name}", { name: w.name }));
@@ -552,21 +607,50 @@ async function boot() {
         const note = fx ? (Object.keys(fx).length ? "" : " · " + tr("wc.sim.noCombat", "no effect on killing")) : " · " + tr("wc.sim.noEffect", "not modelled");
         return `<option value="${esc(n)}" ${mine[sl] === n ? "selected" : ""}>${esc(n + note)}</option>`;
       }).join("")}</select></label>`).join("");
-      return `<div class="wc-wcard" role="listitem" style="--c:${color(i)}"><div class="wc-wtop">`
+      const guide = SAGE_GUIDES.get(w.id);
+      const b = adadBadge(w);
+      return `<div class="wc-wcard" role="listitem" data-card="${w.id}" style="--c:${color(i)}"><div class="wc-wtop">`
         + `<img src="assets/weapons/${w.img}.webp" alt="" width="56" height="28" loading="lazy" onerror="this.style.visibility='hidden'" />`
         + `<div class="wc-wtxt"><b>${esc(w.name)}</b><span class="wc-wmeta">${esc(FACTION[w.fac] ?? "")} · ${esc(w.cat)}</span></div>`
         + `<button type="button" class="wc-rm" data-id="${w.id}" title="${tip}" aria-label="${tip}">✕</button></div>`
-        + (slots ? `<div class="wc-atts">${slots}</div>` : recoil ? "" : `<p class="wc-dim wc-attwait">${esc(tr("wc.sim.wait", "Loading recoil data…"))}</p>`)
+        + `<div class="wc-wlinks">`
+        + (guide ? `<a class="wc-guide" href="${esc(guide)}">${esc(tr("wc.guide.btn", "📖 Beginner guide"))}</a>` : `<span class="wc-guide wc-guide-soon">${esc(tr("wc.guide.soon", "📖 Guide coming soon"))}</span>`)
+        + `<button type="button" class="wc-adadbtn" data-adad="${w.id}" title="${esc(b.tip)}"${b.text ? "" : " hidden"}>${esc(b.text)}</button></div>`
+        + (slots ? `<details class="wc-attd" data-w="${w.id}"${openAtt.has(w.id) ? " open" : ""}><summary>${esc(attSummary(w.id))}</summary><div class="wc-atts">${slots}</div></details>` : recoil ? "" : `<p class="wc-dim wc-attwait">${esc(tr("wc.sim.wait", "Loading recoil data…"))}</p>`)
         + `</div>`;
     }).join("");
-    // the Sage guide link: shown when one of the loaded weapons has a guide
-    const sage = selected().map((w) => SAGE_GUIDES.get(w.id)).find(Boolean);
-    const sageEl = $("wcSageLink");
-    if (sageEl) {
-      sageEl.hidden = !sage;
-      if (sage) $("wcSageLinkA").href = sage;
-    }
   }
+  $("wcChips").addEventListener("toggle", (e) => {
+    const d = e.target.closest && e.target.closest("details[data-w]");
+    if (d) { if (d.open) openAtt.add(+d.dataset.w); else openAtt.delete(+d.dataset.w); }
+  }, true);
+
+  // ---- the ADAD calculator lives in the folded section below; it starts (and loads its data) when first opened ----
+  let adadMod = null;
+  async function loadAdad(id) {
+    try {
+      adadMod ||= await import("./weapon-adad.mjs?v=20261109-merge1");
+      const w = weapons.get(id);
+      if (w) await adadMod.selectWeapon({ id: w.id, name: w.name, fac: FACTION[w.fac] ?? "", cat: w.cat });
+      else await adadMod.startAdad();
+    } catch { $("adadMsg").textContent = tr("adad.loadFail", "Could not load the weapon data. Reload the page to try again."); }
+  }
+  $("wcAdad").addEventListener("toggle", () => { if ($("wcAdad").open && !adadMod) loadAdad(st.ids[0]); });
+  $("wcChips").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-adad]");
+    if (!b) return;
+    $("wcAdad").open = true;
+    loadAdad(+b.dataset.adad).then(() => $("wcAdad").scrollIntoView({ block: "start", behavior: "smooth" }));
+  });
+  // the calculator's own table has a Compare link per weapon: here that adds the weapon to this page
+  $("wcAdad").addEventListener("click", (e) => {
+    const a = e.target.closest('a[href^="weapon-compare.html?w="]');
+    if (!a) return;
+    e.preventDefault();
+    const id = Number(new URL(a.href, location.href).searchParams.get("w"));
+    if (weapons.has(id) && addId(id)) document.querySelector(".wc-pick").scrollIntoView({ block: "start", behavior: "smooth" });
+  });
+  if (location.hash === "#adad") $("wcAdad").open = true;
 
   // ------------------------------------------------------------- compute --
   let calc = null;
@@ -606,6 +690,7 @@ async function boot() {
       case "cone": return tr("wc.cofV", "{min} / {max}", { min: nf(v, 2), max: vmax == null ? "–" : nf(vmax, 2) });
       case "mps": return tr("wc.mps", "{v} m/s", { v: nf(v) });
       case "degps": return tr("wc.degps", "{v}°/s", { v: nf(v, 1) });
+      case "free": return v >= NO_BLOOM ? tr("wc.noBloom", "no bloom") : nf(v);
       default: return nf(v);
     }
   };
@@ -620,7 +705,7 @@ async function boot() {
     }
     return classCache.get(key);
   }
-  const DEFAULT_OPEN = new Set(["kill", "damage", "magazine"]);
+  const DEFAULT_OPEN = new Set(["kill"]);
   let openGroups;
   try { const j = JSON.parse(localStorage.getItem(OPEN_KEY) || "null"); openGroups = new Set(Array.isArray(j) ? j : DEFAULT_OPEN); } catch { openGroups = new Set(DEFAULT_OPEN); }
   function toggleGroup(g) {
@@ -694,7 +779,7 @@ async function boot() {
   const plotBg = (L, T, W, H) => `<rect class="plot" x="${L}" y="${T}" width="${Math.max(0, W).toFixed(1)}" height="${Math.max(0, H).toFixed(1)}"/>`;
   const legend = () => `<div class="wc-legend">${calc.ws.map((w, i) => `<span><span class="sw" style="background:${color(i)}"></span>${esc(w.name)}</span>`).join("")}</div>`;
   const chartWidth = (el) => Math.max(280, Math.floor(el.clientWidth || el.parentElement.clientWidth || 600));
-  const CH = 280;   // both line charts share one height, so the two panels side by side match
+  const CH = 240;   // both line charts share one height, so the two panels side by side match
 
   function drawTtk() {
     const el = $("wcTtk");

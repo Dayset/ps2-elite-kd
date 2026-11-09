@@ -83,3 +83,16 @@ test("rank: an attachment that beats the stock class best is still gold; equal r
   assert.equal(rowAllSame([{ a: 2 }], "a"), false, "one weapon: nothing is hidden");
   assert.equal(rowAllSame([{ c: 1, "c:max": 2 }, { c: 1, "c:max": 3 }], "c"), false, "cones compare both ends");
 });
+
+test("free still shots (the ADAD count): same rule as weapon-adad nStill, in the stat table's strafing group", async () => {
+  const { freeShots, NO_BLOOM, METRICS, GROUPS } = await import("../weapon-stats.mjs?free");
+  const { nStill } = await import("../weapon-adad.mjs");
+  assert.ok(GROUPS.includes("strafe"));
+  for (const [a, b, c] of [[0.15, 0.4, 0.06], [0.3, 0.5, 0.05], [0.1, 0.25, 0.05], [0.5, 0.4, 0.1], [0.2, 0.2, 0.05]]) assert.equal(freeShots(a, b, c), nStill(a, b, c), `${a} ${b} ${c}`);
+  assert.equal(freeShots(0.2, 0.5, 0), NO_BLOOM, "no bloom: every still shot is free");
+  assert.equal(freeShots(null, 0.5, 0.1), null);
+  // the Naginata worked example from the calculator page: ADS standing, still 0.15, moving 0.4, bloom 0.06 -> 4
+  const rec = { adsFm: { cof_recoil: 0.06 }, adsStates: [{ player_state_id: 0, cof_min: 0.15 }, { player_state_id: 2, cof_min: 0.4 }], fm: null, states: [] };
+  assert.equal(METRICS.find((m) => m.key === "freeAds").get({ rec }), 4);
+  assert.equal(METRICS.find((m) => m.key === "freeHip").get({ rec }), null, "no hip fire mode: no value");
+});

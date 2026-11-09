@@ -9,7 +9,7 @@
   --wc-band-g: #2e8a40; --wc-band-y: #b08a10; --wc-band-r: #b03224;
 }
 html, body { overflow: visible; overflow-x: clip; } /* hidden would make body the scroll box and break the sticky control bar */
-.wc-wrap { --wc-gap: 12px; --wc-pad: 14px; max-width: none; margin: 0 auto; padding: 0; display: flex; flex-direction: column; gap: var(--wc-gap); padding-bottom: 16px; }
+.wc-wrap { --wc-gap: 10px; --wc-pad: 12px; max-width: none; margin: 0 auto; padding: 0; display: flex; flex-direction: column; gap: var(--wc-gap); padding-bottom: 16px; }
 .wc-wrap a { color: var(--accent); }
 .wc-panel { background: var(--panel); border: 1px solid var(--border); border-radius: 0; padding: var(--wc-pad); margin: 0; min-width: 0; }
 .wc-panel-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; margin-bottom: 10px; }
@@ -29,34 +29,60 @@ html, body { overflow: visible; overflow-x: clip; } /* hidden would make body th
 .wc-sub { color: var(--dim); font-size: 0.85rem; }
 .wc-head .lang-select { align-self: start; }
 
+.wc-slim { padding-top: 8px; padding-bottom: 8px; }
+.wc-slim .wc-back { width: 2.25rem; height: 2.25rem; font-size: 1.2rem; }
+.wc-slim h1 { margin: 0; font-size: 1.1rem; }
+.wc-slim .lang-select { align-self: center; }
+
 /* weapon picker + one loadout card per chosen weapon */
-.wc-pick-row { display: grid; grid-template-columns: minmax(11rem, 14rem) 1fr; gap: 10px; }
+.wc-pick-row { display: grid; grid-template-columns: minmax(10rem, 13rem) 1fr auto; gap: 8px 10px; align-items: end; }
+.wc-guidechk { height: 2.25rem; padding: 0 10px; border: 1px solid var(--accent); color: var(--text); font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
 .wc-field { display: flex; flex-direction: column; gap: 3px; font-size: 0.8rem; color: var(--dim); min-width: 0; }
 .wc-field select, .wc-field input, .wc-ctl select, .wc-att select { background: var(--input-bg); color: var(--text); border: 1px solid var(--border); border-radius: 0; padding: 0 8px; height: 2.25rem; font: inherit; font-size: 0.9rem; min-width: 0; }
 .wc-field input:focus-visible, .wc-field select:focus-visible, .wc-ctl select:focus-visible, .wc-att select:focus-visible { outline: 1px solid var(--accent); }
-.wc-loadouts { display: grid; grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr)); gap: 10px; margin-top: 12px; }
+.wc-loadouts { display: grid; grid-template-columns: repeat(auto-fill, minmax(14.5rem, 1fr)); gap: 8px; margin-top: 10px; }
 .wc-loadouts:empty { display: none; }
-.wc-wcard { border: 1px solid var(--border); border-top: 3px solid var(--c, var(--border)); background: var(--bg); padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.wc-wtop { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+.wc-wcard { border: 1px solid var(--border); border-top: 3px solid var(--c, var(--border)); background: var(--bg); padding: 6px 8px 8px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.wc-wtop { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; align-items: center; gap: 8px; }
 .wc-wtop img { width: 56px; height: 28px; object-fit: contain; }
 .wc-wtxt { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
 .wc-wtxt b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wc-wmeta { color: var(--dim); font-size: 0.78rem; font-weight: 400; }
-.wc-rm { width: 2rem; height: 2rem; border: 1px solid var(--border); border-radius: 0; background: var(--panel); color: var(--dim); cursor: pointer; font: inherit; font-size: 0.8rem; line-height: 1; }
+.wc-rm { width: 1.8rem; height: 1.8rem; border: 1px solid var(--border); border-radius: 0; background: var(--panel); color: var(--dim); cursor: pointer; font: inherit; font-size: 0.8rem; line-height: 1; }
 .wc-rm:hover { color: var(--err); border-color: var(--err); }
 .wc-atts { display: grid; grid-template-columns: minmax(0, max-content) minmax(8rem, 1fr); gap: 5px 8px; align-items: center; }
 .wc-att { display: contents; font-size: 0.78rem; color: var(--dim); }
 .wc-att > span { max-width: 6.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wc-att select { width: 100%; height: 2rem; font-size: 0.8rem; padding: 0 4px; }
 .wc-attwait { margin: 0; }
+/* guide + ADAD links under the weapon name; attachments fold away */
+.wc-wlinks { display: flex; flex-wrap: wrap; gap: 6px; }
+.wc-guide, .wc-adadbtn { display: inline-flex; align-items: center; height: 1.8rem; padding: 0 8px; font: inherit; font-size: 0.78rem; font-weight: 600; text-decoration: none; border: 1px solid var(--accent); border-radius: 0; background: var(--panel); color: var(--accent); cursor: pointer; white-space: nowrap; }
+.wc-wrap a.wc-guide { color: var(--accent); }
+.wc-guide:hover, .wc-adadbtn:hover { background: var(--chip-active-bg); color: var(--text); }
+.wc-adadbtn { border-color: var(--border); color: var(--text); font-weight: 400; }
+.wc-adadbtn[hidden] { display: none; }
+.wc-guide-soon { border-style: dashed; border-color: var(--border); color: var(--dim); font-weight: 400; cursor: default; }
+.wc-guide-soon:hover { background: var(--panel); color: var(--dim); }
+body.wc-noguides .wc-guide, body.wc-noguides .wc-guidefind { display: none; }
+.wc-attd > summary { cursor: pointer; font-size: 0.78rem; color: var(--dim); padding: 2px 0; }
+.wc-attd[open] > summary { margin-bottom: 5px; }
+.wc-guidefind { margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px; }
+.wc-guidefind > summary { cursor: pointer; font-weight: 700; font-size: 0.9rem; color: var(--accent); }
+.wc-guidefind .wc-note { margin: 6px 0; }
+.wc-guidelist { display: grid; gap: 6px; }
+.wc-gcat { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; font-size: 0.82rem; }
+.wc-gcat b { flex: 0 0 8.5rem; color: var(--dim); font-weight: 600; }
+.wc-gcat a { padding: 2px 8px; border: 1px solid var(--border); background: var(--bg); text-decoration: none; }
+.wc-gcat a:hover { border-color: var(--accent); }
 
 /* the sticky control bar: four equal cells */
 .wc-sticky { position: sticky; top: 0; z-index: 20; box-shadow: 0 6px 10px -8px var(--shadow); }
-.wc-bar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 18px; align-items: start; padding-top: 10px; padding-bottom: 10px; }
+.wc-bar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px 16px; align-items: start; padding-top: 6px; padding-bottom: 6px; }
 .wc-ctl { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; color: var(--dim); min-width: 0; }
 .wc-ctl-h { display: flex; justify-content: space-between; gap: 8px; min-height: 1.2em; }
 .wc-ctl b { color: var(--text); font-variant-numeric: tabular-nums; }
-.wc-ctl input[type="range"] { width: 100%; accent-color: var(--accent); height: 1.6rem; margin: 0; }
+.wc-ctl input[type="range"] { width: 100%; accent-color: var(--accent); height: 1.3rem; margin: 0; }
 .wc-ctl select { width: 100%; }
 .wc-check { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--dim); cursor: pointer; }
 .wc-check input { width: 1rem; height: 1rem; margin: 0; accent-color: var(--accent); }
@@ -66,7 +92,7 @@ html, body { overflow: visible; overflow-x: clip; } /* hidden would make body th
 @media (hover: hover) and (pointer: fine) { .wc-table-wrap { max-height: none; } }
 .wc-table { table-layout: fixed; font-size: 0.84rem; min-width: calc(13rem + var(--n, 1) * 9rem); }
 .wc-table col.wc-lab-col { width: 14rem; }
-.wc-table th, .wc-table td { text-align: center; padding: 0.3rem 0.6rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+.wc-table th, .wc-table td { text-align: center; padding: 0.2rem 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
 .wc-table .wc-lab { text-align: left; color: var(--dim); font-weight: 400; position: sticky; left: 0; z-index: 2; box-shadow: 4px 0 8px -4px var(--shadow); white-space: normal; }
 .wc-table thead th { vertical-align: bottom; border-top: 3px solid var(--c, transparent); }
 .wc-table thead th.wc-lab { z-index: 5; border-top-color: transparent; }
@@ -212,3 +238,10 @@ tbody.open .wc-caret::before { content: "▾"; }
   .wc-bar { gap: 6px 12px; }
   .wc-bars li { grid-template-columns: 6.5rem 1fr auto; }
 }
+
+/* the ADAD calculator, folded inside this page: its sections are plain blocks, not boxes in a box */
+#wcAdad .wc-panel { background: transparent; border: 0; border-top: 1px solid var(--border); padding: 12px 0 0; margin: 12px 0 0; }
+#wcAdad .adad-ver { border-top: 0; margin-top: 0; padding-top: 0; }
+#wcAdad > .wc-note { margin: 0 0 10px; }
+#wcAdad .adad-tbl > summary h2, #wcAdad .adad-notes > summary h2 { display: inline; font-size: 0.95rem; margin: 0; }
+#wcAdad .adad-foot { margin: 14px 0 0; }
