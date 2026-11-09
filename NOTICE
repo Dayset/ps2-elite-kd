@@ -8,7 +8,8 @@ right to that content.
 
 1. PlanetSide 2 game content: Daybreak Game Company LLC
    - assets/weapons/*.webp (weapon images, converted from the Daybreak Census
-     API image files) and assets/weapons/catalog.json (item names and ids)
+     API image files), assets/weapons/*.png (the full-size Census renders
+     used as the Sage guide heroes) and assets/weapons/catalog.json (item names and ids)
    - Daybreak game data in data/ and data-ps/ (character names and ids, stats,
      weapon, map, base and alert data from the Census API and streaming API)
    - assets/site-bg.webp: PlanetSide 2 key art used as the page background
@@ -45,6 +46,13 @@ right to that content.
    the page); the 2018 weapon numbers come from the Stats sheet of Iridar's
    Toolbox v6h (Stats sheet dated 2018-08-19), the current numbers from the
    Census API via the site's weapon snapshot (item 1). No code was copied.
+
+7. Sage guide pages (weapon-sage-*.html, 54 guns): the cone-of-fire method (free
+   shots standing still, burst length by distance) paraphrased from Iridar's
+   Weapon Mechanics guide (same lineage as item 6); the weapon numbers come
+   from the Census API (item 1) and the PlanetSide 2 Wiki, the starter
+   comparison figures from the Census API; the weapon renders are Daybreak's
+   (item 1). The text is our own.
 
 Vendored code (served from this site, not loaded from elsewhere):
 - oracle/js/vendor/qrcode.mjs: qrcode-generator 2.0.4, Copyright (c) 2009

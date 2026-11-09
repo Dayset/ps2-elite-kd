@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>T1S Cycler Sage Guide &middot; PS2 Elite</title>
+  <meta name="description" content="A beginner's guide to the T1S Cycler &mdash; The 650-cert select-fire rifle for the TR Combat Medic &mdash; also open to Engineers and Heavy Assaults with ASP." />
+  <meta name="color-scheme" content="light dark" />
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="weapon-sage.css?v=20261109-sageguide2" />
+  <style>
+    /* Faction colours for the T1S Cycler (differs from the shared NC default).
+       Dark values in :root (dark is the default); light values under data-theme. */
+    :root {
+      --nc-blue: #e05a5a;
+      --nc-blue-deep: #f08a8a;
+      --tr-gold: #e8a812;
+      --tr-red: #e05a5a;
+    }
+    html[data-theme="light"] {
+      --first: #6d1216;
+      --hero-bg: #6d1216;
+      --hero-soft: #e3a9a9;
+      --nc-blue: #a91f26;
+      --nc-blue-deep: #6d1216;
+      --tr-gold: #e8a812;
+      --tr-red: #a91f26;
+    }
+    /* Carried from the source file: rules for classes the body uses
+       that the shared stylesheet does not define. */
+    .strip { background: var(--surface); border: 1px solid var(--line); padding: 16px 18px; margin-bottom: 14px; }
+    .strip h3 { margin: 0 0 2px; font-size: 21px; }
+    .panel-label { font-size: 15px; font-weight: 700; fill: var(--ink); }
+    .panel-note { font-size: 13.5px; fill: var(--ink-soft); }
+    .exception { margin-top: 14px; padding: 14px 16px; border: 2px dashed var(--good);
+        background: var(--good-bg); border-radius: 4px; }
+    .exception h4 { margin: 0 0 4px; font-family: "Rajdhani", sans-serif; font-size: 19px; color: var(--good); }
+    .exception p { margin: 4px 0; font-size: 15.5px; }
+  </style>
+</head>
+<body class="site-page">
+
+    <div class="wrap">
+
+    <p class="sage-back"><a href="weapon-compare.html?w=7127">← Back to the T1S Cycler comparison</a></p>
+
+      <!-- ================= HERO ================= -->
+      <header class="hero">
+        <p class="brandline">Sage Guide · Terran Republic · Combat Medic</p>
+        <h1>T1S Cycler <span class="thin">— the do-anything rifle, mastered</span></h1>
+        <p class="sub">The 650-cert select-fire rifle for the TR Combat Medic — also open to Engineers and Heavy Assaults with ASP. It trades a little killing speed for the widest attachment choice of any TR rifle, including the underbarrel grenade launcher.</p>
+        <p class="verdict"><strong>The one-line verdict:</strong> a steady, versatile rifle that rewards good aim and short bursts, and punishes spray-and-pray. Fight between 10 and 50 metres and it will carry you.</p>
+        <img class="hero-gun" src="assets/weapons/5361.png" alt="The T1S Cycler assault rifle, side profile — Terran Republic's select-fire rifle with its 40-round magazine" width="256" height="128" />
+        <p class="hero-gun-cap">The T1S Cycler · Terran Republic · 40-round magazine · 650 certs / 499 DBC</p>
+      </header>
+
+      <div class="stats" role="list" aria-label="T1S Cycler key statistics">
+        <div class="stat" role="listitem"><div class="stat-big">143<small> → 112</small></div><div class="stat-label">Damage per bullet</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">698</div><div class="stat-label">Rounds per minute</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">40</div><div class="stat-label">Rounds per magazine</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">2.52<small> s</small></div><div class="stat-label">Reload (rounds left)</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">580<small> m/s</small></div><div class="stat-label">Bullet velocity</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">×2</div><div class="stat-label">Headshot damage</div></div>
+      </div>
+
+      <!-- ================= 01 FIRST LESSON: ADS AFTER THE RUN ================= -->
+      <section aria-labelledby="s-first">
+        <div class="sec-head">
+          <span class="num">01</span>
+          <h2 id="s-first">First lesson: stop, aim, <em>then</em> fire</h2>
+          <span class="tag">The mistake almost<br />every new player makes</span>
+        </div>
+        <p class="lede">Picture the scene, because you've probably lived it: you're <strong>sprinting</strong> across a courtyard, an enemy appears, and you do everything at once — hold the trigger down <em>while you're still running</em>, then press aim-down-sights (ADS) a split-second later, finger still down. The sight picture snaps in, it <em>looks</em> precise… and your bullets spray everywhere except the man in your crosshair. He kills you. It feels like the game cheated. It didn't — here's what actually happened.</p>
+
+        <div class="strip">
+          <h3>What you did — the spray</h3>
+          <p class="small" style="margin:0">Three moments, one bad habit. Read left to right.</p>
+          <svg viewBox="0 0 640 218" width="100%" role="img" aria-label="Three-panel sketch of the sprint-spray mistake. First, a soldier sprints with his gun firing from the hip, the cone of fire already at its widest 7.0 degrees. Second, he presses aim-down-sights while still holding the trigger, but the cone stays wide. Third, the target stands untouched while bullet holes scatter in a wide circle around him.">
+            <!-- panel dividers -->
+            <g stroke="var(--line)" stroke-width="1.5" stroke-dasharray="3 4">
+              <line x1="213" y1="8" x2="213" y2="206" />
+              <line x1="427" y1="8" x2="427" y2="206" />
+            </g>
+            <!-- panel 1: sprinting + hipfire -->
+            <g fill="var(--ink-soft)">
+              <circle cx="82" cy="52" r="13" />
+              <rect x="66" y="68" width="32" height="52" rx="9" transform="rotate(14 82 94)" />
+              <rect x="52" y="118" width="11" height="48" rx="5" transform="rotate(28 57 142)" />
+              <rect x="96" y="118" width="11" height="48" rx="5" transform="rotate(-24 101 142)" />
+            </g>
+            <rect x="96" y="86" width="46" height="9" rx="4" fill="var(--ink)" transform="rotate(8 96 90)" />
+            <g stroke="var(--ink-soft)" stroke-width="2" stroke-linecap="round">
+              <line x1="34" y1="96" x2="58" y2="96" />
+              <line x1="30" y1="112" x2="54" y2="112" />
+              <line x1="36" y1="128" x2="58" y2="128" />
+            </g>
+            <polygon points="142,88 206,58 206,124" fill="var(--skip)" opacity="0.13" />
+            <g stroke="var(--skip)" stroke-width="2" stroke-dasharray="6 4" fill="none">
+              <line x1="142" y1="88" x2="206" y2="58" />
+              <line x1="142" y1="88" x2="206" y2="124" />
+            </g>
+            <text x="10" y="30" class="panel-label">1 · SPRINTING, trigger held</text>
+            <text x="10" y="190" class="panel-note">Cone already 7.0° — the widest</text>
+            <text x="10" y="206" class="panel-note">it can ever be. Hip bloom +0.1°/shot.</text>
+            <!-- panel 2: ADS pressed mid-hold -->
+            <circle cx="320" cy="104" r="52" fill="none" stroke="var(--ink)" stroke-width="3" stroke-dasharray="2 3" />
+            <g fill="var(--ink-soft)">
+              <circle cx="320" cy="76" r="10" />
+              <rect x="306" y="88" width="28" height="44" rx="8" />
+              <rect x="309" y="130" width="8" height="38" rx="4" />
+              <rect x="324" y="130" width="8" height="38" rx="4" />
+            </g>
+            <circle cx="320" cy="104" r="26" fill="none" stroke="var(--skip)" stroke-width="2" stroke-dasharray="5 4" />
+            <circle cx="320" cy="104" r="3" fill="var(--skip)" />
+            <text x="226" y="30" class="panel-label">2 · ADS pressed — mid-hold</text>
+            <text x="226" y="190" class="panel-note">The sight is up, the picture is</text>
+            <text x="226" y="206" class="panel-note">precise — but the cone did NOT reset.</text>
+            <!-- panel 3: the spray -->
+            <g fill="var(--ink-soft)">
+              <circle cx="532" cy="72" r="12" />
+              <rect x="516" y="86" width="32" height="50" rx="9" />
+              <rect x="520" y="134" width="9" height="42" rx="4" />
+              <rect x="536" y="134" width="9" height="42" rx="4" />
+            </g>
+            <circle cx="532" cy="104" r="46" fill="none" stroke="var(--skip)" stroke-width="2" stroke-dasharray="6 4" />
+            <g fill="var(--skip)">
+              <circle cx="494" cy="70" r="4" /><circle cx="566" cy="66" r="4" /><circle cx="576" cy="118" r="4" />
+              <circle cx="500" cy="138" r="4" /><circle cx="556" cy="146" r="4" /><circle cx="516" cy="96" r="3" />
+            </g>
+            <text x="440" y="30" class="panel-label">3 · THE SPRAY</text>
+            <text x="440" y="190" class="panel-note">Six holes, none on the chest.</text>
+            <text x="440" y="206" class="panel-note">He kills you. It felt unfair. It wasn't.</text>
+          </svg>
+          <p class="cap"><b>Read it this way:</b> the disaster is set before the sight ever comes up. Sprinting puts your cone at <b>7.0°</b>, hipfiring widens it further (<b>+0.1° per shot</b>), and pressing ADS does <b>not</b> shrink a cone that is already bloomed — the scope only gives you a precise <em>picture</em>. Your bullets keep flying out of the wide cone you built while running.</p>
+        </div>
+
+        <div class="strip">
+          <h3>The fix — three beats, in order</h3>
+          <p class="small" style="margin:0">Same courtyard, same enemy. Three beats, in order — never two at once.</p>
+          <svg viewBox="0 0 640 218" width="100%" role="img" aria-label="Three-panel sketch of the fix. First, stop: the soldier plants his feet and the sprint motion lines are crossed out, about 0.3 seconds for the gun to settle. Second, aim: the sight rises and the cone of fire narrows from wide to a thin wedge, about 0.15 seconds. Third, fire: a tight cluster of bullet holes lands on the target's chest, fired from the aimed 0.1 degree cone.">
+            <g stroke="var(--line)" stroke-width="1.5" stroke-dasharray="3 4">
+              <line x1="213" y1="8" x2="213" y2="206" />
+              <line x1="427" y1="8" x2="427" y2="206" />
+            </g>
+            <!-- beat 1: stop -->
+            <g fill="var(--ink-soft)">
+              <circle cx="86" cy="52" r="13" />
+              <rect x="70" y="68" width="32" height="52" rx="9" />
+              <rect x="74" y="118" width="10" height="48" rx="5" />
+              <rect x="90" y="118" width="10" height="48" rx="5" />
+            </g>
+            <g stroke="var(--skip)" stroke-width="2.5" stroke-linecap="round">
+              <line x1="30" y1="92" x2="56" y2="92" />
+              <line x1="32" y1="108" x2="54" y2="108" />
+              <line x1="34" y1="80" x2="52" y2="98" />
+              <line x1="52" y1="80" x2="34" y2="98" />
+            </g>
+            <rect x="104" y="86" width="44" height="9" rx="4" fill="var(--ink)" />
+            <text x="10" y="30" class="panel-label">1 · STOP</text>
+            <text x="10" y="190" class="panel-note">Feet planted, finger OFF the trigger.</text>
+            <text x="10" y="206" class="panel-note">~0.3 s for the gun to settle.</text>
+            <!-- beat 2: aim -->
+            <g fill="var(--ink-soft)">
+              <circle cx="300" cy="56" r="12" />
+              <rect x="285" y="70" width="30" height="48" rx="9" />
+              <rect x="288" y="116" width="10" height="46" rx="5" />
+              <rect x="304" y="116" width="10" height="46" rx="5" />
+            </g>
+            <path d="M 330 96 L 372 96" stroke="var(--ink)" stroke-width="3" stroke-linecap="round" />
+            <path d="M 366 88 L 380 96 L 366 104" fill="none" stroke="var(--good)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+            <polygon points="380,96 414,80 414,112" fill="var(--good)" opacity="0.13" />
+            <g stroke="var(--good)" stroke-width="2" fill="none">
+              <line x1="380" y1="96" x2="414" y2="80" />
+              <line x1="380" y1="96" x2="414" y2="112" />
+            </g>
+            <text x="226" y="30" class="panel-label">2 · AIM</text>
+            <text x="226" y="190" class="panel-note">Sight rises, cone shrinks to 0.1°.</text>
+            <text x="226" y="206" class="panel-note">~0.15 s. You stopped first — no rush.</text>
+            <!-- beat 3: fire -->
+            <g fill="var(--ink-soft)">
+              <circle cx="532" cy="72" r="12" />
+              <rect x="516" y="86" width="32" height="50" rx="9" />
+              <rect x="520" y="134" width="9" height="42" rx="4" />
+              <rect x="536" y="134" width="9" height="42" rx="4" />
+            </g>
+            <circle cx="532" cy="104" r="9" fill="none" stroke="var(--good)" stroke-width="2" />
+            <g fill="var(--good)">
+              <circle cx="529" cy="100" r="3.5" /><circle cx="536" cy="106" r="3.5" /><circle cx="531" cy="109" r="3.5" />
+              <circle cx="535" cy="99" r="3.5" /><circle cx="528" cy="106" r="3.5" />
+            </g>
+            <text x="440" y="30" class="panel-label">3 · FIRE</text>
+            <text x="440" y="190" class="panel-note">Five holes, one fist-sized group,</text>
+            <text x="440" y="206" class="panel-note">all on the chest. Same gun. Same you.</text>
+          </svg>
+          <p class="cap"><b>Stop → aim → fire.</b> If you take one habit from this entire page, take this one. You'll practise exactly this rhythm in the simulator in section 04.</p>
+          <div class="exception">
+            <h4>Under ~11 m? Skip the whole dance.</h4>
+            <p>Inside about 11 metres, <strong>don't ADS at all — hipfire and keep moving.</strong> No sight to raise, no settling to wait for, and stopping is optional: the moving hipfire ring at 11 m is only <strong>about 0.48 m wide</strong>, so it still covers his chest. The three-beat fix is a mid-range habit; up close, your movement <em>is</em> your defence.</p>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="card">
+            <h3>✗ What you did — the spray</h3>
+            <p><strong>You started firing from a sprint, from the hip.</strong> Sprinting is the least accurate state in the game: your cone of fire starts at <strong>7.0° — fully bloomed, the widest it can ever be</strong>. Every shot you fire from the hip widens it further still (+0.1° per shot).</p>
+            <p><strong>Then you pressed ADS mid-hold — and nothing reset.</strong> Aiming down sights does <em>not</em> shrink a cone of fire that is already bloomed. The scope only gives you a precise <em>picture</em>; the bullets keep flying out of the wide cone you built while running and hipfiring. That's the whole mystery: <strong>accurate-looking aim, wildly inaccurate gun.</strong></p>
+            <p>Two timers stack the deck further: your gun needs about <strong>0.3 s to settle after a sprint</strong>, and raising the sight itself takes ~0.15 s. Trigger held through all of it means your first half-second of fire is pure confetti.</p>
+          </div>
+          <div class="card">
+            <h3>✓ The fix — three beats, in order</h3>
+            <p><strong>1 · Feet.</strong> Let go of sprint (and the trigger, if you're already holding it). Stop, or drop into a strafe — anything but a full sprint.</p>
+            <p><strong>2 · Sight.</strong> Press ADS and let the sight come up. This takes a heartbeat — that's fine, you stopped first.</p>
+            <p><strong>3 · Trigger.</strong> <em>Now</em> fire. Starting from the aimed cone of <strong>0.1°</strong>, your first shots land where the dot points, and you control the bloom from zero instead of inheriting a maxed-out cone.</p>
+            <p><strong>Stop → aim → fire.</strong> If you take one habit from this entire page, take this one. You'll practise exactly this rhythm in the simulator in section 04.</p>
+          </div>
+        </div>
+
+        <div class="rule"><strong>The one exception</strong>Inside ~11 metres, don't ADS at all — hipfire and keep moving (section 03). The disaster above is a mid-range problem: close enough that you reached for the sight, far enough that the spray missed. When in doubt: release everything, aim, then shoot.</div>
+        </section>
+
+      <!-- ================= 02 DAMAGE ================= -->
+      <section class="is-collapsed" aria-labelledby="s-damage">
+        <div class="sec-head">
+          <span class="num">02</span>
+          <h2 id="s-damage">Know your damage</h2>
+          <span class="tag">How many bullets<br />to kill, by range</span>
+        </div>
+        <p class="lede">Every enemy infantry has 1,000 health (500 shield + 500 health). Your bullet does <strong>143 damage up close</strong>, fading to <strong>112 at long range</strong>. Headshots count double, leg shots count less (×0.9). That gives you three numbers worth memorising:</p>
+
+        <table class="tbl" aria-label="Shots to kill by range">
+          <thead>
+            <tr><th>Range</th><th class="n">Damage</th><th class="n">Head</th><th class="n">Chest</th><th class="n">Legs</th><th class="n">Chest vs shielded Heavy</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Close</strong> · 0–10 m</td><td class="n big">143</td><td class="n big">4</td><td class="n big">7</td><td class="n">8</td><td class="n">11</td></tr>
+            <tr><td><strong>Mid</strong> · 10–50 m</td><td class="n big">143→125</td><td class="n big">4</td><td class="n big">8</td><td class="n">9</td><td class="n">12</td></tr>
+            <tr><td><strong>Far</strong> · 50–80 m+</td><td class="n big">125→112</td><td class="n big">5</td><td class="n big">9</td><td class="n">10</td><td class="n">13</td></tr>
+          </tbody>
+        </table>
+        <p class="small">Perfect-accuracy times to kill: 4 headshots ≈ 0.26 s, 7 chest shots ≈ 0.52 s up close. In real fights you'll land maybe half your rounds — still, this is why the head matters so much on this gun.</p>
+
+        <div class="chart-box">
+          <h3>Damage falloff — where your bullets get weaker</h3>
+          <p class="small" style="margin:0 0 6px">Full power to 10 m, then a steady slide to 125 at 50 m and 112 at 80 m. The gold line shows Soft Point Ammunition, which stretches full power to 15 m.</p>
+          <svg viewBox="0 0 640 240" width="100%" role="img" aria-label="Line chart of T1S Cycler damage per bullet from 0 to 100 metres: 143 damage flat to 10 metres, falling to 125 at 50 metres and 112 at 80 metres, then flat. Soft Point Ammunition stays at 143 until 15 metres.">
+            <g stroke="var(--line)" stroke-width="1">
+              <line x1="56" y1="135" x2="616" y2="135" />
+              <line x1="56" y1="145.5" x2="616" y2="145.5" />
+              <line x1="56" y1="172.5" x2="616" y2="172.5" />
+              <line x1="56" y1="192" x2="616" y2="192" />
+            </g>
+            <g fill="var(--ink-soft)" font-size="12">
+              <text x="48" y="139" text-anchor="end">150</text>
+              <text x="48" y="149.5" text-anchor="end">143</text>
+              <text x="48" y="176.5" text-anchor="end">125</text>
+              <text x="48" y="196" text-anchor="end">112</text>
+              <text x="56" y="222">0 m</text>
+              <text x="168" y="222" text-anchor="middle">25 m</text>
+              <text x="336" y="222" text-anchor="middle">50 m</text>
+              <text x="504" y="222" text-anchor="middle">75 m</text>
+              <text x="616" y="222" text-anchor="end">100 m</text>
+            </g>
+            <polyline points="56,145.5 112,145.5 336,172.5 504,192 616,192" fill="none" stroke="var(--tr-red)" stroke-width="3" />
+            <polyline points="56,145.5 140,145.5 336,172.5 504,192 616,192" fill="none" stroke="var(--tr-gold)" stroke-width="2.5" stroke-dasharray="7 5" />
+            <g fill="var(--tr-red)">
+              <circle cx="112" cy="145.5" r="4" /><circle cx="336" cy="172.5" r="4" /><circle cx="504" cy="192" r="4" />
+            </g>
+            <g font-size="13" font-weight="600" fill="var(--ink)">
+              <text x="118" y="136">143</text>
+              <text x="318" y="164">125 @ 50 m</text>
+              <text x="480" y="212">112 @ 80 m</text>
+              <text x="392" y="96" fill="var(--accent-ink)">— with Soft Point Ammo</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="rule"><strong>Rule of thumb</strong>Inside 10 m you are at maximum power. Past 50 m every kill takes one or two extra bullets — close the distance or burst carefully instead of spraying.</div>
+        </section>
+
+      <!-- ================= 03 AIM AT EVERY RANGE ================= -->
+      <section class="is-collapsed" aria-labelledby="s-aim">
+        <div class="sec-head">
+          <span class="num">03</span>
+          <h2 id="s-aim">Aim at every range</h2>
+          <span class="tag">What to do, and when,<br />from 0 to 100 metres</span>
+        </div>
+        <p class="lede">Your rifle's job changes with distance. Up close, movement is your defence; at mid-range, your aim and your bursts are; past 50 m, you are mostly reminding the enemy you exist.</p>
+
+        <div class="lab" aria-label="Range lab — slide to a distance and see the T1S Cycler's damage, shots to kill and time to kill" data-rpm="698" data-dmg-max="143" data-dmg-min="112" data-max-range="10" data-min-range="80" data-hs-mult="2" data-advice-0="0–8 m: hipfire and keep moving. Your ring is tiny this close — trust the hip cone and your movement." data-advice-1="8–25 m: this is your home turf. Hipfire if he rushes you, ADS and burst if he's still. Aim at the neck — the recoil will lift the next rounds into his head." data-advice-2="25–50 m: ADS, stand still or crouch, and fire disciplined bursts of 3–5. A 10-round spray is just noise at this distance." data-advice-3="50 m+: tap-fire, one shot at a time, and let the cone settle between shots. Or close the distance — this is not the gun's range." data-band-names="Point blank,Sweet spot,Controlled,Plinking" data-band-chip="0">
+          <div class="lab-top">
+            <div class="reading">Range: <span id="labDist">18</span> <small>m</small></div>
+            <div class="reading"><span id="labDmg">139</span> <small>dmg</small></div>
+            <div class="reading" style="color: var(--tr-red)"><span id="labBand">Sweet spot</span></div>
+          </div>
+          <input id="labRange" type="range" min="0" max="100" step="1" value="18" aria-label="Distance to target in metres" />
+          <div class="lab-scale" aria-hidden="true"><span>0</span><span>10</span><span>25</span><span>50</span><span>80</span><span>100 m</span></div>
+          <div class="lab-out">
+            <div class="lab-cell"><div class="v" id="labHead">4</div><div class="k">Headshots to kill</div></div>
+            <div class="lab-cell"><div class="v" id="labChest">8</div><div class="k">Chest shots to kill</div></div>
+            <div class="lab-cell"><div class="v" id="labTtk">0.60 s</div><div class="k">Chest time to kill</div></div>
+            <div class="lab-cell"><div class="v" id="labBullet">698</div><div class="k">Rounds per minute</div></div>
+          </div>
+          <div class="lab-advice" id="labAdvice"><b>Sweet spot</b><span>8–25 m: this is your home turf. Hipfire if he rushes you, ADS and burst if he's still. Aim at the neck — the recoil will lift the next rounds into his head.</span></div>
+        </div>
+
+        <div style="height:16px"></div>
+        <div class="band">
+          <div class="dist"><span class="d1">0–8 m</span><span class="d2">Point blank</span></div>
+          <div class="body">
+            <h3>Point blank — hipfire, keep moving</h3>
+            <p><strong>Your hipfire ring is tiny this close.</strong> Even running, the cone is only about 0.35 m wide at 8 m — inside a man's chest. So don't ADS, don't stop: hold A or D, keep your crosshair on his torso, and let the trigger sing. The hipfire ring stays chest-sized out to about <strong>11 m</strong>.</p>
+            <p class="aim">Aim: torso. Keep strafing. Don't reload mid-fight — your 40-round magazine is enough for two kills here.</p>
+          </div>
+        </div>
+        <div class="band">
+          <div class="dist"><span class="d1">8–25 m</span><span class="d2">Sweet spot</span></div>
+          <div class="body">
+            <h3>Sweet spot — your home turf</h3>
+            <p><strong>Full damage, manageable spread, time to aim.</strong> Stop, ADS, and fire bursts of 5 at the neck — the first shot kicks 0.525° up and the rest climb straight up, so the neck is where headshots happen.</p>
+            <p class="aim">Aim: neck. Bursts of 5, release, let the cone shrink, repeat. Hold a wide strafe between bursts.</p>
+          </div>
+        </div>
+        <div class="band">
+          <div class="dist"><span class="d1">25–50 m</span><span class="d2">Controlled</span></div>
+          <div class="body">
+            <h3>Controlled — patience wins</h3>
+            <p><strong>Damage is fading (143 → 125), so every bullet has to count.</strong> ADS, stand still or crouch, and fire disciplined bursts of 3–5. At this distance a 10-round spray is just noise — you'll lose the duel to someone bursting.</p>
+            <p class="aim">Aim: upper chest. Switch to the 3-round burst mode (B) if your finger gets greedy.</p>
+          </div>
+        </div>
+        <div class="band">
+          <div class="dist"><span class="d1">50+ m</span><span class="d2">Plinking</span></div>
+          <div class="body">
+            <h3>Plinking — tap, or close in</h3>
+            <p><strong>Past 50 m your bullet is down to 112 damage and 9 chest shots to kill.</strong> Tap-fire: one shot at a time, wait for the cone to settle between shots. If he's behind cover, stop shooting — you're only giving away your position. A Medic's job here is usually to close the distance or heal the people doing the shooting.</p>
+            <p class="aim">Aim: head height on a still target, chest if he's moving. Switch to semi-auto (B) for the slowest, steadiest shots.</p>
+          </div>
+        </div>
+        </section>
+
+      <!-- ================= 04 STANCES & FIRING MODES ================= -->
+      <section class="is-collapsed" aria-labelledby="s-stances">
+        <div class="sec-head">
+          <span class="num">04</span>
+          <h2 id="s-stances">Stances &amp; firing modes</h2>
+          <span class="tag">How steady you are,<br />and how to pull the trigger</span>
+        </div>
+        <p class="lede">Your cone of fire — how wide your bullets scatter — depends on what your body is doing. <strong>Standing still and aiming is 25× more accurate than sprinting.</strong> Learn the table, then feel it in the simulator below.</p>
+
+        <table class="tbl" aria-label="Cone of fire by stance">
+          <thead>
+            <tr><th>Stance</th><th class="n">Cone (degrees)</th><th>What it means</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Sprinting</strong></td><td class="n big">7.0°</td><td>Don't shoot — wait 0.3 s after you stop. The sprint cone is 70× wider than aimed.</td></tr>
+            <tr><td>Hipfire, moving</td><td class="n big">2.5°</td><td>Your strafe-fight cone — tight enough at 10 m to hit a chest.</td></tr>
+            <tr><td>Hipfire, standing</td><td class="n big">2.0°</td><td>Standing still, hipfire — fine in a doorway.</td></tr>
+            <tr><td>Hipfire, crouched</td><td class="n big">1.5°</td><td>Crouching tightens the hip cone further (crouch-walk: 2.0°).</td></tr>
+            <tr><td>Aimed (ADS), feet planted</td><td class="n big">0.10°</td><td>A laser. This is the cone you want for every mid-range kill.</td></tr>
+            <tr><td>Aimed (ADS), strafing</td><td class="n big">0.30°</td><td>Strafing while aimed is 3× wider than standing still — still very accurate. Move speed halves (0.5×) while ADS.</td></tr>
+          </tbody>
+        </table>
+        <p class="small">The cone grows by <strong>+0.05° per shot aimed</strong> (and +0.10° per shot from the hip), starting from shot 1. It shrinks back at 20°/s when you stop firing — that's why short bursts stay accurate and long sprays don't.</p>
+
+        <h3 style="margin:24px 0 8px">The gun's fire-mode switch</h3>
+        <table class="tbl" aria-label="Fire modes of the T1S Cycler">
+          <thead>
+            <tr><th>Mode</th><th>How</th><th>When to use it</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Automatic</strong></td><td>Default. Hold the trigger — fires until you release.</td><td>Your default. Burst by hand: pull, release, pull.</td></tr>
+            <tr><td><strong>3-round burst</strong></td><td>Press <strong>B</strong> once. Exactly 3 shots per trigger pull.</td><td>25–50 m, when your finger gets greedy in full-auto.</td></tr>
+            <tr><td><strong>Semi-auto</strong></td><td>Press <strong>B</strong> again. One shot per click.</td><td>50 m+ plinking — the slowest, steadiest shots.</td></tr>
+          </tbody>
+        </table>
+        <p class="small">The burst mode has no special properties — it just stops after three shots. A disciplined finger in full-auto does the same thing, so most players leave the switch on Auto and burst by hand.</p>
+
+        <h3 style="margin:24px 0 8px">The three ways to pull the trigger</h3>
+        <table class="tbl" aria-label="Trigger discipline by range">
+          <thead>
+            <tr><th style="width:130px">Style</th><th class="n">Shots</th><th>When</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Mag dump</strong></td><td class="n">Hold it down</td><td>Only under 8 m, hipfire, and only if he's right in front of you.</td></tr>
+            <tr><td><strong>Bursts</strong></td><td class="n">5, then release</td><td>Your default. <strong>5 shots is ideal</strong> — the cone has grown by only 0.25°; 6–8 is forgivable if the target is close.</td></tr>
+            <tr><td><strong>Tap-fire</strong></td><td class="n">3–5, patient</td><td>Past 50 m — and the simulator below is built for exactly this.</td></tr>
+          </tbody>
+        </table>
+
+        <h3 style="margin:28px 0 8px">Try it: tap-fire simulator</h3>
+        <p class="lede" style="margin-top:0">Press and hold the red button — or tap it in bursts — and watch the cone bloom. Target at 30 m. Shots that land inside the green ring are hits. The cone grows by 0.05° per shot from shot 1, and shrinks back while you wait.</p>
+        <div class="sim" id="tapSim" data-rpm="698" data-base-cof="0.10" data-bloom="0.05" data-distance="30" data-seed="4242" data-target-radius="0.3">
+          <div class="sim-stage" id="simStage">
+            <svg viewBox="0 0 420 300" width="420" height="300" aria-hidden="true">
+              <circle cx="210" cy="150" r="70" fill="none" stroke="#4a90e2" stroke-width="2" />
+              <circle cx="210" cy="150" r="4" fill="#4a90e2" />
+              <line x1="210" y1="76" x2="210" y2="90" stroke="#4a90e2" stroke-width="2" />
+              <line x1="210" y1="210" x2="210" y2="224" stroke="#4a90e2" stroke-width="2" />
+              <line x1="136" y1="150" x2="150" y2="150" stroke="#4a90e2" stroke-width="2" />
+              <line x1="270" y1="150" x2="284" y2="150" stroke="#4a90e2" stroke-width="2" />
+              <circle id="simBloomRing" cx="210" cy="150" r="3" fill="none" stroke="#e05a5a" stroke-width="2" stroke-dasharray="5 4" />
+            </svg>
+          </div>
+          <div class="sim-controls">
+            <button class="sim-fire" id="simFire" type="button">Hold to fire</button>
+            <button class="sim-reset" id="simReset" type="button">Reset</button>
+          </div>
+          <div class="sim-read">
+            <div class="lab-cell"><div class="v" id="simShots">0</div><div class="k">Shots fired</div></div>
+            <div class="lab-cell"><div class="v" id="simHits">0</div><div class="k">Hits (0.60 m ring)</div></div>
+            <div class="lab-cell"><div class="v" id="simCof">0.10°</div><div class="k">Current cone</div></div>
+          </div>
+          <div class="bloom-track"><div class="bloom-fill" id="simBloomFill"></div></div>
+          <div class="burst-log" id="simBurstLog" aria-live="polite"></div>
+          <div class="sim-verdict" id="simVerdict">698 RPM, 0.10° starting cone, 0.05° bloom per shot, target at 30 m.</div>
+          <p class="small">Try this: hold for 12 shots — count the misses. Now tap in bursts of 5 with a half-second pause — the cone resets between bursts. Same gun, same target, very different result.</p>
+        </div>
+        </section>
+
+      <!-- ================= 05 SEE IT ================= -->
+      <section class="is-collapsed" aria-labelledby="s-see">
+        <div class="sec-head">
+          <span class="num">05</span>
+          <h2 id="s-see">See it: hipfire, bursts &amp; sights</h2>
+          <span class="tag">The pictures that<br />make it click</span>
+        </div>
+
+        <div class="viz">
+          <h3>Your hipfire ring at 8 metres</h3>
+          <p class="small" style="margin:0 0 10px">Same distance, same gun — the rings show how wide your bullets scatter. The green circle is the enemy's chest, 0.6 m across.</p>
+          <svg viewBox="0 0 640 240" width="100%" role="img" aria-label="Three rings showing hipfire spread at 8 metres: moving 0.35 metres, standing 0.28 metres, and with the Laser Sight 0.19 metres, next to a 0.6 metre chest circle.">
+            <g stroke="var(--line)" stroke-width="1">
+              <line x1="213" y1="8" x2="213" y2="232" />
+              <line x1="427" y1="8" x2="427" y2="232" />
+            </g>
+            <g fill="var(--ink-soft)" font-size="13" font-weight="600">
+              <text x="10" y="24">HIPFIRE · MOVING</text>
+              <text x="226" y="24">HIPFIRE · STANDING</text>
+              <text x="440" y="24">+ LASER SIGHT · STANDING</text>
+            </g>
+            <g fill="none" stroke="var(--good)" stroke-width="2">
+              <circle cx="106" cy="128" r="21" />
+              <circle cx="320" cy="128" r="21" />
+              <circle cx="533" cy="128" r="21" />
+            </g>
+            <circle cx="106" cy="128" r="24" fill="none" stroke="var(--skip)" stroke-width="3" />
+            <circle cx="320" cy="128" r="19" fill="none" stroke="var(--tr-red)" stroke-width="3" />
+            <circle cx="533" cy="128" r="13" fill="none" stroke="var(--tr-red)" stroke-width="3" />
+            <circle cx="106" cy="128" r="4" fill="var(--skip)" />
+            <circle cx="320" cy="128" r="4" fill="var(--tr-red)" />
+            <circle cx="533" cy="128" r="4" fill="var(--tr-red)" />
+            <g fill="var(--ink)" font-size="14" font-weight="600">
+              <text x="106" y="196" text-anchor="middle">0.35 m ring</text>
+              <text x="320" y="196" text-anchor="middle">0.28 m ring</text>
+              <text x="533" y="196" text-anchor="middle">0.19 m ring</text>
+            </g>
+            <g fill="var(--ink-soft)" font-size="13">
+              <text x="106" y="214" text-anchor="middle">Cone 2.5° · still hits a chest</text>
+              <text x="320" y="214" text-anchor="middle">Cone 2.0° · tighter</text>
+              <text x="533" y="214" text-anchor="middle">Cone ×0.67 · best hipfire</text>
+            </g>
+          </svg>
+          <p class="cap"><b>Reading it:</b> even while moving, your hipfire ring at 8 m is <b>0.35 m wide</b> — smaller than the green chest circle (0.6 m). That's why the hipfire exception in section 01 works: up close, you don't need to ADS to hit him. Standing still shrinks the ring to <b>0.28 m</b>, and the Laser Sight shrinks it to <b>0.19 m</b>.</p>
+        </div>
+
+        <div class="viz2">
+          <div class="viz">
+            <h3>What a burst looks like — 30 m, aimed</h3>
+            <p class="small" style="margin:0 0 8px">Five shots, ADS, first shot at the neck. Recoil climbs straight up, so the group climbs straight up.</p>
+            <svg viewBox="0 0 320 220" width="100%" role="img" aria-label="Five bullet holes in a vertical line on a target, starting at the neck and climbing straight up into the head. The cone grows from 0.10 to 0.35 degrees across the five shots.">
+              <circle cx="160" cy="110" r="58" fill="none" stroke="var(--ink-soft)" stroke-width="2" />
+              <circle cx="160" cy="110" r="6" fill="var(--ink-soft)" />
+              <g stroke="var(--ink-soft)" stroke-width="2">
+                <line x1="160" y1="46" x2="160" y2="60" /><line x1="160" y1="160" x2="160" y2="174" />
+                <line x1="96" y1="110" x2="110" y2="110" /><line x1="210" y1="110" x2="224" y2="110" />
+              </g>
+              <g fill="var(--good)">
+                <circle cx="160" cy="128" r="5" /><circle cx="160" cy="113" r="5" /><circle cx="160" cy="98" r="5" />
+                <circle cx="160" cy="83" r="5" /><circle cx="160" cy="68" r="5" />
+              </g>
+              <g font-size="13" font-weight="600" fill="var(--ink)">
+                <text x="174" y="132">Shot 1 · neck</text>
+                <text x="174" y="72">Shot 5 · head</text>
+              </g>
+              <text x="160" y="208" text-anchor="middle" font-size="13" fill="var(--ink-soft)">Cone: 0.10° → 0.35° across 5 shots</text>
+            </svg>
+            <p class="cap"><b>Read it:</b> aim at the <b>neck</b> and the recoil does the work for you — shot 1 lands on the neck, the climb walks the next shots up into the head. That's the whole "aim at the neck" trick: <b>let the gun lift your aim into the headshots.</b></p>
+          </div>
+          <div class="viz">
+            <h3>What 10 shots of spraying looks like</h3>
+            <p class="small" style="margin:0 0 8px">Same target, same distance — but the trigger held down. The cone is now 0.60° and still growing.</p>
+            <svg viewBox="0 0 320 220" width="100%" role="img" aria-label="Ten bullet holes scattered across a target, most outside the chest circle, after a 10-shot spray. The cone has grown to 0.60 degrees.">
+              <circle cx="160" cy="110" r="58" fill="none" stroke="var(--ink-soft)" stroke-width="2" />
+              <circle cx="160" cy="110" r="6" fill="var(--ink-soft)" />
+              <g fill="var(--skip)">
+                <circle cx="148" cy="140" r="5" /><circle cx="172" cy="128" r="5" /><circle cx="156" cy="100" r="5" />
+                <circle cx="180" cy="88" r="5" /><circle cx="140" cy="76" r="5" /><circle cx="196" cy="140" r="5" />
+                <circle cx="118" cy="110" r="5" /><circle cx="204" cy="118" r="5" /><circle cx="168" cy="58" r="5" />
+                <circle cx="128" cy="152" r="5" />
+              </g>
+              <text x="160" y="208" text-anchor="middle" font-size="13" fill="var(--ink-soft)">Cone: 0.10° → 0.60° across 10 shots</text>
+            </svg>
+            <p class="cap"><b>Read it:</b> after 10 held shots the cone is <b>0.60° — six times wider than the first shot</b> — and half your bullets miss the chest entirely. Release after 5, let it shrink, then burst again.</p>
+          </div>
+        </div>
+
+        <div style="height:14px"></div>
+        <div class="viz2">
+          <div class="viz">
+            <h3>Through the 1× sight — RTA Reflex</h3>
+            <p class="small" style="margin:0 0 8px">Same view as your iron sights, only cleaner. Target at 35 m.</p>
+            <svg viewBox="0 0 320 220" width="100%" role="img" aria-label="View through a 1x reflex sight at a target 35 metres away: the target appears small, the sight dot sits on his chest, and the view around the sight is wide.">
+              <rect x="0" y="0" width="320" height="220" fill="var(--surface-2)" />
+              <circle cx="160" cy="100" r="42" fill="none" stroke="var(--ink)" stroke-width="2" />
+              <rect x="150" y="60" width="20" height="80" rx="4" fill="var(--ink-soft)" opacity="0.35" />
+              <circle cx="160" cy="86" r="5" fill="var(--ink-soft)" />
+              <path d="M 160 86 L 160 100" stroke="var(--ink-soft)" stroke-width="2" />
+              <circle cx="160" cy="100" r="4" fill="var(--tr-red)" />
+              <text x="160" y="196" text-anchor="middle" font-size="14" font-weight="600" fill="var(--ink)">1× — wide view, fast target finding</text>
+            </svg>
+            <p class="cap"><b>1× RTA Reflex (30 certs):</b> your default. The dot sits on his chest, you can still see the room around him. Best for the 8–25 m fights this gun lives in.</p>
+          </div>
+          <div class="viz">
+            <h3>Through the 2× sight — MH2 Reflex</h3>
+            <p class="small" style="margin:0 0 8px">Same target, same distance — twice as big in the glass, half as much room around him.</p>
+            <svg viewBox="0 0 320 220" width="100%" role="img" aria-label="View through a 2x reflex sight at a target 35 metres away: the target appears twice as large, the sight dot sits on his chest, and the view around the sight is narrower.">
+              <rect x="0" y="0" width="320" height="220" fill="var(--surface-2)" />
+              <circle cx="160" cy="100" r="56" fill="none" stroke="var(--ink)" stroke-width="2" />
+              <rect x="138" y="44" width="44" height="112" rx="6" fill="var(--ink-soft)" opacity="0.35" />
+              <circle cx="160" cy="72" r="7" fill="var(--ink-soft)" />
+              <path d="M 160 72 L 160 100" stroke="var(--ink-soft)" stroke-width="2" />
+              <circle cx="160" cy="100" r="4" fill="var(--tr-red)" />
+              <text x="160" y="196" text-anchor="middle" font-size="14" font-weight="600" fill="var(--ink)">2× — bigger target, narrower view</text>
+            </svg>
+            <p class="cap"><b>2× MH2 Reflex (30 certs):</b> take it for open ground and 25–50 m fights. The target is twice as big, so your aim point is clearer — but you see less of the room, so it's the wrong pick for a point hold.</p>
+          </div>
+        </div>
+        <div class="rule"><strong>Rule of thumb</strong>1× for indoors and point holds, 2× for open ground. If you can only afford one sight, buy the 1×.</div>
+        </section>
+
+      <!-- ================= 06 ATTACHMENTS ================= -->
+      <section class="is-collapsed" aria-labelledby="s-attach">
+        <div class="sec-head">
+          <span class="num">06</span>
+          <h2 id="s-attach">Attachments: what's worth your certs</h2>
+          <span class="tag">Every slot, judged<br />by situation</span>
+        </div>
+        <p class="lede">The T1S costs 650 certs to unlock, and it arrives bare — iron sights, no grip, no extras. That's fine: the gun is already good. Everything below is an optional sidegrade, not an upgrade. Buy in the order shown and stop whenever the gun feels right. <strong>One warning first:</strong> there is no Heavy Barrel and no Extended Magazine for this gun — they simply don't exist for the T1S, so if a loadout video tells you to buy one, it's for a different weapon.</p>
+
+        <h3 class="slot-title">Optics <span>— pick one; they change nothing but the view</span></h3>
+        <div class="att">
+          <div class="att-head"><h4>Iron sights</h4><span class="chip free">Already yours · 0 certs</span><span class="cost">Included</span></div>
+          <p class="effect">Clean, usable, and free. The T1S's irons don't get in your way.</p>
+          <div class="when"><span><b class="good-t">Good:</b> your first 10 hours — learn the gun before spending on a sight.</span><span><b class="bad-t">Bad:</b> nothing. They're genuinely fine.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>RTA Reflex Sight · 1×</h4><span class="chip first">First buy · 30 certs</span><span class="cost">30 certs</span></div>
+          <p class="effect">A simple red dot, same zoom as irons, much clearer picture.</p>
+          <div class="when"><span><b class="good-t">Good:</b> everything from 8–25 m — your first purchase, always.</span><span><b class="bad-t">Bad:</b> nothing. The default pick for a reason.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>MH2 Reflex Sight · 2×</h4><span class="chip good">Good · 30 certs</span><span class="cost">30 certs</span></div>
+          <p class="effect">Target appears twice as big; you see less of the room around him.</p>
+          <div class="when"><span><b class="good-t">Good:</b> open ground and 25–50 m fights where the extra zoom helps you pick the head.</span><span><b class="bad-t">Bad:</b> indoors and point holds — the narrow view gets you flanked.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>HS/NV Scope · 1×</h4><span class="chip situ">Situational · 30 certs</span><span class="cost">30 certs</span></div>
+          <p class="effect">Thermal-style highlight: enemies glow against a dark background, day or night.</p>
+          <div class="when"><span><b class="good-t">Good:</b> night fights and smoky rooms — targets pop out of the dark.</span><span><b class="bad-t">Bad:</b> daytime — the picture is washed out and hard to read.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>3.4×, 4× &amp; 6× scopes</h4><span class="chip skip">Skip · 30 certs</span><span class="cost">30 certs each</span></div>
+          <p class="effect">Big zoom for a rifle that stops being useful past 50 m.</p>
+          <div class="when"><span><b class="good-t">Good:</b> almost never — this is not a sniper rifle.</span><span><b class="bad-t">Bad:</b> everything closer than 50 m — you'll lose the man beside you while you stare at a dot.</span></div>
+        </div>
+
+        <h3 class="slot-title">Barrels <span>— pick one; you can live without any of them</span></h3>
+        <div class="att">
+          <div class="att-head"><h4>No barrel attachment</h4><span class="chip free">Free · 0 certs</span><span class="cost">0 certs</span></div>
+          <p class="effect">The bare muzzle is a perfectly good choice on this gun.</p>
+          <div class="when"><span><b class="good-t">Good:</b> everywhere — the recoil is manageable without help.</span><span><b class="bad-t">Bad:</b> nothing.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>Compensator</h4><span class="chip good">Good · 100 certs</span><span class="cost">100 certs</span></div>
+          <p class="effect">−30% vertical recoil; +15% hipfire cone; you appear on the enemy minimap 35 m farther when firing.</p>
+          <div class="when"><span><b class="good-t">Good:</b> mid-range aimed fights — the recoil climb gets noticeably easier to ride.</span><span><b class="bad-t">Bad:</b> close-range hipfire fights (the hip cone gets worse) and stealthy flanks (you light up the minimap).</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>Short Barrel</h4><span class="chip situ">Situational · 100 certs</span><span class="cost">100 certs</span></div>
+          <p class="effect">Hip bloom −40% (tighter hipfire bursts); +20% vertical recoil while ADS.</p>
+          <div class="when"><span><b class="good-t">Good:</b> point holds and biolabs — most of your fights are hipfire inside 11 m.</span><span><b class="bad-t">Bad:</b> mid-range ADS fights — the extra aimed recoil hurts exactly where you need control.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>Suppressor</h4><span class="chip situ">Situational · 100 certs</span><span class="cost">100 certs</span></div>
+          <p class="effect">Quiet; you don't appear on the minimap when firing. Damage falls off 20 m sooner; velocity −15% (580 → 493 m/s).</p>
+          <div class="when"><span><b class="good-t">Good:</b> flanking and ambushes — enemies can't hear or map you.</span><span><b class="bad-t">Bad:</b> mid-range duels — the earlier damage falloff costs you kills, and your bullets arrive slower.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>Flash Suppressor</h4><span class="chip situ">Situational · 100 certs</span><span class="cost">100 certs</span></div>
+          <p class="effect">Hides your muzzle flash; +15 m minimap range when firing.</p>
+          <div class="when"><span><b class="good-t">Good:</b> night fights — no bright flash giving you away.</span><span><b class="bad-t">Bad:</b> almost everything else — a marginal benefit for 100 certs.</span></div>
+        </div>
+
+        <h3 class="slot-title">Rails <span>— the slot that changes how the gun handles</span></h3>
+        <div class="att">
+          <div class="att-head"><h4>Forward Grip</h4><span class="chip good">Good · 100 certs</span><span class="cost">100 certs</span></div>
+          <p class="effect">−25% horizontal recoil; +0.15 s equip time (the gun comes out a little slower).</p>
+          <div class="when"><span><b class="good-t">Good:</b> everything — the side-to-side wobble is what makes mid-range bursts drift, and this kills most of it.</span><span><b class="bad-t">Bad:</b> nothing real. The equip penalty is barely noticeable.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>Laser Sight</h4><span class="chip good">Good · 100 certs</span><span class="cost">100 certs</span></div>
+          <p class="effect">+33% hipfire accuracy — the hip cone shrinks to ×0.67 (2.5° → 1.7° moving).</p>
+          <div class="when"><span><b class="good-t">Good:</b> close-quarters builds — point holds, towers, biolabs where you live inside 11 m.</span><span><b class="bad-t">Bad:</b> open-field fights — you can't ADS and hipfire at once, and the laser does nothing for aimed shots.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>Angled Forward Grip</h4><span class="chip situ">Situational · 100 certs</span><span class="cost">100 certs</span></div>
+          <p class="effect">First-shot vertical recoil −60% (the big 0.525° kick becomes 0.21°); +10% horizontal recoil.</p>
+          <div class="when"><span><b class="good-t">Good:</b> tap-fire and first-shot accuracy at range.</span><span><b class="bad-t">Bad:</b> bursts — the extra horizontal wobble hurts the 2nd–5th shots more than the first-shot help is worth.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>Grenade Launcher</h4><span class="chip situ">Situational · 100 certs</span><span class="cost">100 certs</span></div>
+          <p class="effect">Single-shot underbarrel grenade; arms after 10 m; +0.25 s equip time. Toggle with Gear Slot 1.</p>
+          <div class="when"><span><b class="good-t">Good:</b> squad play — lob one into a doorway or a MAX crash before you push. This is the reason to own the T1S at all.</span><span><b class="bad-t">Bad:</b> solo duels — it replaces the grip, and it won't arm inside 10 m where duels happen.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>Smoke Launcher</h4><span class="chip situ">Situational · 100 certs</span><span class="cost">100 certs</span></div>
+          <p class="effect">Single-shot underbarrel smoke; +0.25 s equip time. Toggle with Gear Slot 1.</p>
+          <div class="when"><span><b class="good-t">Good:</b> covering a revive or a push across open ground.</span><span><b class="bad-t">Bad:</b> solo play — smoke helps your squad, not your own aim, and it replaces the grip.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>Underbarrel Shotgun</h4><span class="chip situ">Situational · 100 certs</span><span class="cost">100 certs</span></div>
+          <p class="effect">Single-shot underbarrel shotgun; +0.25 s equip time. Toggle with Gear Slot 1.</p>
+          <div class="when"><span><b class="good-t">Good:</b> a panic button when someone rounds the corner inside 5 m.</span><span><b class="bad-t">Bad:</b> almost everything else — one shot, long reload, and it replaces the grip.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>Darklight Flashlight</h4><span class="chip situ">Tool · 100 certs</span><span class="cost">100 certs</span></div>
+          <p class="effect">Reveals cloaked infiltrators. Toggle with the attachment key (X).</p>
+          <div class="when"><span><b class="good-t">Good:</b> point holds plagued by stalkers — switch it on, sweep the corners.</span><span><b class="bad-t">Bad:</b> as a permanent pick — it replaces the grip for a job you only need sometimes.</span></div>
+        </div>
+
+        <h3 class="slot-title">Ammo <span>— pick one; both are real choices</span></h3>
+        <div class="att">
+          <div class="att-head"><h4>Soft Point Ammunition</h4><span class="chip first">First buy · 100 certs</span><span class="cost">100 certs</span></div>
+          <p class="effect">Full 143 damage stretches from 10 m to 15 m; velocity −10% (580 → 522 m/s).</p>
+          <div class="when"><span><b class="good-t">Good:</b> your normal fights — most kills happen inside 15 m, so the extra 5 m of full damage is free value.</span><span><b class="bad-t">Bad:</b> long-range plinking — the slower bullet makes leading moving targets harder.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>High Velocity Ammunition</h4><span class="chip situ">Situational · 100 certs</span><span class="cost">100 certs</span></div>
+          <p class="effect">Velocity +10% (580 → 638 m/s); min-damage range +20 m (80 → 100 m); max-damage range −2 m (10 → 8 m).</p>
+          <div class="when"><span><b class="good-t">Good:</b> open-field fights — faster bullets, less leading, damage holds up further out.</span><span><b class="bad-t">Bad:</b> close fights — you give up 2 m of full damage for speed you don't need.</span></div>
+        </div>
+
+        <div class="rule"><strong>Spend order</strong>RTA Reflex 1× (30) → Forward Grip (100) → Soft Point Ammo (100) → then stop. 230 certs of attachments on top of the 650-cert gun. Put the next several hundred certs into your Medical Applicator, revive grenades and suit slots — they win more fights than any barrel.</div>
+        </section>
+
+      <!-- ================= 07 LOADOUTS ================= -->
+      <section class="is-collapsed" aria-labelledby="s-loadouts">
+        <div class="sec-head">
+          <span class="num">07</span>
+          <h2 id="s-loadouts">Loadouts for real fights</h2>
+          <span class="tag">Four ready-made setups,<br />cheapest first</span>
+        </div>
+        <p class="lede">Copy one of these and go play. The "cost" is attachments only — the gun itself is 650 certs on top.</p>
+        <div class="grid2">
+          <div class="loadout">
+            <h3>Standard Issue</h3>
+            <p class="cost">0 certs · the gun, as bought</p>
+            <ul>
+              <li><b>Sight:</b> Iron sights</li>
+              <li><b>Barrel:</b> none</li>
+              <li><b>Rail:</b> none</li>
+              <li><b>Ammo:</b> standard</li>
+            </ul>
+            <p><strong>Use it for:</strong> your first sessions. The gun is good bare — learn the recoil and the ranges before you spend anything.</p>
+          </div>
+          <div class="loadout pick">
+            <h3>All-Rounder ★ Recommended</h3>
+            <p class="cost">230 certs · the default build</p>
+            <ul>
+              <li><b>Sight:</b> RTA Reflex 1× (30) — swap to MH2 2× (+30) for open ground</li>
+              <li><b>Barrel:</b> none</li>
+              <li><b>Rail:</b> Forward Grip (100)</li>
+              <li><b>Ammo:</b> Soft Point (100)</li>
+            </ul>
+            <p><strong>Use it for:</strong> everything. This is the build the rest of the page assumes.</p>
+          </div>
+          <div class="loadout">
+            <h3>Point Hold</h3>
+            <p class="cost">230 certs · indoors</p>
+            <ul>
+              <li><b>Sight:</b> RTA Reflex 1× (30)</li>
+              <li><b>Barrel:</b> Short Barrel (100)</li>
+              <li><b>Rail:</b> Laser Sight (100)</li>
+              <li><b>Ammo:</b> Soft Point (100, optional)</li>
+            </ul>
+            <p><strong>Use it for:</strong> biolabs, towers and point rooms, where every fight is hipfire inside 11 m.</p>
+          </div>
+          <div class="loadout">
+            <h3>Grenadier</h3>
+            <p class="cost">130 certs · squad support</p>
+            <ul>
+              <li><b>Sight:</b> RTA Reflex 1× (30)</li>
+              <li><b>Barrel:</b> none</li>
+              <li><b>Rail:</b> Grenade Launcher (100)</li>
+              <li><b>Ammo:</b> standard</li>
+            </ul>
+            <p><strong>Use it for:</strong> squad play — lob a grenade into the doorway, then push in with the rifle. The reason you bought this gun.</p>
+          </div>
+        </div>
+        </section>
+
+      <!-- ================= 08 KILL EFFICIENTLY ================= -->
+      <section class="is-collapsed" aria-labelledby="s-kill">
+        <div class="sec-head">
+          <span class="num">08</span>
+          <h2 id="s-kill">How to kill efficiently</h2>
+          <span class="tag">Six habits that<br />win gunfights</span>
+        </div>
+        <ol class="habits">
+          <li>
+            <h3>Aim at the neck, harvest the head</h3>
+            <p>4 headshots kill up close (0.26 s) versus 7 chest shots (0.52 s). Aim at the neck and let the straight-up recoil walk the next rounds into his head — you get headshots without having to aim at a moving head.</p>
+          </li>
+          <li>
+            <h3>Burst, release, burst</h3>
+            <p>Five shots, finger off, half a second, five more. The cone resets while you wait. A held trigger after shot 8 is just confetti — the cone is 0.50° wide and still growing.</p>
+          </li>
+          <li>
+            <h3>Never reload on empty</h3>
+            <p>A reload with rounds still in the mag takes <strong>2.52 s</strong>; an empty reload takes <strong>3.25 s</strong>. Fire about 25 rounds, then reload behind cover while you still have 15 left. Dying with a half-empty mag is the most avoidable death in the game.</p>
+          </li>
+          <li>
+            <h3>Pre-aim the doorway, strafe the duel</h3>
+            <p>Point your crosshair at head height where he'll appear, then strafe sideways while you fire. He has to track a moving target; you have to track a still one. In ADS your move speed halves — so strafe between bursts, not during them.</p>
+          </li>
+          <li>
+            <h3>Pick fights inside 50 m</h3>
+            <p>Past 50 m your damage falls to 112 and kills take 9 chest shots. If he's far away, close in, let someone else shoot him, or don't shoot at all — a long-range duel you lose slowly is worse than no duel.</p>
+          </li>
+          <li>
+            <h3>You're the medic — heal between kills</h3>
+            <p>Your rifle is only half the job. After every kill, top up your squadmates and revive the fallen. A Medic who wins the fight <em>and</em> brings the squad back to full health is worth two riflemen.</p>
+          </li>
+        </ol>
+        </section>
+
+      <!-- ================= 09 WEAK SPOTS ================= -->
+      <section class="is-collapsed" aria-labelledby="s-weak">
+        <div class="sec-head">
+          <span class="num">09</span>
+          <h2 id="s-weak">Know your weak spots</h2>
+          <span class="tag">Five ways this gun<br />lets you down</span>
+        </div>
+        <div class="weak">
+          <h3>1 · It loses a fair DPS race to the free T1 Cycler</h3>
+          <p>The T1 Cycler — the starter rifle you got for free — fires faster (750 RPM vs 698) and kills about 7% quicker in every range band. The 650 certs didn't buy you speed; they bought you <strong>versatility</strong>: burst and semi-auto modes, the grenade launcher, the whole attachment list. If all you want is raw killing speed, the free gun is better.</p>
+          <p class="fix"><b>The fix:</b> win with your head — the grenade launcher, the burst modes, and better positioning are what you paid for.</p>
+        </div>
+        <div class="weak">
+          <h3>2 · 40 rounds, no extended magazine</h3>
+          <p>Forty rounds is generous for one kill, thin for two, and hopeless for three. There is no Extended Magazine for the T1S — the slot doesn't exist. Spraying a whole mag at one man leaves you reloading in front of his friend.</p>
+          <p class="fix"><b>The fix:</b> burst, and reload after ~25 rounds behind cover (see habit 3 above).</p>
+        </div>
+        <div class="weak">
+          <h3>3 · A long-range pea-shooter</h3>
+          <p>Past 80 m your bullet does 112 damage — 9 chest shots to kill, and the target has time to walk behind a rock between them. Long-range duels are the T1S's worst fight.</p>
+          <p class="fix"><b>The fix:</b> tap-fire, or don't take the fight. Close the distance or let a teammate with a longer-range gun handle it.</p>
+        </div>
+        <div class="weak">
+          <h3>4 · Recoil climbs straight up — 0.30° per shot, first shot 1.75×</h3>
+          <p>The first shot kicks 0.525° up and every shot after adds 0.30°, all straight up. Hold the trigger and your aim walks over his head in half a second. The horizontal wobble is small (0.225°), so the fix is simple: pull straight down.</p>
+          <p class="fix"><b>The fix:</b> pull down smoothly as you fire, and burst — the cone resets between bursts.</p>
+        </div>
+        <div class="weak">
+          <h3>5 · Aiming halves your speed, and the gun is slow to draw</h3>
+          <p>ADS cuts your move speed to 0.5×, and the equip time is 0.65 s — if you round a corner with your tool out and try to swap to the rifle, you're dead before it comes up.</p>
+          <p class="fix"><b>The fix:</b> have the rifle out <em>before</em> you enter the room, and strafe between bursts rather than during them.</p>
+        </div>
+        </section>
+
+      <!-- ================= 10 DRILLS ================= -->
+      <section class="is-collapsed" aria-labelledby="s-drills">
+        <div class="sec-head">
+          <span class="num">10</span>
+          <h2 id="s-drills">Training: five VR drills</h2>
+          <span class="tag">Ten minutes in VR Training<br />before your first real fight</span>
+        </div>
+        <p class="lede">VR Training costs nothing and the targets don't shoot back. Run these once and the habits above stop being theory.</p>
+        <ul class="drills">
+          <li>
+            <span class="d-name">The Wall Test <span>20 m · recoil control</span></span>
+            <span>Stand 20 m from a wall. Fire a 10-round burst at one spot and watch the holes climb. Now do it again, pulling down — the group should stay fist-sized. This teaches you the straight-up recoil pattern in one minute.</span>
+          </li>
+          <li>
+            <span class="d-name">The Neck-Line Walk <span>15 m · headshot habit</span></span>
+            <span>Walk sideways past a line of targets, firing 5-round bursts at the neck. Every burst should land neck-to-head. If you're hitting the chest, you're aiming too low; if you're missing over the top, you're not pulling down.</span>
+          </li>
+          <li>
+            <span class="d-name">The Burst Ladder <span>30–40 m · discipline</span></span>
+            <span>Pick a target at 30 m. Fire bursts of 5 with a half-second pause between them. Count: how many bursts before you get impatient and hold the trigger? The answer tells you how much work your finger needs.</span>
+          </li>
+          <li>
+            <span class="d-name">The Circle Strafe <span>5 m · hipfire</span></span>
+            <span>Circle a target at 5 m, hipfiring in short bursts while you move. Your ring is 0.22 m wide at this distance — if you're missing, you're aiming at the head instead of the chest. Torso, torso, torso.</span>
+          </li>
+          <li>
+            <span class="d-name">Reload Discipline <span>anywhere · the 25-round rule</span></span>
+            <span>Fire exactly 25 rounds, then reload behind a pillar. Repeat until you do it without thinking. The goal: never hear the empty click in a real fight.</span>
+          </li>
+        </ul>
+        <div class="rule"><strong>Pocket summary</strong>T1S Cycler · fight at 10–50 m · aim neck, burst 5, release, repeat · reload early behind cover (never on empty) · buy the 1× (30 certs), Forward Grip (100), Soft Point (100) · hipfire under ~11 m · past 50 m, tap or close in · the grenade launcher is why you bought it — use it.</div>
+        </section>
+
+      <footer>
+        <p><strong>About this guide.</strong> Numbers on this page are the T1S Cycler's live values — 143 → 112 damage, 698 RPM, 40-round magazine, 580 m/s velocity, 2.52 s short reload — from the PlanetSide 2 wiki and the Census snapshot of 2026-11-06. "Shots to kill" and times-to-kill are calculated from damage, fire rate and a 1,000-health target; the range lab and simulator use the same numbers. Attachment effects and cert costs come from the wiki.</p>
+        <p>Sources: <a href="https://planetside.fandom.com/wiki/T1S_Cycler">T1S Cycler — PlanetSide 2 Wiki</a> · <a href="https://iridar-mirror.knyazev.io/planetside2/weapons/assault-rifles/">Iridar's Assault Rifle Guide</a> · Census item database, snapshot 2026-11-06.</p>
+        <p>PlanetSide 2 is a trademark of Daybreak Game Company. This is a fan-made beginner guide, not affiliated with Daybreak.</p>
+      </footer>
+    </div>
+
+  <script type="module" src="weapon-sage-guide.mjs?v=20261109-sageguide2"></script>
+  <!-- One-off simulator for this gun, kept verbatim from the source
+       guide: its widget differs structurally from the shared one
+       (see the series notes), so the shared simulator never
+       attaches to it (no #burstSim on this page). -->
+  <script>
+// ---- Tap-fire simulator ----
+      (function () {
+        var sim = document.getElementById("tapSim");
+        if (!sim) return;
+        var RPM = Number(sim.dataset.rpm) || 698;
+        var BASE_COF = Number(sim.dataset.baseCof) || 0.10;
+        var BLOOM = Number(sim.dataset.bloom) || 0.05;
+        var DIST = Number(sim.dataset.distance) || 30;
+        var MAX_COF = 3.0;
+        var DECAY = 20;
+        var stage = document.getElementById("simStage");
+        var ring = document.getElementById("simBloomRing");
+        var fireBtn = document.getElementById("simFire");
+        var resetBtn = document.getElementById("simReset");
+        var shotsEl = document.getElementById("simShots");
+        var hitsEl = document.getElementById("simHits");
+        var cofEl = document.getElementById("simCof");
+        var fillEl = document.getElementById("simBloomFill");
+        var logEl = document.getElementById("simBurstLog");
+        var verdictEl = document.getElementById("simVerdict");
+
+        var stageW = 420, stageH = 300, CX = 210, CY = 150;
+        var TARGET_R = 70;
+        var PIXELS_PER_METER = TARGET_R / 0.3;
+
+        function cofToRadius(cofDeg) {
+          var spread = 2 * DIST * Math.tan((cofDeg * Math.PI / 180) / 2);
+          return spread * PIXELS_PER_METER;
+        }
+        var shots = 0, hits = 0, cof = BASE_COF, burst = 0, timer = null, lastShot = 0;
+
+        function rng() {
+          rng.seed = (rng.seed * 1103515245 + 12345) % 2147483648;
+          return rng.seed / 2147483648;
+        }
+        rng.seed = Number(sim.dataset.seed) || 1;
+
+        function render() {
+          var r = Math.max(3, cofToRadius(cof));
+          ring.setAttribute("r", String(r.toFixed(1)));
+          shotsEl.textContent = shots;
+          hitsEl.textContent = hits;
+          cofEl.textContent = cof.toFixed(2) + "°";
+          var pct = Math.min(100, ((cof - BASE_COF) / (MAX_COF - BASE_COF)) * 100);
+          fillEl.style.width = pct.toFixed(1) + "%";
+          fillEl.className = "bloom-fill" + (pct > 70 ? " hot" : pct > 30 ? " warm" : "");
+        }
+
+        function verdictFor(n) {
+          if (n === 0) return "";
+          if (n <= 5) return { cls: "good", text: n + " shots — tight. That's the ideal burst." };
+          if (n <= 8) return { cls: "warn", text: n + " shots — forgivable up close, but watch the cone." };
+          return { cls: "bad", text: n + " shots — that's a spray. The cone is " + cof.toFixed(2) + "° and most of your rounds are missing." };
+        }
+
+        function endBurst() {
+          if (burst === 0) return;
+          var v = verdictFor(burst);
+          var pip = document.createElement("span");
+          pip.className = "burst-pip " + v.cls;
+          pip.textContent = "×" + burst;
+          logEl.appendChild(pip);
+          verdictEl.innerHTML = "<b>" + (v.cls === "good" ? "Tight." : v.cls === "warn" ? "Loose." : "Spray.") + "</b> " + v.text;
+          burst = 0;
+        }
+
+        function fireOne() {
+          var now = performance.now();
+          if (lastShot && now - lastShot > 600) endBurst();
+          lastShot = now;
+          var r = Math.max(3, cofToRadius(cof));
+          var ang = rng() * Math.PI * 2;
+          var dist = Math.sqrt(rng()) * r;
+          var x = CX + Math.cos(ang) * dist;
+          var y = CY + Math.sin(ang) * dist;
+          var dot = document.createElement("div");
+          dot.className = "sim-shot" + (dist <= TARGET_R ? " hit" : "");
+          dot.style.left = x.toFixed(1) + "px";
+          dot.style.top = y.toFixed(1) + "px";
+          stage.appendChild(dot);
+          shots++;
+          if (dist <= TARGET_R) hits++;
+          burst++;
+          cof = Math.min(MAX_COF, cof + BLOOM);
+          render();
+        }
+
+        function start() {
+          if (timer) return;
+          fireBtn.classList.add("firing");
+          fireOne();
+          timer = setInterval(fireOne, Math.max(40, 60000 / RPM));
+        }
+        function stop() {
+          if (timer) { clearInterval(timer); timer = null; }
+          fireBtn.classList.remove("firing");
+          endBurst();
+        }
+        function decay() {
+          var now = performance.now();
+          if (timer || (now - lastShot) < 200) return;
+          if (cof > BASE_COF) { cof = Math.max(BASE_COF, cof - DECAY * 0.05); render(); }
+        }
+
+        fireBtn.addEventListener("pointerdown", function (e) { e.preventDefault(); start(); });
+        ["pointerup", "pointercancel", "pointerleave"].forEach(function (ev) { fireBtn.addEventListener(ev, stop); });
+        fireBtn.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+        resetBtn.addEventListener("click", function () {
+          stop();
+          stage.querySelectorAll(".sim-shot").forEach(function (el) { el.remove(); });
+          shots = 0; hits = 0; cof = BASE_COF; burst = 0; lastShot = 0;
+          logEl.innerHTML = "";
+          verdictEl.textContent = "698 RPM, 0.10° starting cone, 0.05° bloom per shot, target at 30 m.";
+          render();
+        });
+        setInterval(decay, 50);
+        render();
+      })();
+  </script>
+</body>
+</html>

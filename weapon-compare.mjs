@@ -40,6 +40,63 @@ const FACTION = { 0: "NS", 1: "VS", 2: "NC", 3: "TR" };
 const OPEN_KEY = "ps2-elite-kd-wc-open";
 const DIFF_KEY = "ps2-elite-kd-wc-diff";   // "0" = show the rows that are the same for every chosen weapon
 const FOLLOW_KEY = "ps2-elite-kd-wc-deep-follow";   // "1" = the deep dive follows the page headshot rate instead of chest aim
+// item id -> sage guide page; the link shows when a loaded weapon has one
+const SAGE_GUIDES = new Map([
+  [7233, "weapon-sage-gd22s.html"],
+  [79, "weapon-sage-t9-carv.html"],
+  [80, "weapon-sage-orion-vs54.html"],
+  [6009899, "weapon-sage-xmg-100.html"],
+  [78, "weapon-sage-nc6-gauss-saw.html"],
+  [7254, "weapon-sage-msw-r.html"],
+  [7276, "weapon-sage-sva-88.html"],
+  [7235, "weapon-sage-em6.html"],
+  [7277, "weapon-sage-flare-ve6.html"],
+  [7255, "weapon-sage-t16-rhino.html"],
+  [7275, "weapon-sage-pulsar-lsw.html"],
+  [7257, "weapon-sage-t32-bull.html"],
+  [7236, "weapon-sage-la1-anchor.html"],
+  [7278, "weapon-sage-ursa.html"],
+  [802106, "weapon-sage-ns-15m2.html"],
+  [7232, "weapon-sage-em1.html"],
+  [6004218, "weapon-sage-mgr-l1-promise.html"],
+  [1879, "weapon-sage-nc6a-godsaw.html"],
+  [7234, "weapon-sage-nc6s-gauss-saw-s.html"],
+  [1894, "weapon-sage-betelgeuse-54-a.html"],
+  [6004118, "weapon-sage-ve-h-maw.html"],
+  [7274, "weapon-sage-vx29-polaris.html"],
+  [6004120, "weapon-sage-mg-h1-watchman.html"],
+  [7253, "weapon-sage-t9-carv-s.html"],
+  [1924, "weapon-sage-t9a-butcher.html"],
+  [7256, "weapon-sage-tmg-50.html"],
+  [14, "weapon-sage-t1-cycler.html"],
+  [7124, "weapon-sage-cycler-trv.html"],
+  [1909, "weapon-sage-darkstar.html"],
+  [73, "weapon-sage-gr-22.html"],
+  [7148, "weapon-sage-h-v45.html"],
+  [4, "weapon-sage-nc1-gauss-rifle.html"],
+  [70998, "weapon-sage-ns-11a.html"],
+  [20, "weapon-sage-pulsar-vs1.html"],
+  [7128, "weapon-sage-tar.html"],
+  [7153, "weapon-sage-terminus-vx-9.html"],
+  [7129, "weapon-sage-torq-9.html"],
+  [7103, "weapon-sage-carnage-ar.html"],
+  [7149, "weapon-sage-cme.html"],
+  [7152, "weapon-sage-corvus-va55.html"],
+  [7150, "weapon-sage-equinox-ve2-burst.html"],
+  [7151, "weapon-sage-equinox-ve2.html"],
+  [77822, "weapon-sage-gauss-prime.html"],
+  [7101, "weapon-sage-gauss-rifle-burst.html"],
+  [7102, "weapon-sage-gauss-rifle-s.html"],
+  [69999, "weapon-sage-ns-11p.html"],
+  [7108, "weapon-sage-reaper-dmr.html"],
+  [7125, "weapon-sage-sabr-13.html"],
+  [1904, "weapon-sage-t1a-unity.html"],
+  [7126, "weapon-sage-t1b-cycler.html"],
+  [6009864, "weapon-sage-ar-100.html"],
+  [7104, "weapon-sage-nc9-a-tross.html"],
+  [804246, "weapon-sage-nsx-yumi.html"],
+  [7127, "weapon-sage-t1s-cycler.html"],
+]);
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const nf = (v, d = 0) => Number(v).toLocaleString(currentLang(), { maximumFractionDigits: d, minimumFractionDigits: d });
@@ -359,6 +416,13 @@ async function boot() {
         + (slots ? `<div class="wc-atts">${slots}</div>` : recoil ? "" : `<p class="wc-dim wc-attwait">${esc(tr("wc.sim.wait", "Loading recoil data…"))}</p>`)
         + `</div>`;
     }).join("");
+    // the Sage guide link: shown when one of the loaded weapons has a guide
+    const sage = selected().map((w) => SAGE_GUIDES.get(w.id)).find(Boolean);
+    const sageEl = $("wcSageLink");
+    if (sageEl) {
+      sageEl.hidden = !sage;
+      if (sage) $("wcSageLinkA").href = sage;
+    }
   }
 
   // ------------------------------------------------------------- compute --

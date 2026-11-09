@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>NSX Yumi Sage Guide &middot; PS2 Elite</title>
+  <meta name="description" content="A beginner's guide to the NSX Yumi &mdash; The charge-up burst rifle that any faction's Combat Medic can carry &mdash; once you've bought it." />
+  <meta name="color-scheme" content="light dark" />
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="weapon-sage.css?v=20261109-sageguide2" />
+  <style>
+    /* Faction colours for the NSX Yumi (differs from the shared NC default).
+       Dark values in :root (dark is the default); light values under data-theme. */
+    :root {
+      --hero-bg: #141a21;
+      --hero-soft: #93a8c2;
+      --nc-blue: #8ba3c4;
+      --nc-blue-deep: #a9bdd6;
+    }
+    html[data-theme="light"] {
+      --first: #20262f;
+      --hero-bg: #20262f;
+      --hero-soft: #a9b8cc;
+      --nc-blue: #51617a;
+      --nc-blue-deep: #20262f;
+    }
+    /* Carried from the source file: rules for classes the body uses
+       that the shared stylesheet does not define. */
+    .hero .buy-note { margin: 18px 0 0; padding: 12px 14px; max-width: 640px;
+        background: rgba(232,168,18,0.14); border-left: 3px solid var(--nc-gold);
+        font-size: 16px; }
+    .hero .buy-note strong { color: var(--nc-gold); }
+    .strip { background: var(--surface); border: 1px solid var(--line); padding: 16px 18px; margin-bottom: 14px; }
+    .strip h3 { margin: 0 0 2px; font-size: 21px; }
+    .strip .cap { font-size: 15px; margin: 8px 0 0; }
+    .strip .cap b { font-weight: 600; }
+    .strip .panel-label { font-family: "Rajdhani", sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; }
+    .exception { margin-top: 14px; padding: 12px 14px; border: 2px dashed var(--good);
+        background: var(--good-bg); font-size: 15.5px; }
+    .exception strong { font-family: "Rajdhani", sans-serif; letter-spacing: 0.04em; text-transform: uppercase; font-size: 14px; color: var(--good); display: block; margin-bottom: 2px; }
+    .charge-fill { background: var(--nc-blue); }
+  </style>
+</head>
+<body class="site-page">
+
+    <div class="wrap">
+
+    <p class="sage-back"><a href="weapon-compare.html?w=804246">← Back to the NSX Yumi comparison</a></p>
+
+      <!-- ================= HERO ================= -->
+      <header class="hero">
+        <p class="brandline">Sage Guide · Nanite Systems · Combat Medic · All factions</p>
+        <h1>NSX Yumi <span class="thin">— the rifle that makes you wait</span></h1>
+        <p class="sub">The charge-up burst rifle that any faction's Combat Medic can carry — once you've bought it. Five bullets, faster than any other gun in the game, after a short wind-up you have to plan around.</p>
+        <p class="buy-note"><strong>Read this first — this gun is NOT a starter.</strong> The NSX Yumi costs <strong>1,000 certs</strong> (or 799 Daybreak Cash). No faction is handed it for free. Your free starter rifle is your faction's own — T1 Cycler, NC1 Gauss Rifle or Pulsar VS1 — and the NSO starter is the AR-100. The Yumi is a purchase you make later, because you want a mid-range burst rifle, not a gun you start with.</p>
+        <p class="verdict"><strong>The one-line verdict:</strong> the most accurate assault rifle you can buy, with the hardest-hitting burst in the game — and a 0.25-second wind-up before every burst that punishes anyone who reacts instead of planning. It rewards firing first, aiming at the neck, and fighting at 10–40 metres. It punishes snap reactions, close-quarters panic, and spray-and-pray. Learn the pause and it will carry you.</p>
+        <img class="hero-gun" src="assets/weapons/88000.png" alt="The NSX Yumi assault rifle, side profile — Nanite Systems' slim grey burst rifle" width="256" height="128" />
+        <p class="hero-gun-cap">The NSX Yumi · Nanite Systems · 30-round magazine · 1,000 certs</p>
+      </header>
+
+      <div class="stats" role="list" aria-label="NSX Yumi key statistics">
+        <div class="stat" role="listitem"><div class="stat-big">167<small> → 143</small></div><div class="stat-label">Damage per bullet</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">1000</div><div class="stat-label">RPM inside a burst</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">405</div><div class="stat-label">RPM averaged over a minute</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">30</div><div class="stat-label">Rounds per magazine</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">1.8<small> s</small></div><div class="stat-label">Reload (rounds left)</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">580<small> m/s</small></div><div class="stat-label">Bullet velocity</div></div>
+      </div>
+      <p class="small" style="margin-top:14px">Every section below folds shut — tap a heading to open it. Section 01 starts open, because it's the lesson that saves you the most deaths.</p>
+
+      <!-- ================= 01 FIRST LESSON: ADS AFTER THE RUN ================= -->
+      <section aria-labelledby="s-first">
+        <div class="sec-head">
+          <span class="num">01</span>
+          <h2 id="s-first">First lesson: stop, aim, <em>then</em> fire</h2>
+          <span class="tag">The mistake almost<br />every new player makes</span>
+          
+        </div>
+        <p class="lede">Picture the scene, because you've probably lived it: you're <strong>sprinting</strong> across a courtyard, an enemy appears, and you do everything at once — hold the trigger down <em>while you're still running</em>, then press aim-down-sights (ADS) a split-second later, finger still down. The sight picture snaps in, it <em>looks</em> precise… and your bullets spray everywhere except the man in your crosshair. He kills you. It feels like the game cheated. It didn't — here's what actually happened.</p>
+
+        <div class="strip">
+          <h3>What you did — the spray</h3>
+          <svg viewBox="0 0 640 210" width="100%" role="img" aria-label="Three-panel strip. Panel one: a soldier sprinting, his cone of fire at the maximum 7.0 degrees. Panel two: the sight picture snaps in while the trigger is still held, but the wide cone does not reset. Panel three: the target stands untouched while bullet holes scatter in a wide ring around him.">
+            <line x1="213" y1="8" x2="213" y2="202" stroke="var(--line)" stroke-width="1" />
+            <line x1="426" y1="8" x2="426" y2="202" stroke="var(--line)" stroke-width="1" />
+            <!-- panel 1: sprinting, wide cone -->
+            <g fill="var(--ink)">
+              <circle cx="70" cy="52" r="10" />
+              <rect x="58" y="62" width="24" height="42" rx="8" transform="rotate(24 70 82)" />
+              <rect x="52" y="100" width="9" height="34" rx="4" transform="rotate(38 56 117)" />
+              <rect x="86" y="100" width="9" height="34" rx="4" transform="rotate(-52 90 117)" />
+              <rect x="78" y="70" width="9" height="30" rx="4" transform="rotate(-64 82 85)" />
+            </g>
+            <g stroke="var(--ink-soft)" stroke-width="2" stroke-linecap="round">
+              <line x1="18" y1="60" x2="44" y2="60" />
+              <line x1="14" y1="78" x2="42" y2="78" />
+              <line x1="20" y1="96" x2="44" y2="96" />
+            </g>
+            <polygon points="96,58 196,22 196,140" fill="var(--skip)" opacity="0.14" />
+            <text x="106" y="34" class="panel-label" fill="var(--skip)" font-size="15">Cone: 7.0° — maxed</text>
+            <text x="12" y="168" font-size="14" fill="var(--ink)">1 · Sprinting, trigger held</text>
+            <text x="12" y="188" font-size="14" fill="var(--ink-soft)">Hipfire from a sprint</text>
+            <!-- panel 2: ADS pressed mid-hold, cone unchanged -->
+            <circle cx="320" cy="88" r="52" fill="none" stroke="var(--ink)" stroke-width="3" />
+            <circle cx="320" cy="88" r="52" fill="none" stroke="var(--skip)" stroke-width="2" stroke-dasharray="6 5" />
+            <line x1="320" y1="30" x2="320" y2="146" stroke="var(--ink)" stroke-width="1.5" />
+            <line x1="262" y1="88" x2="378" y2="88" stroke="var(--ink)" stroke-width="1.5" />
+            <circle cx="320" cy="88" r="4" fill="var(--skip)" />
+            <text x="232" y="168" font-size="14" fill="var(--ink)">2 · ADS pressed mid-hold</text>
+            <text x="232" y="188" font-size="14" fill="var(--skip)">The cone does NOT reset</text>
+            <!-- panel 3: target, scattered holes -->
+            <g fill="var(--ink-soft)">
+              <circle cx="540" cy="52" r="12" />
+              <rect x="525" y="66" width="30" height="52" rx="7" />
+              <rect x="528" y="116" width="9" height="34" />
+              <rect x="548" y="116" width="9" height="34" />
+            </g>
+            <g fill="var(--skip)">
+              <circle cx="478" cy="40" r="4" /><circle cx="596" cy="58" r="4" /><circle cx="470" cy="104" r="4" />
+              <circle cx="606" cy="118" r="4" /><circle cx="500" cy="150" r="4" /><circle cx="578" cy="158" r="4" />
+              <circle cx="516" cy="80" r="4" /><circle cx="588" cy="88" r="4" />
+            </g>
+            <text x="440" y="168" font-size="14" fill="var(--ink)">3 · The sight lied</text>
+            <text x="440" y="188" font-size="14" fill="var(--ink-soft)">Bullets spray, target untouched</text>
+          </svg>
+          <p class="cap"><b>Sprinting is the least accurate state in the game:</b> your cone starts at <b>7.0° — fully bloomed, the widest it can ever be</b> — and every hipfire shot widens it further (+0.12° per shot). Pressing ADS mid-hold changes the picture, not the cone.</p>
+        </div>
+
+        <div class="grid2">
+          <div class="card">
+            <h3>✗ What you did — the spray</h3>
+            <p><strong>You started firing from a sprint, from the hip.</strong> Sprinting is the least accurate state in the game: your cone of fire starts at <strong>7.0° — fully bloomed, the widest it can ever be</strong>. Every shot you fire from the hip widens it further still (+0.12° per shot).</p>
+            <p><strong>Then you pressed ADS mid-hold — and nothing reset.</strong> Aiming down sights does <em>not</em> shrink a cone of fire that is already bloomed. The scope only gives you a precise <em>picture</em>; the bullets keep flying out of the wide cone you built while running and hipfiring. That's the whole mystery: <strong>accurate-looking aim, wildly inaccurate gun.</strong></p>
+            <p>Two timers stack the deck further: your gun needs about <strong>0.3 s to settle after a sprint</strong>, and raising the sight itself takes ~0.15 s. Trigger held through all of it means your first half-second of fire is pure confetti.</p>
+            <p>And on this gun there's a third timer no other rifle has: even once you're aimed and still, the Yumi <strong>winds up for 0.25 s after you press the trigger</strong> before the first bullet leaves. If you only start aiming when you see the enemy, that quarter-second is when he kills you.</p>
+          </div>
+          <div class="card">
+            <h3>✓ The fix — three beats, in order</h3>
+            <p><strong>1 · Feet.</strong> Let go of sprint (and the trigger, if you're already holding it). Stop, or drop into a strafe — anything but a full sprint. Do this from behind cover, before you peek.</p>
+            <p><strong>2 · Sight.</strong> Press ADS and let the sight come up. This takes a heartbeat — that's fine, cover buys it.</p>
+            <p><strong>3 · Trigger.</strong> <em>Now</em> press — and hold your aim steady through the wind-up. Starting from the aimed cone of <strong>0.03°</strong>, your first shots land where the dot points, and you control the bloom from zero instead of inheriting a maxed-out cone.</p>
+            <p><strong>Stop → aim → fire.</strong> If you take one habit from this entire page, take this one. You'll practise exactly this rhythm in the simulator in section 04 — including the wind-up, which is the part that makes this gun different.</p>
+          </div>
+        </div>
+
+        <div class="strip">
+          <h3>The fix — three beats, in order</h3>
+          <svg viewBox="0 0 640 210" width="100%" role="img" aria-label="Three-panel strip. Beat one, Stop: the soldier stands still and the wide cone shrinks, about 0.3 seconds to settle. Beat two, Aim: the sight rises into place in about 0.15 seconds. Beat three, Fire: a tight group of holes lands on the target's chest, fired from the 0.03 degree aimed cone.">
+            <line x1="213" y1="8" x2="213" y2="202" stroke="var(--line)" stroke-width="1" />
+            <line x1="426" y1="8" x2="426" y2="202" stroke="var(--line)" stroke-width="1" />
+            <!-- beat 1: stop, cone shrinks -->
+            <circle cx="106" cy="30" r="15" fill="var(--good)" />
+            <text x="106" y="36" text-anchor="middle" font-size="17" font-weight="700" fill="#fff">1</text>
+            <g fill="var(--ink)">
+              <circle cx="106" cy="72" r="10" />
+              <rect x="94" y="82" width="24" height="42" rx="8" />
+              <rect x="96" y="122" width="9" height="34" rx="4" />
+              <rect x="111" y="122" width="9" height="34" rx="4" />
+            </g>
+            <polygon points="128,84 196,74 196,120" fill="var(--good)" opacity="0.16" />
+            <text x="12" y="168" font-size="14" fill="var(--ink)"><tspan font-weight="700">STOP</tspan> — feet planted</text>
+            <text x="12" y="188" font-size="14" fill="var(--ink-soft)">Cone shrinks · ≈0.3 s to settle</text>
+            <!-- beat 2: aim -->
+            <circle cx="320" cy="30" r="15" fill="var(--good)" />
+            <text x="320" y="36" text-anchor="middle" font-size="17" font-weight="700" fill="#fff">2</text>
+            <circle cx="320" cy="96" r="34" fill="none" stroke="var(--ink)" stroke-width="3" />
+            <line x1="320" y1="58" x2="320" y2="134" stroke="var(--ink)" stroke-width="1.5" />
+            <line x1="282" y1="96" x2="358" y2="96" stroke="var(--ink)" stroke-width="1.5" />
+            <circle cx="320" cy="96" r="4" fill="var(--good)" />
+            <text x="232" y="168" font-size="14" fill="var(--ink)"><tspan font-weight="700">AIM</tspan> — sight comes up</text>
+            <text x="232" y="188" font-size="14" fill="var(--ink-soft)">Sight raise · ≈0.15 s · from cover</text>
+            <!-- beat 3: fire, tight group -->
+            <circle cx="533" cy="30" r="15" fill="var(--good)" />
+            <text x="533" y="36" text-anchor="middle" font-size="17" font-weight="700" fill="#fff">3</text>
+            <g fill="var(--ink-soft)">
+              <circle cx="533" cy="58" r="11" />
+              <rect x="519" y="70" width="28" height="48" rx="7" />
+              <rect x="522" y="116" width="9" height="30" />
+              <rect x="540" y="116" width="9" height="30" />
+            </g>
+            <g fill="var(--good)">
+              <circle cx="530" cy="86" r="4" /><circle cx="538" cy="92" r="4" /><circle cx="528" cy="96" r="4" />
+              <circle cx="536" cy="82" r="4" /><circle cx="533" cy="100" r="4" />
+            </g>
+            <text x="440" y="168" font-size="14" fill="var(--ink)"><tspan font-weight="700">FIRE</tspan> — from the aimed cone</text>
+            <text x="440" y="188" font-size="14" fill="var(--ink-soft)">0.03° cone · tight group on the chest</text>
+          </svg>
+          <p class="cap"><b>Three beats, always in this order.</b> Stop first so the cone can shrink, aim second so the sight is up before any bullet leaves, fire third from a cone that starts at <b>0.03°</b> instead of 7.0°. The whole sequence costs about half a second — cover buys it, and the wind-up happens inside that half-second if you press the trigger the moment the sight is up.</p>
+          <div class="exception">
+            <strong>The hipfire exception — under ~10 m, skip all three beats</strong>
+            Inside ~10 metres, don't ADS at all: hipfire and keep moving. At 10 m your moving hipfire ring is only about 0.5 m wide (section 05), scoping in costs time and slows you to half speed, and stopping makes you an easy target. Here, stopping is optional — the movement <em>is</em> your defence. The disaster above is a mid-range problem: close enough that you reached for the sight, far enough that the spray missed. One warning: even from the hip, the burst still winds up for 0.25 s — at arm's length, your sidearm fires instantly and the Yumi doesn't, so inside 5 m reach for the pistol instead.
+          </div>
+        </div>
+
+        <div class="rule"><strong>The one exception</strong>Inside ~10 metres, don't ADS at all — hipfire and keep moving (section 03). The disaster above is a mid-range problem: close enough that you reached for the sight, far enough that the spray missed. When in doubt: release everything, aim, then shoot.</div>
+
+        <div class="rule"><strong>The Yumi rule — learn this before anything else</strong>Press the trigger → <b>0.25 s of nothing</b> (the gun winds up) → <b>5 bullets in 0.24 s</b> (60 ms apart — 1000 RPM while it lasts) → <b>0.25 s pause</b> before the next burst can start. One click is always a whole burst: you cannot fire a single bullet, you cannot skip the wind-up, and holding the trigger just chains bursts every 0.74 s. Over a minute that averages out to 405 RPM — the wiki's own figure. Everything in this guide is built around that rhythm.</div>
+      </section>
+
+      <!-- ================= 02 DAMAGE ================= -->
+      <section class="is-collapsed" aria-labelledby="s-damage">
+        <div class="sec-head">
+          <span class="num">02</span>
+          <h2 id="s-damage">Know your damage</h2>
+          <span class="tag">How many bullets<br />to kill, by range</span>
+          
+        </div>
+        <p class="lede">Every enemy infantry has 1,000 health (500 shield + 500 health). Your bullet does <strong>167 damage up close</strong>, fading to <strong>143 at long range</strong>. Headshots count double, leg shots count less (×0.9). There are only <strong>two</strong> damage tiers to memorise — no middle step — and because one burst is exactly 5 bullets, the kill always comes down to "one burst, plus a little":</p>
+
+        <table class="tbl" aria-label="Shots to kill by range">
+          <thead>
+            <tr><th>Range</th><th class="n">Damage</th><th class="n">Head</th><th class="n">Chest</th><th class="n">Legs</th><th class="n">Chest vs shielded Heavy</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Close</strong> · 0–10 m</td><td class="n big">167</td><td class="n big">3</td><td class="n big">6</td><td class="n">7</td><td class="n">9</td></tr>
+            <tr><td><strong>Mid</strong> · 10–90 m</td><td class="n big">≈155 @ 50 m</td><td class="n big">4</td><td class="n big">7</td><td class="n">8</td><td class="n">10</td></tr>
+            <tr><td><strong>Far</strong> · 90 m+</td><td class="n big">143</td><td class="n big">4</td><td class="n big">7</td><td class="n">8</td><td class="n">11</td></tr>
+          </tbody>
+        </table>
+        <p class="small">Six chest shots up close means the kill lands on the <strong>first bullet of your second burst</strong> — the whole first burst (5 shots) plus one more. Past 10 m it's seven chest shots: the whole first burst plus the first two of the second. Against a Heavy with his overshield up (1,450 health) you need two full bursts up close, and eleven chest shots far away. Headshots change everything: <strong>3 headshots end a normal enemy up close, 4 at any longer range</strong> — and three of those can all land inside a single burst.</p>
+
+        <div class="chart-box">
+          <h3>Damage falloff — where your bullets get weaker</h3>
+          <p class="small" style="margin:0 0 6px">Full power to 10 m, then a steady slide to minimum at 90 m — the longest full-power band of any 167-damage rifle. The gold line shows Soft Point Ammunition, which stretches full power to 15 m.</p>
+          <svg viewBox="0 0 640 240" width="100%" role="img" aria-label="Line chart of NSX Yumi damage per bullet from 0 to 100 metres: 167 damage flat to 10 metres, falling to 143 at 90 metres, then flat. Soft Point Ammunition stays at 167 until 15 metres.">
+            <g stroke="var(--line)" stroke-width="1">
+              <line x1="56" y1="38" x2="616" y2="38" />
+              <line x1="56" y1="89" x2="616" y2="89" />
+              <line x1="56" y1="140.5" x2="616" y2="140.5" />
+              <line x1="56" y1="184.5" x2="616" y2="184.5" />
+            </g>
+            <g fill="var(--ink-soft)" font-size="12">
+              <text x="48" y="42" text-anchor="end">175</text>
+              <text x="48" y="93" text-anchor="end">150</text>
+              <text x="48" y="144" text-anchor="end">143</text>
+              <text x="48" y="188" text-anchor="end">125</text>
+              <text x="56" y="222">0 m</text>
+              <text x="168" y="222" text-anchor="middle">25 m</text>
+              <text x="336" y="222" text-anchor="middle">50 m</text>
+              <text x="504" y="222" text-anchor="middle">75 m</text>
+              <text x="616" y="222" text-anchor="end">100 m</text>
+            </g>
+            <polyline points="56,61 112,61 560,132 616,132" fill="none" stroke="var(--nc-blue)" stroke-width="3" />
+            <polyline points="56,61 140,61 560,132 616,132" fill="none" stroke="var(--nc-gold)" stroke-width="2.5" stroke-dasharray="7 5" />
+            <g fill="var(--nc-blue)">
+              <circle cx="112" cy="61" r="4" /><circle cx="560" cy="132" r="4" />
+            </g>
+            <g font-size="13" font-weight="600" fill="var(--ink)">
+              <text x="118" y="53">167</text>
+              <text x="536" y="152">143 @ 90 m</text>
+              <text x="392" y="96" fill="var(--accent-ink)">— with Soft Point Ammo</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="rule"><strong>How long does the kill actually take?</strong>Count it on the burst clock from section 01: press at 0.00 s, first bullet at 0.25 s, the fifth at 0.49 s, then a 0.25 s pause, and the sixth bullet at <b>0.99 s</b> up close (seventh at 1.05 s far away). So a perfect chest kill takes <b>about one second from the moment you press the trigger</b> — and three headshots inside one burst take only 0.37 s. That's the honest number, worked out from the wiki's own timings (0.25 s wind-up, 60 ms between bullets, 0.25 s between bursts). A warning about the wiki itself: its time-to-kill tables print <b>two different answers</b> for this gun — 0.30 s if you pretend it's a 1000 RPM automatic, 0.74 s if you average the whole cycle into one steady rate. Neither is the real shot-by-shot clock, because no single "time to kill" fits a charge-up gun cleanly. The ~1 s figure counts the wind-up you actually wait through, so it's the one to trust.</div>
+
+        <div class="rule"><strong>Rule of thumb</strong>Inside 10 m you are at maximum power — 6 chest shots, 3 headshots, and one burst nearly does the job. Past 10 m every chest kill takes one extra bullet (7 instead of 6), and the head stays at 4 all the way out. Think in bursts, not bullets: one burst wounds, the second burst finishes — unless the headshots land, in which case one burst is the whole fight.</div>
+      </section>
+
+      <!-- ================= 03 RANGE LAB + AIM ================= -->
+      <section class="is-collapsed" aria-labelledby="s-aim">
+        <div class="sec-head">
+          <span class="num">03</span>
+          <h2 id="s-aim">Aim by distance</h2>
+          <span class="tag">Drag the range,<br />learn the style</span>
+          
+        </div>
+        <p class="lede">One gun, four fighting styles. The right technique changes with distance — use the range finder below to see what your bullets do at any range, then learn the four bands underneath it. The "time to kill" here counts from the trigger press, wind-up included.</p>
+
+        <div class="lab" aria-label="Interactive range finder" data-rpm="405" data-dmg-max="167" data-dmg-min="143" data-max-range="10" data-min-range="90" data-hs-mult="2" data-advice-0="Hipfire and keep moving — or draw your sidearm. Don’t ADS: it costs time and halves your speed, and the burst still takes 0.25 s to wind up." data-advice-1="Aim down sights at the upper chest and neck. One burst, one breath — and if a headshot lands in the burst, the second burst is often unnecessary." data-advice-2="Aim down sights at the chest. One burst, let the cone settle, next burst. Pull straight down — the recoil climbs straight up." data-advice-3="One burst at a time at exposed targets only. Seven chest hits to kill — and every click spends a whole burst, so make each one count, or close the distance instead." data-band-limits="11,26,51" data-band-names="Point blank,Sweet spot,Controlled,Plinking" data-band-classes="situ,good,situ,situ" data-charge-ms="250" data-burst="5" data-cycle-ms="740" data-bullet-ms="60">
+          <div class="lab-top">
+            <span class="reading"><span id="labDist">18</span> <small>metres to target</small></span>
+            <span class="chip good" id="labBand">Sweet spot</span>
+          </div>
+          <input type="range" id="labRange" min="0" max="100" step="1" value="18" aria-label="Distance to target in metres" />
+          <div class="lab-scale"><span>0 m</span><span>10 m</span><span>25 m</span><span>50 m</span><span>90 m</span><span>100 m</span></div>
+          <div class="lab-out">
+            <div class="lab-cell"><div class="v" id="labDmg">164</div><div class="k">Damage / bullet</div></div>
+            <div class="lab-cell"><div class="v" id="labHead">4</div><div class="k">Headshots to kill</div></div>
+            <div class="lab-cell"><div class="v" id="labChest">7</div><div class="k">Chest shots to kill</div></div>
+            <div class="lab-cell"><div class="v" id="labTtk">1.05 s</div><div class="k">Trigger press → kill</div></div>
+          </div>
+          <p class="lab-advice"><b>How to fight here</b><span id="labAdvice">Aim down sights at the upper chest and neck. One burst, one breath — and if a headshot lands in the burst, the second burst is often unnecessary.</span></p>
+        </div>
+
+        <div style="margin-top:18px">
+          <div class="band">
+            <div class="dist"><span class="d1">0–10 m</span><span class="d2">Point blank</span></div>
+            <div class="body">
+              <h3>Hipfire — or better, the sidearm</h3>
+              <p class="aim">Aim: centre of the chest, from the hip. Keep moving — or draw your pistol.</p>
+              <p>Scoping in costs you time and slows you to half speed — at arm's length that gets you killed. Hipfire works here (your moving ring is only ~0.5 m wide), but remember the wind-up: even from the hip, the burst takes 0.25 s to start. Inside 5 m, a pistol that fires instantly is the better gun. The Yumi's home is not a knife fight.</p>
+            </div>
+          </div>
+          <div class="band">
+            <div class="dist"><span class="d1">10–25 m</span><span class="d2">Sweet spot</span></div>
+            <div class="body">
+              <h3>ADS, upper chest, one burst at a time</h3>
+              <p class="aim">Aim: neck / upper chest. One 5-round burst, breathe, next burst if needed.</p>
+              <p>This is where the gun earns its keep: full or near-full 167 damage, a 0.03° cone, and recoil so gentle the burst barely moves. Start your crosshair at the neck — the slight upward climb walks shots two and three into the head, and 3 head hits end the fight inside a single burst. Fire first here and the enemy rarely gets to shoot back.</p>
+            </div>
+          </div>
+          <div class="band">
+            <div class="dist"><span class="d1">25–50 m</span><span class="d2">Controlled</span></div>
+            <div class="body">
+              <h3>ADS, patient bursts, pull straight down</h3>
+              <p class="aim">Aim: chest. One burst, let the cone settle, next burst.</p>
+              <p>Damage is sliding toward 143 and your cone blooms 0.05° with every shot of the burst, so the fifth bullet already flies from a 0.23° cone. Don't chain bursts back-to-back — the half-second between them is when your accuracy resets. The recoil climbs straight up (5° angle, no sideways lean), so pull your mouse gently down. Crouch or stand still when you can — both tighten your shots, and crouching costs you nothing on this gun.</p>
+            </div>
+          </div>
+          <div class="band">
+            <div class="dist"><span class="d1">50 m +</span><span class="d2">Plinking</span></div>
+            <div class="body">
+              <h3>One burst at a time — or don't engage</h3>
+              <p class="aim">Aim: chest. Single bursts at exposed targets only.</p>
+              <p>At 143 damage you need 7 chest hits, and each burst is only 5 — a long, loud advertisement of your position. Take these shots at stationary or fleeing targets, medics reviving, and engineers on turrets. There is no tap-fire on this gun: every click spends a whole burst, so make each one count. Otherwise, your better play is to close the distance behind cover. Knowing when <em>not</em> to shoot is a skill too.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 04 STANCES & FIRING MODES ================= -->
+      <section class="is-collapsed" aria-labelledby="s-stances">
+        <div class="sec-head">
+          <span class="num">04</span>
+          <h2 id="s-stances">Stances and the charge</h2>
+          <span class="tag">How you stand and<br />how the burst works</span>
+          
+        </div>
+        <p class="lede">Your accuracy is decided by two things before skill even enters it: <strong>what your body is doing</strong> (your stance sets the starting cone of fire) and <strong>how the burst works</strong> (one click is always five bullets, after a 0.25 s wind-up). The Yumi has no fire-mode switch and no single-shot option — "firing modes" are something you do with your finger, not a setting on the gun.</p>
+
+        <h3 class="slot-title">Stances <span>— the cone you start with, before the first shot</span></h3>
+        <table class="tbl" aria-label="NSX Yumi cone of fire by stance">
+          <thead>
+            <tr><th>Stance</th><th class="n">Starting cone</th><th>What it means for you</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Sprinting</strong></td><td class="n big">7.0°</td><td>Maxed out — the widest the cone can be. This is the section 01 disaster: never start firing from a sprint.</td></tr>
+            <tr><td><strong>Hipfire, moving</strong></td><td class="n big">3.0°</td><td>Walking or strafing from the hip. Fine inside ~10 m, leaks rounds past the target beyond it.</td></tr>
+            <tr><td><strong>Hipfire, standing</strong></td><td class="n big">2.5°</td><td>Your point-blank default. The 0.35 m ring at 8 m in section 05 is this stance drawn out.</td></tr>
+            <tr><td><strong>Hipfire, crouched</strong></td><td class="n big">2.0°</td><td>The tightest hipfire you have (2.25° if you crouch-walk). Crouch when holding a doorway from the hip.</td></tr>
+            <tr><td><strong>Aimed (ADS), feet planted</strong></td><td class="n big">0.03°</td><td>Standing or crouched makes no difference here — this gun gets no accuracy bonus for crouching while aimed. Eighty times tighter than hipfire. This is why section 01's order matters.</td></tr>
+            <tr><td><strong>Aimed (ADS), strafing</strong></td><td class="n big">0.15°</td><td>The moving floor while aiming — five times wider than planted, still tiny. But you only move at <strong>0.5× speed</strong> while aiming, the slowest of any assault rifle: strafe <em>between</em> bursts, not during them.</td></tr>
+          </tbody>
+        </table>
+
+        <h3 class="slot-title">The burst <span>— the cone you grow, shot by shot, inside 0.24 seconds</span></h3>
+        <table class="tbl" aria-label="How the Yumi burst works and when to use each rhythm">
+          <thead>
+            <tr><th>Rhythm</th><th>How your finger does it</th><th>Use it at</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>One click, one burst — the default</strong></td><td>Click once, let all 5 rounds fire, release, breathe, click again</td><td>Almost everything, 10–50 m. Every burst starts at 0.03° if you let the cone settle between bursts.</td></tr>
+            <tr><td><strong>Hold to chain bursts</strong></td><td>Hold the trigger down — bursts fire back-to-back every 0.74 s on their own</td><td>Only when the target is already hurt or standing still. Chained bursts start from a partly-bloomed cone, so the later bursts spread wider.</td></tr>
+            <tr><td><strong>Queue the next burst</strong></td><td>Click again <em>while</em> the current burst is still charging or firing — the next burst starts the moment the pause allows</td><td>When you know the first burst won't finish the job (a shielded Heavy). It shaves the hesitation between bursts, but never the 0.25 s pause itself.</td></tr>
+            <tr><td><strong>Pre-charge the corner</strong></td><td>Click <em>before</em> you step around the corner, so the wind-up happens while you're still hidden</td><td>Every corner you expect an enemy behind. This is the advanced move that turns the wind-up from a weakness into a free first burst.</td></tr>
+          </tbody>
+        </table>
+
+        <div class="viz" id="tapSim" data-charge-ms="250" data-refire-ms="60" data-burst="5" data-post-ms="250" data-base-cof="0.03" data-bloom="0.05" data-distance="30">
+          <h3>Try it: the charge-up window</h3>
+          <p class="small" style="margin:0">A target 30 m away, aiming down sights. <strong>Press and hold FIRE</strong> (mouse, touch, or hold Space with the button focused). Watch the charge bar fill for 0.25 s — <em>nothing fires yet, that's the wind-up</em> — then all 5 rounds leave in 0.24 s, each from a slightly wider cone (0.05° of bloom per shot, so the fifth bullet flies from a 0.23° cone). Release, let the cone reset, fire again. <strong>Six hits kill this target</strong> — a full burst plus the first bullet of the next one — so watch the clock: your kill time includes the wind-up. This practice window is shared by the whole Sage series: it's driven by a weapon profile plugged into the window — here the Yumi's (250 ms charge, 60 ms between bullets, 5-round bursts, 250 ms between bursts, 0.03° starting cone, 0.05° bloom per shot, target at 30 m) — and the spread is drawn at true scale from those numbers.</p>
+          <div class="sim-stage" id="simStage" aria-hidden="true">
+            <svg viewBox="0 0 200 300" width="150" height="300" role="presentation">
+              <g fill="var(--ink-soft)">
+                <circle cx="100" cy="42" r="23" />
+                <rect x="84" y="68" width="11" height="74" rx="5" />
+                <rect x="105" y="68" width="11" height="74" rx="5" />
+                <rect x="60" y="66" width="80" height="112" rx="14" />
+                <rect x="66" y="178" width="28" height="18" />
+                <rect x="68" y="194" width="22" height="102" />
+                <rect x="110" y="194" width="22" height="102" />
+              </g>
+              <circle cx="100" cy="126" r="5" fill="var(--nc-gold)" />
+            </svg>
+          </div>
+          <div class="sim-controls">
+            <button type="button" class="sim-fire" id="simFire">Hold to fire</button>
+            <button type="button" class="sim-reset" id="simReset">Reset target</button>
+          </div>
+          <div class="bloom-track" aria-hidden="true"><div class="bloom-fill charge-fill" id="simCharge"></div></div>
+          <p class="small" style="margin:4px 0 0">Charge — fills for 0.25 s before the burst. Nothing fires while it fills.</p>
+          <div class="bloom-track" aria-hidden="true"><div class="bloom-fill" id="simBloom"></div></div>
+          <p class="small" style="margin:4px 0 0">Cone of fire — grows with each bullet of the burst, shrinks back between bursts.</p>
+          <div class="sim-read">
+            <div class="lab-cell"><div class="v" id="simShots">0</div><div class="k">Rounds fired</div></div>
+            <div class="lab-cell"><div class="v" id="simHits">0</div><div class="k">Hits on target</div></div>
+            <div class="lab-cell"><div class="v" id="simKill">—</div><div class="k">Your kill time · 6 hits</div></div>
+          </div>
+          <p class="sim-verdict" id="simVerdict">Your bursts will be graded here — 5 out of 5 hits is a perfect burst.</p>
+          <div class="burst-log" id="simLog" aria-label="Your bursts so far"></div>
+        </div>
+      </section>
+
+      <!-- ================= 05 SEE IT ================= -->
+      <section class="is-collapsed" aria-labelledby="s-see">
+        <div class="sec-head">
+          <span class="num">05</span>
+          <h2 id="s-see">See it: the pictures</h2>
+          <span class="tag">Spread, bursts<br />and sights, drawn</span>
+          
+        </div>
+        <p class="lede">Some things are easier to show than to say. Here's what your bullets actually do: how wide hipfire spreads at 8 metres, what a good burst rhythm looks like on a gun that charges before every burst, and what the 2x sight really changes. The hands-on version — holding the trigger yourself — is the practice window in section 04.</p>
+
+        <div class="viz">
+          <h3>Hipfire at 8 metres — where the bullets land</h3>
+          <p class="small" style="margin:0">A full-size target 8 m away — an arm's-length room fight. The rings show where hipfire rounds land around your aim point (the chest). Sizes are drawn to scale from the gun's real cone-of-fire numbers.</p>
+          <svg viewBox="0 0 640 320" width="100%" role="img" aria-label="Diagram of a soldier target at 8 metres with three spread rings drawn at true scale: hipfire while moving spreads about 0.42 metres wide, hipfire standing still about 0.35 metres, and hipfire with a Laser Sight about 0.23 metres. Aiming down sights lands in a dot a few centimetres wide.">
+            <line x1="20" y1="292" x2="620" y2="292" stroke="var(--line)" stroke-width="2" />
+            <g fill="var(--ink-soft)">
+              <circle cx="320" cy="58" r="17" />
+              <rect x="281" y="86" width="13" height="66" rx="6" />
+              <rect x="346" y="86" width="13" height="66" rx="6" />
+              <rect x="297" y="82" width="46" height="78" rx="10" />
+              <rect x="301" y="158" width="38" height="16" />
+              <rect x="303" y="172" width="15" height="118" />
+              <rect x="322" y="172" width="15" height="118" />
+            </g>
+            <circle cx="320" cy="128" r="29" fill="none" stroke="var(--skip)" stroke-width="2" stroke-dasharray="7 5" />
+            <circle cx="320" cy="128" r="24" fill="var(--nc-blue)" opacity="0.16" />
+            <circle cx="320" cy="128" r="24" fill="none" stroke="var(--nc-blue)" stroke-width="2" />
+            <circle cx="320" cy="128" r="16" fill="var(--nc-gold)" opacity="0.22" />
+            <circle cx="320" cy="128" r="16" fill="none" stroke="var(--nc-gold)" stroke-width="2" />
+            <circle cx="320" cy="128" r="5" fill="var(--good)" />
+            <g font-size="14" font-weight="600" fill="var(--ink)">
+              <text x="24" y="46">Target at 8 m</text>
+              <text x="24" y="66" fill="var(--ink-soft)" font-weight="400">≈ 1.8 m tall, drawn to scale</text>
+              <text x="470" y="66" fill="var(--skip)">moving: ≈ 0.42 m wide</text>
+              <text x="470" y="118" fill="var(--nc-blue)">standing: ≈ 0.35 m wide</text>
+              <text x="470" y="180" fill="var(--accent-ink)">+ Laser Sight: ≈ 0.23 m</text>
+              <text x="470" y="238" fill="var(--good)">aimed (ADS): a dot</text>
+            </g>
+            <g stroke="var(--ink-soft)" stroke-width="1">
+              <line x1="462" y1="62" x2="350" y2="106" />
+              <line x1="462" y1="114" x2="345" y2="124" />
+              <line x1="462" y1="176" x2="337" y2="140" />
+              <line x1="462" y1="234" x2="326" y2="132" />
+            </g>
+          </svg>
+          <div class="legend">
+            <span><i style="background:var(--skip)"></i>Hipfire, strafing (3.0° cone)</span>
+            <span><i style="background:var(--nc-blue)"></i>Hipfire, standing (2.5° cone)</span>
+            <span><i style="background:var(--nc-gold)"></i>With Laser Sight (−33%)</span>
+            <span><i style="background:var(--good)"></i>Aimed down sights</span>
+          </div>
+          <p class="cap">Read it this way: standing still, the <b>0.35 m ring sits inside the chest</b> — most rounds hit a target this size, which is why hipfire works point-blank. But move and it grows to <b>0.42 m — nearly as wide as the torso</b> — so the edge rounds start leaking past him, and the rings only grow with distance while the man doesn't. Past ~10 m that's rounds missing entirely: the exact moment to switch to aiming down sights, where the spread shrinks to a dot. (Ring sizes use the real geometry: spread diameter = 2 × distance × tan(cone ÷ 2).)</p>
+        </div>
+
+        <div class="viz">
+          <h3>Chain it, or breathe between bursts</h3>
+          <p class="small" style="margin:0">Holding the trigger chains bursts every 0.74 s on their own — wind-up, 5 rounds, pause, repeat. But a chained burst starts from a cone that hasn't fully reset, so the groups keep growing. One burst, one breath, and every burst starts at 0.03°:</p>
+          <svg viewBox="0 0 640 250" width="100%" role="img" aria-label="Diagram comparing burst rhythms. Chained: holding the trigger fires bursts every 0.74 seconds, and the second burst's group is visibly wider than the first because the cone has not fully reset. One burst, one breath: click, release, breathe about half a second, click again, and both groups stay fist-sized.">
+            <g font-family="Rajdhani, sans-serif" font-weight="700">
+              <text x="8" y="52" font-size="17" fill="var(--skip)">✗ CHAINED</text>
+              <text x="8" y="168" font-size="17" fill="var(--good)">✓ ONE BURST, ONE BREATH</text>
+            </g>
+            <g fill="var(--ink)" font-size="13.5">
+              <text x="120" y="24">Trigger held — bursts chain every 0.74 s on their own</text>
+              <text x="120" y="140">Click, release, breathe, click again</text>
+            </g>
+            <rect x="120" y="34" width="100" height="16" fill="var(--nc-gold)" opacity="0.8" />
+            <rect x="220" y="34" width="96" height="16" fill="var(--skip)" opacity="0.75" />
+            <rect x="416" y="34" width="100" height="16" fill="var(--nc-gold)" opacity="0.8" />
+            <rect x="516" y="34" width="96" height="16" fill="var(--skip)" opacity="0.75" />
+            <g fill="var(--ink)" font-size="13">
+              <text x="170" y="66" text-anchor="middle">wind-up 0.25 s</text>
+              <text x="268" y="66" text-anchor="middle">5 rounds · 0.24 s</text>
+              <text x="366" y="66" text-anchor="middle">pause 0.25 s</text>
+              <text x="466" y="66" text-anchor="middle">wind-up</text>
+              <text x="564" y="66" text-anchor="middle">5 rounds</text>
+            </g>
+            <g fill="none" stroke="var(--nc-blue)" stroke-width="2">
+              <ellipse cx="268" cy="92" rx="11" ry="10" />
+            </g>
+            <g fill="none" stroke="var(--skip)" stroke-width="2">
+              <ellipse cx="564" cy="92" rx="20" ry="18" />
+            </g>
+            <g fill="var(--ink)" font-size="13.5">
+              <text x="120" y="118">Second burst starts from a partly-bloomed cone — the groups keep growing.</text>
+            </g>
+            <rect x="120" y="150" width="100" height="16" fill="var(--nc-gold)" opacity="0.8" />
+            <rect x="220" y="150" width="96" height="16" fill="var(--skip)" opacity="0.75" />
+            <rect x="436" y="150" width="100" height="16" fill="var(--nc-gold)" opacity="0.8" />
+            <rect x="536" y="150" width="96" height="16" fill="var(--skip)" opacity="0.75" />
+            <g fill="var(--ink)" font-size="13">
+              <text x="170" y="182" text-anchor="middle">wind-up</text>
+              <text x="268" y="182" text-anchor="middle">5 rounds</text>
+              <text x="376" y="182" text-anchor="middle" fill="var(--good)" font-weight="600">breathe ≈0.5 s — cone resets</text>
+              <text x="486" y="182" text-anchor="middle">wind-up</text>
+              <text x="584" y="182" text-anchor="middle">5 rounds</text>
+            </g>
+            <g fill="none" stroke="var(--nc-blue)" stroke-width="2">
+              <ellipse cx="268" cy="208" rx="11" ry="10" />
+              <ellipse cx="584" cy="208" rx="11" ry="10" />
+            </g>
+            <g fill="var(--ink)" font-size="13.5">
+              <text x="120" y="236">Every burst starts at 0.03° — both groups stay fist-sized.</text>
+            </g>
+          </svg>
+          <p class="cap"><b>One burst is exactly 5 rounds — that's the ideal, and there's no way to fire fewer.</b> Chaining is fine when the target is already hurt or standing still, but the later bursts spread wider, so don't make it your default. The half-second breath between bursts is also when you strafe, check the minimap, and decide whether the next burst is worth the noise. Short, deliberate bursts also leave you rounds for the second enemy — remember, the magazine is only 30.</p>
+        </div>
+
+        <div class="viz2">
+          <div class="viz">
+            <h3>NiCO — 1x</h3>
+            <svg viewBox="0 0 300 210" width="100%" role="img" aria-label="View through the 1x NiCO sight at a target 35 metres away: the soldier appears small in an open frame, with buildings and a crate visible around him.">
+              <rect x="0" y="0" width="300" height="152" fill="var(--surface-2)" />
+              <rect x="0" y="152" width="300" height="58" fill="var(--line)" opacity="0.55" />
+              <rect x="238" y="58" width="28" height="94" fill="var(--ink-soft)" opacity="0.55" />
+              <rect x="22" y="118" width="52" height="34" fill="var(--ink-soft)" opacity="0.7" />
+              <g fill="var(--ink)" transform="translate(150,152)">
+                <circle cx="0" cy="-57" r="6.5" />
+                <rect x="-8" y="-51" width="16" height="27" rx="4" />
+                <rect x="-7" y="-24" width="6" height="24" />
+                <rect x="1" y="-24" width="6" height="24" />
+              </g>
+              <circle cx="150" cy="110" r="4" fill="var(--skip)" />
+              <circle cx="150" cy="110" r="10" fill="none" stroke="var(--skip)" stroke-width="1.5" />
+              <rect x="8" y="8" width="284" height="194" rx="14" fill="none" stroke="var(--ink)" stroke-width="5" />
+            </svg>
+            <p class="cap">No zoom. The target at 35 m is <b>small but the view is wide open</b> — you see the crate, the tower, and the next enemy coming. Fast to aim, nothing blocks your edges. Best inside ~40 m.</p>
+          </div>
+          <div class="viz">
+            <h3>NiCO XR — 2x</h3>
+            <svg viewBox="0 0 300 210" width="100%" role="img" aria-label="View through the 2x NiCO XR sight at the same target 35 metres away: the soldier appears twice as tall and fills the round scope, while the crate and tower are cropped out of view.">
+              <rect x="0" y="0" width="300" height="168" fill="var(--surface-2)" />
+              <rect x="0" y="168" width="300" height="42" fill="var(--line)" opacity="0.55" />
+              <rect x="-52" y="100" width="104" height="68" fill="var(--ink-soft)" opacity="0.7" />
+              <g fill="var(--ink)" transform="translate(150,168) scale(2)">
+                <circle cx="0" cy="-57" r="6.5" />
+                <rect x="-8" y="-51" width="16" height="27" rx="4" />
+                <rect x="-7" y="-24" width="6" height="24" />
+                <rect x="1" y="-24" width="6" height="24" />
+              </g>
+              <circle cx="150" cy="88" r="4.5" fill="var(--skip)" />
+              <circle cx="150" cy="88" r="12" fill="none" stroke="var(--skip)" stroke-width="1.5" />
+              <circle cx="150" cy="105" r="97" fill="none" stroke="var(--ink)" stroke-width="7" />
+            </svg>
+            <p class="cap">Same target, same 35 m — but he looks <b>twice as tall</b>, so placing shots on his chest and head gets much easier. The price: your view narrows to the round window, the crate and tower are gone, and close targets feel fast and huge. Best at 25–50 m.</p>
+          </div>
+        </div>
+        <p class="cap" style="margin-top:12px">That's the whole 30-cert decision from section 06 in one picture: <b>1x for awareness, 2x for precision.</b> Most veterans carry both and swap per base — indoors 1x, open ground 2x.</p>
+      </section>
+
+      <!-- ================= 06 ATTACHMENTS ================= -->
+      <section class="is-collapsed" aria-labelledby="s-att">
+        <div class="sec-head">
+          <span class="num">06</span>
+          <h2 id="s-att">Attachments: what's worth your certs</h2>
+          <span class="tag">Good, situational,<br />or a waste — by slot</span>
+          
+        </div>
+        <p class="lede">Attachments are judged for <strong>this</strong> gun, not in general. A part that's great on an automatic can be useless on a charge-up burst rifle — and one of them does literally nothing on the Yumi, because the thing it fixes is already zero. <span class="chip first">Buy first</span> means your first certs here. <span class="chip good">Good</span> earns its keep. <span class="chip situ">Situational</span> helps in one kind of fight. <span class="chip skip">Skip</span> costs certs for nothing — or hurts you.</p>
+        <p class="small">One gap to know up front: <strong>there is no suppressor for the Yumi.</strong> If you want to stay off the minimap, the Flash Suppressor only hides the flash — you still ping on the map when you fire.</p>
+
+        <h3 class="slot-title">Optics <span>— all 30 certs each</span></h3>
+        <div class="att">
+          <div class="att-head"><h4>NiCO XR — 2x</h4><span class="chip first">Buy first</span><span class="cost">30 certs</span></div>
+          <p class="effect">2x magnification in a round scope.</p>
+          <div class="when"><span><b class="good-t">Good when:</b> fighting at 25–50 m, where the doubled target makes neck and head shots placeable (see section 05).</span><span><b class="bad-t">Bad when:</b> indoors or under ~15 m, where the narrow window slows you down.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>NiCO — 1x</h4><span class="chip good">Good</span><span class="cost">30 certs</span></div>
+          <p class="effect">No zoom, open frame, nothing blocking your edges.</p>
+          <div class="when"><span><b class="good-t">Good when:</b> inside ~40 m, or anywhere you need to see the next enemy coming.</span><span><b class="bad-t">Bad when:</b> past 40 m, where the target gets small and the 2x earns its keep.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>HS/NV Scope — 1x</h4><span class="chip situ">Situational</span><span class="cost">30 certs</span></div>
+          <p class="effect">Night-vision sight — brightens dark fights, washes out in daylight.</p>
+          <div class="when"><span><b class="good-t">Good when:</b> night fights and dark interiors.</span><span><b class="bad-t">Bad when:</b> daytime — the picture flares and you lose detail.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>CCLR — 1x</h4><span class="chip situ">Situational</span><span class="cost">30 certs</span></div>
+          <p class="effect">A red-dot style 1x sight — same zoom as the NiCO, different picture.</p>
+          <div class="when"><span><b class="good-t">Good when:</b> you prefer a dot to the NiCO's post.</span><span><b class="bad-t">Bad when:</b> you already own the NiCO — it does the same job.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>ACRA — 3.4x</h4><span class="chip skip">Skip</span><span class="cost">30 certs</span></div>
+          <p class="effect">3.4x magnification — a sniper's zoom on a burst rifle.</p>
+          <div class="when"><span><b class="good-t">Good when:</b> almost never — this gun fights at 10–50 m.</span><span><b class="bad-t">Bad when:</b> always: tunnel vision, slow to acquire, and the burst is wasted on a target that far away.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>LANS — 3.4x</h4><span class="chip skip">Skip</span><span class="cost">30 certs</span></div>
+          <p class="effect">3.4x magnification, different reticle — same problem as the ACRA.</p>
+          <div class="when"><span><b class="good-t">Good when:</b> almost never.</span><span><b class="bad-t">Bad when:</b> always: too much zoom for a 5-round burst gun.</span></div>
+        </div>
+
+        <h3 class="slot-title">Barrel <span>— 100 certs each</span></h3>
+        <div class="att">
+          <div class="att-head"><h4>Compensator</h4><span class="chip situ">Situational</span><span class="cost">100 certs</span></div>
+          <p class="effect">−30% vertical recoil, +15% hipfire cone, and you show on the minimap from 35 m further away.</p>
+          <div class="when"><span><b class="good-t">Good when:</b> long lanes where you never hipfire anyway.</span><span><b class="bad-t">Bad when:</b> anywhere you hipfire — vertical recoil is already tiny (0.22), so you gain almost nothing and pay with hipfire spread and a bigger minimap signature.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>Flash Suppressor</h4><span class="chip situ">Situational</span><span class="cost">100 certs</span></div>
+          <p class="effect">Hides your muzzle flash; you still show on the minimap (+15 m range). No recoil help.</p>
+          <div class="when"><span><b class="good-t">Good when:</b> you want the flash gone for night fights.</span><span><b class="bad-t">Bad when:</b> you expect it to keep you hidden — it doesn't; and it does nothing for your accuracy.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>Heavy Barrel</h4><span class="chip situ">Situational</span><span class="cost">100 certs</span></div>
+          <p class="effect">Aimed bloom −20% (0.05° → 0.04° per shot), but aimed move speed −20% (0.5× → 0.4×).</p>
+          <div class="when"><span><b class="good-t">Good when:</b> holding a lane planted, where the fifth shot of the burst matters and you aren't moving anyway.</span><span><b class="bad-t">Bad when:</b> you strafe between bursts — this gun is already the slowest aimed mover in its class, and this makes it slower.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>Short Barrel</h4><span class="chip skip">Skip</span><span class="cost">100 certs</span></div>
+          <p class="effect">Hipfire bloom −40%, but aimed vertical recoil +20%.</p>
+          <div class="when"><span><b class="good-t">Good when:</b> almost never — you fight aimed, not from the hip.</span><span><b class="bad-t">Bad when:</b> always: it trades the thing you don't use (hipfire bloom) for a penalty on the thing you do (aimed recoil).</span></div>
+        </div>
+
+        <h3 class="slot-title">Rail <span>— 100 certs each, except the grenade launcher</span></h3>
+        <div class="att">
+          <div class="att-head"><h4>Forward Grip</h4><span class="chip good">Good</span><span class="cost">100 certs</span></div>
+          <p class="effect">Horizontal recoil −25%; equipping the gun takes 0.15 s longer.</p>
+          <div class="when"><span><b class="good-t">Good when:</b> fighting at 25–50 m, where keeping the burst on the chest matters most. Your second rail buy, after the sight.</span><span><b class="bad-t">Bad when:</b> you swap weapons constantly in close fights — the slower equip is felt there.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>Angled Forward Grip</h4><span class="chip skip">Skip</span><span class="cost">100 certs</span></div>
+          <p class="effect">First-shot vertical recoil −60%, horizontal recoil +10%.</p>
+          <div class="when"><span><b class="good-t">Good when:</b> never on this gun — and here's why: the Yumi's first-shot recoil multiplier is already <b>0×</b>. There is no first-shot kick to reduce. This attachment does literally nothing, and charges you 100 certs plus 10% more sideways recoil for the privilege.</span><span><b class="bad-t">Bad when:</b> always. The one trap attachment on this gun.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>Laser Sight</h4><span class="chip good">Good</span><span class="cost">100 certs</span></div>
+          <p class="effect">Hipfire cone 33% tighter (standing 2.5° → 1.675°; moving 3.0° → 2.01°).</p>
+          <div class="when"><span><b class="good-t">Good when:</b> you fight close — it shrinks the 8 m ring from 0.35 m to 0.23 m (section 05).</span><span><b class="bad-t">Bad when:</b> you live at 25 m and beyond, where you never hipfire anyway.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>Extended Magazine</h4><span class="chip good">Good</span><span class="cost">100 certs</span></div>
+          <p class="effect">30 → 35 rounds — one more full burst per magazine (6 → 7 bursts); equipping and unequipping take 15% longer.</p>
+          <div class="when"><span><b class="good-t">Good when:</b> almost always: 30 rounds is only 6 bursts, and a shielded Heavy already eats two of them.</span><span><b class="bad-t">Bad when:</b> you swap to your sidearm mid-fight a lot — the slower equip is the only cost.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>Underbarrel Grenade Launcher</h4><span class="chip situ">Situational</span><span class="cost">200 certs</span></div>
+          <p class="effect">A single-shot underbarrel grenade; equipping the gun takes 0.25 s longer.</p>
+          <div class="when"><span><b class="good-t">Good when:</b> clearing doorways and grouped enemies at range — the Grenadier loadout in section 07.</span><span><b class="bad-t">Bad when:</b> in a duel: one grenade doesn't replace a burst, and the slower equip hurts.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>Darklight Flashlight</h4><span class="chip situ">Situational</span><span class="cost">100 certs</span></div>
+          <p class="effect">Reveals cloaked infiltrators in your light.</p>
+          <div class="when"><span><b class="good-t">Good when:</b> stalkers keep knifing your squad.</span><span><b class="bad-t">Bad when:</b> any normal fight — it does nothing for your shooting, and the light gives you away.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>Smoke Launcher</h4><span class="chip situ">Situational</span><span class="cost">100 certs</span></div>
+          <p class="effect">Fires a smoke grenade — squad cover, not a weapon.</p>
+          <div class="when"><span><b class="good-t">Good when:</b> covering a revive or a crossing with your squad.</span><span><b class="bad-t">Bad when:</b> solo play — it never helps you win a gunfight.</span></div>
+        </div>
+
+        <h3 class="slot-title">Ammunition <span>— 100 certs each</span></h3>
+        <div class="att">
+          <div class="att-head"><h4>Soft Point Ammunition</h4><span class="chip good">Good</span><span class="cost">100 certs</span></div>
+          <p class="effect">Full 167 damage out to 15 m instead of 10 m; bullet velocity −10% (580 → 522 m/s).</p>
+          <div class="when"><span><b class="good-t">Good when:</b> fighting at 10–25 m — your sweet spot — where the extra 5 m of full power means one burst nearly kills instead of needing a second.</span><span><b class="bad-t">Bad when:</b> long lanes, where the slower bullet makes leading moving targets harder.</span></div>
+        </div>
+        <div class="att">
+          <div class="att-head"><h4>High Velocity Ammunition</h4><span class="chip situ">Situational</span><span class="cost">100 certs</span></div>
+          <p class="effect">Velocity +10% (580 → 638 m/s); minimum-damage range stretches to 110 m, but full damage ends at 8 m instead of 10 m.</p>
+          <div class="when"><span><b class="good-t">Good when:</b> holding long lanes at 50 m+, where the faster bullet and longer minimum range help.</span><span><b class="bad-t">Bad when:</b> close in — you give up 2 m of full power where you fight most.</span></div>
+        </div>
+      </section>
+
+      <!-- ================= 07 LOADOUTS ================= -->
+      <section class="is-collapsed" aria-labelledby="s-loadouts">
+        <div class="sec-head">
+          <span class="num">07</span>
+          <h2 id="s-loadouts">Four loadouts, one to start with</h2>
+          <span class="tag">Copy one,<br />then make it yours</span>
+          
+        </div>
+        <p class="lede">Don't buy attachments one at a time at random. Pick a loadout, buy it in the order given, and you'll feel the gun improve at every step. The All-Rounder is the one to start with — it makes the gun better everywhere without locking you into one kind of fight.</p>
+
+        <div class="grid2">
+          <div class="loadout">
+            <h3>Stock</h3>
+            <p class="cost">0 certs · What you get with the gun</p>
+            <ul>
+              <li><b>Optic:</b> iron sights</li>
+              <li><b>Barrel:</b> none</li>
+              <li><b>Rail:</b> none</li>
+              <li><b>Ammo:</b> standard</li>
+            </ul>
+            <p>Perfectly usable — the iron sights are clean and the gun's accuracy is already its best feature. Use this while you save your first 30 certs for the sight. Every fight you win stock is proof the gun works, not the attachments.</p>
+          </div>
+          <div class="loadout pick">
+            <h3>All-Rounder ★ start here</h3>
+            <p class="cost">230 certs · NiCO XR 2x + Forward Grip + Extended Mag</p>
+            <ul>
+              <li><b>Optic:</b> NiCO XR — 2x (30)</li>
+              <li><b>Rail:</b> Forward Grip (100)</li>
+              <li><b>Rail:</b> Extended Magazine (100)</li>
+              <li><b>Ammo:</b> standard</li>
+            </ul>
+            <p>The best general kit: the 2x makes neck shots placeable at 25–50 m, the grip keeps the burst on the chest, and the extra burst per magazine covers the shielded Heavy who eats two. Nothing here hurts you anywhere — this is the loadout the rest of this guide assumes.</p>
+          </div>
+          <div class="loadout">
+            <h3>Lane Holder</h3>
+            <p class="cost">330 certs · 2x + Compensator + Forward Grip + HVA</p>
+            <ul>
+              <li><b>Optic:</b> NiCO XR — 2x (30)</li>
+              <li><b>Barrel:</b> Compensator (100)</li>
+              <li><b>Rail:</b> Forward Grip (100)</li>
+              <li><b>Ammo:</b> High Velocity Ammunition (100)</li>
+            </ul>
+            <p>For holding a long sightline and never moving: the compensator trims the little vertical recoil there is, and the faster bullet with a 110 m minimum-damage range keeps your shots honest past 50 m. You give up hipfire spread and show further on the minimap — a fair trade only if you truly never hipfire.</p>
+          </div>
+          <div class="loadout">
+            <h3>Grenadier</h3>
+            <p class="cost">330 certs · 2x + Grenade Launcher + SPA</p>
+            <ul>
+              <li><b>Optic:</b> NiCO XR — 2x (30)</li>
+              <li><b>Rail:</b> Underbarrel Grenade Launcher (200)</li>
+              <li><b>Ammo:</b> Soft Point Ammunition (100)</li>
+            </ul>
+            <p>For squad play and doorways: open with the grenade into a grouped room, finish the survivors with bursts at full 167 damage out to 15 m. The grenade is one shot — it's an opener, not a second weapon — and the slower equip means you commit to the rifle once it's out.</p>
+          </div>
+        </div>
+
+        <div class="rule"><strong>Spend order — 330 certs to a finished gun</strong>NiCO XR 2x (30) → Forward Grip (100) → Extended Magazine (100) → Soft Point Ammunition (100). Buy in this order and every purchase is felt immediately: the sight first because aiming is everything on this gun, the grip second, the magazine third, the ammo last. Skip the Angled Forward Grip entirely (section 06 — it does nothing on this gun) and leave the 3.4x scopes in the shop.</div>
+      </section>
+
+      <!-- ================= 08 HABITS ================= -->
+      <section class="is-collapsed" aria-labelledby="s-habits">
+        <div class="sec-head">
+          <span class="num">08</span>
+          <h2 id="s-habits">Six habits that win fights</h2>
+          <span class="tag">Do these and<br />the gun does the rest</span>
+          
+        </div>
+        <p class="lede">The Yumi doesn't reward the fastest finger — it rewards the player who starts the fight half a second before the enemy does. These six habits are the whole playstyle; practise them in the order given, because each one makes the next one easier.</p>
+
+        <ol class="habits">
+          <li>
+            <h3>Fire first — pre-charge corners</h3>
+            <p>The wind-up punishes reacting. Click <em>before</em> you step around a corner, so the 0.25 s happens while you're still hidden and the burst lands the moment you appear. If you only press when you see the enemy, he shoots first.</p>
+          </li>
+          <li>
+            <h3>Aim at the neck</h3>
+            <p>Three headshots end a normal enemy up close, and all three can land inside a single burst. Start the crosshair at the neck: the burst's slight upward climb walks shots two and three into the head, and the headshot is what turns one burst into the whole fight.</p>
+          </li>
+          <li>
+            <h3>One burst, one breath</h3>
+            <p>Click, let all 5 rounds fire, release, breathe, click again. The pause lets the cone reset to 0.03°, so every burst starts as accurate as the first. Chained bursts start bloomed and spread wider (section 05).</p>
+          </li>
+          <li>
+            <h3>Reload early, never on empty</h3>
+            <p>Reloading with rounds left takes 1.8 s; an empty magazine takes 2.45 s. And 30 rounds is only 6 bursts — so reload after 4 bursts, in cover, while the fight is quiet. An empty Yumi in a duel is a death sentence.</p>
+          </li>
+          <li>
+            <h3>Move between bursts, not during them</h3>
+            <p>While aiming you move at 0.5× speed — the slowest of any assault rifle — and your aimed cone is five times wider while strafing (0.15° vs 0.03°). So plant your feet for the burst, then strafe in the pause. Movement is your defence between shots, not during them.</p>
+          </li>
+          <li>
+            <h3>Keep your sidearm ready</h3>
+            <p>Inside 5 m, your pistol fires instantly and the Yumi doesn't — draw it. And if a burst leaves an enemy nearly dead, don't wait for the next wind-up: 4 burst hits plus a quick knife finishes standard infantry even through nanoweave.</p>
+          </li>
+        </ol>
+      </section>
+
+      <!-- ================= 09 WEAK SPOTS ================= -->
+      <section class="is-collapsed" aria-labelledby="s-weak">
+        <div class="sec-head">
+          <span class="num">09</span>
+          <h2 id="s-weak">Where this gun loses</h2>
+          <span class="tag">Know the weakness<br />before it kills you</span>
+          
+        </div>
+        <p class="lede">Every gun has fights it can't win. The Yumi's weaknesses are all the same weakness wearing different clothes: <strong>time</strong>. The wind-up, the pause, the slow aim-walk, the small magazine — each one is a quarter-second or a few rounds that a faster gun doesn't pay. Here's each one, and what to do about it.</p>
+
+        <div class="weak">
+          <h3>The 0.25 s wind-up — it loses reaction duels</h3>
+          <p>An enemy who appears suddenly and shoots will land his first bullets while your gun is still charging. You cannot win a fair reaction duel with this rifle — the other gun fires instantly and yours doesn't.</p>
+          <p class="fix"><b>The fix:</b> don't take fair reaction duels. Fire first, pre-charge corners (habit 1), and fight from cover where the wind-up happens behind a wall.</p>
+        </div>
+        <div class="weak">
+          <h3>Slow in ADS — and locked in once the burst starts</h3>
+          <p>While aiming you move at 0.5× speed, the slowest of any assault rifle, and once a burst starts you're committed to it — you can't leave ADS mid-burst to dodge. A strafing enemy at mid range will out-move you.</p>
+          <p class="fix"><b>The fix:</b> strafe between bursts, not during them (habit 5), and disengage with cover — never try to out-strafe someone while your own burst is still firing.</p>
+        </div>
+        <div class="weak">
+          <h3>Close quarters — wind-up plus hipfire bloom</h3>
+          <p>Inside 10 m the burst still takes 0.25 s to start, hipfire blooms 0.12° per shot, and the enemy's automatic is already shredding you. This is the range where the Yumi is at its worst.</p>
+          <p class="fix"><b>The fix:</b> sidearm inside 5 m, hipfire and keep moving at 5–10 m, and don't take arm's-length fights at all if you can back off to 15 m instead.</p>
+        </div>
+        <div class="weak">
+          <h3>A small magazine — 30 rounds is 6 bursts</h3>
+          <p>One burst is a fifth of your magazine. A shielded Heavy needs two full bursts up close and eleven chest shots far away — and if a second enemy appears while you're at 8 rounds, you're reloading in the open.</p>
+          <p class="fix"><b>The fix:</b> Extended Magazine (35 rounds, 7 bursts) and reload discipline — reload after 4 bursts, in cover, never on empty (habit 4).</p>
+        </div>
+        <div class="weak">
+          <h3>It costs 1,000 certs — and still loses the paper DPS race</h3>
+          <p>The Yumi is a purchase, Medic-only (Engineer and Heavy need ASP), and its sustained damage per second is lower than a starter rifle's — the wind-up and the 0.25 s pause between bursts eat into it, even though the burst itself hits harder than anything in the game.</p>
+          <p class="fix"><b>The fix:</b> there isn't one — know what you bought it for. You didn't buy damage per second; you bought the tightest aimed cone of any assault rifle and a burst that ends fights in a single pull. Fight at 10–40 m, fire first, and the DPS number never gets a chance to matter.</p>
+        </div>
+      </section>
+
+      <!-- ================= 10 DRILLS ================= -->
+      <section class="is-collapsed" aria-labelledby="s-drills">
+        <div class="sec-head">
+          <span class="num">10</span>
+          <h2 id="s-drills">Drills — and the pocket summary</h2>
+          <span class="tag">Ten minutes in VR,<br />then take it live</span>
+          
+        </div>
+        <p class="lede">Five drills, all in VR Training (warp there from any warpgate terminal — it's free, and the targets don't shoot back). Ten minutes here saves you ten deaths out there. Do them in order: the first teaches your hands the recoil, the second teaches the wind-up, and the rest teach the rhythm.</p>
+
+        <ul class="drills">
+          <li>
+            <span class="d-name">Wall Test<span>VR Training · 20 m · 5 min</span></span>
+            <span>Stand 20 m from a wall. Fire one burst and watch the holes: they climb <b>straight up</b> — no sideways lean, 5° angle, vertical only. Now fire a second burst while pulling your mouse gently down. When the five holes make a vertical line instead of a staircase, your hands know the recoil.</span>
+          </li>
+          <li>
+            <span class="d-name">Pre-Charge Corners<span>VR Training · any doorway · 5 min</span></span>
+            <span>Pick a doorway with a dummy behind it. Click <em>before</em> you step out, so the wind-up happens while you're hidden and the burst lands as you appear. Do it ten times, then do it ten times stepping out the other side. The goal: the press becomes part of the step, not a reaction to what you see.</span>
+          </li>
+          <li>
+            <span class="d-name">Burst Ladder<span>VR Training · 30–40 m · 5 min</span></span>
+            <span>Line up on a row of dummies at 30–40 m. One burst per dummy — click, release, breathe, next dummy. Move on only when the first dummy drops. If you're chaining bursts to finish one, you're rushing: slow down until one burst does the job.</span>
+          </li>
+          <li>
+            <span class="d-name">Circle Strafe<span>VR Training · 5 m · 5 min</span></span>
+            <span>Hipfire while circling a dummy at 5 m — never stop moving, never ADS. Learn where the 0.42 m ring stops hitting: that's the edge of your hipfire range. Then step to 10 m and feel it stop working. Your feet now know what section 05 drew.</span>
+          </li>
+          <li>
+            <span class="d-name">Reload Discipline<span>Live play · every fight</span></span>
+            <span>Thirty rounds is 6 bursts. In live play, reload after 4 bursts — always in cover, never on an empty magazine, never in the open. Count the bursts out loud for your first few sessions ("one, two, three, four — reload") until the count is automatic.</span>
+          </li>
+        </ul>
+
+        <div class="card" style="margin-top:18px">
+          <h3>Pocket summary — screenshot this</h3>
+          <p><strong>The Yumi rule:</strong> press → 0.25 s wind-up → 5 bullets in 0.24 s → 0.25 s pause. One click is always a whole burst.</p>
+          <p><strong>To kill:</strong> 6 chest shots up close (3 headshots), 7 past 10 m (4 headshots). Shielded Heavy: 9 up close, 11 far.</p>
+          <p><strong>Ranges:</strong> 0–10 m hipfire or sidearm · 10–25 m ADS at the neck, one burst at a time · 25–50 m ADS at the chest, pull straight down · 50 m+ one burst at exposed targets only.</p>
+          <p><strong>Stop → aim → fire.</strong> Never start firing from a sprint, and never press ADS mid-hold expecting the cone to reset.</p>
+          <p><strong>Spend order (330 certs):</strong> NiCO XR 2x (30) → Forward Grip (100) → Extended Mag (100) → Soft Point Ammo (100). Skip the Angled Forward Grip — it does nothing on this gun.</p>
+          <p style="margin-bottom:0"><strong>Reload after 4 bursts, in cover.</strong> 1.8 s with rounds left, 2.45 s on empty.</p>
+        </div>
+      </section>
+
+      <footer>
+        <p><strong>Sources:</strong> <a href="https://planetside.fandom.com/wiki/NSX_Yumi">NSX Yumi — PlanetSide 2 Wiki</a> (charge timings, attachment effects and cert costs, damage model); Daybreak Census weapon snapshot, saved 2026-11-06 (damage 167 → 143, cone of fire, bloom, recoil, velocity); Weapon Surgeon workbook (cross-check). Spread rings, sight views and burst diagrams are drawn to scale from the gun's published cone-of-fire values: spread diameter = 2 × distance × tan(cone ÷ 2).</p>
+        <p><strong>Two things the sources disagree on, so you know:</strong> the minimum damage is 143 — a July 21, 2021 hotfix raised it from 125, so older guides (including the workbook and Iridar's) still print 125. And the wiki's own time-to-kill tables print two different answers for this gun (0.30 s pretending it's a 1000 RPM automatic, 0.74 s averaging the whole cycle) — neither is the real shot-by-shot clock, so this page counts trigger press → killing bullet instead (about 1 s for a chest kill, 0.37 s for three headshots inside one burst).</p>
+        <p>PlanetSide 2 is a Daybreak Game Company title. This is a fan-made tutorial in the Sage Guide series, not affiliated with Daybreak. Numbers are for the live game as of the sources above; balance patches can change them.</p>
+      </footer>
+    </div>
+
+  <script type="module" src="weapon-sage-guide.mjs?v=20261109-sageguide2"></script>
+  <!-- One-off simulator for this gun, kept verbatim from the source
+       guide: its widget differs structurally from the shared one
+       (see the series notes), so the shared simulator never
+       attaches to it (no #burstSim on this page). -->
+  <script>
+/* ---------- charge-up burst simulator (reusable across the Sage series) ----------
+         The window is driven by a weapon profile on its container element:
+         data-charge-ms (wind-up before the first bullet), data-refire-ms (between
+         bullets in a burst), data-burst (rounds per burst), data-post-ms (pause
+         between bursts), data-base-cof (degrees), data-bloom (degrees per shot),
+         data-distance (metres to target). Each gun page plugs in its own.
+         Press and hold: charge fills (nothing fires), then the burst fires, then a
+         pause, then the next burst if still held. Release during the wind-up and
+         the burst never fires; release during a burst and it plays out, then stops. */
+      (function () {
+        var box = document.getElementById('tapSim');
+        var stage = document.getElementById('simStage');
+        var fireBtn = document.getElementById('simFire');
+        var resetBtn = document.getElementById('simReset');
+        var chargeEl = document.getElementById('simCharge');
+        var bloomEl = document.getElementById('simBloom');
+        var shotsEl = document.getElementById('simShots');
+        var hitsEl = document.getElementById('simHits');
+        var killEl = document.getElementById('simKill');
+        var verdictEl = document.getElementById('simVerdict');
+        var logEl = document.getElementById('simLog');
+        if (!box || !stage || !fireBtn) return;
+
+        function profile(name, fallback) {
+          var v = parseFloat(box.getAttribute('data-' + name));
+          return isNaN(v) ? fallback : v;
+        }
+        var CHARGE_MS = profile('charge-ms', 250);
+        var REFIRE_MS = profile('refire-ms', 60);
+        var BURST = profile('burst', 5);
+        var POST_MS = profile('post-ms', 250);
+        var BASE_COF = profile('base-cof', 0.03);  // degrees, ADS standing still
+        var BLOOM = profile('bloom', 0.05);         // degrees added per shot, ADS
+        var COF_CAP = 1.6;                          // degrees, display cap
+        var DIST = profile('distance', 30);         // metres to target
+        var KILL_HITS = 6;                          // chest shots to kill at 30 m
+
+        var held = false, phase = 'idle'; // idle | charging | bursting | pausing
+        var chargeTimer = null, burstTimer = null, pauseTimer = null, chargeTick = null, resetTimer = null;
+        var burstShots = 0, burstHits = 0, shots = 0, hits = 0;
+        var t0 = 0, killMs = null;
+
+        function aimPoint() {
+          var r = stage.getBoundingClientRect();
+          return { x: r.width / 2, y: r.height * 0.42, ppm: r.width / 3 }; // view ≈ 3 m wide at the target
+        }
+        function setBloom(cof) {
+          var pct = Math.min(100, (cof / COF_CAP) * 100);
+          bloomEl.style.width = pct + '%';
+          bloomEl.className = 'bloom-fill' + (cof > 0.95 ? ' hot' : cof > 0.5 ? ' warm' : '');
+        }
+        function setCharge(pct) {
+          chargeEl.style.width = pct + '%';
+        }
+        function fireShot() {
+          var p = aimPoint();
+          var cof = BASE_COF + BLOOM * burstShots; // cone of this shot: 0.03° .. 0.23°
+          var radiusM = Math.tan(cof * Math.PI / 180) * DIST;
+          var ang = Math.random() * Math.PI * 2;
+          var dist = radiusM * Math.sqrt(Math.random()) * p.ppm; // true scale: view is ~3 m wide at the target
+          var dx = Math.cos(ang) * dist;
+          var dy = Math.sin(ang) * dist - burstShots * 0.9; // recoil climbs a touch as the burst goes on
+          var dot = document.createElement('span');
+          dot.className = 'sim-shot';
+          var hit = (dx * dx) / (56 * 56) + (dy * dy) / (98 * 98) <= 1; // torso/head ellipse
+          if (hit) { dot.classList.add('hit'); hits++; burstHits++; }
+          dot.style.left = (p.x + dx) + 'px';
+          dot.style.top = (p.y + dy) + 'px';
+          stage.appendChild(dot);
+          burstShots++; shots++;
+          setBloom(BASE_COF + BLOOM * burstShots);
+          shotsEl.textContent = shots;
+          hitsEl.textContent = hits;
+          if (killMs === null && hits >= KILL_HITS) {
+            killMs = performance.now() - t0;
+            killEl.textContent = (killMs / 1000).toFixed(2) + ' s';
+          }
+        }
+        function gradeBurst(h) {
+          if (h === 5) return ['good', '<b>Perfect burst</b> \u2014 5 out of 5 on target. That is the whole burst landing where the dot pointed.'];
+          if (h === 4) return ['good', '<b>Nearly perfect</b> \u2014 4 of 5 hits. One round leaked \u2014 usually the fifth, from the widest cone.'];
+          return ['bad', '<b>Loose burst</b> \u2014 only ' + h + ' of 5 hits. At 30 m aimed, that usually means the target moved \u2014 or you fired while still settling.'];
+        }
+        function endBurst() {
+          if (burstShots > 0) {
+            var g = gradeBurst(burstHits);
+            verdictEl.innerHTML = g[1];
+            var pip = document.createElement('span');
+            pip.className = 'burst-pip ' + g[0];
+            pip.textContent = burstHits + '/5';
+            logEl.appendChild(pip);
+          }
+          burstShots = 0; burstHits = 0;
+        }
+        function clearTimers() {
+          if (chargeTimer) { clearTimeout(chargeTimer); chargeTimer = null; }
+          if (burstTimer) { clearInterval(burstTimer); burstTimer = null; }
+          if (pauseTimer) { clearTimeout(pauseTimer); pauseTimer = null; }
+          if (chargeTick) { clearInterval(chargeTick); chargeTick = null; }
+        }
+        function startCharge() {
+          phase = 'charging';
+          fireBtn.textContent = 'Charging\u2026';
+          var start = performance.now();
+          setCharge(0);
+          chargeTick = setInterval(function () {
+            var pct = Math.min(100, ((performance.now() - start) / CHARGE_MS) * 100);
+            setCharge(pct);
+          }, 16);
+          chargeTimer = setTimeout(function () {
+            clearInterval(chargeTick); chargeTick = null;
+            setCharge(100);
+            startBurst();
+          }, CHARGE_MS);
+        }
+        function startBurst() {
+          phase = 'bursting';
+          fireBtn.textContent = 'Firing\u2026';
+          setCharge(0);
+          fireShot();
+          burstTimer = setInterval(function () {
+            fireShot();
+            if (burstShots >= BURST) {
+              clearInterval(burstTimer); burstTimer = null;
+              endBurst();
+              startPause();
+            }
+          }, REFIRE_MS);
+        }
+        function startPause() {
+          phase = 'pausing';
+          fireBtn.textContent = 'Pausing\u2026';
+          pauseTimer = setTimeout(function () {
+            pauseTimer = null;
+            if (held) startCharge();
+            else { phase = 'idle'; fireBtn.textContent = 'Hold to fire'; }
+          }, POST_MS);
+          resetTimer = setTimeout(function () { setBloom(0); }, 260);
+        }
+        function startFire(e) {
+          if (phase !== 'idle') return;
+          if (e && e.preventDefault) e.preventDefault();
+          if (resetTimer) { clearTimeout(resetTimer); resetTimer = null; }
+          held = true;
+          if (shots === 0) { t0 = performance.now(); killMs = null; killEl.textContent = '\u2014'; }
+          fireBtn.classList.add('firing');
+          startCharge();
+        }
+        function stopFire() {
+          held = false;
+          fireBtn.classList.remove('firing');
+          if (phase === 'charging') {
+            // released during the wind-up: the burst never fires
+            clearTimers();
+            setCharge(0);
+            phase = 'idle';
+            fireBtn.textContent = 'Hold to fire';
+            verdictEl.textContent = 'Released during the wind-up \u2014 no burst fired. That quarter-second is the whole lesson of this gun.';
+          } else {
+            // mid-burst or mid-pause: the burst plays out, then no further bursts
+            fireBtn.textContent = 'Hold to fire';
+          }
+        }
+        fireBtn.addEventListener('pointerdown', function (e) {
+          try { fireBtn.setPointerCapture(e.pointerId); } catch (err) {}
+          startFire(e);
+        });
+        fireBtn.addEventListener('pointerup', stopFire);
+        fireBtn.addEventListener('pointercancel', stopFire);
+        fireBtn.addEventListener('keydown', function (e) {
+          if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) startFire(e);
+        });
+        fireBtn.addEventListener('keyup', function (e) {
+          if (e.key === ' ' || e.key === 'Enter') stopFire();
+        });
+        fireBtn.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+        resetBtn.addEventListener('click', function () {
+          held = false;
+          clearTimers();
+          if (resetTimer) { clearTimeout(resetTimer); resetTimer = null; }
+          phase = 'idle';
+          fireBtn.classList.remove('firing');
+          fireBtn.textContent = 'Hold to fire';
+          var dots = stage.querySelectorAll('.sim-shot');
+          for (var i = 0; i < dots.length; i++) dots[i].remove();
+          shots = 0; hits = 0; burstShots = 0; burstHits = 0; killMs = null;
+          shotsEl.textContent = '0'; hitsEl.textContent = '0'; killEl.textContent = '\u2014';
+          logEl.innerHTML = '';
+          verdictEl.textContent = 'Your bursts will be graded here \u2014 5 out of 5 hits is a perfect burst.';
+          setBloom(0);
+          setCharge(0);
+        });
+      })();
+  </script>
+</body>
+</html>
