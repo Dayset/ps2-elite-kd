@@ -259,11 +259,11 @@ export function pctNum(x) {
 export function costHtml(rows, t) {
   const miss = (v) => pctNum(1 - v) + "%";
   const hits = (v) => (v * SHOTS).toFixed(1);
-  const cell = (label, v) => `<td>${label}</td><td>${miss(v)}</td><td>${hits(v)}</td>`;
+  const cell = (label, v) => `<td class="c-txt">${label}</td><td class="c-num">${miss(v)}</td><td class="c-num">${hits(v)}</td>`;
   let html = `<h3>${t.h}</h3><p class="cost-intro">${t.intro}</p>`
-    + `<table class="cost"><thead><tr><th>${t.colDist}</th><th>${t.colRhythm}</th><th>${t.colMiss}</th><th>${t.colHits}</th></tr></thead><tbody>`;
+    + `<table class="cost"><thead><tr><th class="c-txt">${t.colDist}</th><th class="c-txt">${t.colRhythm}</th><th class="c-num">${t.colMiss}</th><th class="c-num">${t.colHits}</th></tr></thead><tbody>`;
   for (const r of rows) {
-    html += `<tr><td rowspan="3">${r.dist} m</td>${cell(t.ideal, r.ideal)}</tr>`
+    html += `<tr class="grp"><td class="c-dist" rowspan="3">${r.dist} m</td>${cell(t.ideal, r.ideal)}</tr>`
       + `<tr>${cell(t.moving, r.moving)}</tr>`
       + `<tr>${cell(t.still, r.still)}</tr>`;
   }
@@ -588,17 +588,30 @@ function compute() {
     { cls: "ideal", pts: [still, ...plan.map((r) => r.cof)] },
     { cls: "move", pts: [move, ...allMove] },
   ];
-  const top = Math.max(...series.flatMap((s) => s.pts)) * 1.05 || 1;
-  const W = 520, H = 190, PL = 34, PR = 8, PT = 8, PB = 22;
+  const peak = Math.max(...series.flatMap((s) => s.pts)) || 1;
+  const top = peak * 1.08;
+  const W = 520, H = 170, PL = 42, PR = 12, PT = 10, PB = 26;
   const x = (i) => PL + (i / SHOTS) * (W - PL - PR);
   const y = (v) => PT + (1 - v / top) * (H - PT - PB);
   const line = (pts) => pts.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const grid = [0, 0.5, 1].map((f) => {
+    const v = (peak * f);
+    return `<line x1="${PL}" y1="${y(v).toFixed(1)}" x2="${W - PR}" y2="${y(v).toFixed(1)}" class="grid"/>`
+      + `<text x="${PL - 6}" y="${(y(v) + 4).toFixed(1)}" class="ax-t" text-anchor="end">${fmt(v)}°</text>`;
+  }).join("");
+  const ticks = Array.from({ length: SHOTS + 1 }, (_, i) => i)
+    .filter((i) => i === 0 || i % 2 === 0 || i === SHOTS)
+    .map((i) => `<text x="${x(i).toFixed(1)}" y="${H - 8}" class="ax-t" text-anchor="middle">${i}</text>`).join("");
+  // dashed floors: the still minimum and the moving minimum
+  const floors = [[still, "floor-still"], [move, "floor-move"]]
+    .filter(([v]) => v !== null && v !== undefined && !Number.isNaN(v) && v > 0 && v <= top)
+    .map(([v, c]) => `<line x1="${PL}" y1="${y(v).toFixed(1)}" x2="${W - PR}" y2="${y(v).toFixed(1)}" class="${c}"/>`).join("");
+  const marks = series.map((s) => s.pts.slice(1).map((v, i) => `<rect x="${(x(i + 1) - 2.5).toFixed(1)}" y="${(y(v) - 2.5).toFixed(1)}" width="5" height="5" class="dot-${s.cls}"/>`).join("")).join("");
   $("chart").innerHTML = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(tr("adad.chart.h", "Cone growth"))}">`
-    + `<line x1="${PL}" y1="${PT}" x2="${PL}" y2="${H - PB}" class="ax"/><line x1="${PL}" y1="${H - PB}" x2="${W - PR}" y2="${H - PB}" class="ax"/>`
-    + `<text x="4" y="${y(top / 1.05) + 4}" class="ax-t">${fmt(top / 1.05)}°</text>`
-    + `<text x="4" y="${H - PB + 4}" class="ax-t">${fmt(0)}°</text>`
+    + grid + floors
+    + `<line x1="${PL}" y1="${H - PB}" x2="${W - PR}" y2="${H - PB}" class="ax"/>`
     + series.map((s) => `<path d="${line(s.pts)}" class="line-${s.cls}" fill="none"/>`).join("")
-    + `<text x="${W - PR}" y="${H - 6}" class="ax-t" text-anchor="end">${SHOTS}</text></svg>`;
+    + marks + ticks + `</svg>`;
 
   const info = resetInfo({ still, endCof: fA, maxCof: maxC, refireMs: refire });
   $("resetBox").innerHTML = info

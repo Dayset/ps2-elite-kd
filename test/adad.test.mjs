@@ -541,8 +541,8 @@ test("applyAttachments: the acceptance numbers — Blitz hip 10 → 6 → 11, GD
 
 test("the page is wired: ids, back link, and the link from weapon-compare", () => {
   const html = read("../weapon-adad.html");
-  assert.match(html, /weapon-adad\.css\?v=20261109-adadunpin1/);
-  assert.match(html, /weapon-adad\.mjs\?v=20261109-adadunpin1/);
+  assert.match(html, /weapon-adad\.css\?v=20261109-adadux1/);
+  assert.match(html, /weapon-adad\.mjs\?v=20261109-adadux1/);
   assert.match(html, /data-sort="loss35"/, "the 35 m loss header sorts");
   assert.match(html, /data-sort="loss60"/, "the 60 m loss header sorts");
   assert.match(html, /data-i18n="adad\.col\.loss35"/, "the 35 m loss header is translated");
