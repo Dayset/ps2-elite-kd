@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>Results of the testing related to my Angular Size research: debunked as wrong? — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>Results of the testing related to my Angular Size research: debunked as wrong?</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd>u/Iridar51</dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://www.reddit.com/r/Planetside/comments/6z5uax/results_of_the_testing_related_to_my_angular_size/" target="_blank" rel="noopener noreferrer">https://www.reddit.com/r/Planetside/comments/6z5uax/results_of_the_testing_related_to_my_angular_size/</a> (Reddit (r/Planetside))</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2017-09-10</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Hand-saved (MHTML)</dd></div>
+      <div><dt data-i18n="arc.attrStatus">Status</dt><dd><span class="arc-badge arc-st-dead">💀 Dead (kept for history)</span><p class="arc-attr-note">Dead as a method, priceless as a record. The archive's INDEX recorded this post as pending (automated fetch of reddit.com is blocked); it was saved by hand as a browser snapshot later the same day, 2026-11-09, post and 23 comments.</p></dd></div>
+      <div><dt data-i18n="arc.attrRaw">Original source file</dt><dd><a href="../raw/angular-size-reddit-post.mhtml" target="_blank" rel="noopener noreferrer">angular-size-reddit-post.mhtml</a></dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<h2>The post</h2>
+<p>u/Iridar51, 2017-09-10.</p>
+<h2>Prehistory</h2>
+<p>Somewhat recently I humiliated myself participated in an interesting discussion regarding crosshairs and how they relate to CoF size.</p>
+<p>The short of it, I speculated that PS2 probably doesn't have the means to draw a crosshair that accurately represents actual weapon Cone of Fire. Then u/Stan2112 and u/Azukae mentioned Aphelion, and how its crosshair actually represents weapon's CoF.</p>
+<p>I was skeptical, made a few screenshots and tried to debunk their claim, referring to my Angular Size research, according to which, Aphelion's CoF should be much smaller than displayed crosshair.</p>
+<p>They replied with screenshots of Aphelion shots clearly going outside the supposed CoF size. Only then I bothered to do what I should've done from the start - actually fired the Aphelion, and confirmed their claim. I confess to the sin of feeling righteous and entitled.</p>
+<p>That incident was a good indication that Angular Size research might be wrong, and only then I realize that I never actually bothered to test it.</p>
+<h2>The test</h2>
+<p>I went into VR with Eridani with 4x Scope and Sweeper HUD. I positioned myself 50m away from target dummies, aimed directly at the center of the head, and used the keyboard to fire single shots. Any hits or misses should have been dictated exclusively by Eridani's starting Cone of Fire, which is equal to 0.3 degrees in all stances.</p>
+<p>Total shots: 351 Headshots: 200 Bodyshots: 47 Complete misses: 104</p>
+<p>From the perspective of the test, bodyshots are treated the same as misses. So out of all shots, ~43% missed completely or hit the body, and 57% hit the head.</p>
+<p>According to Angular Size research, the head hitbox at that range should have about ~0.2 degrees of Angular Size. Depending on method of measurement, the results can vary within ~10% or so.</p>
+<p>So the Eridani's CoF is ~50% larger than target's hitbox.</p>
+<p>However, we are interested in hit probabilities, which should be determined by the relative areas of the circles.</p>
+<p>Using the diameter (D) of the circle, we can calculate its area as: S = D <em> D </em> Pi / 4</p>
+<p>Hitbox area: 0.0309 CoF Area: 0.0706</p>
+<p>If we put these circles on top of each other - which is what I supposedly did with the firing test - the hitbox area would make up for 43.7% of the CoF area. So we should be getting ~44% of headshots, and ~56% of misses and bodyshots.</p>
+<p>Clearly that is not the case. So that pretty much seals it.</p>
+<h2>Conclusion</h2>
+<p>The Angular Size research as it is on my site is wrong, and I will be taking it down. So is the Ideal Burst Length Calculator and the CoF Page in my Weapon Toolbox, which use the Angular Size research as the basis for their calculations. I'm very sorry for the lack of effort in properly testing these tools before releasing them to the public. If its any consolation, I've been relying on the same wrong information myself this whole time, though it probably only makes it worse, since I based many recommendations on it.</p>
+<p>Turns out, based just on CoF values, we cannot predict approximate weapon accuracy at a certain range. What you can personally test in-game is also limited, because we're usually mostly interested in moving CoFs, which you can't test easily.</p>
+<p>EDIT: Per the suggestion of u/BoatsFriends, it makes sense to assume that the discrepancy between projected and tested accuracy values is caused by bullet projectile size. Bullets have invisible dimensions, and they can still hit the target, even if you are not directly aiming at it. This is a hit. So this would explain why in-game weapons hit more than shots than my calculations would suggest.</p>
+<p>However, without knowing the exact size of the projectile, it's not possible to confirm this assumption, and Angular Size research remains useless for the purposes of determining weapon's accuracy at range.</p>
+<hr />
+<h2>Comments (23)</h2>
+<p>Thread order as shown on the page. Indentation follows the reply depth.</p>
+<p><strong>u/ShadowInsignus</strong> — 2017-09-10 · <a href="https://www.reddit.com/r/Planetside/comments/6z5uax/comment/dmts8es/" target="_blank" rel="noopener noreferrer">permalink</a></p>
+<blockquote><p>Humble confessions are the path to forgiveness, my son, and the community accepts them, in the name of the Valker, the Spotter, and the Boomy Frisbee, Amen.</p>
+<p>But I'm busy at the moment. Go hop on the game and personally train 5 rank 1 newbies as your absolution ;D</p></blockquote>
+<p><strong>u/DefinitelyHelpfulBot</strong> — 2017-09-10 (reply to u/ShadowInsignus) · <a href="https://www.reddit.com/r/Planetside/comments/6z5uax/comment/dmts8ir/" target="_blank" rel="noopener noreferrer">permalink</a></p>
+<blockquote><blockquote><p>WTF Richard?</p></blockquote></blockquote>
+<p><strong>u/[deleted]</strong> — 2017-09-10 · <a href="https://www.reddit.com/r/Planetside/comments/6z5uax/comment/dmt6rir/" target="_blank" rel="noopener noreferrer">permalink</a></p>
+<blockquote><p>You are the rocket scientist of PS2, no pun intended.</p>
+<p>I actually read your stuff up after years of playing and learned a few things I didn't know.</p></blockquote>
+<p><strong>u/H_Q_</strong> — 2017-09-10 · <a href="https://www.reddit.com/r/Planetside/comments/6z5uax/comment/dmt3krg/" target="_blank" rel="noopener noreferrer">permalink</a></p>
+<blockquote><p>Well, well, well. First d0ku confesses and now you. Should we be worried what u/Wrel might come up with?</p></blockquote>
+<p><strong>u/VORTXS</strong> — 2017-09-10 (reply to u/H_Q_) · <a href="https://www.reddit.com/r/Planetside/comments/6z5uax/comment/dmt7cdc/" target="_blank" rel="noopener noreferrer">permalink</a></p>
+<blockquote><blockquote><p>Hopefully something good for all this cai shit.</p>
+<p>Aka &quot;I'm sorry I'm I have vs favouritism.&quot;</p></blockquote></blockquote>
+<p><strong>u/H_Q_</strong> — 2017-09-10 (reply to u/VORTXS) · <a href="https://www.reddit.com/r/Planetside/comments/6z5uax/comment/dmtbx7d/" target="_blank" rel="noopener noreferrer">permalink</a></p>
+<blockquote><blockquote><blockquote><p>Aww come on, don't get your panties in a wad.</p></blockquote></blockquote></blockquote>
+<p><strong>u/AmigAtari</strong> — 2017-09-10 · <a href="https://www.reddit.com/r/Planetside/comments/6z5uax/comment/dmsxhqu/" target="_blank" rel="noopener noreferrer">permalink</a></p>
+<blockquote><p>We appreciate the transparency and admission of erring. However, even if you are incorrect 5% of the time, the other 95% well more than makes up for it. Your dedication and work is appreciated to the highest degree.</p>
+<p>Personally, you have influenced my gameplay and purchase decisions so much that even if your information is wrong once in a while, it's more than forgivable.</p>
+<p>You are doing more than 99.9% of the player base is doing and it is beyond useful.</p></blockquote>
+<p><strong>u/Iridar51</strong> — 2017-09-10 (reply to u/AmigAtari) · <a href="https://www.reddit.com/r/Planetside/comments/6z5uax/comment/dmtdys7/" target="_blank" rel="noopener noreferrer">permalink</a></p>
+<blockquote><blockquote><p>Appreciated :)</p></blockquote></blockquote>
+<p><strong>u/moewillis2</strong> — 2017-09-10 (reply to u/AmigAtari) · <a href="https://www.reddit.com/r/Planetside/comments/6z5uax/comment/dmt3y32/" target="_blank" rel="noopener noreferrer">permalink</a></p>
+<blockquote><blockquote><p>Amen! Couldn't have said it better myself.</p>
+<p>We are all human and err from time to time. You've already made up for this one iridar, just don't let it happen again... :)</p></blockquote></blockquote>
+<p><strong>u/BoatsFriends</strong> — 2017-09-10 · <a href="https://www.reddit.com/r/Planetside/comments/6z5uax/comment/dmsucb0/" target="_blank" rel="noopener noreferrer">permalink</a></p>
+<blockquote><p>just fyi, the charged shot projectile will start out lower than the regular projectiles. Kind of like how bullets start from the chest or something like that or it just has a bigger projectile size. Try pull a harasser then drive up to the side of the hood of a harasser. You can fire normal shots which will all miss, then hit with your charged shot. This is how I figured out the charged shot is equal to 4x regular shots, probably. Do you have any idea how to find out through the API? Would it be under zone effect stuff or maybe projectile stuff? (I'm not even sure if the charged shot starts out lower, but it looks that way visually. And yeah the Charged shot is large so who knows how big the normal shots are in comparison to the eridani.)</p></blockquote>
+<p><strong>u/Iridar51</strong> — 2017-09-10 (reply to u/BoatsFriends) · <a href="https://www.reddit.com/r/Planetside/comments/6z5uax/comment/dmsurxy/" target="_blank" rel="noopener noreferrer">permalink</a></p>
+<blockquote><blockquote><p>Wait a second. The Aphelion projectile stuff has nothing to do with the topic, and no, I don't think that projectile size is accessible anywhere in the API.</p>
+<p>HOWEVER. The bullet projectile size would actually explain the discrepancy between projected and tested values. According to raw calculations, I should have been getting more misses. But there have been more hits. This would happen if bullets that had trajectory outside the actual head hitbox would still glance it, and that would count as a hit.</p>
+<p>The discrepancy is fairly large, though. It is possible that PS2 uses a sort of mechanic that makes bullet hitboxes larger at range.</p>
+<p>Gonna need to run some tests. Perhaps Angular Size wasn't wrong after all.</p>
+<p>EDIT: Though without knowing the actual hitbox size of the bullet it would still be useless.</p>
+<p>EDIT2: Yep, that confirms it. The bullet hitbox is fairly large, and allows you to score a hit even while clearly aiming past the head. That is a hit: http://i.imgur.com/vAet3dz.jpg</p>
+<p>However, without a way to know the exact size of a projectile, Angular Size cannot be used to determine weapon's effective range, because it always will underestimate weapon's accuracy by an unknown amount. And that's assuming that discrepancy is even caused by projectile size.</p></blockquote></blockquote>
+<p><strong>u/BoatsFriends</strong> — 2017-09-10 (reply to u/Iridar51) · <a href="https://www.reddit.com/r/Planetside/comments/6z5uax/comment/dmt4f16/" target="_blank" rel="noopener noreferrer">permalink</a></p>
+<blockquote><blockquote><blockquote><p>random thoughts:</p>
+<p>Is there a fixed FOV when gunning? Were there enough test shots? Would a 0.99 meter difference account for the discrepancy? Like if you were 50.99 meters away when shooting? With regard to translation of degrees into pixels... What about fractions of pixels? Also maybe try setting render quality to 2.000000 for more refined crosshairs.</p>
+<p>Also,</p></blockquote></blockquote></blockquote>
+<p><strong>u/Iridar51</strong> — 2017-09-10 (reply to u/BoatsFriends) · <a href="https://www.reddit.com/r/Planetside/comments/6z5uax/comment/dmtdq9d/" target="_blank" rel="noopener noreferrer">permalink</a></p>
+<blockquote><blockquote><blockquote><blockquote><p>Is there a fixed FOV when gunning?</p>
+<p>Yes, ~45 degrees of Vertical FoV, according to my tests. Piloting the vehicle is affected as well, probably.</p>
+<p>Would a 0.99 meter difference account for the discrepancy?</p>
+<p>Nope.</p>
+<p>What about fractions of pixels?</p>
+<p>Yeah, the statistical error would be somewhere in the ballpark of +/- ~10%. E.g. 40% vs 44% of misses would be okay, but not 43% vs 57%.</p>
+<p>Also maybe try setting render quality to 2.000000 for more refined crosshairs.</p>
+<p>It doesn't change much. Crosshairs were only mentioned in the context of the Aphelion, which doesn't have much to do with the test itself, performed on the Eridani.</p></blockquote></blockquote></blockquote></blockquote>
+<p><strong>u/BoatsFriends</strong> — 2017-09-10 (reply to u/Iridar51) · <a href="https://www.reddit.com/r/Planetside/comments/6z5uax/comment/dmtjvpu/" target="_blank" rel="noopener noreferrer">permalink</a></p>
+<blockquote><blockquote><blockquote><blockquote><blockquote><p>what if fov was fixed at 40 instead of 45?</p></blockquote></blockquote></blockquote></blockquote></blockquote>
+<p><strong>u/Iridar51</strong> — 2017-09-10 (reply to u/BoatsFriends) · <a href="https://www.reddit.com/r/Planetside/comments/6z5uax/comment/dmtk9ys/" target="_blank" rel="noopener noreferrer">permalink</a></p>
+<blockquote><blockquote><blockquote><blockquote><blockquote><blockquote><p>Just retested and fairly sure it's 45 for gunners. Could be different for vehicle pilot. Once again, it doesn't change anything regarding the Eridani tests, which are mostly like explained by bullet hitbox size.</p></blockquote></blockquote></blockquote></blockquote></blockquote></blockquote>
+<p><strong>u/middleground11</strong> — 2017-09-10 · <a href="https://www.reddit.com/r/Planetside/comments/6z5uax/comment/dmss8j0/" target="_blank" rel="noopener noreferrer">permalink</a></p>
+<blockquote><p>Question, does this mean using scopes can have a different recoil pattern or cone of fire compared to irons, reflex, etc?</p></blockquote>
+<p><strong>u/Iridar51</strong> — 2017-09-10 (reply to u/middleground11) · <a href="https://www.reddit.com/r/Planetside/comments/6z5uax/comment/dmssua0/" target="_blank" rel="noopener noreferrer">permalink</a></p>
+<blockquote><blockquote><p>Good question. Normally I'd say no, but right now the translation of degrees into pixels doesn't make any sense to me.</p>
+<p>For example, Aphelion-H crosshair, which supposedly encases the CoF of 0.85 degrees at 45 FoV, has 44 pixel diameter without ADS, and 102 pixel with 2x Zoom. Try to wrap your head around that. Mine doesn't.</p>
+<p>The crosshair seems to fairly accurately represent Aphelion's bullet distribution pattern in both ADS and without ADS, so it's not the case of ADS crosshair just being randomly bigger.</p>
+<p>I feel like there's some sort of advanced optics phenomenon is involved.</p>
+<p>That said, I vaguely recall specifically testing the assertion that in ADS mode weapons have more recoil, and the result was negative.</p></blockquote></blockquote>
+<p><strong>u/Mvaughan1</strong> — 2017-09-10 (reply to u/Iridar51) · <a href="https://www.reddit.com/r/Planetside/comments/6z5uax/comment/dmtkkkj/" target="_blank" rel="noopener noreferrer">permalink</a></p>
+<blockquote><blockquote><blockquote><p>I do remember reading the other night that you stated iron sights can be slightly inaccurate compared to even a 1x dot. I've been putting at least some kind of sight on all my weapons now. Was I reading that correctly? Or does it even matter with a reticle overlay? Thanks.</p></blockquote></blockquote></blockquote>
+<p><strong>u/Iridar51</strong> — 2017-09-10 (reply to u/Mvaughan1) · <a href="https://www.reddit.com/r/Planetside/comments/6z5uax/comment/dmtlhfy/" target="_blank" rel="noopener noreferrer">permalink</a></p>
+<blockquote><blockquote><blockquote><blockquote><p>Yes, this doesn't have anything to do with Angular Size stuff. Iron Sights are bad because they are physical models, attached to the weapon, which wobbles and shake while moving and firing.</p>
+<p>Center of the weapons' Cone of Fire is always at the exact middle of the screen, but Iron Sights often deviate from that position, so they basically do not point where you're firing.</p>
+<p>Reflex dots and proper crosshair overlays are always in the exact center of the screen, so they don't have this issue.</p></blockquote></blockquote></blockquote></blockquote>
+<p><strong>u/Mvaughan1</strong> — 2017-09-11 (reply to u/Iridar51) · <a href="https://www.reddit.com/r/Planetside/comments/6z5uax/comment/dmugzws/" target="_blank" rel="noopener noreferrer">permalink</a></p>
+<blockquote><blockquote><blockquote><blockquote><blockquote><p>Ah, thanks for clearing up my confusion and thanks for the great info on Iridar!</p></blockquote></blockquote></blockquote></blockquote></blockquote>
+<p><strong>u/[deleted]</strong> — 2017-09-10 · <a href="https://www.reddit.com/r/Planetside/comments/6z5uax/comment/dmsrua1/" target="_blank" rel="noopener noreferrer">permalink</a></p>
+<blockquote><p>B-but that's impossible, you're never wrong!!!</p></blockquote>
+<p><strong>u/Iridar51</strong> — 2017-09-10 (reply to u/[deleted]) · <a href="https://www.reddit.com/r/Planetside/comments/6z5uax/comment/dmsslr0/" target="_blank" rel="noopener noreferrer">permalink</a></p>
+<blockquote><blockquote><p>I've been wrong about a lot of things. For example, for years, I used to say to people that NMG / Adrenaline isn't affected by Nanoweave, relying on someone else's say-so. When I actually bothered to test, turned out it wasn't the case. When I came to reddit to share the news, turned it was &quot;common knowledge&quot;, even though nobody bothered to correct me on it for years.</p>
+<p>So I'm actually really grateful to u/Stan2112 [+1] and u/Azukae for correcting me. This is another thing that I'm usually preaching - don't trust people's words (including mine), test things properly yourself. This is the best path to the truth.</p>
+<p>Most of the time, I thoroughly test out my assertions, but this wasn't the case with Angular Size stuff. Which is really sad. I'm genuinely ashamed to so let down the PS2 community. I know that vast majority of people don't care about such complicated matters, but I was really proud of this Angular Size stuff, because it gave a nice (if approximate) way of figuring out weapon's effective range based on CoF.</p>
+<p>I've no intention of stopping my quest, though, and I'll try to figure out a way to find a new way. Even at the cost of sitting in VR for hours, if it comes to that.</p></blockquote></blockquote>
+<p><strong>u/Mentleman</strong> — 2017-09-10 (reply to u/Iridar51) · <a href="https://www.reddit.com/r/Planetside/comments/6z5uax/comment/dmt4o0s/" target="_blank" rel="noopener noreferrer">permalink</a></p>
+<blockquote><blockquote><blockquote><p>ur the batman of auraxis</p></blockquote></blockquote></blockquote>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>Weapon Analysis Toolbox Spotlight — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>Weapon Analysis Toolbox Spotlight</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd>Iridar</dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://www.youtube.com/watch?v=Njd4iKRLS6s" target="_blank" rel="noopener noreferrer">https://www.youtube.com/watch?v=Njd4iKRLS6s</a> (Iridar (YouTube @Iridar51))</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2017</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>YouTube (record only)</dd></div>
+      <div><dt data-i18n="arc.attrStatus">Status</dt><dd><span class="arc-badge arc-st-mixed">⚠️ Mixed</span><p class="arc-attr-note">No video file is stored. Title and channel confirmed via YouTube oEmbed 2026-11-09; transcript unavailable (YouTube rate-limited the fetch, HTTP 429). The CoF analysis in the video is dead by the author's own warning (based on the incorrect angular-size research); the rest is a 2017-era feature walkthrough of the tool.</p></dd></div>
+      </dl>
+    </section>
+    <section class="arc-video" aria-label="Video record">
+      <p>A walkthrough of the Toolbox: loading a weapon, the analysis pages. Gauss SAW vs Nanoweave TTK; HVA effects on damage ranges and kill thresholds (Pulsar C as the case where HVA matters more); the Recoil page and horizontal deviation (Pulsar C's exceptionally low deviation vs the Cyclone); CoF-based effective ranges; Cyclone vs Armistice, including the Cyclone 3-headshot kill. The video's stated purpose is not balance argument — it is a practical tour of the tool's features.</p>
+      <p data-i18n="arc.videoNoFile">No video file is stored in this archive. Watch it at the original link above while it still exists.</p>
+    </section>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

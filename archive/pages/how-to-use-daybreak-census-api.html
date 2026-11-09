@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>How to use Daybreak Census API | CMDRCyrious.com — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>How to use Daybreak Census API | CMDRCyrious.com</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd>CMDRCyrious</dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/how-to-use-daybreak-census-api/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/how-to-use-daybreak-census-api/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2017-07-04</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Live</dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<p><em>You can find pre-made queries <strong><a href="http://cmdrcyrious.com/weapon-stats/#Daybreak_Census_API" target="_blank" rel="noopener noreferrer">here</a></strong>. This article explains how they work, so you can make your own queries, if need be.</em></p>
+<h2>How to make an API Query</h2>
+<p>Information in the API is distributed between many <strong>collections</strong>. Each collection contains <strong>entries</strong> with typical structure for that collection. Each entry contains <strong>fields</strong> with information.</p>
+<p>Usually, information about in-game objects is distributed between many different collections. For example, to pull full stats of one weapon, you have to access as many as 17 (!) different collections.</p>
+<p>Fortunately, you can access several collections at once by <strong>joining</strong> several queries together.</p>
+<p>Before you proceed, It is highly recommended you get a <strong>JSON formatter plugin</strong> for your browser. Google it.</p>
+<p><strong>List of collections:</strong> <a href="https://census.daybreakgames.com/get/ps2/" target="_blank" rel="noopener noreferrer">https://census.daybreakgames.com/get/ps2/</a></p>
+<p><strong>Census website:</strong> <a href="https://census.daybreakgames.com/" target="_blank" rel="noopener noreferrer">https://census.daybreakgames.com/</a></p>
+<p>Some queries pull a lot of info at once, and if you intend to make several queries in a short time frame, you may be required to register a <strong><a href="https://census.daybreakgames.com/#service-id" target="_blank" rel="noopener noreferrer">Service ID</a></strong>.</p>
+<h2>Basic Queries</h2>
+<p><strong>To query a collection</strong>, you simply write its name in the link. For example, let’s query the “<strong>item</strong>” collection, which is basically a huge list of all items in game:</p>
+<p><a href="http://census.daybreakgames.com/get/ps2/item" target="_blank" rel="noopener noreferrer">http://census.daybreakgames.com/get/ps2/<strong>item</strong></a></p>
+<p>This will return a JSON string with the first entry of the “item” collection. In this case, it contains information about <a href="http://cmdrcyrious.com/planetside2/weapons/melee-weapons/#StandardKnives" target="_blank" rel="noopener noreferrer"><strong>Mag-Cutter</strong></a>.</p>
+<p><strong>To query a collection for multiple entries</strong>, you have to specify the amount using a c:limit modifier. <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/One-Does-Not-Simply.jpg" target="_blank" rel="noopener noreferrer"><strong>One does not simply</strong></a> access ALL entries in a collection.</p>
+<p><a href="http://census.daybreakgames.com/get/ps2/item?c:limit=5" target="_blank" rel="noopener noreferrer">http://census.daybreakgames.com/get/ps2/item?c:limit=5</a></p>
+<p>This will give you first five “items”. However, there is an overall limit to query size, and querying for several thousand of items will get hard and messy, so it’s a method best kept to “small” collections of several hundred members.</p>
+<p><strong>To query specific entries</strong>, you can search entries with a field containing a certain value. For example, you can query a weapon by a <strong>name</strong>, or by an <strong>item\_id</strong>.</p>
+<p><a href="http://census.daybreakgames.com/get/ps2/item?name.en=TRAC-5" target="_blank" rel="noopener noreferrer">http://census.daybreakgames.com/get/ps2/item?<strong>name.en=TRAC-5</strong></a></p>
+<p><a href="http://census.daybreakgames.com/get/ps2/item?item_id=43" target="_blank" rel="noopener noreferrer">http://census.daybreakgames.com/get/ps2/item?<strong>item\_id=43</strong></a></p>
+<p>Weapon name has to be written exactly as it appears in game, it is sensitive to letter case and spaces. Notice how we also specified the language of the name field. Collections with localized fields, such as names and descriptions, will contain all languages at the same time, which can get cluttering. You can <strong>specify a language</strong> like this:</p>
+<p><a href="http://census.daybreakgames.com/get/ps2/item?name.en=TRAC-5&amp;amp;c:lang=en" target="_blank" rel="noopener noreferrer">http://census.daybreakgames.com/get/ps2/item?name.en=TRAC-5&amp;c:lang=en</a></p>
+<p>You can search for multiple entries with a certain value in a field. For example:</p>
+<p><a href="https://census.daybreakgames.com/get/ps2/item?item_category_id=8" target="_blank" rel="noopener noreferrer">https://census.daybreakgames.com/get/ps2/item?<strong>item\_category\_id=8</strong></a></p>
+<p>This query will display the first entry in the “item” collection with the item\_category\_id of 8, which is the Carbines’ category ID. **To show <em>all</em> entries with that item\_category\_id<strong>, you have to again use the </strong>c:limit**:</p>
+<p><a href="https://census.daybreakgames.com/get/ps2/item?item_category_id=8&amp;amp;c:limit=400" target="_blank" rel="noopener noreferrer">https://census.daybreakgames.com/get/ps2/item?item\_category\_id=8&amp;c:limit=400</a></p>
+<h2>Joining Collections</h2>
+<p><strong>Joining several collections in one query</strong> makes it easier to access full information about something. For example:</p>
+<p>This query will join item and item\_category collections, so you can access a weapon by a name, and see its category right away.</p>
+<p>“On” is the name of the field in parent collection, “to” is the name of the field in child collection. In some cases you can forego specifying the “on” and “to” parts of the joining. In this case, you can simply write:</p>
+<p><a href="http://census.daybreakgames.com/get/ps2/item?name.en=TRAC-5&amp;amp;c:lang=en&amp;amp;c:join=item_category" target="_blank" rel="noopener noreferrer">http://census.daybreakgames.com/get/ps2/item?name.en=TRAC-5&amp;c:lang=en&amp;<strong>c:join=item\_category</strong></a></p>
+<p>Sometimes <strong>on</strong> and <strong>to</strong> can be omitted and the join will still work. That’s because if you don’t specify them it will use <strong>item\_id</strong> by default.</p>
+<p>Most times using only <strong>on</strong> to specify which field from the parent collection to use is enough. For example instead of <strong>item\_id</strong> you might want to use <strong>item\_category\_id</strong> or there is no <strong>item\_id</strong> in the collection so there is no default.</p>
+<p>But there are times when you have to use <strong>to</strong> as well. That’s when the joining field from the parent collection has a different name from the identifying field of the child collection.</p>
+<p>For example joining attachment item info to the attachment list of a weapon. The attachments list collection uses <strong>attachment\_item\_id</strong> to identify the attachment, but the attachment info collection uses <strong>item\_id</strong>.</p>
+<p>You can also <strong>specify the name of the join</strong>:</p>
+<p>This can make large queries more readable. If the child collection contains several entries with that identifier, you need to specify that you want to join all of them.</p>
+<p>This query will show all weapons in the “Carbine” category.</p>
+<h3>Multi Join</h3>
+<p>You can string several joins together by separating them with commas:</p>
+<p>This identical to using several join commands in one query:</p>
+<h3>Multi-Level Join</h3>
+<p>You can create multi level joins by using round brackets: <strong>(</strong> and <strong>)</strong>.</p>
+<p>This query will display some of the weapon’s stats, stored in the “weapon” collection. It has the following structure and query response:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">JSON Multi Level Query</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/multi_query.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h2>Collections</h2>
+<p>You may find <a href="http://cmdrcyrious.com/Arklur's_API_map.svg" target="_blank" rel="noopener noreferrer"><strong>this map of the API</strong></a> useful. All credit goes to <strong><a href="https://www.reddit.com/r/Planetside/comments/75rnqd/ps2_api_model/" target="_blank" rel="noopener noreferrer">/u/Arklur</a></strong>.</p>
+<h2>item</h2>
+<p>This collection contains meta information about an item, such as its localized name and description. This is the starting point for queries of weapon stats.</p>
+<h3>Fields</h3>
+<p><strong>Category:</strong> item\_category\_id</p>
+<p>You can figure out item’s category by searching for the specified <strong>item\_category\_id</strong> in the <strong><a href="http://census.daybreakgames.com/s:iridar/get/ps2/item_category?c:limit=500" target="_blank" rel="noopener noreferrer">item\_category</a></strong> collection, or <strong><a href="http://census.daybreakgames.com/get/ps2/item?name.en=TRAC-5&amp;amp;c:lang=en&amp;amp;c:join=item_category" target="_blank" rel="noopener noreferrer">joining</a></strong> it.</p>
+<p><strong>Description:</strong> description</p>
+<p>Contains all languages by default, but you can access specific language by writing the language’s two-letter code after a dot, for example: <strong>description.en</strong>, or using a <a href="http://census.daybreakgames.com/s:iridar/get/ps2/item_category?c:limit=500&amp;amp;c:lang=en" target="_blank" rel="noopener noreferrer"><strong>&amp;c:lang=en</strong></a> modifier.</p>
+<p><strong>Faction:</strong> faction\_id</p>
+<p>These field will specify which factions can use the weapon. Faction IDs can be accessed in <strong><a href="http://census.daybreakgames.com/get/ps2/faction?c:limit=50&amp;amp;c:lang=en" target="_blank" rel="noopener noreferrer">faction</a></strong> collection.</p>
+<p><strong>Item’s Image:</strong> image\_path</p>
+<p>This can be used to access item’s <a href="http://census.daybreakgames.com/files/ps2/images/static/963.png" target="_blank" rel="noopener noreferrer"><strong>in game icon</strong></a>. Simply paste the path after the basic census link:</p>
+<p><a href="http://census.daybreakgames.com/files/ps2/images/static/963.png" target="_blank" rel="noopener noreferrer">http://census.daybreakgames.com/<strong>files/ps2/images/static/963.png</strong></a></p>
+<p>Some images are missing from the API, and will give a <em><strong>page\_not\_found</strong></em> error when you try to access them. There is nothing to be done about it, but you can datamine weapons’ icons from client files by using <strong><a href="http://cmdrcyrious.com/planetside2/tools-and-useful-links/#Tools" target="_blank" rel="noopener noreferrer">PS2LS tool</a></strong>. Images are stored in .dds format, and you can use any free converter to convert them into .png.</p>
+<p><strong>Image Set:</strong> image\_set\_id</p>
+<p>The API usually stores several icons of different sizes. The image\_path contains the address of the largest image, you can access smaller images by searching or <strong><a href="http://census.daybreakgames.com/s:iridar/get/ps2/item?name.en=TRAC-5&amp;amp;c:join=image_set^list:1" target="_blank" rel="noopener noreferrer">joining</a></strong> the <strong>image\_set</strong> collection.</p>
+<h2>weapon\_datasheet</h2>
+<p><strong>Parent collection:</strong> item</p>
+<p><strong>Join key:</strong> item\_id</p>
+<p><strong>Magazine Size:</strong> clip\_size</p>
+<p><strong>Ammo Pool:</strong> capacity</p>
+<p>It’s worth noting that Ammo Pool includes the ammunition already loaded into the weapon, so 40/240 in the API will appear as 40/200 in game.</p>
+<p>The rest of the fields in <strong>weapon\_datasheet</strong> collection are <strong>misleading and should not be used</strong>, as they refer to the <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/old-weapon-stats.png" target="_blank" rel="noopener noreferrer"><strong>old format of displaying weapon stats in game</strong></a>, basically somehow correlating with the number of bars in certain categories.</p>
+<h2>fire\_mode</h2>
+<p><strong>Parent collection:</strong> item</p>
+<p><strong>Join key:</strong> item\_id</p>
+<p>This collection contains some of the weapon stats, related to Damage and Reload times. However, the <a href="http://cmdrcyrious.com/how-to-use-daybreak-census-api/#fire_mode_2" target="_blank" rel="noopener noreferrer"><strong>fire\_mode\_2</strong></a> collection contains the same information and much more, so it is preferable to use that when possible.</p>
+<p>It is important to understand that in-game firemodes, such as “semi-auto” and “fully-automatic”, and the API “firemodes” are different.</p>
+<p>As far as API is concerned, “semi auto” and “full auto” are <a href="http://cmdrcyrious.com/how-to-use-daybreak-census-api/#fire_group" target="_blank" rel="noopener noreferrer"><strong>fire groups</strong></a>, and “fire modes” make the distinction between hip firing and ADSing.</p>
+<p>Attachments like <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/#Underbarrel_Grenade_Launcher_UBGL" target="_blank" rel="noopener noreferrer">Underbarrel Grenade Launcher</a></strong> function by attaching an additional fire\_group to a weapon.</p>
+<p>Each API firemode contains a complete set of parameters and keys to entries in other collections that define how a weapon functions. So it is technically possible to give a weapon completely different functions in different firemodes; that’s how <a href="http://cmdrcyrious.com/planetside2/weapons/melee-weapons/#NSX_Amaterasu" target="_blank" rel="noopener noreferrer"><strong>NSX Amaterasu</strong></a> works.</p>
+<p>The fire\_mode collection will usually have multiple entries for each weapon, all using the same <strong>item\_id key</strong>. So when joining the <strong>item\_id collection</strong>, remember to use <strong><a href="https://census.daybreakgames.com/s:iridar/get/ps2/item?name.en=TRAC-5&amp;amp;c:lang=en&amp;amp;c:join=fire_mode^list:1" target="_blank" rel="noopener noreferrer">^list:1</a></strong> modifier, or when searching the fire\_mode collection manually, remember to use <strong><a href="https://census.daybreakgames.com/s:iridar/get/ps2/fire_mode?item_id=43&amp;amp;c:limit=400" target="_blank" rel="noopener noreferrer">&amp;c:limit=400</a></strong> modifier.</p>
+<p><strong>Cone of Fire Bloom:</strong> cof\_recoil</p>
+<p><strong>Short Reload:</strong> reload\_time\_ms</p>
+<p><strong>Reload Chamber Time:</strong> reload\_chamber\_time\_ms</p>
+<p><strong>Pellets Per Shot:</strong> pellets\_per\_shot</p>
+<p><strong>Pellet Spread:</strong> pellet\_spread</p>
+<p><strong>Magnification:</strong> default\_zoom</p>
+<p><strong>Projectile Speed:</strong> muzzle\_velocity</p>
+<p><strong>Minimum Damage:</strong> damage\_min</p>
+<p><strong>Maximum Damage:</strong> damage\_max</p>
+<p><strong>Minimum Damage Range:</strong> damage\_min\_range</p>
+<p><strong>Maximum Damage Range:</strong> damage\_max\_range</p>
+<p><strong>Resistances:</strong> damage\_target\_type, damage\_resist\_type</p>
+<h2>weapon</h2>
+<p><strong>Parent Collections:</strong> item -&gt; item\_to\_weapon</p>
+<p><strong>Key:</strong> weapon\_id – required to join <strong>fire\_group</strong> collection.</p>
+<p><strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Sprint_Recovery" target="_blank" rel="noopener noreferrer">Sprint Recovery Time</a>:</strong> sprint\_recovery\_ms</p>
+<p>A delay before a weapon can be fired after you stop sprinting.</p>
+<p><strong>Equip Time:</strong> equip\_ms</p>
+<p><strong>Unequip Time:</strong> unequip\_ms</p>
+<p><strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Scope-In_and_Scope-Out_Times" target="_blank" rel="noopener noreferrer">Scope In Time</a>:</strong> to\_iron\_sights\_ms</p>
+<p><strong>Scope Out Time:</strong> from\_iron\_sights\_ms</p>
+<h4>Unused or unknown fields</h4>
+<p>weapon\_group\_id, turn\_modifier, move\_modifier</p>
+<h2>fire\_group</h2>
+<p><strong>Parent Collections:</strong>  item -&gt; item\_to\_weapon -&gt; weapon\_to\_fire\_group (list)</p>
+<p>For each <strong>weapon\_id</strong> there are one or several corresponding entries in <strong>fire\_group</strong> collection.</p>
+<p>Each <strong>fire\_group entry</strong> refers to weapon’s in game firemode, such as 3x Burst, Semi Auto, etc.</p>
+<p>Each fire\_group entry has an <strong>index</strong>, which refers to the order of in-game firemodes. Index of 0 corresponds with weapon’s first firemode.</p>
+<p>Most <strong>fire\_group entries</strong> have two <strong>firemode\_id</strong>s. The first defines how the weapon behaves while hip firing, the second – ADSing.</p>
+<h4>Example</h4>
+<p><strong><a href="https://cmdrcyrious.com/how-to-use-daybreak-census-api/&amp;lt;http://census.daybreakgames.com/s:iridar/get/ps2/item?name.en=TRAC-5&amp;amp;c:lang=en&amp;amp;c:join=item_to_weapon(weapon(weapon_to_fire_group^on:weapon_id^to:weapon_id^list:1(fire_group_to_fire_mode^on:fire_group_id^to:fire_group_id^list:1" target="_blank" rel="noopener noreferrer">Link to example query.</a>))&gt;)</strong> First, we have to access TRAC-5’s <strong>weapon\_id</strong> by joining the <strong>item\_to\_weapon collection</strong>. <strong>TRAC-5</strong> has two in-game firemodes, <strong>semi auto</strong> and <strong>auto</strong>. This is represented in the API by fact that there are two entries in <strong>weapon\_to\_fire\_group</strong> collection with TRAC-5’s <strong>weapon\_id</strong>. But first you have to join the item\_to\_weapon collection to access TRA</p>
+<p>Each <strong>weapon\_to\_fire\_group</strong> entry contain a <strong>fire\_group\_id</strong> and <strong>index</strong>.</p>
+<p>The entry with index of 0 refers to TRAC-5’s default in-game firemode – the full auto one. Pressing the in-game <strong>Change Firemode</strong> key basically increases weapon’s current Fire Group index by 1.</p>
+<p>For each <strong>fire\_group\_id</strong>, there are two entries in <strong>fire\_group\_to\_fire\_mode</strong> collection.</p>
+<p>Again, each <strong>fire\_group\_to\_fire\_mode</strong> entry contains a <strong>fire\_mode\_id</strong> and <strong>index</strong>.</p>
+<p>The entry with index of 0 refers to hip fire stats of the weapon, index of 0 refers to ADS stats.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/query-structure.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Click to enlarge</p>
+<p>Each <strong>fire\_mode\_2 entry</strong> completely describes how a weapon performs, so in theory, a weapon can have completely different performance between hip firing and ADSing. Same goes for different in-game firemodes. This is why it’s possible for <a href="http://cmdrcyrious.com/planetside2/weapons/sidearms/#Spiker" target="_blank" rel="noopener noreferrer"><strong>Spiker</strong></a> to have a secondary charge up mode.</p>
+<h3>Additional Fields</h3>
+<p>For some specific weapons, <strong>fire\_group entries</strong> also contain some crucial stats:</p>
+<p><strong>transition\_duration\_ms</strong> – how long does it take a weapon to switch to this fire group.</p>
+<p><strong>chamber\_duration\_ms</strong> – how long does it take to cycle a <strong><a href="http://cmdrcyrious.com/planetside2/weapons/sniper-rifles/#Bolt_Action_Chamber_Time" target="_blank" rel="noopener noreferrer">Bolt Action</a></strong> or <strong><a href="http://cmdrcyrious.com/planetside2/weapons/shotguns/#Pump_Action_Shotguns" target="_blank" rel="noopener noreferrer">Pump Action</a></strong> weapon between shots. To calculate actual <strong>time between shots</strong>, you need to add together the <strong>chamber\_duration\_ms</strong> and <strong>refire\_ms</strong>.</p>
+<p><strong>can\_chamber\_ironsights</strong> – whether a Bolt Action or Pump Action weapon can be cycled between shots while the user Aims Down Sights.</p>
+<p><strong>spool\_up\_ms</strong> – how long does it take for a spool-up weapon to reach its maximum Rate of Fire. Ex. <a href="http://cmdrcyrious.com/planetside2/weapons/heavy-weapons/#T7_Mini-Chaingun" target="_blank" rel="noopener noreferrer">T7 Mini-Chaingun</a></p>
+<p><strong>spool\_up\_initial\_refire\_ms</strong> – initial Refire Time of a spool-up weapon.</p>
+<h2>fire\_group\_to\_fire\_mode</h2>
+<p>A pass-through collection between <strong>fire\_group</strong> and <strong>fire\_mode\_2</strong>. In addition to <strong>fire\_mode\_id</strong>s, also contains <strong>indexes</strong> of relevant fire\_modes.</p>
+<h2>fire\_mode\_2</h2>
+<p>This collection is much trickier to access than <strong>fire\_mode</strong>, and requires a multi-level join. However, in return it provides a much clearer structure and more stats.</p>
+<p><strong>Collection:</strong> fire\_mode\_2</p>
+<p><strong>Parent collections:</strong> item -&gt; item\_to\_weapon -&gt; weapon\_to\_fire\_group (list) -&gt; </p>
+<p>fire\_group\_to\_fire\_mode (list) -&gt; fire\_mode\_2</p>
+<p>Check this <strong><a href="https://cmdrcyrious.com/how-to-use-daybreak-census-api/&amp;lt;http://census.daybreakgames.com/get/ps2/item?name.en=TRAC-5&amp;amp;c:join=item_to_weapon^on:item_id^to:item_id(weapon_to_fire_group^on:weapon_id^to:weapon_id^list:1(fire_group_to_fire_mode^on:fire_group_id^to:fire_group_id^list:1(fire_mode_2^on:fire_mode_id^to:fire_mode_id" target="_blank" rel="noopener noreferrer">example</a>))&amp;c:lang=en&gt;)</strong> to see which <strong>keys</strong> you need to specify for each join.</p>
+<p><strong>Join key:</strong> fire\_mode\_id</p>
+<p><strong>Contains keys:</strong> player\_state\_group\_id, damage\_direct\_effect\_id, damage\_indirect\_effect\_id</p>
+<h4>Step by step</h4>
+<p><strong>item -&gt; item\_to\_weapon</strong></p>
+<p>To learn weapon’s weapon\_id.</p>
+<p> <strong>item\_to\_weapon -&gt; weapon\_to\_fire\_group (list)</strong></p>
+<p>Here you get a list of weapon’s in-game firemodes, such as “3x burst” and “semi-auto”. Each fire group has an <strong>index</strong>. Index of 0 refers to weapon’s default firemode.</p>
+<p> <strong>weapon\_to\_fire\_group (list) -&gt; fire\_group\_to\_fire\_mode (list)</strong></p>
+<p>Here you get a list of fire modes for each fire group. Usually this will be hip firing and ADSing. Each mentioned firemode will also have an <strong>index</strong>. Usually, index of 0 usually refers to hip firing, and index of 1 to ADSing.</p>
+<p><strong>fire\_group\_to\_fire\_mode (list) -&gt; fire\_mode\_2</strong></p>
+<p>Finally, you get to weapon stats for each firemode.</p>
+<h3>Fields</h3>
+<p><strong>fire\_mode\_2 collection</strong> has the same fields as <strong><a href="http://cmdrcyrious.com/how-to-use-daybreak-census-api/#fire_mode" target="_blank" rel="noopener noreferrer">fire\_mode collection</a></strong>, and more:</p>
+<p><strong>automatic</strong> – defines whether the weapon will continuously fire if you hold the “fire” key.</p>
+<p><strong>move\_modifier</strong> – a multiplicative modifier to player’s movement speed in this firemode. This is how you access weapon’s <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#ADS_Movespeed_Multiplier" target="_blank" rel="noopener noreferrer">ADS Movement Speed Modifier</a></strong>.</p>
+<p><strong>cof\_scalar, cof\_scalar\_moving</strong> – multiplicative multipliers to <strong>Cone of Fire values</strong> written in <a href="http://cmdrcyrious.com/how-to-use-daybreak-census-api/#player_state_group" target="_blank" rel="noopener noreferrer"><strong>Player State Group entries</strong></a>. For example, <strong>Laser Sight</strong> functions by reducing <strong>cof\_scalar</strong> of hip fire fire\_modes. Moving CoFs are already affected by <strong>cof\_scalar</strong>, so <strong>cof\_scalar\_moving</strong> is an additional variable.</p>
+<p><strong>Projectile Velocity aka Muzzle Velocity:</strong> projectile\_speed\_override</p>
+<p>Each projectile in PS2 has a pre-defined velocity. This field will override projectile’s pre-defined velocity. This is a convenient way for developers to set different velocities for different weapons that use the same projectile (e.g. bullet).</p>
+<p><strong>Magnification:</strong> zoom\_default</p>
+<p>This is the field that gets overridden by <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/#Scopes" target="_blank" rel="noopener noreferrer">optics attachments</a></strong>.</p>
+<p><strong>Pellet Spread:</strong> cof\_pellet\_spread</p>
+<p>For non-shotgun weapons, this will be equal to 0.</p>
+<p><strong>Cone of Fire Bloom:</strong> cof\_recoil</p>
+<p><strong>Headshot Damage Multiplier:</strong> damage\_head\_multiplier</p>
+<p>Increase this is by 1 to get a total multiplier. E.g., damage\_head\_multiplier of 1 means the weapon deals 2x damage on headshots.</p>
+<p><strong>Legshot Damage Multiplier:</strong> damage\_legs\_multiplier</p>
+<p>Subtract this value from 1 to get the total multiplier. E.g. damage\_legs\_multiplier of -0.1 means the weapon deals 0.9x damage on legshots.</p>
+<p><strong>fire\_ammo\_per\_shot</strong> – determines how many rounds a weapon spends with each shot. E.g., shotguns fires multiple pellets per shot, but spend only one round per shot. While <a href="http://cmdrcyrious.com/rocket-launchers/#NSX_Masamune" target="_blank" rel="noopener noreferrer"><strong>NSX Masamune</strong></a> fires all 4 rockets at the same time from the hip.</p>
+<p><strong>fire\_auto\_fire\_ms</strong> – sets the weapon’s Refire Rate in fixed burst firemodes.</p>
+<p><strong>fire\_burst\_count</strong> – sets the weapon’s burst length in fixed burst firemodes.</p>
+<p><strong>fire\_charge\_up\_ms</strong> – determines for how long can you hold the fire key before releasing to fire. E.g. <a href="http://cmdrcyrious.com/rocket-launchers/#Lancer_VS22" target="_blank" rel="noopener noreferrer"><strong>Lancer</strong></a>. It is unclear where the information about different charge levels is stored.</p>
+<p><strong>fire\_delay\_ms</strong> – determines the amount of time that passes between you clicking to fire, and the weapon firing. E.g. <a href="http://cmdrcyrious.com/nsx-yumi-highly-technical-weapon-guide/" target="_blank" rel="noopener noreferrer"><strong>NSX Yumi</strong></a>, <a href="http://cmdrcyrious.com/planetside2/weapons/sniper-rifles/#AF-8_RailJack" target="_blank" rel="noopener noreferrer"><strong>RailJack</strong></a>.</p>
+<p><strong>Minimap Fire Detect Range:</strong> fire\_detect\_range</p>
+<p><strong>Refire Time:</strong> fire\_refire\_ms</p>
+<p>The amount of time that must pass between shots. Refire Time also plays an important role in <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Cone_of_Fire_Bloom" target="_blank" rel="noopener noreferrer">CoF Recovery</a></strong> and <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Recoil_Recovery_Delay" target="_blank" rel="noopener noreferrer">Recoil Recovery</a></strong> processes. Can be used to calculate weapon’s <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Fire_Rate" target="_blank" rel="noopener noreferrer"><strong>Rate of Fire</strong></a>:</p>
+<p><code>Rate of Fire = 60 / Refire Time.</code></p>
+<p><strong>Pellets Per Shot:</strong> fire\_pellets\_per\_shot</p>
+<p>How many projectiles a weapon fires with each shot. Important for shotguns and other similar weapons.</p>
+<p><strong>Maximum Indirect Damage:</strong> max\_damage\_ind</p>
+<p><strong>Maximum Indirect Damage Radius:</strong> max\_damage\_ind\_radius</p>
+<p><strong>Minimum Indirect Damage:</strong> min\_damage\_ind</p>
+<p><strong>Minimum Indirect Damage Radius:</strong> min\_damage\_ind\_radius</p>
+<p>Go <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Indirect_Damage" target="_blank" rel="noopener noreferrer"><strong>here</strong></a> to learn about Indirect Damage Mechanics.</p>
+<h4><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Recoil_Mechanics" target="_blank" rel="noopener noreferrer">Recoil</a> Statistics</h4>
+<p><strong>Maximum Recoil Angle:</strong> recoil\_angle\_max</p>
+<p><strong>Minimum Recoil Angle:</strong> recoil\_angle\_min</p>
+<p><strong>First Shot Recoil Multiplier:</strong> recoil\_first\_shot\_modifier</p>
+<p>This is the total multiplier, no need to add or subtract anything.</p>
+<p><strong>Maximum Horizontal Recoil:</strong> recoil\_horizontal\_max</p>
+<p><strong>Minimum Horizontal Recoil:</strong> recoil\_horizontal\_min</p>
+<p><strong>Horizontal Recoil Tolerance:</strong> recoil\_horizontal\_tolerance</p>
+<p><strong>Maximum Vertical Recoil:</strong> recoil\_magnitude\_max</p>
+<p><strong>Minimum Vertical Recoil:</strong> recoil\_magnitude\_min</p>
+<p><strong>Recoil Scaling Stats:</strong> recoil\_increase, recoil\_increase\_crouched, </p>
+<p>recoil\_horizontal\_max\_increase, recoil\_horizontal\_min\_increase</p>
+<p><strong>Recoil Recovery Delay:</strong> recoil\_recovery\_delay\_ms</p>
+<p><strong>Recoil Recovery Rate</strong> aka <strong>Recoil Decrease</strong>: recoil\_recovery\_rate</p>
+<p><strong>recoil\_recovery\_acceleration</strong> – no solid information on how it functions, presumably the value of 1000 means there is no acceleration.</p>
+<h4>Unused or unknown fields</h4>
+<p>grief\_immune, sprint\_fire, turn\_modifier, use\_in\_water, cof\_override, cof\_range, armor\_penetration, shield\_bypass\_pct</p>
+<h2>effect</h2>
+<p><strong>Parent Collection:</strong> fire\_mode\_2</p>
+<p><strong>Join keys:</strong> damage\_direct\_effect\_id, damage\_indirect\_effect\_id</p>
+<p>This collection’s entries contain effects caused by weapons. Usually, they just repeat the weapon’s damage values, but there are exceptions.</p>
+<p>For example, accessing <strong><a href="https://cmdrcyrious.com/how-to-use-daybreak-census-api/&amp;lt;http://census.daybreakgames.com/s:iridar/get/ps2/item?name.en=S1&amp;amp;c:lang=en&amp;amp;c:join=item_to_weapon^inject_at:fire_mode_2(weapon,weapon_to_fire_group^on:weapon_id^to:weapon_id^list:1(fire_group^on:fire_group_id^to:fire_group_id,fire_group_to_fire_mode^on:fire_group_id^to:fire_group_id^list:1(fire_mode_2^on:fire_mode_id^to:fire_mode_id^list:1(effect^on:damage_indirect_effect_id^to:effect_id^list:1(effect_type^list:1" target="_blank" rel="noopener noreferrer">Rocket Launchers’ Indirect Damage Effect</a>)))))&gt;)</strong> allowed to discover the <strong><a href="http://cmdrcyrious.com/rocket-launchers/#Indirect_Damage_Hidden_Distance_Scaling" target="_blank" rel="noopener noreferrer">Hidden Scaling of Indirect Damage based on Rocket Flight Distance</a></strong>.</p>
+<p>Similarly to <a href="http://cmdrcyrious.com/how-to-use-daybreak-census-api/#zone_effect" target="_blank" rel="noopener noreferrer"><strong>zone\_effect collection</strong></a>, you can join the <strong>effect\_type collection</strong> to get textual description of what effect’s parameters do.</p>
+<h2>player\_state\_group</h2>
+<p>Contains some information about weapon’s <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Hip_Accuracy_and_Aim_Accuracy__Cone_of_Fire" target="_blank" rel="noopener noreferrer">Cone of Fire</a></strong> properties, but less than <a href="http://cmdrcyrious.com/how-to-use-daybreak-census-api/#player_state_group_2" target="_blank" rel="noopener noreferrer"><strong>player\_state\_group\_2</strong></a>.</p>
+<p><strong>Parent Collection:</strong> fire\_mode\_2</p>
+<p>Each <strong>fire\_mode\_2 entry</strong> contains a <strong>player\_state\_group\_id</strong>. The <strong>player\_state\_group</strong> collection contains <strong>multiple entries</strong> with the same player\_state\_group\_id.</p>
+<p>Each entry contains the <strong>textual description</strong> of the player state, like “Standing” or “CrouchWalking”, and weapon’s <strong>Minimum Cone of Fire</strong> in that state.</p>
+<p><strong>Fields:</strong> player\_state, min\_cone\_of\_fire</p>
+<h2>player\_state\_group\_2</h2>
+<p>Basically the same as <strong><a href="http://cmdrcyrious.com/how-to-use-daybreak-census-api/#player_state_group" target="_blank" rel="noopener noreferrer">player\_state\_group collection</a></strong>, but with more stats.</p>
+<p><strong>Parent Collection:</strong> fire\_mode\_2</p>
+<p><strong>player\_state\_id</strong> – determines which player stance is being described in this entry.</p>
+<p>| <strong>Player State ID</strong> | <strong>Stance</strong> |  | 0 | Standing Still |  | 1 | Crouching Still |  | 2 | Standing Moving |  | 3 | Sprinting |  | 4 | Falling Long |  | 5 | Crouching Moving | </p>
+<p><strong>can\_iron\_sight</strong> – whether the user can Aim Down Sights in this state. This is likely the field that was changed when players lost the ability to Aim Down Sights while jumping and falling.</p>
+<p><strong>cof\_grow\_rate</strong> – degrees per second, the speed of Cone of Fire expansion when it blooms or when the player moves to a stance with larger Minimum CoF.</p>
+<p><strong>cof\_recovery\_rate</strong> – degrees per second, the speed at of Cone of Fire reduction when the user stops firing or moves to a stance with lower Minimum Cone of Fire.</p>
+<p><strong>Maximum Cone of Fire:</strong> cof\_max</p>
+<p><strong>Minimum Cone of Fire:</strong> cof\_min</p>
+<p><strong>Cone of Fire Recovery Delay:</strong> cof\_recovery\_delay\_ms</p>
+<p>I assume this functions by the same principles as <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Recoil_Recovery_Delay" target="_blank" rel="noopener noreferrer">Recoil Recovery Delay</a></strong>.</p>
+<h4>Unused or unknown fields</h4>
+<p>cof\_shots\_before\_penalty, cof\_recovery\_delay\_threshold, cof\_turn\_penalty</p>
+<h2>fire\_mode\_to\_projectile</h2>
+<p>A pass-through collection between <strong>fire\_mode</strong> or <strong>fire\_mode\_2</strong> and <strong>projectile</strong> collections.</p>
+<h2>projectile</h2>
+<p>Contains information about the projectile used by a weapon in specific <strong>fire\_mode</strong>.</p>
+<p><strong>Parent Collection:</strong> fire\_mode\_2 -&gt; fire\_mode\_to\_projectile -&gt; projectile</p>
+<p><strong>Projectile Speed</strong> aka <strong>Muzzle Velocity:</strong> speed</p>
+<p>Keep in mind that this field will be usually overridden by <strong>projectile\_speed\_override</strong> in <strong>fire\_mode\_2 entry</strong>.</p>
+<p><strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Projectile_Lifespan" target="_blank" rel="noopener noreferrer">Projectile Lifespan</a></strong>: lifespan</p>
+<p><strong><a href="http://cmdrcyrious.com/rocket-launchers/#Dumbfire_Mechanics" target="_blank" rel="noopener noreferrer">Dumbfire Rocket Acceleration:</a></strong> acceleration</p>
+<p><strong>Dumbfire Rocket Maximum Speed:</strong> speed\_max</p>
+<p><strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Muzzle_Velocity" target="_blank" rel="noopener noreferrer">Projectile Gravity</a></strong>: gravity</p>
+<p><strong>drag</strong> – unknown field. Possibly a delay between weapon “firing” and projectile appearing. It seems to be greater than zero only for grenade-like weapons. <a href="https://cmdrcyrious.com/how-to-use-daybreak-census-api/&amp;lt;https://census.daybreakgames.com/s:iridar/get/ps2/projectile?drag=%3E0&amp;amp;c:limit=4000&amp;amp;c:join=fire_mode_to_projectile(fire_group_to_fire_mode^on:fire_mode_id^to:fire_mode_id(weapon_to_fire_group^on:fire_group_id^to:fire_group_id(item_to_weapon^on:weapon_id^to:weapon_id(item^on:item_id^to:item_id" target="_blank" rel="noopener noreferrer">Drag &gt; 0 query.</a>)))&amp;c:lang=en&gt;)</p>
+<p><strong>Projectile Flight Type:</strong> projectile\_flight\_type\_id</p>
+<p>This field can be used to search or join the <strong>projectile\_flight\_typecollection</strong>. This is a small collection with only a few <strong>entries</strong>:</p>
+<ul><li>Ballistic</li><li>True Ballstic – Uses Real Gravity</li><li>Dynamic</li><li>Proximity Detonate</li></ul>
+<p>These descriptions can be used to <em>speculate</em> how the projectile will behave in game.</p>
+<ul><li><strong>Ballistic</strong> type is likely to “detonate” and disappear upon hitting anything.</li><li><strong>Dynamic</strong> type is assigned to grenade-like projectiles, so it means it will bounce around until the lifespan is over, and then it will “detonate”.</li><li><strong>Proximity Detonate</strong> type likely means the projectile will “detonate” when near an eligible enemy object. E.g. flak weapons.</li></ul>
+<p>By “detonate” I mean the projectile will apply its effects. E.g. a bullet will deal direct damage, a rocket will explode and deal direct and indirect damage, a Smoke Grenade will puff out smoke.</p>
+<p><strong><a href="http://cmdrcyrious.com/rocket-launchers/#Lock-on_Mechanics" target="_blank" rel="noopener noreferrer">Lock-on Turn Rate</a></strong>: turn\_rate </p>
+<p><strong><a href="http://cmdrcyrious.com/rocket-launchers/#Lock-on_Mechanics" target="_blank" rel="noopener noreferrer">Lock-on Lose Angle</a></strong>: lockon\_lose\_angle</p>
+<p><strong><a href="http://cmdrcyrious.com/rocket-launchers/#Lock-on_Mechanics" target="_blank" rel="noopener noreferrer">Lock-on Lifespan</a></strong>: lockon\_lifespan</p>
+<p><strong><a href="http://cmdrcyrious.com/rocket-launchers/#Velocity_of_Locked-on_Rockets_is_Unknown" target="_blank" rel="noopener noreferrer">Lock-on Acceleration</a></strong>: lockon\_acceleration</p>
+<p>Still no idea how it works.</p>
+<h2>item\_attachment</h2>
+<p>PlanetSide 2 weapon attachments are also a part of the <strong>item collection</strong>. The <strong>item\_attachment collection</strong> contains <strong>entries</strong> with <strong>item\_id</strong>s of attachments, available to a weapon with a certain item\_id.</p>
+<p><a href="https://census.daybreakgames.com/s:iridar/get/ps2/item?name.en=TRAC-5&amp;amp;c:lang=en&amp;amp;c:join=item_attachment^list:1" target="_blank" rel="noopener noreferrer">Example query.</a><strong>Example response.</strong></p>
+<p><strong>Parent Collection:</strong> item</p>
+<p>Then you can <strong><a href="https://cmdrcyrious.com/how-to-use-daybreak-census-api/&amp;lt;https://census.daybreakgames.com/s:iridar/get/ps2/item?name.en=TRAC-5&amp;amp;c:lang=en&amp;amp;c:join=item_attachment^list:1(item^on:attachment_item_id^to:item_id" target="_blank" rel="noopener noreferrer">join the item collection</a>&gt;)</strong> to get the <strong>item entries</strong> for all attachments, available to a weapon.</p>
+<h2>zone\_effect</h2>
+<p>Among other things, this collection contains <strong>effects of all weapon attachments</strong>.</p>
+<p><strong>Parent Collection:</strong> item</p>
+<p>Most attachment <strong>item entries</strong> have a <strong>passive\_ability\_id</strong> field. You can use this to <strong>join</strong> it with <strong>ability\_id</strong> of <strong>zone\_effect</strong> entries.</p>
+<h2>zone\_effect\_type</h2>
+<p>This collection contains <strong>textual descriptions</strong> of values stored in <strong>zone\_effect entries</strong>.</p>
+<p>Each <strong>zone\_effect entry</strong> has a <strong>zone\_effect\_type\_id</strong> field. It can be used to create a <strong>join</strong> with <strong>zone\_effect\_type collection</strong>.</p>
+<h2>Attachment Effects Examples</h2>
+<p>Figuring out attachment effects can get kinda messy, so let’s go over a few examples so you get the general idea of how it works.</p>
+<h3><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/#Scopes" target="_blank" rel="noopener noreferrer">Scope</a></h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/scope-attachment.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong><a href="https://cmdrcyrious.com/how-to-use-daybreak-census-api/&amp;lt;https://census.daybreakgames.com/s:iridar/get/ps2/item?name.en=TRAC-5&amp;amp;c:lang=en&amp;amp;c:join=item_attachment^list:1(item^on:attachment_item_id^to:item_id(zone_effect^on:passive_ability_id^to:ability_id^list:1(zone_effect_type" target="_blank" rel="noopener noreferrer">Query.</a>))&gt;)</strong> Here we are interested in four things.</p>
+<ol><li>The attachment affects all fire\_groups.</li><li>The attachment affects only fire\_modes with index of 1 (usually, ADSing).</li><li>The attachment changes weapon’s default zoom in affected firemodes.</li><li>The value is changed by adding “1” to it.</li></ol>
+<p>M-77B has Default Zoom of “6”, so the 7x Scope Attachment simply adds “1” to that value.</p>
+<h3><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/#Forward_Grip_Advanced_Forward_Grip" target="_blank" rel="noopener noreferrer">Forward Grip</a></h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/forward-grip-effects.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>The “string1” description tells us the affected weapon statistic is Maximum Recoil Angle.</p>
+<p>“param1” and “param2” are set to “-1”, which means that all weapon’s Fire Modes are affected by the attachment, i.e. regardless if you hip fire or ADS and from which stance.</p>
+<p>“param3” is not set for this effect.</p>
+<p>“param4” is set to “-25”. Description of param4 is “PcntAddend”, where “pcnt” stands for “percent”. <strong>So this effect of the Forward Grip reduces Maximum Recoil Angle by 25%.</strong></p>
+<p>But there are other effects of the Forward Grip.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/forward-grip-effects2.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>For example, here we can see that for TRAC 5 Forward Grip also increases Equip Time by 150ms.</strong></p>
+<h3><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/#Suppressor" target="_blank" rel="noopener noreferrer">Suppressor</a></h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/suppressor-effects.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Here we can see that Suppressor for TRAC 5 reduces Max Damage Range by 5m and Min Damage Range by 20m.</p>
+<h3><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/#HSNV_IRNV_scope" target="_blank" rel="noopener noreferrer">HS/NV Scope</a></h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/HSNV-effect.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Increases the time it takes to ADS by 150ms.</p>
+<p>For comparison, by default it takes TRAC 5 another 150ms to ADS:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/scope-in-time.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/#Underbarrel_Grenade_Launcher_UBGL" target="_blank" rel="noopener noreferrer">Underbarrel Grenade Launcher</a></h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/grenade-launcher-attachment.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong><a href="https://cmdrcyrious.com/how-to-use-daybreak-census-api/&amp;lt;https://census.daybreakgames.com/s:iridar/get/ps2/item?name.en=TRAC-5%20S&amp;amp;c:lang=en&amp;amp;c:join=item_attachment^list:1(item^on:attachment_item_id^to:item_id(zone_effect^on:passive_ability_id^to:ability_id^list:1(zone_effect_type" target="_blank" rel="noopener noreferrer">Example query.</a>))&gt;)</strong> We can see that Underbarrel Grenade Launcher attachment adds a Fire Group to a weapon. <strong><a href="https://cmdrcyrious.com/how-to-use-daybreak-census-api/&amp;lt;https://census.daybreakgames.com/s:iridar/get/ps2/fire_group?fire_group_id=48&amp;amp;c:join=fire_group_to_fire_mode^list:1(fire_mode_2^on:fire_mode_id^to:fire_mode_id" target="_blank" rel="noopener noreferrer">Let’s query that Fire Group</a>&gt;)</strong>. Here’s what we get:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/grenade-launcher-query.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>This way we can access exact stats of the Grenade Launcher, and learn that it takes 0.8 seconds to switch to it.</p>
+<h2>Ability Effects Examples</h2>
+<p><strong>zone\_effect collection</strong> also contains effects of passive and active abilities, such as Zealot Overdrive Engine of VS MAXes. <a href="https://cmdrcyrious.com/how-to-use-daybreak-census-api/&amp;lt;http://census.daybreakgames.com/s:iridar/get/ps2/item?name.en=Zealot%20Overdrive%20Engine%201&amp;amp;c:lang=en&amp;amp;c:join=zone_effect^on:activatable_ability_id^to:ability_id^list:1(zone_effect_type" target="_blank" rel="noopener noreferrer">Example query.</a>&gt;)</p>
+<p>We can query the <a href="http://census.daybreakgames.com/get/ps2/armor_info?armor_info_id=1081,1080,1083,1084,1085" target="_blank" rel="noopener noreferrer"><strong>armor\_info collection</strong></a> and learn that ZOE 1 increases incoming damage  by 20% from all sides except Bottom.</p>
+<h2>Armor and Resistances</h2>
+<p>You can learn about Armor and Resistance interactions <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Health_Armor_and_Resistances" target="_blank" rel="noopener noreferrer">here</a></strong>.</p>
+<p><a href="http://census.daybreakgames.com/s:iridar/get/ps2/profile_2?c:limit=500" target="_blank" rel="noopener noreferrer"><strong>profile\_2</strong></a> – contains unit names and their <strong>profile\_id</strong>s.</p>
+<p><a href="http://census.daybreakgames.com/get/ps2/profile_armor_map?c:limit=100" target="_blank" rel="noopener noreferrer"><strong>profile\_armor\_map</strong></a>, <a href="http://census.daybreakgames.com/get/ps2/profile_resist_map?c:limit=100" target="_blank" rel="noopener noreferrer"><strong>profile\_resist\_map</strong></a> – contains <strong>armor\_info\_id</strong>s and <strong>resist\_info\_id</strong>s for built-in armor and resistance values for all profiles, using <strong>profile\_id</strong> as key.</p>
+<p><a href="http://census.daybreakgames.com/get/ps2/armor_facing?c:limit=100" target="_blank" rel="noopener noreferrer"><strong>armor\_facing</strong></a> – contains descriptions for different <strong>armor\_facing\_id</strong>s. You need those to learn which armor\_info is applied to which unit’s projection.</p>
+<p><a href="http://census.daybreakgames.com/get/ps2/armor_info?c:limit=100" target="_blank" rel="noopener noreferrer"><strong>armor\_info</strong></a> – contains the actual information about units’ armor, both built-in and acquired from items and abilities, using <strong>armor\_info\_id</strong> as key.</p>
+<p><a href="http://census.daybreakgames.com/get/ps2/resist_info?c:limit=100" target="_blank" rel="noopener noreferrer"><strong>resist\_info</strong></a> – same as armor\_info, but for resistances. <strong>resist\_info\_id</strong> is key.</p>
+<p><a href="http://census.daybreakgames.com/get/ps2/resist_type?c:limit=100" target="_blank" rel="noopener noreferrer"><strong>resist\_type</strong></a> – contains textual descriptions for different <strong>resist\_type\_id</strong>s. Incomplete and sometimes not exactly accurate.</p>
+<p>For example, it doesn’t contain Damage Type 9 – Tank Mine and Damage Type 11 – C4. It also won’t tell you that AV Grenades use Damage Type 34 – Infantry Rockets.</p>
+<p>All of these collections are utilized in the “<strong><a href="http://cmdrcyrious.com/toolbox/#Resistances_Page" target="_blank" rel="noopener noreferrer">Resistances</a></strong>” and “<strong><a href="http://cmdrcyrious.com/toolbox/#Built_In_Resistances_Page" target="_blank" rel="noopener noreferrer">Built In Resistances</a></strong>” pages of the <strong><a href="http://cmdrcyrious.com/toolbox/" target="_blank" rel="noopener noreferrer">Toolbox</a></strong>, which calculates weapon damage to vehicles.</p>
+<p>This <strong><a href="https://cmdrcyrious.com/how-to-use-daybreak-census-api/&amp;lt;http://census.daybreakgames.com/s:iridar/get/ps2/profile_2?profile_id=26&amp;amp;c:join=profile_resist_map^on:profile_id^to:profile_id^list:1^show:resist_info_id(resist_info(resist_type^show:description^inject_at:resist_type" target="_blank" rel="noopener noreferrer">multi-join query</a>)&amp;c:join=profile_armor_map^on:profile_id^to:profile_id^list:1^hide:rank(armor_info(armor_facing^show:description^inject_at:facing))&gt;)</strong> will show you built-in Armor and Resistance values for the Lightning.</p>
+<h2>Credits</h2>
+<p>Huge thanks to <strong>/u/L33-the-3rd</strong>, <strong>/u/shaql</strong>, <strong>/u/fisu\_</strong>, <strong>/u/Wrel</strong> and <strong>/u/nehylen</strong> for teaching me how to use the API. You guys are awesome, wouldn’t be here without y’all.</p>
+<p>Thanks for sharing.</p>
+<p>I want to prepare a script. For example!</p>
+<p>Server Name | Server Location | Server Population | Server Status</p>
+<p>I would like to draw some information like this, would you give me a sample in it? Also https://census.daybreakgames.com/get/ps2/ I could not see anything related to the server in it.</p>
+<p>Please</p>
+<p>Sorry I don’t know anything about using API for info about servers/population. Try asking FISU or H\_Q\_.</p>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

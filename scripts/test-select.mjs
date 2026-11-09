@@ -40,6 +40,7 @@ export const CORE_IMPORTERS = 5;
 export const BIG_CHANGE = 8;
 export const PATTERN_READS = [
   ["i18n/", ["test/i18n.test.mjs"]],
+  ["archive/", ["test/archive.test.mjs"]],
   ["oracle/backend/", ["test/oracle-engine.test.mjs", "test/oracle-commander.test.mjs", "test/oracle-focus.test.mjs", "test/oracle-defend.test.mjs"]],
   ["data-ps/", ["test/ps-room.test.mjs", "test/ranks-unique-query.test.mjs"]],
   ["data/", ["test/ranks-unique-query.test.mjs"]],

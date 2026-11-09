@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>How to benchmark PlanetSide 2 | CMDRCyrious.com — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>How to benchmark PlanetSide 2 | CMDRCyrious.com</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd>CMDRCyrious</dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/how-to-benchmark-planetside-2/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/how-to-benchmark-planetside-2/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2017-10-27</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Live</dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<p><span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/178-FPS-1.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> PlanetSide 2 historically lacks any form of benchmark. Most players rely on anecdotal framerate, provided by in-game FPS counter, which can be enabled by pressing</p>
+<p><strong>Alt + F</strong> or typing <strong>/fps</strong> in chat.</p>
+<p>The benchmarking method below using FRAPS is still far from perfect, but it’s a big step in the right direction. RTSS instead allows to monitor performance and components in real time.</p>
+<h2>RTSS</h2>
+<p><a href="https://www.msi.com/page/afterburner" target="_blank" rel="noopener noreferrer">MSI afterburner</a> is a widely used tool to both adjust cooling curves for GPU and/or overclock them, and offers built-in <strong>monitoring for most hardware components</strong>, including CPU and RAM.</p>
+<p>The add in <strong>Riva Tuner Statistic Server</strong> is an overlay that displays these monitored components in real time while gaming (the display can be hidden by keybindings), and allows to track performance over time and current usage.</p>
+<h2><a href="http://www.fraps.com/download.php" target="_blank" rel="noopener noreferrer">FRAPS</a></h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/11/6xvjjv0V-fraps-logo.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>FRAPS is a free video capture and benchmarking program. Some of its video recording functionality is locked behind a paywall, but it doesn’t matter for our purposes. We’re going to use FRAPS to collect PlanetSide 2 performance information while you’re playing, notably <strong>Average FPS</strong> and <strong>Frame Time</strong>. You can learn about both statistics in <a href="https://www.vortez.net/articles_pages/frame_time_analysis,1.html" target="_blank" rel="noopener noreferrer"><strong>this excellent article</strong></a>.</p>
+<p>Let’s get started:</p>
+<p><strong>(1)</strong> Download and install <a href="http://www.fraps.com/download.php" target="_blank" rel="noopener noreferrer"><strong>FRAPS</strong></a>.</p>
+<p><strong>(2)</strong> Launch FRAPS and set it up like this:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/11/fraps-settings-1.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>(3)</strong> Log into PlanetSide 2.</p>
+<p><strong>(4)</strong> Start benchmarking by pressing the <strong>FRAPS benchmarking key</strong>, F11 by default.  You will notice that FPS counter in the corner disappears.</p>
+<p><strong>(5)</strong> FRAPS will record <strong>Frame Times</strong> – how much time it took your PC to render each individual frame.</p>
+<p><strong>(6)</strong> When benchmarking is over, the FPS counter will appear again. You can also manually end benchmarking by pressing F11 again. FRAPS will put recorded Frame Times in a file in the FRAPS benchmarking folder.</p>
+<p>To actually analyze the recorded Frame Times, you’re gonna need another program.</p>
+<h2><a href="https://sourceforge.net/projects/frafsbenchview/" target="_blank" rel="noopener noreferrer"><strong>FRAFS Bench Viewer</strong></a></h2>
+<p><a href="https://sourceforge.net/projects/frafsbenchview/files/latest/download" target="_blank" rel="noopener noreferrer"><strong>Download</strong></a> and install FRAFS Bench Viewer.</p>
+<p>Whenever you launch it, it will automatically open your FRAPS Benchmarking Folder. To analyze a recorded benchmark, simply drag and drop the corresponding <strong>“frametimes”</strong> file on Bench Viewer’s window.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/11/ps2-frame-time-1024x554.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Vertical spikes on the graph represent frames that take abnormally long to render. In-game lags and framerate drops will be shown on this graph as long sequences of frames with long Frame Time.</p>
+<p>It’s important to visually analyze Frame Time data, because framerate drops, lags and stuttering will not have a considerable effect on Average FPS, yet there will be a noticeable impact on gaming experience.</p>
+<p>Keep in mind that <strong>in PlanetSide 2, you will get Frame Time lags whenever you use a terminal or go through a loading screen</strong>, and it’s just a part of normal gameplay. Single Frame Time lags can appear even with good hardware, and are imperceptible to human eye. You only should be worried if you see a whole block of spikes:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/11/stutter-1-1024x553.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>At the top left, there’s a table with useful statistics:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/11/bench-viewer-stats-1.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Avg. time</strong> refers to overall average Frame Time. It is used to calculate your <strong>Average FPS</strong> to the right.</p>
+<p><strong>1% time</strong> refers to average Frame Time of 1% of worst frames. In other words, during this benchmark, the 99% of frames took less than <strong>1% time</strong> to render. You can treat it as your meaningful “minimum FPS”, that more or less ignores the occasional imperceptible frame skip.</p>
+<h2>PlanetSide 2 benchmarking problem</h2>
+<p>As mentioned, PlanetSide 2 will invariably experience framerate drops whenever you interact with a terminal or go through a loading screen, which often happens whenever you die or use a teleporter. Opening the map or other menus is likely to lower the framerate as well.</p>
+<p>This is a problem, because it will pollute your benchmarking results. There are several ways around this.</p>
+<h2>Short Benchmarking</h2>
+<p>This method gives you the most clean results, but they will vary from test to test. The basic idea is to go for short benchmarking time, around 1-5 minutes, and ***avoid<em>:</em>*</p>
+<ul><li>Dying</li><li>Interacting with terminals or teleporters</li><li>Opening your map</li></ul>
+<p>The easiest way to facilitate that would be to equip Stalker Cloaking and stay crouched and cloaked throughout the whole benchmark.</p>
+<p>Find a battle that looks like it’s gonna last longer than for your intended benchmarking time. A large slug fest on open ground between bases would be ideal. Make sure to remember or write down the approximate number of players in that area, e.g. 24-48 vs 24-48.</p>
+<p>Watch the battle, but do not actually participate.</p>
+<p>The problem with this method is that your framerate will change depending on how much action is going on screen. This method works well if you want to “stress test” your system, and figure out if there are any problems with <strong>skipped frames and stutter</strong>.</p>
+<h2>Extended Benchmarking</h2>
+<p>With this method, you remove any time constraints from FRAPS benchmarking, and simply enable it in the background whenever you play. Ideally, you want to accumulate a few hours of data. It will be polluted by loading terminals and interface interactions, but if you go for a really large sample size, and assuming you play roughly the same every day, this benchmark can potentially give you more accurate <strong>Average FPS</strong> as an overall performance indicator. Just keep in mind that your actual in-combat FPS is likely to be different from that Average FPS.</p>
+<h2>Benchmarking + Video Recording</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/frametimes-video-1024x555.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>This one is my favorite.</p>
+<p>If you usually play with Shadowplay or ReLive enabled, simply enable recording at the same time as you start benchmarking, and end them together as well.</p>
+<p>This way you will get an FPS timeline, accompanied by a video, which will tell you how much action was going on screen during this or that FPS, and what happened when you were getting framerate stutter.</p>
+<ul><li>If it happens while you’re interacting with a terminal, then it’s not a problem.</li><li>But if you see stutter during combat, it’s an indication that you need to lower settings or upgrade your hardware.</li></ul>
+<h2>Closing</h2>
+<p>Obviously, your performance will vary a lot depending on how much action is going on screen. Benchmarking over extended periods of time will help reduce the variance somewhat, but we all know how much PlanetSide 2 changes from day to day. But it’s still better than trying to infer meaningful information from in-game FPS counter.</p>
+<p>Benchmarking this way will allow you to perform more meaningful analysis if you decide to <a href="http://cmdrcyrious.com/planetside2/performance-guide/#Hardwareand_Overclocking" target="_blank" rel="noopener noreferrer"><strong>overclock</strong></a> or <strong><a href="http://cmdrcyrious.com/pc-building-services/" target="_blank" rel="noopener noreferrer">upgrade your hardware</a></strong>, or compare the performance cost of different graphics settings on your PC specifically.</p>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

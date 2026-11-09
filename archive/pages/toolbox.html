@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>Iridar's Weapon Analysis Toolbox | CMDRCyrious.com — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>Iridar's Weapon Analysis Toolbox | CMDRCyrious.com</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd>CMDRCyrious</dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/toolbox/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/toolbox/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2016-12-07</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Live</dd></div>
+      <div><dt data-i18n="arc.attrNote">Note</dt><dd>interactive tool — saved text only, functionality not preserved</dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<p><em>This video is outdated and doesn’t include many new features, but it explains the general purpose and spirit behind this tool.</em></p>
+<p>This Excel Spreadsheet is a culmination of years of work on theorycrafting PlanetSide 2 weapon mechanics. It uses Visual Basic macros to pull weapon stats from DBG API, to calculate damage and recoil statistics and draw graphs to visualize them.</p>
+<p>This toolbox arms you with all necessary tools for comprehensive weapon analysis.</p>
+<p>Current version: v6h</p>
+<p><strong>Attention!</strong> When you first open the toolbox, you will see a yellow bar with a security warning about macros. Click “Enable content” to allow the use of macros, or the Toolbox will not function.</p>
+<h2>Structure</h2>
+<p>The Excel file has 9 pages:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/pages-1.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Each page fulfills its own, clearly defined function, but some of the pages can transfer data to each other.</p>
+<p>Pages contain cells of different color:</p>
+<p><span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">soft-orange</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/soft-orange.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> Soft orange cells. These cells store automatically imported weapons stats, and they also accept manual input. You can edit them without fear of breaking anything.</p>
+<p><span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">light-grey</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/light-grey.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> Light grey cells contain calculations and references to other cells,</p>
+<p><strong>do not edit</strong> grey cells, or you will break the tool’s functionality.</p>
+<p><span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">pale-yellow</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/pale-yellow.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> Pale yellow cells store values for configuration, and you may need to edit them in specific situations.</p>
+<p><span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Toolbox chosen cell</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/chosen-cell.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> Light green filling indicates that this cell’s value has been selected, likely by double clicking.</p>
+<p><span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Toolbox tooltip</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/tooltip-1.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> Small red triangles in the corner of a cell indicate a tooltip. Put your mouse over the cell to display the tooltip.</p>
+<p><strong>Note:</strong> Toolbox’s calculations always assume worst case scenario: weapon damage is rounded down and target health is rounded up.</p>
+<h2>Stats Page</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Toolbox stats page</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/stats.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>This huge table has stats of all known primary and secondary infantry weapons. Normally you don’t work with this table itself, and only use it to export stats into other pages:</p>
+<p><strong>Double click or right click</strong> on any weapon to copy its stats into soft orange cells on other pages.</p>
+<p>Other functions:</p>
+<p><strong>Double click on Item ID</strong> of the weapon to open a <a href="http://cmdrcyrious.com/weapon-stats/#Full_Query" target="_blank" rel="noopener noreferrer">API query</a> for that weapon in your default browser.</p>
+<p>The Toolbox is not perfect, and may sometimes pull wrong stats, or fail to pull stats at all. There is no substitute for looking at a query with your own eyes.</p>
+<p><strong>Select a weapon and click “Export 1” button.</strong> A window with exported weapon’s stats  and attachment list will show.</p>
+<h3>Pulling stats and adding new weapons</h3>
+<p>The <strong>Pull Stats</strong> button will initiate a download of weapon stats from DBG API, using <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Where_to_get_weapon_stats" target="_blank" rel="noopener noreferrer">API queries</a></strong> for each Item ID in the first column. When a new weapon is released, simply insert its <strong>Item ID</strong> to the end of the list, and its stats will be downloaded as well.</p>
+<p>If you don’t know weapon’s Item ID, you can find it out <strong><a href="http://cmdrcyrious.com/weapon-stats/#How_to_find_out_weapon8217s_Item_ID" target="_blank" rel="noopener noreferrer">this way</a></strong>,  or simply copy-paste it from Attachments Page.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">add-new-weapons</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/add-new-weapons.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Keep in mind that “Name” column is not downloaded, and you will have to fill it manually for any new weapon releases.</p>
+<p>The “Date” field near the “pull stats” button stores the date when stats were last downloaded. Normally, you should re-download stats only after a patch that changed something.</p>
+<h2>Damage Page</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">damage toolbox page</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/damage-1.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>This page serves to analyze weapon damage at different ranges and/or with different attachments. You can compare two weapons at the same time.</p>
+<p>On “Stats” page, <strong>double click</strong> on a weapon to export its stats for the first weapon, and <strong>right click</strong> for the second weapon.</p>
+<p>You can add attachments to weapons by clicking corresponding Check Boxes. If the weapon doesn’t have a certain attachment, you will be informed with a pop up window, but you can’t see whether weapon has access to an attachment on this page without clicking the Check Box.</p>
+<p>The calculations for Minimum and Maximum damage ranges are self-explanatory. To calculate weapon’s damage stats at certain range, enter it into soft orange Range cell.</p>
+<p>Both weapons are analyzed against the same target, which you can configure this way:</p>
+<h3>Target Settings</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/target-config.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Below the Health block, there are reference tables for Health, Nanoweave Armor and Kinetic Armor. <strong>Double click</strong> on Health or Damage Multiplier value to automatically apply it.</p>
+<p>Both weapons have Headshot Damage Multiplier listed. You can <strong>double click</strong> on its value to apply it to the Damage Multiplier.</p>
+<p>Since both weapons fire at the same target, and damage multiplier is tied to the target, it may be inconvenient to compare headshot properties of two weapons with different headshot multipliers.</p>
+<p>The most common way to analyze a weapon is to look at its performance against the default target with 1000 HP and against a Full Nanoweave target with 1250 Effective HP, so these are the default parameters, and statistics for standard Full Nano target are calculated automatically.</p>
+<h3>BTK Thresholds</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Toolbox BTK Thresholds</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/thresholds.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>The “Calculate Thresholds” button will calculate <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#BTK_Thresholds" target="_blank" rel="noopener noreferrer"><strong>BTK Thresholds</strong></a> for both weapons.</p>
+<p>For example, the results on the picture above read as:</p>
+<p>Gauss Rifle kills in 6 shots at 0m to 10m, and in 7 shots at 11m+.</p>
+<p>“Draw Graph” button will also recalculate Thresholds and then draw a comparative graph.</p>
+<h2>Recoil Page</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/recoil-page-1024x402.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>This page serves to analyze weapons’ recoil properties.</p>
+<p>On the “Stats” page, <strong>double click</strong> on the weapon’s name will import its stats to the left position, and the <strong>right click</strong> to the right position.</p>
+<p>Click <strong>Calculate Stability</strong> to calculate <a href="http://cmdrcyrious.com/highly-technical-how-to-analyze-a-weapon/#Stability" target="_blank" rel="noopener noreferrer"><strong>Average and Maximum horizontal Deviations</strong></a> and to update Probability Distribution Graph.</p>
+<p>The Visual Basic macro fires a virtual gun in bursts with listed “Burst Length” for the amount of times, listed in “Simulations” cell, and then averages out the results.</p>
+<p>“Average Deviation” is the average distance of the crosshair from the burst’s starting crosshair position. The lower it is, the better is the weapon’s horizontal recoil.</p>
+<p>“Graph Scale H” refers to the maximum Horizontal Recoil value, visible on the graph. The default value of 0.7 is fine for most cases, but depending on how good / bad the weapon’s horizontal recoil is, you may need to increase or decrease this value to see the graph in necessary detail.</p>
+<p>Vertical Recoil module is self explanatory, you’re mostly interested in Vertical Recoil per Second. For the purposes of vertical recoil, it’s better to have high RoF and low vertical recoil per shot, to ensure nice and soft, consistent pull.</p>
+<p>FSRM value is listed mostly for your reference, it doesn’t participate in any calculations.</p>
+<p>The <strong>Average Deviations</strong> listed in Recoil Angle block show how much a weapon is affected by <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Recoil_Angle" target="_blank" rel="noopener noreferrer"><strong>Recoil Angle Variance</strong></a>. They basically show you the size of the yellow area:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Serpent Recoil Pattern</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/6jhgkh.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Serpent’s recoil pattern – not included with the Toolbox</p>
+<h2>Cone of Fire Page</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/cof-page-1024x624.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>This page displays weapon’s Cone of Fire in different stances and shows how it is affected by various attachments.</p>
+<p>For now, this page has limited functionality due to <strong><a href="https://www.reddit.com/r/Planetside/comments/6z5uax/results_of_the_testing_related_to_my_angular_size/" target="_blank" rel="noopener noreferrer">Angular Size research fiasco</a></strong>. At this moment, the CoF Page will calculate weapon’s CoF Size after a certain amount of shots, necessary to kill the specified target at different ranges.</p>
+<p>However, without a way to calculate weapon’s accuracy at that range, it is more or less pointless.</p>
+<p>The CoF Page will also calculate a more useful statistic: <strong>Cone of Fire Bloom per Point of Damage Done</strong>. This statistic with an extra long name ties weapon’s damage output to accuracy loss, which allows you to objectively determine which weapon requires more burst firing, even with perfect accuracy, and regardless of weapon’s RoF or DPS.</p>
+<p>You can combine weapon’s starting CoFs and CoF Bloom PPD to make an educated guess which weapon will be more accurate at range, and which weapon will require more burst firing.</p>
+<h2>Built In Resistances Page</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/BuiltInResistancesPage-1024x362.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Most units have built-in resistances and weaknesses to some of the Damage Types. This page can download these values from DBG API. To do so, double click on the Profile Name of the unit in the left list.</p>
+<p>Keep in mind that this page is also used for inner calculations of the Resistances Page, so the values you pull may be automatically overridden.</p>
+<p>At the top left, you can click “Pull Profiles” button to pull Profile IDs and Profile Names for all units in PS2. You may need to do this if a new vehicle or class is added to the game. You can also scrub the API for deployable items, such as Spitfire Turrets and Hardlight Barriers, as well as misc items, such as Infantry Terminals.</p>
+<h2>Resistances Page</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/resistances3-1024x419.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>This page allows you to calculate weapon damage against vehicles, taking into account their <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Health_Armor_and_Resistances" target="_blank" rel="noopener noreferrer"><strong>Health, Armor</strong> and <strong>Resistances</strong></a> to specific damage types.</p>
+<p>It also lets you apply <strong>additional defensive certifications</strong> to the vehicle. The damage is calculated for all different directions.</p>
+<p>This is one of the more complicated pages, and it requires a connection to the Internet in order to function. <a href="https://vimeo.com/233738859" target="_blank" rel="noopener noreferrer">A video demonstration with a couple of examples.</a></p>
+<p><strong>1) Select the weapon category, and then the weapon</strong> from the lists on the upper left. Weapon’s stats for its default firemode will be automatically imported from the API. You can change the weapon’s <strong>firemode</strong> in the respective listbox. This can be necessary for some of the weapons, like the <strong><a href="http://cmdrcyrious.com/planetside2/weapons/lmgs/#NC6A_GODSAW" target="_blank" rel="noopener noreferrer">GODSAW</a></strong>.</p>
+<p>Each weapon has fields for <strong>Direct</strong> and <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Indirect_Damage" target="_blank" rel="noopener noreferrer"><strong>Indirect Damage</strong></a>. You can specify the <strong>distance to the target</strong> for Direct Damage, and <strong>distance to the explosion</strong> for Indirect Damage in the orange <strong>Range</strong> boxes on the lower left:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">resistances range</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/resistances-range.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>2) Select the target unit</strong> from the list in the middle by <em>double clicking</em> on its name. Unit’s Health will be copy pasted from the listed, and unit’s Armor and Resistance to the selected weapon will be imported from the API.</p>
+<p>Keep in mind that API does not contain unit health values. Health values in the toolbox were acquired by in-game testing, and in case of a patch that affects vehicle health values, values in the Toolbox will have to be adjusted manually.</p>
+<p>Direct Damage, Indirect Damage, as well as hits to kill will be automatically calculated and displayed on the target’s “doll”.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/resistance-legend.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Each side of the target has five values associated with it:</p>
+<ul><li><strong>Armor</strong> reduces all incoming damage from this direction by a certain percent. In game, only vehicle’s orientation relative to the damage source is important. It doesn’t matter which part of the vehicle you’re hitting, only your position relative to the vehicle.</li><li><strong>Direct Damage</strong> is dealt on direct hits.</li><li><strong>Indirect Damage</strong> is dealt on direct and indirect hits, though most of armored vehicles are immune to most Indirect Damage sources.</li><li>The amount of hits required to destroy the vehicle with specified Direct OR Indirect Damage is also listed. Keep in mind that these damage sources are not added together. So if the unit takes damage from both Direct and Indirect Damage, you will have to calculate the required amount of hits manually.</li></ul>
+<p>When you import the target unit by double clicking on its name, the list on the upper right will update with some of the vehicle’s defensive certifications. Double click on the certification name to add it to the vehicle.</p>
+<p>When a defensive certification has several ranks, you only have to click on the rank you wish to add. E.g. when you wish to make calculations for Composite Armor 4, you don’t have to double click on Composite Armor 1-2-3 before that.</p>
+<p>Weapon-Target Resistance values will update from the API whenever you change the weapon or the target unit.</p>
+<p>You can also manually edit all values in orange boxes to analyze theoretical scenarios. Do not edit the grey boxes, or you will break the tool’s functionality.</p>
+<p><strong>Additional Functions:</strong></p>
+<p>For both Direct and Indirect Damage, you can double click the cell with damage value to apply it to the target and subtract it from target’s health. This is convenient when you wish to calculate damage from several sources.</p>
+<p><strong>Example:</strong> you want to find out how much Rocklet Rifle hits it takes to destroy a Lightning in the rear armor after one brick of C4. <strong>Video demonstration.</strong></p>
+<p>For both Direct and Indirect Damage Types, you can click a “<strong>Find Weapons with that Damage Type</strong>” button. The toolbox will find all weapons that use that Damage Type, and put them into Weapon Name listbox.</p>
+<p>Keep in mind that not everything is perfectly represented in the API. For example, AV Grenades use the same Damage Resist Type as Rocket Launchers, but you will not see AV Grenades in the list if you search for that Damage Type.</p>
+<p>You can click “<strong>Export List</strong>“, and a pop-up window will show, and you will be able to copy from it.</p>
+<p>Note there are two “<strong>Find Weapons with that Damage Type</strong>” buttons,  one for Direct Damage, and one for Indirect Damage.</p>
+<p>There are also two self-descriptive buttons <strong>“Find Units with Resistances to that Damage Type”</strong>. When clicked, the toolbox will provide you with a list of units, with the amount or resistance specified in brackets. You can export that list in a similar fashion.</p>
+<p>If you have doubts whether the Toolbox correctly displays the Resistance relationship between your current target and weapon, you can click “<strong>Refresh Resistances</strong>” to make sure. You may want to do this if you manually change weapon’s Damage Resist Type for an experiment’s sake.</p>
+<p>Sometimes, the listboxes on this page will bug out, and won’t let you scroll down to the final element in the list. Blame Excel. You can temporarily fix this issue by clicking the “<strong>Fix Listboxes</strong>” button.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">toolbox damage per minute DPM</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/DPM.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>For both Direct and Indirect Damage, the Toolbox will <strong>calculate Damage Per Minute (DPM)</strong>. It will take Reload speed and Refire Time into account.</p>
+<p>To get correct DPM numbers, you often have to manually edit some of the orange cells:</p>
+<ul><li>For tank cannons and other vehicle weapons, you should apply a <strong>Reload Speed Upgrade</strong>. Maximum value is usually 10%, but check in-game descriptions to be sure.</li><li>For Rocket Launchers, <strong>Lock-on Time and Charge Time (<a href="http://cmdrcyrious.com/rocket-launchers/#Lancer_VS22" target="_blank" rel="noopener noreferrer">Lancer</a>) are not calculated</strong>, so you’ll have to manually add them into Reload Time. Lancer’s charge damage is not available in the API either, so you’ll have to change Direct Damage manually as well.</li><li>DPM calculations don’t yet take into account “shotgun” weapons, such as <a href="http://cmdrcyrious.com/rocket-launchers/#NSX_Masamune" target="_blank" rel="noopener noreferrer"><strong>NSX Masamune</strong></a>. Speaking of Masamune, it has an <strong><a href="https://www.reddit.com/r/Planetside/comments/7nd2gd/why_is_the_annihilator_taken_over_the_es_lockons/ds10q99/" target="_blank" rel="noopener noreferrer">edgy reload mechanic</a></strong> in ADS mode.</li></ul>
+<h2>Implants Page</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/Implants-Page.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>This page will perform calculations for <strong><a href="http://cmdrcyrious.com/planetside2/equipment/implants/" target="_blank" rel="noopener noreferrer">Implants</a></strong>. In order to function it requires statistical data on implant drop chances, such as <strong><a href="https://www.reddit.com/r/Planetside/comments/97slxw/pts_new_implant_drop_rates/e4akaec/" target="_blank" rel="noopener noreferrer">this spreadsheet by RegulusMagnus</a></strong>. It is normally acquired by purchasing a ton of Deluxe Packs and Recycler on the <strong><a href="http://launch.daybreakgames.com/installer/PS2_Test_setup.exe" target="_blank" rel="noopener noreferrer">Public Test Server</a></strong>, and writing down how many of each thing have you gotten.</p>
+<p>Enter the data in orange boxes. <strong>Group Size</strong> column refers to number of implants in each rarity group. E.g. how many exceptional implants are there in total.</p>
+<p>Then enter how many of Deluxe Packs and/or Recyclers you “buy”, and the spreadsheet will calculate how much will it cost, how many implants you will receive, what is their ISO-4 value, what are the chances that at least one of the dropped implants will belong to a certain rarity group, and what are the chances of getting a specific implant you want.</p>
+<p><strong>Known issues:</strong></p>
+<ul><li>Sometimes an error pops up when reaching out to the API. Just try again whatever you were doing.</li><li>Resist Shield does not work yet. If you wish to make an analysis for the Resist Shield, simply add 35% Resistance to orange cells on the lower left.</li><li>The tool does not fully support charge up weapons, such as <a href="http://cmdrcyrious.com/rocket-launchers/#Lancer_VS22" target="_blank" rel="noopener noreferrer"><strong>Lancer</strong></a>. You have to manually multiply the damage.</li><li>It will not calculate weapon’s TTK.</li><li>It will not take into account <a href="http://cmdrcyrious.com/rocket-launchers/#Indirect_Damage_Hidden_Distance_Scaling" target="_blank" rel="noopener noreferrer"><strong>rocket launcher indirect damage scaling</strong></a>.</li><li>Weapons’ faction isn’t always determined correctly.</li><li>Damage values of Explosive Bolts, Typhoon Rocklets, Anti-Vehicle Grenades, C4 and Tank Mines are not accessible in the API. I have discovered their more or less precise damage values by in-game testing, and then hardcoded those values in the Toolbox. They will have to be manually updated if a patch changes them.</li><li>Damage for the Underbarrel Grenade Launcher is available in the API, but it’s formatted differently, so it was easier to hardcode its damage as well.</li><li>Other explosives, like Frag Grenades and Sticky Grenades simply do not work (yet). They could potentially get hardcoded as well.</li></ul>
+<h2>Attachments Page</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">attachments toolbox page</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/attachments-1024x293.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>This page stores a table with known effects of known attachments on all weapons. When you add attachments to weapons on other pages, this is where their effects are taken from.</p>
+<p>To update the table, click “<strong>Pull Attachments</strong>“. A VBA Script will pull <strong>Names</strong> and <strong>Item IDs</strong> for all weapons from weapon categories on <strong>Categories Page</strong>, and then pull attachment data for them.</p>
+<p>You can also <strong>double click on weapon’s name</strong> to open a JSON query for that weapon’s attachment list. This may be necessary if a weapon has access to atypical attachment, since the table is formatted only for known effects of known attachments.</p>
+<h2>Categories Page</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/categories-page-1024x431.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>This page has two functions. On the left, there is a list of weapon categories. The “Attachments” page will use this list to pull attachments for all weapons in these categories.</p>
+<p>You can click “Pull Categories” to download a full list of Item Categories from the API, but then you will have to manually clean it up, and remove everything except infantry weapons, so the Attachments Page doesn’t get overloaded.</p>
+<p>On the right, there is a similar list of weapon categories. For each weapon category there is a list of weapons in that category. This list is used by the “Resistances” page. To update this list, click “Pull Categories”, clean up the downloaded list, then copy paste it to the right and click “Pull Weapons”. Save, close and reopen the Toolbox so that changes take effect on the Resistances Page.</p>
+<h2>Temp Page</h2>
+<p>This is a temporary page for storing calculations results. You don’t need to interact with this page at all.</p>
+<h2>Changelog and To-Do</h2>
+<p>v1 – initial release.</p>
+<p>v2 – added CoF import functionality and reworked Cone of Fire page. Special thanks to <a href="https://www.reddit.com/r/Planetside/comments/5h49v2/tool_release_weapon_analysis_toolbox_pulls_stats/day1vw5/" target="_blank" rel="noopener noreferrer">FISU</a>. Weapon names also update when you add attachments.</p>
+<p>v2a – added the ability to double click on weapon’s Item ID to open JSON queries.</p>
+<p>v2b – Pull Stats will also pull Falling CoF (for flying / jumping with Carbines). Falling CoF will also be imported into Cone of Fire page. Also fixed a bug that any value of 1 character long was not pulled from the API.</p>
+<p>v3 – The toolbox will now also pull ADS movespeed multiplier and other missing stats. Fixed several issues, minor improvements.</p>
+<p>v3a – Fixed a Reload Time export.</p>
+<p>v3b – Added the button to pull information about weapon’s projectiles.</p>
+<p>v4a – Added functionality to download exact effects of weapon attachments and apply them to weapons.</p>
+<p>v4c – Cleaned up unnecessary code in order for the Toolbox to work with 64 bit version of Excel. Also fixed a minor bug with HVA on Damage page.</p>
+<p>v4d – Downloaded weapon and attachment stats for latest patch, including NSX Tanto.</p>
+<p>v4c – Cleaned up unnecessary code in order for the Toolbox to work with 64 bit version of Excel. Again.</p>
+<p>v4f – Stripped most of the functionality of the CoF Page, because it was based on the <a href="https://www.reddit.com/r/Planetside/comments/6z5uax/results_of_the_testing_related_to_my_angular_size/" target="_blank" rel="noopener noreferrer">wrong Angular Size research</a>. Added “CoF Bloom Per Point of Damage Done” instead. Also updated weapon stats for the latest patch.</p>
+<p>v5 – Added a second weapon to the Recoil Page. Added brand new “Resistances” page to calculate weapon damage to vehicles.</p>
+<p>v5a – Resistance Page will now correctly display and apply Composite Armor to air units.</p>
+<p>v5b – added infantry and MAX defensive certifications.</p>
+<p>v6 – added Built In Resistances Page. Reworked Resistances page, now it has increased performance and works completely differently behind the scenes, with more precision.</p>
+<p>v6b – fixed a minor bug, removed remnants of unused code causing errors on some PCs.</p>
+<p>v6c – fixed a minor bug related to resistances not updating properly. Fixed Blockade Armor not adding bonus HP.</p>
+<p>v6d – hardcoded a few more weapons: UBGL, Explosive Bolts, Typhoon Rocklets. Added Engineer’s turrets. Added some more functionality to the Resistances page.</p>
+<p>v6e – added damage-per-minute calculations to Resistances page. This feature was not thoroughly tested, so treat it as a beta.</p>
+<p>v6f – added new weapons.</p>
+<p>v6g – added new weapons (Flash / Doku BRs)</p>
+<h2>To Do</h2>
+<p>~~Determine if BASR time between shots = chamber time.~~ <a href="http://cmdrcyrious.com/planetside2/weapons/sniper-rifles/#Bolt_Action_Chamber_Time" target="_blank" rel="noopener noreferrer">Done.</a></p>
+<p>Overall weapon rating based on multigon square calculations.</p>
+<p>CoF / RoF probability distribution to determine weapon consistency (done in alpha)</p>
+<p>Reword the horizontal recoil probability distribution graph to be more accurate</p>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

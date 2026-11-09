@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>PlanetSide 2 Minimap Guide | CMDRCyrious.com — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>PlanetSide 2 Minimap Guide | CMDRCyrious.com</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd><span data-i18n="arc.attrUnknown">Not recorded in the source</span></dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/planetside2/beginner-guides/minimap/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/planetside2/beginner-guides/minimap/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2017-11-12</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Live</dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Minimap</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Minimap.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h2>Minimap</h2>
+<p>Minimap is your main source of tactical information. You can zoom in and out of the minimap by pressing the \[ and \] bracket keys, and enlarge it by pressing H. Some players bind the zoom function to their mousewheel.</p>
+<p>Enemy infantry players are shown on the minimap when they:</p>
+<ol><li>Fire unsuppressed weapons within <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Fire_Detect_Range" target="_blank" rel="noopener noreferrer"><strong>Fire Detect Range</strong></a> of you.</li><li>Get spotted by you or an ally within 150m of you.</li><li>Get detected by <a href="http://cmdrcyrious.com/planetside2/beginner-guides/minimap/#Radar_Detection_Tools" target="_blank" rel="noopener noreferrer"><strong>Radar Detection Tools</strong></a>.</li></ol>
+<p><span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Minimap\_Enemy\_Infantry</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Minimap_Enemy_Infantry.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> There are two ways an enemy player’s position can appear on your minimap:</p>
+<p>1\. <strong>As a dot.</strong> It will show player’s position at the time of detection event. For example, when somebody fires an unsuppressed weapon near you, he will be put on your minimap as a dot. The dot will linger for a couple of seconds, but will not follow the enemy movement.</p>
+<p>2\. <strong>As an arrow.</strong> Enemy’s position is continuously transmitted, and you will know the direction the enemy is facing. This helps you figure out what the enemy is up to. Note, that minimap has a delay of about a second, and will show where a moving enemy was a moment ago, but not where he is currently. If a player already appears as an arrow, he will not produce dot signatures.</p>
+<p><strong>Objectives</strong>, like <strong><a href="http://cmdrcyrious.com/planetside2/beginner-guides/bases/#Capture_Points" target="_blank" rel="noopener noreferrer">capture points</a></strong> and <strong><a href="http://cmdrcyrious.com/planetside2/beginner-guides/bases/#Shield_Generators" target="_blank" rel="noopener noreferrer">generators</a></strong>, are also marked on the minimap. When an enemy is capturing a capture point, or overloading a generator, you will see its icon blinking on the minimap.</p>
+<p>So if you see you’re losing a control point, you know for sure there’s at least one enemy there.</p>
+<p>Nearby enemy vehicles automatically appear on your minimap, from hundreds of meters. This can be reduced and completely removed by <strong><a href="http://cmdrcyrious.com/planetside2/vehicles/#Defense_Slot" target="_blank" rel="noopener noreferrer">Vehicle Stealth</a></strong> certifications, but vehicles will still briefly appear on minimap when firing within their weapons’ Fire Detect Range.</p>
+<p><strong>Deployed Sunderers</strong> have minimap detection range of just 20m even without Vehicle Stealth.</p>
+<ul><li>Enemy MANA Turret</li></ul>
+<ul><li>Allied Motion Spotter</li></ul>
+<ul><li>Enemy Spawn Beacon</li></ul>
+<ul><li>Infantry-based enemy radar detection tools are also marked on the minimap, so you can know when you yourself are detected.</li><li>Engineer’s MANA turrets also put themselves on the minimap when firing, and can be spotted by players.</li><li>Enemy Motion Spotters automatically appear on the minimap when you are within their detection range.</li><li>Other deployables, like mines, spawn beacons and medic’s Shield Regeneration Fields need to be manually spotted by players.</li></ul>
+<p>The minimap is an invaluable source of information, but because enemies have a number of ways to stay off your minimap, you must combine other sources of information to have a more complete picture.</p>
+<p>Tips:</p>
+<ul><li>where is one enemy, there are always more. Just because you see one dot on the minimap does not guarantee there will be only one enemy.</li><li>there is no verticality to the minimap. If you were spotted on one level of the base, try to fool the enemy by going up or down a floor.</li></ul>
+<h2>Radar Detection Tools</h2>
+<h2>Infantry tools</h2>
+<ul><li><strong><a href="http://cmdrcyrious.com/planetside2/classes/infiltrator/#Tools" target="_blank" rel="noopener noreferrer">Infiltrator’s Detection Tools.</a></strong></li><li><a href="http://cmdrcyrious.com/planetside2/weapons/sidearms/#Hunter_QCX" target="_blank" rel="noopener noreferrer"><strong>Hunter QCX Crossbow</strong></a>‘s Detect Bolt. Functions the same way as Infiltrator’s Recon Detect Device.</li></ul>
+<h2>Vehicle tools</h2>
+<ul><li><strong><a href="http://cmdrcyrious.com/planetside2/vehicles/#Utility_Slot" target="_blank" rel="noopener noreferrer">Scout Radar.</a></strong> Functions similarly to Infiltrator’s Motion Spotter. Available to Flash, ESF and Valkyrie.</li><li><strong><a href="http://cmdrcyrious.com/planetside2/vehicles/#Defense_Slot" target="_blank" rel="noopener noreferrer">Proximity Radar.</a></strong> Functions similarly to Recon Detect Device. Has shorter range than Scout Radar. Available to all ground vehicles except for Flash.</li></ul>
+<h2><strong>Notes</strong></h2>
+<ul><li>You can’t see the effect of vehicle radars on your minimap.</li><li>Radar Detection Tools cannot detect vehicles in any way.</li><li>Infantry detection is based on the stance of the moving unit. You can avoid detection by staying immobile, or moving while crouched.</li><li>Radar Detection Tools are limited to the minamp. They will not show a triangle above a detected enemy’s head.</li><li>Being cloaked does not prevent you from being detected by Radar Detection Tools.</li><li>The <strong><a href="https://www.youtube.com/watch?v=NGIkuyv9wfI" target="_blank" rel="noopener noreferrer">Engagement Radar</a></strong> is an exception to many rules stated above. It is a defense slot, available to ESFs and Lightnings, which detects enemy aircraft within several hundred meters.</li></ul>
+<h2>Using Mouse on Minimap</h2>
+<p>You can press Alt to enable the mouse cursor, and use the mouse to right click on the minmap to set waypoints, the same way you do on the main map.</p>
+<p>If you’re leading a squad, you can also right click on the minimap to place reinforcement requests and smoke signals, and click on individual players to invite them to squad, or promote them within the squad.</p>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

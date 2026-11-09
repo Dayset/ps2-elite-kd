@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>LMGs — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>LMGs</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd>Iridar (Institoros)</dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/planetside2/weapons/lmgs/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/planetside2/weapons/lmgs/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2017-07-26</dd></div>
+      <div><dt data-i18n="arc.attrSnapshot">Snapshot date</dt><dd>20230504122354</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Wayback</dd></div>
+      <div><dt data-i18n="arc.attrNote">Note</dt><dd>Wayback snapshot; live copy empty</dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/unknown-LMG.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>LMGs are a primary weapon class, available only to <strong><a href="http://cmdrcyrious.com/planetside2/classes/heavy-assault/" target="_blank" rel="noopener noreferrer">Heavy Assaults</a></strong>. LMGs in PlanetSide 2 fulfill a different role than in real life, and basically play like heavy Assault Rifles. Each faction has a lot of LMGs, but there is surprisingly little variety. Half of them could be removed, and little of value would be lost.</p>
+<p>You can find general tips on using PlanetSide 2 weapons in the <strong><a href="http://cmdrcyrious.com/planetside2/weapons/gunplay-guide/" target="_blank" rel="noopener noreferrer">Gunplay Guide</a></strong> and some LMG-specific tips in <strong>Heavy Assault guide</strong>.</p>
+<h2>LMG Mechanics</h2>
+<p>LMGs follow the same <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/" target="_blank" rel="noopener noreferrer">Weapon Mechanics</a></strong> as other weapons. LMGs are characterized by these traits:</p>
+<p><strong>Lots of ammunition, but longer reloads.</strong> This allows LMGs to comfortably lead several engagements back-to-back, without reloading, and unleash a sustained stream of damage on MAXes and light vehicles.</p>
+<p><strong>Low to average DPS.</strong> This means that LMGs often have to go for headshots in order to have a competitive TTK. This is somewhat offset by the fact that Heavy Assaults have an overshield to outlast the enemy.</p>
+<p><strong>Heavy recoil, especially Vertical Recoil.</strong> Most LMGs require conscious and deliberate recoil control when engaging enemies at medium to long range, more so than any other primary weapon class.</p>
+<p><strong>Bad initial accuracy on the move.</strong> LMGs have either 0.35 or 0.4 ADS Moving CoF, which means that LMGs have to fire in shorter bursts than most other weapons to maintain the same CoF accuracy.</p>
+<p>When engaging targets at longer ranges, LMGs earlier encounter the threshold where the user has to remain stationary in order to land even a shot on a target.</p>
+<p><strong>Low Recoil Recovery Rate and high First Shot Recoil.</strong> While LMGs have to burst fire more, they are simultaneously worse at it.</p>
+<p><strong>Longer Equip Times.</strong> LMGs take more time to equip, and take longer to recover after a grenade throw or quick knife swing. That’s kind of a big deal, since Heavy Assaults spend a lot of time switching back and forth between their primary weapon and their rocket launcher.</p>
+<p><strong>Worse Hip Fire accuracy than Assault Rifles’, but still notably better than Sniper Rifles’.</strong> For most LMGs, hip firing isn’t an option outside of few meters.</p>
+<p>Some LMGs also get access to <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/#Extended_Magazine" target="_blank" rel="noopener noreferrer">Extended Mags</a></strong> rail attachment, which in most cases doubles magazine size.</p>
+<h2>Attachment Availability</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/LMG-attachments.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>All LMGs have access to basic <strong>Forward Grip</strong> and <strong>Laser Sight</strong>, as well as <strong>Darklight Flashlight</strong> and <strong>Suppressor</strong> (with a rare exception on that one).</p>
+<p><strong>You can learn about exact effects of attachments <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/" target="_blank" rel="noopener noreferrer">here</a></strong>.</p>
+<p>SPA = Soft Point Ammo</p>
+<p>HVA = High Velocity Ammo</p>
+<p>ALS  = Advanced Laser Sight</p>
+<p>AFG = Advanced Forward Grip</p>
+<p>Ext. Mags = Extended Magazine</p>
+<p>Flash Supp. = Flash Suppressor</p>
+<p>Comp = Compensator.</p>
+<h2>LMG Tier List</h2>
+<p>This tier list has been compiled by <strong><a href="https://www.reddit.com/user/miniux" target="_blank" rel="noopener noreferrer">/u/miniux,</a></strong> a very skilled an experienced player from the infamous Das Anfall outfit:</p>
+<p>…I’ve done the LMG directive about 10 times (all factions at least twice) along with an aurax of every one.</p>
+<p>In this tier list, Miniux gives each LMG a <em><strong>subjective</strong></em> score, that shows how much a <em><strong>skilled</strong></em> user is likely to benefit from the weapon.</p>
+<p>In other words, <strong>a low score doesn’t mean a weapon is completely unusable</strong> and struggles to kill anyone, and <strong>a high score doesn’t mean the weapon just kills everyone by itself</strong>, and all you need to do is point it at the enemy. <strong>Score is more about how efficiently the weapon can convert skill into kills.</strong></p>
+<p>The main goal is to showcase which weapons are considered “good” by the more skilled part of the community, and why.</p>
+<p>\[spoiler title=”The Tier List”\]</p>
+<h2>Terran Republic</h2>
+<p><strong>CARV</strong></p>
+<p><strong>Score: 7.5/10</strong></p>
+<p><em>The default TR weapon is an excellent all-around gun, primarily because of its 143/750 damage model. Use a grip and you can reach out to 50+m while retaining accuracy. More aggressive players may prefer the MSW-R if they are constantly reloading.</em></p>
+<p><strong>CARV-S</strong></p>
+<p><strong>Score: 5/10</strong></p>
+<p><em>While not awful, this doesn’t have any real perks that make up for its lower DPS. You don’t need 200 bullets in a magazine, ever, and the rest of the attachments are useless.</em></p>
+<p><strong>MSW-R</strong></p>
+<p><strong>Score: 8.5/10</strong></p>
+<p><em>The MSW-R is the meta gun for almost every skilled TR HA. It has both a 143/750 damage model, a short reload, and excellent hipfire (for a LMG).</em> </p>
+<p><strong>Rhino</strong></p>
+<p><strong>Score: 3/10</strong></p>
+<p><em>The Rhino is a bad weapon. It has abysmal DPS, offset by nothing of value. There is no realistic situation in which the Rhino will be better than a CARV.</em> </p>
+<p><strong>TMG</strong></p>
+<p><strong>Score: 6.5/10</strong></p>
+<p><em>The TMG is the closest weapon the TR have to the SAW. It has a decent mix of 167 damage, a 75 bullet clip and a short reload (considering the damage/mag). It’s a good weapon if you can consistently land headshots out to 35-40m.</em> </p>
+<p><strong>Bull</strong></p>
+<p><strong>Score: 5/10</strong></p>
+<p><em>The Bull doesn’t really do anything particularly well. It has a small clip, terrible DPS, a decent reload and passable hipfire. There are no real benefits to offset the DPS.</em></p>
+<p><strong>Butcher</strong></p>
+<p><strong>Score: 8/10</strong></p>
+<p><em>The Butcher is an excellent weapon in certain situations. In a straight up fight it’s an inferior CARV, but it shines when you need to be able to fire a 143/750 weapon for 150 bullets. It has less range than the CARV due to no Forward Grip, but makes up for it with 3-4 extra engagements of ammo available.</em></p>
+<h2>New Conglomerate</h2>
+<p><strong>SAW</strong></p>
+<p><strong>Score: 7.5/10</strong></p>
+<p><em>Excellent weapon if you can aim. Triple-tap people at any range with 100 rounds before reloading. Good if you know you’re going to be outside in a fight (tech plants, amp stations).</em> </p>
+<p><strong>SAW-S</strong></p>
+<p><strong>Score: 4/10</strong></p>
+<p><em>Doesn’t have anything going for it. Low damage, attachments mean nothing. Don’t use.</em> </p>
+<p><strong>Anchor</strong></p>
+<p><strong>Score: 9/10</strong></p>
+<p><em>Best all-around NC LMG in the game. Triple-taps out to 15m with softpoint. Competitive 600/167 model with great hipfire and a decently quick reload. Easy to control recoil.</em> </p>
+<p><strong>EM1</strong></p>
+<p><strong>Score: 2/10</strong></p>
+<p><em>Useless weapon. Too low damage to matter. No real perks to make up for it.</em> </p>
+<p><strong>EM6</strong></p>
+<p><strong>Score: 6.5/10</strong></p>
+<p><em>Not a bad weapon, but not near the Anchor. Decent DPS with a large mag size can be okay in some situations, but usually overshadowed by Anchor in CQC, and SAW at range.</em></p>
+<p><strong>GD-22S</strong></p>
+<p><strong>Score: 7/10</strong></p>
+<p><em>The same weapon as the Anchor, with a little bit less DPS in exchange for controllable recoil and very fast reloading. Can be a viable alternative but not often used by those who can control recoil of the anchor.</em> </p>
+<p><strong>GODSAW</strong></p>
+<p><strong>Score: 8.5/10</strong></p>
+<p><em>Same as the SAW, but less bullets/mag in exchange for a shorter reload. Has a useless alt fire mode. For good players this is an upgrade over the SAW, you don’t need 100 rounds of 400 damage headshots and it punishes you less for reloading.</em></p>
+<h2>Vanu Sovereignty</h2>
+<p><strong>Orion</strong></p>
+<p><strong>Score: 8/10</strong></p>
+<p><em>The default VS LMG is a meta gun. It’s very similar to the TR’s MSW-R with a few very small changes in recoil. I consider it slightly worse due to not being able to equip SPA.</em></p>
+<p><strong>Flare</strong></p>
+<p><strong>Score: 6/10</strong></p>
+<p><em>The Flare is the VS “equivalent” of the SAW. It’s similar to the TMG in many respects, but it can equip SPA. It’s not a bad weapon but it’s nowhere near Orion/BG for more situations.</em></p>
+<p><strong>Polaris</strong></p>
+<p><strong>Score: 2/10</strong></p>
+<p><em>More attachment options and additional mag capacity don’t mean anything when the basic damage model is trash. The Polaris is a bad gun.</em></p>
+<p><strong>Pulsar LSW</strong></p>
+<p><strong>Score: 7/10</strong></p>
+<p><em>After a number of changes, the Pulsar now fits the niche where the SVA use to be. It has a larger mag capacity than the Orion at the cost of some DPS. If you’re comfortable winning 1v1s, the extra mag capacity can be nice.</em> </p>
+<p><strong>SVA-88</strong></p>
+<p><strong>Score: 6/10</strong></p>
+<p><em>The SVA is mostly a worse Pulsar LSW after the changes. It gives up several useful attachments (Flash Suppressor and Ext. Mags) for two useless ones (HVA and Compensator). It has worse recoil and also blocks a \</em>huge\<em> amount of your screen.</em></p>
+<p><strong>Ursa</strong></p>
+<p><strong>Score: 1/10</strong></p>
+<p><em>The Ursa is a bad weapon. It has abysmal damage and no real positive features. If you insist on using a 167 damage weapon on VS, use the Flare.</em></p>
+<p><strong>Betelgeuse</strong></p>
+<p><strong>Score: 9.5/10</strong></p>
+<p><em>Often considered the best farming weapon in the game, the Betel combines the perks of the Orion with infinite ammo, allowing you to extend and kill without engineer support indefinitely. Instead of reloading, it “loses heat”. The main benefit of this is it does so even when not equipped, allowing you to switch to a pistol while waiting.</em></p>
+<h2>Nanite Systems</h2>
+<p><strong>NS-15M</strong></p>
+<p><strong>Score: 8.5/10</strong></p>
+<p><em>Either you will enjoy the NS-15M or you won’t. Its terrible damage model is offset by the 0.75ADS multiplier and low recoil. It’s primarily used by players who can consistently land headshots and heavily rely on movement. Not recommended to newer players or those who cannot consistently land headshots at all ranges.</em></p>
+<p><strong>Naginata</strong></p>
+<p><strong>Score: 3/10</strong></p>
+<p><em>Naginata is an awful weapon for good players. In order to make the weapon anything less than a worse NS-15, you have to stand still. This negates a large benefit of NS weapons (0.75 ADS), while also being a terrible idea in general. High FSRM punishes bursting.</em></p>
+<h2>Starting LMGs</h2>
+<p>These LMGs are available by default. They come with free <strong>Forward Grip</strong>, <strong>1x Reflex Sight</strong> and a bit of faction flavor.</p>
+<h2>T9 CARV</h2>
+<p>| DAMAGE | 143 @ 10m – 112 @ 65m |  | RATE OF FIRE | 750 RPM |  | VELOCITY | 600 m/s |  | AMMO | 100 / 400 |  | RELOAD TIME | 5.4 sec / 6.2 sec | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/T9-CARV.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Auto</p>
+<p>Hip CoFs: 3.5 / 4 / 4 / 4.5 / 0.1</p>
+<p>ADS CoFs: 0.1 / 0.2 / 0.1 / 0.4 / 0.05</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 50m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 1.2 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.5 / 11.25</p>
+<p>Vertical Recoil: 0.4</p>
+<p>First Shot Recoil Multiplier: 2x</p>
+<p>Recoil Angle: 0 / 0</p>
+<p>Horizontal Recoil: 0.214 / 0.214</p>
+<p>Horizontal Recoil Tolerance: 0.9</p>
+<p>Recoil Recovery Delay: 80</p>
+<p>Recoil Recovery Rate: 12</p>
+<p><strong>Attachments:</strong> Suppressor, Forward Grip, Laser Sight, Darklight Flashlight, Flash Suppressor</p>
+<p>T9 CARV is a bulky and oppressive machinegun. It has lots of firepower, and thanks to the large magazine, can dish it out for a while. However, CARV also has a ton of recoil, and its accuracy leaves something to be desired.</p>
+<p>T9 CARV is an ADS powerhouse… if you can control it.</p>
+<p>– \[RMIS\] nicigee</p>
+<h2>NC6 Gauss SAW</h2>
+<p>| DAMAGE | 200 @ 10m – 167 @ 85m |  | RATE OF FIRE | 500 RPM |  | VELOCITY | 600 m/s |  | AMMO | 100 / 400 |  | RELOAD TIME | 6.5 sec / 7.5 sec | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/NC6-Gauss-SAW.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Auto</p>
+<p>Hip CoFs: 3.5 / 4 / 4 / 4.5 / 0.14</p>
+<p>ADS CoFs: 0 / 0.2 / 0 / 0.4 / 0.07</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 50m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 1.2 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.5 / 11.25</p>
+<p>Vertical Recoil: 0.55</p>
+<p>First Shot Recoil Multiplier: 1.65x</p>
+<p>Recoil Angle: 0 / 0</p>
+<p>Horizontal Recoil: 0.175 / 0.175</p>
+<p>Horizontal Recoil Tolerance: 0.525</p>
+<p>Recoil Recovery Delay: 120</p>
+<p>Recoil Recovery Rate: 12</p>
+<p><strong>Attachments:</strong> Suppressor, Laser Sight, Darklight Flashlight, High Velocity Ammunition, Compensator, Advanced Forward Grip</p>
+<p>Gauss SAW is a controversial weapon. It deals the highest damage per shot among all LMGs, and in skilled hands becomes an amazing weapon for medium to long range combat. Basically, a portable autocannon, with enough ammo to last for days.</p>
+<p>However, it faces <strong>a number of issues</strong> and gets a lot of heat for:</p>
+<p><strong>(1) One of the highest values for Vertical Recoil per Shot.</strong> When coupled with low RoF, it makes for very choppy, rough recoil pattern. It can be especially hard to get under control to an inexperienced player.</p>
+<p><strong>(2)</strong> For that reason, it’s not recommended to use SAW with a scope with magnification stronger than 1x. Which creates <strong>another problem:</strong> it’s a ranged LMG and you can’t even get decent magnification for it, as it would make your aim jump all over the screen.</p>
+<p><strong>(3)</strong> Strong vertical recoil <strong>makes Compensator a mandatory attachment</strong>, which carries penalties to Minimap Firing Detection Distance, and to hip fire accuracy, which is already fairly terrible.</p>
+<p><strong>(4)</strong> Due to low Rate of Fire and damage model, <strong>SAW gets hard countered in close quarters by Nanoweave Armor</strong>, and has to go for headshots to compensate.</p>
+<p><strong>(5) Poor initial ADS Moving accuracy</strong> means SAW struggles to reliably land multiple headshots on enemies outside \~20m, despite being a hardcore ranged LMG.</p>
+<p><strong>(6)</strong> Finally, <strong>ranged LMGs are simply not needed a lot of the time</strong>. Most of the “useful” fighting happens at ranges where most other LMGs would be just as effective, without sacrificing so much close range power.</p>
+<p>SAW is high risk, high reward. Frustrating most of the time, but there is no better feeling than 3 tapping an enemy at long range. A Nightmare for inexperienced players, and more of a meme weapon if you compare it to a real “tool” like a GD-22S, Pulsar LSW or T32 Bull.</p>
+<p>– \[RMIS\] nicigee</p>
+<p>Many players have spoken against the fact that Gauss SAW is the default LMG, saying that <a href="http://cmdrcyrious.com/planetside2/weapons/lmgs/#GD-22S" target="_blank" rel="noopener noreferrer"><strong>GD-22S</strong></a> should fulfill that role instead, as it’s much more versatile.</p>
+<p>But it’s not all bad. There are some <strong>redeeming qualities</strong> as well:</p>
+<p><strong>(1) Consistent performance over range.</strong> SAW has only 1 tier of damage degradation, and kills standard infantry target roughly in the same amount of shots at all ranges. Headshots are especially devastating.</p>
+<p><strong>(2)</strong> SAW’s **Vertical Recoil <em>per Second</em> isn’t that big.<strong> It is actually <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/LMG-vertical-recoil-per-second-comparison.png" target="_blank" rel="noopener noreferrer"></strong>only above average**</a> for LMGs even without the Compensator, and below average with one.</p>
+<p><strong>(3)</strong> As said, <strong>SAW has potential for amazing ranged performance</strong>. It’s an excellent weapon for open field combat. It just takes a bit of getting used to its recoil pattern. SAW is actually very controllable and accurate for an LMG.</p>
+<h2>Orion VS54</h2>
+<p>| DAMAGE | 143 @ 10m – 112 @ 65m |  | RATE OF FIRE | 750 RPM |  | VELOCITY | 540 m/s |  | AMMO | 50 / 250 |  | RELOAD TIME | 3 sec / 3.444 sec | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/Orion-VS54.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Auto</p>
+<p>Hip CoFs: 2.25 / 2.5 / 2.5 / 3.25 / 0.1</p>
+<p>ADS CoFs: 0.1 / 0.2 / 0.1 / 0.4 / 0.04</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 40m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 0.8 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.25 / 0</p>
+<p>Vertical Recoil: 0.4</p>
+<p>First Shot Recoil Multiplier: 2.25x</p>
+<p>Recoil Angle: 0 / 0</p>
+<p>Horizontal Recoil: 0.22 / 0.22</p>
+<p>Horizontal Recoil Tolerance: 0.8</p>
+<p>Recoil Recovery Delay: 80</p>
+<p>Recoil Recovery Rate: 13</p>
+<p><strong>Attachments:</strong> Darklight Flashlight, Suppressor, Forward Grip, Laser Sight, Flash Suppressor</p>
+<p>Orion is the staple close range LMG for Vanu Sovereignty. Overall, it handles more like a big Assault Rifle, and it’s noticeably more mobile than most LMGs. It has faster reload, shorter Equip Time, and its hip fire accuracy isn’t that bad. It also has a good damage output, but pays in magazine size. Similarly to CARV, it has a ton of recoil, and will require some deliberate handling to be effective at medium range.</p>
+<p>One of the more unusual features is that Orion has reduced Cone of Fire Bloom, so it can fire in longer bursts than most other LMGs.</p>
+<p>Unlike other Close Range LMGs, Orion doesn’t get access to SPA nor ALS, but it has better Hip Fire accuracy from the get-go, so even with basic Laser Sight it gets roughly the same Hip Fire accuracy as other Close Range LMGs with ALS.</p>
+<h2>Close Range LMGs</h2>
+<p>These LMGs behave more like big Assault Rifles. They have increased Hip Fire accuracy, shorter Equip Times, faster reloads, as well as access to Soft Point Ammo and Advanced Laser Sight. However, they have smaller magazines, worse handling and shorter effective range than most other LMGs.</p>
+<p>For <strong>VS</strong>, <a href="http://cmdrcyrious.com/planetside2/weapons/lmgs/#Orion_VS54" target="_blank" rel="noopener noreferrer"><strong>Orion</strong></a> is the dedicated CQC LMG.</p>
+<h2>MSW-R</h2>
+<p>| DAMAGE | 143 @ 10m – 112 @ 65m |  | RATE OF FIRE | 750 RPM |  | VELOCITY | 550 m/s |  | AMMO | 50 / 250 |  | RELOAD TIME | 3.045 sec / 3.305 sec |  | UNLOCK COST | 325 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 250 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/MSW-R.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Auto</p>
+<p>Hip CoFs: 2.25 / 2.75 / 2.75 / 3.5 / 0.1</p>
+<p>ADS CoFs: 0.1 / 0.2 / 0.1 / 0.35 / 0.05</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 50m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 0.8 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.5 / 11.25</p>
+<p>Vertical Recoil: 0.35</p>
+<p>First Shot Recoil Multiplier: 2.5x</p>
+<p>Recoil Angle: 17 / 20</p>
+<p>Horizontal Recoil: 0.225 / 0.225</p>
+<p>Horizontal Recoil Tolerance: 0.55</p>
+<p>Recoil Recovery Delay: 80</p>
+<p>Recoil Recovery Rate: 13</p>
+<p><strong>Attachments:</strong> Flash Suppressor, Darklight Flashlight, Forward Grip, Suppressor, Soft Point Ammunition, Advanced Laser Sight</p>
+<p>MSW-R is the TR workhorse. One of the most popular LMGs, and for good reason: it’s cheap, simple, reliable, effective. Everything you’d want for breaching points and taking the fight to the enemy. It deals good DPS and doesn’t have any issues killing with just bodyshots at close range.</p>
+<h2>LA1 Anchor</h2>
+<p>| DAMAGE | 167 @ 10m – 125 @ 75m |  | RATE OF FIRE | 600 RPM |  | VELOCITY | 570 m/s |  | AMMO | 50 / 250 |  | RELOAD TIME | 3.37 sec / 4 sec |  | UNLOCK COST | 1000 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 699 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/LA1-Anchor.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Auto</p>
+<p>Hip CoFs: 2.25 / 2.75 / 2.75 / 3.5 / 0.12</p>
+<p>ADS CoFs: 0.03 / 0.2 / 0.03 / 0.35 / 0.06</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 50m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 0.8 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.5 / 11.25</p>
+<p>Vertical Recoil: 0.4</p>
+<p>First Shot Recoil Multiplier: 2.2x</p>
+<p>Recoil Angle: 18 / 20</p>
+<p>Horizontal Recoil: 0.18 / 0.18</p>
+<p>Horizontal Recoil Tolerance: 0.4</p>
+<p>Recoil Recovery Delay: 100</p>
+<p>Recoil Recovery Rate: 13</p>
+<p><strong>Attachments:</strong> Flash Suppressor, Darklight Flashlight, Forward Grip, Suppressor, Soft Point Ammunition, Advanced Laser Sight</p>
+<p>Another wildly popular LMG. It deals more damage per shot than other Close Range LMGs, but due to lower RoF has lower overall DPS. However, Anchor has excellent accuracy for a CQC LMG, and within 10m (15m with SPA), it kills standard infantry in just 3 headshots, which makes for a shorter TTK.</p>
+<p>Most beastly CQC LMG in the game. Works great on public servers and dominates competitive scene. Possibly the best LMG overall, once you figure out the recoil, which is still much simpler than for MSW-R. Hip Fire is the only noticeable disadvantage.</p>
+<p>– \[RMIS\] nicigee</p>
+<h2>Adaptable LMGs</h2>
+<p>These LMGs have access to a wide variety of attachments, and can be specialized for any range. Their concept is similar to Select Fire Carbines and Assault Rifles, but unlike them, these LMGs don’t get access to anything unique, like underbarrel attachments.</p>
+<p>They have middle-of-the-road stats, which makes them rather boring, “just another LMG” type of weapons.</p>
+<h2>T9 CARV-S</h2>
+<p>| DAMAGE | 143 @ 10m – 112 @ 65m |  | RATE OF FIRE | 698 RPM |  | VELOCITY | 600 m/s |  | AMMO | 100 / 400 |  | RELOAD TIME | 4.64 sec / 5.58 sec |  | UNLOCK COST | 650 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 499 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/T9-CARV-S.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Auto / Semi-Auto</p>
+<p>Hip CoFs: 3.5 / 4 / 4 / 4.5 / 0.1</p>
+<p>ADS CoFs: 0.1 / 0.2 / 0.1 / 0.4 / 0.05</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 50m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 1.1 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.5 / 11.25</p>
+<p>Vertical Recoil: 0.42</p>
+<p>First Shot Recoil Multiplier: 1.75x</p>
+<p>Recoil Angle: 0 / 0</p>
+<p>Horizontal Recoil: 0.2 / 0.212</p>
+<p>Horizontal Recoil Tolerance: 0.7</p>
+<p>Recoil Recovery Delay: 86</p>
+<p>Recoil Recovery Rate: 12</p>
+<p><strong>Attachments:</strong> Flash Suppressor, Darklight Flashlight, Forward Grip, Laser Sight, Suppressor, Soft Point Ammunition, High Velocity Ammunition, Extended Magazine, Compensator</p>
+<p>\[/spoiler\]</p>
+<p>CARV-S can be treated like a variant of the CARV that sacrifices raw DPS in favor of better recoil and more attachment choices. CARV-S actually has higher Vertical Recoil per Shot than CARV, but due to lower RoF, it boils down to less Vertical Recoil per Second, especially when equipped with a Compensator. It also has nearly a second faster reload.</p>
+<p>Overall, CARV-S makes for a typical general-purpose LMG that doesn’t stand out in any particular area.</p>
+<p>T9 CARV-S is a part of <a href="http://cmdrcyrious.com/highly-technical-weapon-comparison-143-698-lmgs/" target="_blank" rel="noopener noreferrer"><strong>this Highly Technical Weapon Comparison</strong></a> with other similar LMGs.</p>
+<h2>NC6S Gauss SAW S</h2>
+<p>| DAMAGE | 167 @ 10m – 125 @ 75m |  | RATE OF FIRE | 577 RPM |  | VELOCITY | 630 m/s |  | AMMO | 75 / 300 |  | RELOAD TIME | 4.24 sec / 5.02 sec |  | UNLOCK COST | 650 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 499 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/NC6S-Gauss-SAW-S.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Auto / Semi-Auto</p>
+<p>Hip CoFs: 3.25 / 3.75 / 3.75 / 4.25 / 0.12</p>
+<p>ADS CoFs: 0.03 / 0.2 / 0.03 / 0.4 / 0.06</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 50m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 0.8 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.5 / 11.25</p>
+<p>Vertical Recoil: 0.45</p>
+<p>First Shot Recoil Multiplier: 1.65x</p>
+<p>Recoil Angle: 0 / 0</p>
+<p>Horizontal Recoil: 0.175 / 0.175</p>
+<p>Horizontal Recoil Tolerance: 0.6</p>
+<p>Recoil Recovery Delay: 104</p>
+<p>Recoil Recovery Rate: 13</p>
+<p><strong>Attachments:</strong> Flash Suppressor, Darklight Flashlight, Forward Grip, Laser Sight, Suppressor, Soft Point Ammunition, High Velocity Ammunition, Extended Magazine, Compensator</p>
+<p>Despite having a similar name to the starting <a href="http://cmdrcyrious.com/planetside2/weapons/lmgs/#NC6_Gauss_SAW" target="_blank" rel="noopener noreferrer"><strong>NC6 Gauss SAW</strong></a>, the SAW-S has a different damage model, and overall is much closer to <a href="http://cmdrcyrious.com/planetside2/weapons/lmgs/#EM6" target="_blank" rel="noopener noreferrer"><strong>EM6</strong></a>. They have only minor differences:</p>
+<ul><li>SAW-S has better Horizontal Recoil properties, and marginally better Hip Fire accuracy, reload speed and Projectile Velocity.</li><li>In return, SAW-S sacrifices Magazine Size and overall Ammo Pool, and has marginally lower RoF.</li></ul>
+<p>Overall, SAW-S makes for a decent general-purpose LMG, and it’s arguably better than EM6.</p>
+<h2>Flare VE6</h2>
+<p>| DAMAGE | 167 @ 10m – 125 @ 75m |  | RATE OF FIRE | 577 RPM |  | VELOCITY | 600 m/s |  | AMMO | 75 / 300 |  | RELOAD TIME | 4.24 sec / 5.225 sec |  | UNLOCK COST | 650 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 499 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/Flare-VE6.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Auto / Semi-Auto</p>
+<p>Hip CoFs: 3.25 / 3.75 / 3.75 / 4.25 / 0.12</p>
+<p>ADS CoFs: 0.03 / 0.2 / 0.03 / 0.4 / 0.06</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 50m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 0.9 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.25 / 0</p>
+<p>Vertical Recoil: 0.4</p>
+<p>First Shot Recoil Multiplier: 1.85x</p>
+<p>Recoil Angle: 0 / 0</p>
+<p>Horizontal Recoil: 0.2 / 0.2</p>
+<p>Horizontal Recoil Tolerance: 0.6</p>
+<p>Recoil Recovery Delay: 104</p>
+<p>Recoil Recovery Rate: 13</p>
+<p><strong>Attachments:</strong> Flash Suppressor, Darklight Flashlight, Forward Grip, Laser Sight, Suppressor, Soft Point Ammunition, High Velocity Ammunition, Extended Magazine, Compensator</p>
+<p>Flare VE6 deals higher damage per shot than majority of VS LMGs. In combination with Soft Point Ammunition, Flare has excellent headshot Time-to-Kill within 15m, which is a fairly competitive range bracket.</p>
+<p>Mild Vertical Recoil makes Flare easy to handle up to medium range, but comparatively high Horizontal Recoil and damage degradation limit Flare’s effectiveness at range.</p>
+<p>Flare is overall similar to <a href="http://cmdrcyrious.com/planetside2/weapons/lmgs/#Ursa" target="_blank" rel="noopener noreferrer"><strong>Ursa</strong></a>, so a <a href="http://cmdrcyrious.com/vs-lmgs-ursa-vs-flare/" target="_blank" rel="noopener noreferrer"><strong>detailed comparison</strong></a> between these two weapons was made.</p>
+<h2>Point Hold LMGs</h2>
+<p>These LMGs have an interesting combination of traits:</p>
+<ul><li>Their Maximum Damage Range is extended to 20m.<ul><li>Some of them also have access to SPA, which further increases Maximum Damage Range by 5m.</li></ul></li><li>Good accuracy and easy recoil.</li><li>100 round magazines, with Extended Mags boosting them to 200 rounds.</li><li>An extra spare magazine.</li><li>Low raw damage output.</li></ul>
+<p>The main feature, of course, is unusually long Maximum Damage Range. It gives these LMGs very consistent performance. They have roughly the same bodyshot TTK against nanoweave targets within \~30m, and maintain headshot TTK within \~50m.</p>
+<p>While they don’t have as much raw DPS as some other LMGs, thanks to extended Maximum Damage Range, they can actually deal more effective DPS at certain ranges than weapons with higher RoF.</p>
+<h2>T16 Rhino</h2>
+<p>| DAMAGE | 143 @ 20m – 112 @ 65m |  | RATE OF FIRE | 659 RPM |  | VELOCITY | 640 m/s |  | AMMO | 100 / 500 |  | RELOAD TIME | 3.96 sec / 4.925 sec |  | UNLOCK COST | 650 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 499 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/T16-Rhino.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Auto / Semi-Auto</p>
+<p>Hip CoFs: 3.5 / 4 / 4 / 4.5 / 0.1</p>
+<p>ADS CoFs: 0.1 / 0.2 / 0.1 / 0.4 / 0.05</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 50m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 1.1 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.5 / 11.25</p>
+<p>Vertical Recoil: 0.3</p>
+<p>First Shot Recoil Multiplier: 1x</p>
+<p>Recoil Angle: 0 / 0</p>
+<p>Horizontal Recoil: 0.2 / 0.2</p>
+<p>Horizontal Recoil Tolerance: 0.7</p>
+<p>Recoil Recovery Delay: 91</p>
+<p>Recoil Recovery Rate: 16</p>
+<p><strong>Attachments:</strong> Flash Suppressor, Darklight Flashlight, Laser Sight, Suppressor, High Velocity Ammunition, Extended Magazine, Advanced Forward Grip</p>
+<p>T16 Rhino gets access to Advanced Forward Grip and High Velocity Ammo, but not Compensator. Fortunately, it already has low Vertical Recoil per Shot. With Advanced Forward Grip, Rhino has roughly the same Horizontal Recoil as <a href="http://cmdrcyrious.com/planetside2/weapons/lmgs/#T32_Bull" target="_blank" rel="noopener noreferrer"><strong>T32 Bull</strong></a> with its basic Forward Grip.</p>
+<p>Overall, Rhino sort of has an identity crisis:</p>
+<ul><li>It tries to be an LMG for fighting within 30m, but unlike other Point Hold LMGs, it doesn’t get Hip Fire accuracy benefits, nor access to SPA and ALS.</li><li>Its attachment options – AFG and HVA – suggest that it wants to be a ranged LMG, but it has comparatively high damage degradation.</li></ul>
+<p>So Rhino gets stuck without a place to call “home”, and there’s no reason to use it, aside from the combination of low recoil and ability to sustain fire.</p>
+<h2>EM1</h2>
+<p>| DAMAGE | 143 @ 20m – 112 @ 65m |  | RATE OF FIRE | 659 RPM |  | VELOCITY | 630 m/s |  | AMMO | 100 / 500 |  | RELOAD TIME | 3.5 sec / 4.465 sec |  | UNLOCK COST | 650 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 499 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/EM1.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Auto</p>
+<p>Hip CoFs: 3 / 3.5 / 3.5 / 4 / 0.1</p>
+<p>ADS CoFs: 0.1 / 0.2 / 0.1 / 0.4 / 0.05</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 50m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 1.1 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.5 / 11.25</p>
+<p>Vertical Recoil: 0.335</p>
+<p>First Shot Recoil Multiplier: 2.3x</p>
+<p>Recoil Angle: 0 / 0</p>
+<p>Horizontal Recoil: 0.18 / 0.18</p>
+<p>Horizontal Recoil Tolerance: 0.54</p>
+<p>Recoil Recovery Delay: 91</p>
+<p>Recoil Recovery Rate: 13</p>
+<p><strong>Attachments:</strong> Flash Suppressor, Darklight Flashlight, Forward Grip, Suppressor, Soft Point Ammunition, Extended Magazine, Advanced Laser Sight</p>
+<p>EM1 is comfortable and controllable, and it’s one of the few 143 damage LMGs available to the NC. Other perks include slightly increased Hip Fire accuracy, though not as great as for <a href="http://cmdrcyrious.com/planetside2/weapons/lmgs/#Close_Range_LMGs" target="_blank" rel="noopener noreferrer"><strong>Close Range LMGs</strong></a>.  EM1 gets access to SPA and Advanced Laser Sight.</p>
+<h2>VX29 Polaris</h2>
+<p>| DAMAGE | 143 @ 20m – 112 @ 65m |  | RATE OF FIRE | 659 RPM |  | VELOCITY | 625 m/s |  | AMMO | 100 / 500 |  | RELOAD TIME | 3.925 sec / 4.925 sec |  | UNLOCK COST | 650 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 499 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/VX29-Polaris.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Auto</p>
+<p>Hip CoFs: 2 / 2.5 / 2.5 / 3.25 / 0.1</p>
+<p>ADS CoFs: 0.1 / 0.2 / 0.1 / 0.4 / 0.05</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 40m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 1.1 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.25 / 0</p>
+<p>Vertical Recoil: 0.3</p>
+<p>First Shot Recoil Multiplier: 2x</p>
+<p>Recoil Angle: 17 / 17</p>
+<p>Horizontal Recoil: 0.2 / 0.2</p>
+<p>Horizontal Recoil Tolerance: 0.7</p>
+<p>Recoil Recovery Delay: 91</p>
+<p>Recoil Recovery Rate: 13</p>
+<p><strong>Attachments:</strong> Flash Suppressor, Darklight Flashlight, Forward Grip, Suppressor, Soft Point Ammunition, Compensator, Advanced Laser Sight</p>
+<p>VX29 Polaris features the best hip fire accuracy among LMGs, sharing the first place with NS-15M2, and it also has access to SPA and Advanced Laser Sight. When equipped with it, Polaris gets hip fire accuracy slightly better than an average stock Carbine, which is quite impressive for an LMG.</p>
+<p>Polaris has controllable recoil, and overall makes for a surprisingly decent LMG. Its only real weakness is low damage output.</p>
+<h2>General-Purpose LMGs</h2>
+<p>These LMGs share a couple of traits: they remain effective at a variety of ranges, but don’t particularly stand out in any field. Their attachment availability and stat allocation are all over the place, though.</p>
+<h2>TMG-50</h2>
+<p>| DAMAGE | 167 @ 10m – 125 @ 75m |  | RATE OF FIRE | 577 RPM |  | VELOCITY | 615 m/s |  | AMMO | 75 / 300 |  | RELOAD TIME | 4.24 sec / 5.225 sec |  | UNLOCK COST | 1000 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 699 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/TMG-50.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Auto / Semi-Auto</p>
+<p>Hip CoFs: 3.25 / 3.75 / 3.75 / 4.25 / 0.12</p>
+<p>ADS CoFs: 0.03 / 0.2 / 0.03 / 0.35 / 0.06</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 50m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 0.9 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.5 / 11.25</p>
+<p>Vertical Recoil: 0.45</p>
+<p>First Shot Recoil Multiplier: 1.5x</p>
+<p>Recoil Angle: 0 / 0</p>
+<p>Horizontal Recoil: 0.175 / 0.175</p>
+<p>Horizontal Recoil Tolerance: 0.7</p>
+<p>Recoil Recovery Delay: 104</p>
+<p>Recoil Recovery Rate: 15</p>
+<p><strong>Attachments:</strong> Darklight Flashlight, Forward Grip, Laser Sight, Suppressor, High Velocity Ammunition, Compensator</p>
+<p>TMG-50 is the only TR LMG that deals more than 143 damage per shot. It’s also slightly more accurate on the move than most LMGs, and has access to HVA and Compensator, but not Advanced Forward Grip. Fortunately, it has great Horizontal Recoil by default, so the basic Forward Grip is enough to facilitate good accuracy.</p>
+<p>If not for two tiers of damage degradation, TMG-50 would make a decent ranged LMG. It’s not a terrible weapon, but usually doesn’t get much love from players.</p>
+<h2>GD-22S</h2>
+<p>| DAMAGE | 167 @ 10m – 125 @ 75m |  | RATE OF FIRE | 577 RPM |  | VELOCITY | 620 m/s |  | AMMO | 50 / 250 |  | RELOAD TIME | 2.275 sec / 3.765 sec |  | UNLOCK COST | 325 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 250 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/GD-22S.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Auto / Semi-Auto</p>
+<p>Hip CoFs: 2.25 / 3 / 3 / 3.75 / 0.12</p>
+<p>ADS CoFs: 0.03 / 0.2 / 0.03 / 0.35 / 0.06</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 50m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 0.8 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.5 / 11.25</p>
+<p>Vertical Recoil: 0.4</p>
+<p>First Shot Recoil Multiplier: 1.5x</p>
+<p>Recoil Angle: 10 / 13</p>
+<p>Horizontal Recoil: 0.175 / 0.175</p>
+<p>Horizontal Recoil Tolerance: 0.4</p>
+<p>Recoil Recovery Delay: 104</p>
+<p>Recoil Recovery Rate: 15</p>
+<p><strong>Attachments:</strong> Flash Suppressor, Darklight Flashlight, Forward Grip, Laser Sight, Suppressor</p>
+<p>GD-22S can be treated as a more general-purpose variant of the Anchor. GD-22S is more accurate and easier to control, and its Hip Fire accuracy and DPS are only slightly worse.</p>
+<p>GD-22S is also dirt cheap and has an amazingly fast reload for an LMG. It’s a simple and effective weapon, and its only real disadvantage is scarce attachment choices. However, having such great base stats, it doesn’t really suffer from it.</p>
+<p>GD-22S often gets recommended as the starting point for anyone willing to play NC Heavy Assault.</p>
+<p>I would recommend GD-22S for less experienced players, but even I enjoy using it, because it’s so user-friendly.</p>
+<p>– \[RMIS\] nicigee</p>
+<h2>EM6</h2>
+<p>| DAMAGE | 167 @ 10m – 125 @ 75m |  | RATE OF FIRE | 600 RPM |  | VELOCITY | 570 m/s |  | AMMO | 100 / 400 |  | RELOAD TIME | 4.655 sec / 5.655 sec |  | UNLOCK COST | 1000 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 699 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/EM6.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Auto / 2x Burst / Semi-Auto</p>
+<p>Hip CoFs: 3.5 / 4 / 4 / 4.5 / 0.12</p>
+<p>ADS CoFs: 0.03 / 0.2 / 0.03 / 0.4 / 0.06</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 50m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 1.1 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.5 / 11.25</p>
+<p>Vertical Recoil: 0.45</p>
+<p>First Shot Recoil Multiplier: 1.8x</p>
+<p>Recoil Angle: 0 / 0</p>
+<p>Horizontal Recoil: 0.175 / 0.175</p>
+<p>Horizontal Recoil Tolerance: 0.7</p>
+<p>Recoil Recovery Delay: 100</p>
+<p>Recoil Recovery Rate: 12</p>
+<p><strong>Attachments:</strong> Flash Suppressor, Darklight Flashlight, Forward Grip, Laser Sight, Suppressor, High Velocity Ammunition, Extended Magazine, Compensator</p>
+<p>EM6 has access to a variety of attachments, and overall makes for a typical, versatile LMG.</p>
+<p>Where other LMGs have built in specializations, the EM6 just got tired and decided it would let its attachment do the work.</p>
+<h2>Pulsar LSW</h2>
+<p>| DAMAGE | 143 @ 10m – 112 @ 65m |  | RATE OF FIRE | 698 RPM |  | VELOCITY | 620 m/s |  | AMMO | 75 / 300 |  | RELOAD TIME | 3.09 sec / 3.9 sec |  | UNLOCK COST | 325 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 250 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/Pulsar-LSW.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Auto</p>
+<p>Hip CoFs: 3.25 / 3.75 / 3.75 / 4.25 / 0.1</p>
+<p>ADS CoFs: 0.1 / 0.2 / 0.1 / 0.4 / 0.04</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 40m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 0.9 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.25 / 0</p>
+<p>Vertical Recoil: 0.335</p>
+<p>First Shot Recoil Multiplier: 1.6x</p>
+<p>Recoil Angle: 14 / 17</p>
+<p>Horizontal Recoil: 0.2 / 0.2</p>
+<p>Horizontal Recoil Tolerance: 0.8</p>
+<p>Recoil Recovery Delay: 86</p>
+<p>Recoil Recovery Rate: 13</p>
+<p><strong>Attachments:</strong> Flash Suppressor, Darklight Flashlight, Forward Grip, Laser Sight, Suppressor, Extended Magazine</p>
+<p>Pulsar LSW can be treated as a variant of Orion, with less raw DPS and worse Hip Fire accuracy, but much easier recoil and larger magazine. Similarly to Orion, Pulsar LSW gets the reduced CoF Bloom per Shot, so it can fire in a bit longer bursts than most LMGs. Great weapon overall.</p>
+<p>Pulsar LSW  is a part of <a href="http://cmdrcyrious.com/highly-technical-weapon-comparison-143-698-lmgs/" target="_blank" rel="noopener noreferrer"><strong>this Highly Technical Weapon Comparison</strong></a> with other similar LMGs.</p>
+<h2>SVA-88</h2>
+<p>| DAMAGE | 143 @ 10m – 112 @ 65m |  | RATE OF FIRE | 698 RPM |  | VELOCITY | 630 m/s |  | AMMO | 75 / 300 |  | RELOAD TIME | 3.38 sec / 4.7 sec |  | UNLOCK COST | 1000 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 699 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/SVA-88.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Auto / Semi-Auto</p>
+<p>Hip CoFs: 3 / 3.5 / 3.5 / 4 / 0.1</p>
+<p>ADS CoFs: 0.1 / 0.2 / 0.1 / 0.4 / 0.04</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 50m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 0.9 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.25 / 0</p>
+<p>Vertical Recoil: 0.4</p>
+<p>First Shot Recoil Multiplier: 1.75x</p>
+<p>Recoil Angle: 0 / 0</p>
+<p>Horizontal Recoil: 0.2 / 0.2</p>
+<p>Horizontal Recoil Tolerance: 0.8</p>
+<p>Recoil Recovery Delay: 86</p>
+<p>Recoil Recovery Rate: 12</p>
+<p><strong>Attachments:</strong> Darklight Flashlight, Forward Grip, Laser Sight, Suppressor, High Velocity Ammunition, Compensator</p>
+<p>SVA-88 is stunningly similar to Pulsar LSW. The main difference is that instead of Flash Suppressor and Extended Mags, SVA-88 gets access to HVA and Compensator.</p>
+<p>SVA also has more Vertical Recoil, but no Recoil Angle, and marginally better Hip Fire accuracy. With the Compensator, SVA-88 has roughly the same Vertical Recoil as Pulsar LSW, and HVA gives it a slight edge in ranged combat.</p>
+<p>Overall, SVA-88 can be treated like a more expensive variant of Pulsar LSW with more inclination towards ranged combat.</p>
+<p>SVA-88  is a part of <a href="http://cmdrcyrious.com/highly-technical-weapon-comparison-143-698-lmgs/" target="_blank" rel="noopener noreferrer"><strong>this Highly Technical Weapon Comparison</strong></a> with other similar LMGs.</p>
+<h2>Long Range LMGs</h2>
+<p>These LMGs have only one tier of damage degradation, which gives them an edge in ranged combat over the majority of other primary weapons.</p>
+<p>The dedicated Long Range LMG for NC is <a href="http://cmdrcyrious.com/planetside2/weapons/lmgs/#NC6_Gauss_SAW" target="_blank" rel="noopener noreferrer"><strong>Gauss SAW</strong></a>.</p>
+<h2>T32 Bull</h2>
+<p>| DAMAGE | 143 @ 10m – 125 @ 65m |  | RATE OF FIRE | 659 RPM |  | VELOCITY | 640 m/s |  | AMMO | 60 / 300 |  | RELOAD TIME | 2.89 sec / 3.28 sec |  | UNLOCK COST | 1000 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 699 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/T32-Bull.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Auto</p>
+<p>Hip CoFs: 2 / 2.75 / 2.5 / 3.25 / 0.1</p>
+<p>ADS CoFs: 0.1 / 0.2 / 0.1 / 0.35 / 0.05</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 50m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 0.8 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.5 / 11.25</p>
+<p>Vertical Recoil: 0.3</p>
+<p>First Shot Recoil Multiplier: 2x</p>
+<p>Recoil Angle: 0 / 0</p>
+<p>Horizontal Recoil: 0.18 / 0.18</p>
+<p>Horizontal Recoil Tolerance: 0.5</p>
+<p>Recoil Recovery Delay: 92</p>
+<p>Recoil Recovery Rate: 13</p>
+<p><strong>Attachments:</strong> Flash Suppressor, Darklight Flashlight, Forward Grip, Laser Sight, Suppressor, Soft Point Ammunition, High Velocity Ammunition, Compensator</p>
+<p>T32 Bull is one of the more unusual LMGs. It gets the best Hip Fire accuracy, amazing recoil pattern, high projectile velocity and fast reload. It takes no effort to hold on target, and low damage degradation ensures the damage remains consistent at all ranges.</p>
+<p>Unfortunately, low damage output makes Bull undesirable to competitive players, and its ADS accuracy doesn’t do anything for it in close quarters.</p>
+<p>Additionally, Bull is very close to <a href="http://cmdrcyrious.com/planetside2/weapons/lmgs/#NS-15M2" target="_blank" rel="noopener noreferrer"><strong>NS-15M2</strong></a>, which also gets higher ADS Movement Speed, making it a much better choice overall.</p>
+<p>T32 Bull is my weapon for everyday use. It’s easy to use and lets you focus on your playstyle, without any compromises. It rewards good aim, but doesn’t punish bad aim, like Gauss SAW would, for example. It is the perfect platform for your daily squadplay and biolabfarm adventures.</p>
+<p>– \[RMIS\] nicigee</p>
+<h2>Ursa</h2>
+<p>| DAMAGE | 167 @ 10m – 143 @ 75m |  | RATE OF FIRE | 550 RPM |  | VELOCITY | 640 m/s |  | AMMO | 75 / 300 |  | RELOAD TIME | 3.72 sec / 4.7 sec |  | UNLOCK COST | 1000 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 699 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/Ursa.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Auto</p>
+<p>Hip CoFs: 3.25 / 3.75 / 3.75 / 4.25 / 0.12</p>
+<p>ADS CoFs: 0.03 / 0.2 / 0.03 / 0.35 / 0.06</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 50m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 0.9 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.25 / 0</p>
+<p>Vertical Recoil: 0.395</p>
+<p>First Shot Recoil Multiplier: 1.5x</p>
+<p>Recoil Angle: 0 / 0</p>
+<p>Horizontal Recoil: 0.182 / 0.182</p>
+<p>Horizontal Recoil Tolerance: 0.5</p>
+<p>Recoil Recovery Delay: 109</p>
+<p>Recoil Recovery Rate: 13</p>
+<p><strong>Attachments:</strong> Flash Suppressor, Darklight Flashlight, Forward Grip, Laser Sight, Suppressor, High Velocity Ammunition, Extended Magazine, Compensator</p>
+<p>Ursa is the dedicated ranged LMG for VS. Ursa has a mild recoil for an LMG, but its low damage output limits its effectiveness outside of ranged combat.</p>
+<p>Ursa is overall very similar to <a href="http://cmdrcyrious.com/planetside2/weapons/lmgs/#Flare_VE6" target="_blank" rel="noopener noreferrer"><strong>Flare VE6</strong></a>, so a <a href="http://cmdrcyrious.com/vs-lmgs-ursa-vs-flare/" target="_blank" rel="noopener noreferrer"><strong>detailed comparison</strong></a> between these two weapons was made.</p>
+<h2>Empire-Specific LMGs</h2>
+<p>This set of empire-specific LMGs has interesting mechanics or unique attachments, as well as unusual models and sound design.</p>
+<h2>MG-H1 Watchman</h2>
+<p>| DAMAGE | 125 @ 10m – 100 @ 55m |  | RATE OF FIRE | 857 RPM |  | VELOCITY | 550 m/s |  | AMMO | 125 / 375 |  | RELOAD TIME | 5.525 sec / 7 sec |  | UNLOCK COST | 1000 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 699 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2018/02/MG-H1-Watchman-e1518141844121.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Auto</p>
+<p>Hip CoFs: 2.25 / 2.75 / 2.75 / 3.5 / 0.1</p>
+<p>ADS CoFs: 0.25 / 0.25 / 0.25 / 0.3 / 0.05</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 40m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 1.125 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.5 / 11.25</p>
+<p>Vertical Recoil: 0.28 / 0.3</p>
+<p>First Shot Recoil Multiplier: 2.5x</p>
+<p>Recoil Angle: 5 / 10</p>
+<p>Horizontal Recoil: 0.18 / 0.22</p>
+<p>Horizontal Recoil Max Increase: -0.015</p>
+<p>Horizontal Recoil Tolerance: 0.5</p>
+<p>Recoil Recovery Delay: 0</p>
+<p>Recoil Recovery Rate: 18</p>
+<p><strong>Attachments:</strong> Flash Suppressor, Darklight Flashlight, Laser Sight, Forward Grip, Impact Ammunition, Soft Point Ammunition</p>
+<p>Mechanically, Watchman is an LMG version of <strong><a href="http://cmdrcyrious.com/planetside2/weapons/assault-rifles/#TORQ-9" target="_blank" rel="noopener noreferrer">TORQ-9 Assault Rifle</a></strong>. It has the highest Rate of Fire among all LMGs, though it deals only 125 damage per shot.</p>
+<p>In terms of raw DPS, Watchman is very close to default <strong>T9 CARV</strong>. Watchman has limited effective range due to bad Cones of Fire while being still, as well as low damage per shot and somewhat low Projectile Velocity. However, fairly stable recoil makes Watchman easier to handle within that range.</p>
+<p>Watchman has good Hip Fire accuracy for an LMG, but it’s still far from being able to hip fire comfortably.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Impact Ammunition</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2018/02/Impact-Ammunition-e1518142012216.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Impact Ammunition</strong> is a unique attachment, available only to Watchman. It increases minimum damage from 100 to 112 at the cost of reducing magazine size by 25 rounds.</p>
+<p><strong>Soft Point Ammunition</strong> is also available, and it will make Watchman more competitive in close quarters, while the <strong>Impact Ammunition</strong> increases Watchman’s damage outside of 20m, and it’s a great choice if you don’t intend to specifically focus on the most competitive performance within 15m.</p>
+<p>Overall, Watchman is an effective LMG that trades effective range for easier handling, and in certain situations it can kill faster than CARV or MSW-R.</p>
+<p>You can learn more about Watchman in this <a href="http://cmdrcyrious.com/mg-h1-watchman-highly-technical-weapon-guide/" target="_blank" rel="noopener noreferrer"><strong>Highly Technical Weapon Guide</strong></a>, and enjoy some juicy lore in this video by Cyrious Gaming:</p>
+<h2>MGR-L1 Promise</h2>
+<p>| DAMAGE | 143 @ 10m – 112 @ 65m |  | RATE OF FIRE | 698 RPM |  | VELOCITY | 550 m/s |  | AMMO | 100 / 500 |  | RELOAD TIME | 4.75 sec / 5.775 sec |  | UNLOCK COST | 1000 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 699 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2018/02/MGR-L1-Promise-e1518145403248.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Auto</p>
+<p>Hip CoFs: 3.25 / 3.75 / 3.75 / 4.25 / 0.1</p>
+<p>ADS CoFs: 0.1 / 0.2 / 0.1 / 0.35 / 0.05</p>
+<p>Max ADS CoFs: 1 / 3 / 1 / 1</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 50m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 1.25 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.5 / 11.25</p>
+<p>Vertical Recoil: 0.15 / 0.3</p>
+<p>Recoil Increase: -0.05</p>
+<p>Recoil Increase Crouched: -0.1</p>
+<p>First Shot Recoil Multiplier: 2x</p>
+<p>Recoil Angle: -5 / 5</p>
+<p>Horizontal Recoil: 0.1 / 0.3</p>
+<p>Horizontal Recoil Max Increase: -0.05</p>
+<p>Horizontal Recoil Tolerance: 5</p>
+<p>Recoil Recovery Delay: 0</p>
+<p>Recoil Recovery Rate: 18</p>
+<p><strong>Attachments:</strong> SPRW Ammunition, Flash Suppressor, Forward Grip, Darklight Flashlight, Laser Sight, Smart Feeder</p>
+<p>Modular Gauss Rifle, LMG-1 “Promise” has low Recoil and high Rate of Fire, which is uncharacteristic for NC. Promise is also the first weapon where <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Recoil_Scaling" target="_blank" rel="noopener noreferrer">Recoil Scaling</a></strong> plays a big role.</p>
+<p>With each shot, Promise’s recoil gets lower and lower, up to a certain limit. Vertical Recoil specifically decreases even faster if you fire while crouched.</p>
+<p>Promise also has reduced values for Maximum ADS Cones of Fire, for most stances equal to 1 degree. This makes sustained full auto fire much more accurate than for most other primary weapons. For some context, 1 degree is the diameter of the center mass of an infantryman about 25m away.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2018/02/SPRW-Ammo-e1518145419403.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/#SPRW_Ammunition" target="_blank" rel="noopener noreferrer"><strong>SPRW Ammunition</strong></a> is available to Promise, increasing Projectile Velocity by 25% at the cost of reducing Magazine Size by 25 rounds. Promise’s base velocity is below average, and can make it challenging to hit moving targets at medium+ range. SPRW Ammo bumps it up to respectable 687 m/s, which is the highest value for LMGs.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2018/02/Smart-Feeder-1-e1518151386733.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Smart Feeder</strong> is a unique ammo attachment, available only to Promise. It increases Magazine Size by 50 rounds at the cost of increasing Reload Times by 0.325 seconds. Since this is an ammo attachment, it is mutually exclusive with SPRW Ammo.</p>
+<p>Between SPRW Ammo and Smart Feeder, Promise allows you to choose between focusing on volume of fire or precision.</p>
+<p>Overall, Promise makes for an interesting medium-range LMG with decent firepower. After \~4 shots it becomes the most stable LMG in the game, and it’s not bad during first 4 shots either.</p>
+<p>MGR-L1 Promise  is a part of <a href="http://cmdrcyrious.com/highly-technical-weapon-comparison-143-698-lmgs/" target="_blank" rel="noopener noreferrer"><strong>this Highly Technical Weapon Comparison</strong></a> with other similar LMGs.</p>
+<h2>VE-H Maw</h2>
+<p>| DAMAGE | 167 @ 10m – 125 @ 75m |  | RATE OF FIRE | 600 RPM |  | VELOCITY | 550 m/s |  | AMMO | 60 / 300 |  | RELOAD TIME | 3.45 sec / 4.6 sec |  | UNLOCK COST | 1000 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 699 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2018/02/VE-H-Maw-e1518154159398.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Auto</p>
+<p>Hip CoFs: 2.25 / 2.75 / 2.75 / 3.25 / 0.12</p>
+<p>ADS CoFs: 0.03 / 0.2 / 0.03 / 0.4 / 0.06</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 40m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 1.1 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1 / 0</p>
+<p>Vertical Recoil: 0.35 / 0.35</p>
+<p>First Shot Recoil Multiplier: 2.5x</p>
+<p>Recoil Angle: 15 / 20</p>
+<p>Horizontal Recoil: 0.175 / 0.195</p>
+<p>Horizontal Recoil Tolerance: 0.4</p>
+<p>Recoil Recovery Delay: 0</p>
+<p>Recoil Recovery Rate: 18</p>
+<p><strong>Attachments:</strong> Soft Point Ammunition, Flash Suppressor, Vented Power Core, Darklight Flashlight, Advanced Laser Sight, Forward Grip, Unstable Ammunition</p>
+<p>Maw is intended to compete with NC’s <a href="http://cmdrcyrious.com/planetside2/weapons/lmgs/#LA1_Anchor" target="_blank" rel="noopener noreferrer"><strong>Anchor</strong></a> as a high-damage, close-medium range LMG. Maw has good damage output, including the infamous 3-headshot kill within maximum damage range.</p>
+<p>Maw is tied for the first place for Hip Fire accuracy with a few other LMGs, but it’s the only new LMG to also have access to <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/#Laser_Sight_Advanced_Laser_Sight" target="_blank" rel="noopener noreferrer">Advanced Laser Sight.</a></strong> When used with ALS, Maw gains Hip Fire accuracy comparable to a stock carbine, which is impressive for an LMG.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/12/Unstable-Ammunition.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/#Unstable_Ammunition" target="_blank" rel="noopener noreferrer"><strong>Unstable Ammunition</strong></a> is available, which increases projectile size making shots easier to hit at the cost of reducing Headshot Damage Multiplier to 1.2x. When coupled with ALS and UA, Maw has potentially the best Hip Fire among LMGs.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Vented Power Core</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2018/02/Vented-Power-Core-e1518150061328.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/#Vented_Power_Core" target="_blank" rel="noopener noreferrer"><strong>Vented Power Core</strong></a> rail attachment is available, which removes Long Reload penalty at the cost of increasing Recoil Angle by 5 degrees. Not recommended.</p>
+<h2>Cross-Faction LMGs</h2>
+<p>These LMGs can be used by all factions. If you purchase them with Daybreak Cash, they will be available on all your characters, regardless of faction. They have white tracers.</p>
+<h2>NS-15M2</h2>
+<p>| DAMAGE | 143 @ 10m – 125 @ 65m |  | RATE OF FIRE | 625 RPM |  | VELOCITY | 600 m/s |  | AMMO | 55 / 275 |  | RELOAD TIME | 2.15 sec / 2.5 sec |  | UNLOCK COST | 1000 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 799 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/NS-15M2.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Auto</p>
+<p>Hip CoFs: 2 / 2.75 / 2.5 / 3.25 / 0.1</p>
+<p>ADS CoFs: 0.1 / 0.2 / 0.1 / 0.35 / 0.05</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 40m</p>
+<p>ADS Movespeed Multiplier: 0.75x</p>
+<p>Equip / Unequip Time: 0.8 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.5 / 11.25</p>
+<p>Vertical Recoil: 0.3</p>
+<p>First Shot Recoil Multiplier: 2x</p>
+<p>Recoil Angle: -20 / -17</p>
+<p>Horizontal Recoil: 0.2 / 0.2</p>
+<p>Horizontal Recoil Tolerance: 0.6</p>
+<p>Recoil Recovery Delay: 96</p>
+<p>Recoil Recovery Rate: 15</p>
+<p><strong>Attachments:</strong> Soft Point Ammunition, High Velocity Ammunition, Compensator, Flash Suppressor, Suppressor, Darklight Flashlight, Forward Grip, Laser Sight</p>
+<p>NS-15M2 is basically an LMG variant of <a href="http://cmdrcyrious.com/planetside2/weapons/assault-rifles/#NS-11A" target="_blank" rel="noopener noreferrer"><strong>NS-11A</strong></a> Assault Rifle. It features the best Hip Fire accuracy and ADS Moving Accuracy, a fast reload and short Equip Time. Most importantly, <strong>it’s the only LMG with 75% ADS Speed</strong>.</p>
+<p>Its recoil isn’t the best, but still one of the easiest to control, and it has only one tier of damage degradation, similar to Long Range LMGs.</p>
+<p>NS-15M2’s only disadvantage is the lowest raw damage output among all LMGs, and fairly small magazine.</p>
+<p>NS-15M2 is wildly popular among good players, who can compensate for low damage output with good headshot accuracy.</p>
+<p>NS-15M2 has a ton of cosmetic variants, including NS-15M1. Differences between them are purely cosmetic.</p>
+<h2>NSX Naginata</h2>
+<p>| DAMAGE | 150 @ 10m – 125 @ 65m |  | RATE OF FIRE | 659 RPM |  | VELOCITY | 490 m/s |  | AMMO | 90 / 450 |  | RELOAD TIME | 3.2 sec / 4.4 sec |  | UNLOCK COST | 1000 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 799 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/NSX-Naginata.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Auto</p>
+<p>Hip CoFs: 2.25 / 4 / 3 / 4.5 / 0.12</p>
+<p>ADS CoFs: 0.15 / 0.35 / 0.15 / 0.4 / 0.06</p>
+<p><strong>Maximum ADS Stand Still CoF:</strong> 0.6</p>
+<p><strong>Maximum ADS Crouch Still CoF:</strong> 0.4</p>
+<p>Maximum Hip Stand Still CoF: 4.25</p>
+<p>Maximum Hip Crouch Still CoF: 3.75</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 40m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 0.65 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.5 / 11.25</p>
+<p>Vertical Recoil: 0.7</p>
+<p>First Shot Recoil Multiplier: 1.8x</p>
+<p>Recoil Angle: -1.5 / 1.5</p>
+<p>Horizontal Recoil: 0.16 / 0.16</p>
+<p>Horizontal Recoil Tolerance: 0.4</p>
+<p>Recoil Recovery Delay: 91</p>
+<p>Recoil Recovery Rate: 13</p>
+<p><strong>Attachments:</strong> Laser Sight, Darklight Flashlight, Compensator, High Velocity Ammunition, Soft Point Ammunition, Forward Grip, Extended Magazine, Flash Suppressor</p>
+<p>NSX Naginata is unique. Its defining feature is that while remaining still, your Cone of Fire will not bloom past a certain point. In other words, while standing still, you can fire at full auto almost without losing accuracy.</p>
+<p>While normally standing still in a firefight isn’t a good idea, there is an advanced trick you can employ.</p>
+<p>Normal weapons have to stop firing to let their Bloomed CoF to recover. Naginata, on the other hand, can use movement to “reset the burst”.</p>
+<p>You fire the Naginata while moving, as you would with any other LMG, but when your CoF Blooms too much, you simply stand still for a moment, and that will reset your CoF, even if you keep firing the whole time.</p>
+<p>You don’t have to stand still for long either. Simply releasing all your movement keys for a moment will do the trick.</p>
+<p>Overall, Naginata is the only LMG that can truly sustain fire without losing accuracy. Other Nagainata’s traits include good damage model, decent reload speed and excellent Horizontal Recoil and Recoil Angle Properties.</p>
+<p>Now, let’s talk about the elephant in the room.</p>
+<p><strong>Naginata has gigantic, absolutely mindblowingly horrible Vertical Recoil.</strong> It is so bad that even with Compensator Naginata has more Vertical Recoil per Shot than infamous Gauss SAW. And due to higher RoF than SAW, Vertical Recoil per Second is through the roof.</p>
+<p>This makes Naginata difficult to control, effectively making it terrible at its intended role of application. Other downsides include low projectile velocity.</p>
+<p>It’s worth noting that NSX Naginata does not count towards LMG directives, and instead counts for Nanite Exports directive.</p>
+<p>You can learn more about Naginata in this <a href="http://cmdrcyrious.com/nsx-naginata-highly-technical-weapon-guide/" target="_blank" rel="noopener noreferrer"><strong>Highly Technical Weapon Guide</strong></a>.</p>
+<h2>Auraxium LMGs</h2>
+<p>These prestige variants of starting LMGs have a cosmetic auraxium shader, as well as unique combination of attachments or special mechanics. You cannot modify any attachments, except Scopes.</p>
+<p>The only way to obtain one of these LMGs is to complete the auraxium level of LMG Directives, by getting auraxium medals (1160 kills) with 5 LMGs.</p>
+<p>Keep in mind that not everything classified as “LMG” counts for these directives, so make sure to check your directives tab.</p>
+<h2>T9A “Butcher”</h2>
+<p>| DAMAGE | 143 @ 10m – 112 @ 65m |  | RATE OF FIRE | 769 RPM |  | VELOCITY | 570 m/s |  | AMMO | 150 / 450 |  | RELOAD TIME | 5.4 sec / 6.2 sec | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/T9A-Butcher.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Auto</p>
+<p>Hip CoFs: 3 / 3.5 / 3.5 / 4 / 0.1</p>
+<p>ADS CoFs: 0.1 / 0.2 / 0.1 / 0.4 / 0.05</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 50m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 1.25 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.5 / 11.25</p>
+<p>Vertical Recoil: 0.4</p>
+<p>First Shot Recoil Multiplier: 2x</p>
+<p>Recoil Angle: 0 / 0</p>
+<p>Horizontal Recoil: 0.214 / 0.214</p>
+<p>Horizontal Recoil Tolerance: 0.9</p>
+<p>Recoil Recovery Delay: 80</p>
+<p>Recoil Recovery Rate: 12</p>
+<p>T9A “Butcher” is the variant of the starting <a href="http://cmdrcyrious.com/planetside2/weapons/lmgs/#T9_CARV" target="_blank" rel="noopener noreferrer"><strong>T9 CARV</strong></a>, and features slightly higher Rate of Fire and 50% larger magazine, as well as marginally better Hip Fire accuracy. Butcher has the highest raw DPS among all LMGs.</p>
+<p>Butcher’s downsides come from inability to mount the Forward Grip or a barrel attachment.</p>
+<p>Overall, Butcher is a bullet hose with terrible accuracy and a redundant amount of ammunition, almost a <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/TR-weapon-in-a-nutshell.png" target="_blank" rel="noopener noreferrer"><strong>TR weapon meme</strong></a>.</p>
+<h2>NC6A GODSAW</h2>
+<p>| DAMAGE | 200 @ 10m – 167 @ 105m 125 (AP) |  | RATE OF FIRE | 500 RPM |  | VELOCITY | 670 m/s |  | AMMO | 65 / 325 |  | RELOAD TIME | 4.24 sec / 5.02 sec | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/NC6A-GODSAW.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Auto / Armor-Piercing Auto</p>
+<p>Hip CoFs: 3.25 / 4 / 3.75 / 4.25 / 0.14</p>
+<p>ADS CoFs: 0 / 0.2 / 0 / 0.4 / 0.07</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 50m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 1.25 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.5 / 11.25</p>
+<p>Vertical Recoil: 0.444</p>
+<p>First Shot Recoil Multiplier: 1.65x</p>
+<p>Recoil Angle: 0 / 0</p>
+<p>Horizontal Recoil: 0.14 / 0.14</p>
+<p>Horizontal Recoil Tolerance: 0.499</p>
+<p>Recoil Recovery Delay: 120</p>
+<p>Recoil Recovery Rate: 12</p>
+<p>\[/spoiler\]</p>
+<p>GODSAW is a variant of the starting <a href="http://cmdrcyrious.com/planetside2/weapons/lmgs/#NC6_Gauss_SAW" target="_blank" rel="noopener noreferrer"><strong>Gauss SAW</strong></a>. Its main feature is a secondary Armor Piercing firemode, which changes GODSAW’s <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Resistances" target="_blank" rel="noopener noreferrer">Damage Resist Type</a></strong> from <strong>Type 2 – Small Arms</strong> to <strong>Type 4 – Heavy Machine Gun</strong>. This lets the GODSAW damage even heavily armored vehicles.</p>
+<p>However, in Armor Piercing firemode GODSAW will deal less damage to infantry, so you have to remember to use the right mode for the right job. The firemode indicator near the ammo counter will show which firemode you’re in:</p>
+<ul><li>Normal</li></ul>
+<ul><li>Armor Piercing</li></ul>
+<p>GODSAW has other differences from Gauss SAW:</p>
+<ul><li>Massively higher Projectile Velocity.</li><li>Minimum Damage Range extended by 20m. This lets GODSAW deal marginally more damage at range.</li><li>Smaller magazine, but more than 2 second faster reload.</li><li>Marginally better Hip Fire accuracy.</li><li>Lower Vertical Recoil and Horizontal Recoil, as if GODSAW had some form of Compensator and Forward Grip. Gauss SAW with Advanced Forward Grip and Compensator has slightly less Horizontal Recoil and more Vertical Recoil.</li><li>GODSAW has the same Equip Time as Gauss SAW with AFG.</li></ul>
+<p>Overall, for most intents and purposes, GODSAW is a direct upgrade over Gauss SAW, but faces many similar issues, like being somewhat lackluster in close quarters.</p>
+<p>\[spoiler title=”Which firemode against what targets”\]</p>
+<p>Using the Toolbox, I was able to determine optimal firemode to engage different targets:</p>
+<p>Normal firemode is better against <strong>Harassers</strong> and <strong>ESFs</strong> at all ranges.</p>
+<p>AP mode is massively better against <strong>Valkyries</strong>, since they have 90% small arms resistance. 97+ hits (double that when firing into the bottom armor). For comparison, normal firemode would require 150 hits without taking damage degradation into account.</p>
+<p>AP mode is better against <strong>Flashes</strong>, and takes 18+ shots to take one out.</p>
+<p><strong>Lightnings</strong>, <strong>ANTs</strong> and <strong>Sunderers:</strong> 250+ shots.</p>
+<p><strong>Prowlers</strong> and <strong>Magriders</strong> take 264+ shots into side armor.</p>
+<p>Safe to say that AP firemode is far from effective against these targets. That said, roughly a magazine will finish off one of these vehicles if they’re burning. Halve that amount if you can hit tanks’ rear armor.</p>
+<p><strong>Liberators</strong>: 162+ shots, not taking bottom armor into account.</p>
+<p><strong>Galaxies</strong>: 171+ shots.</p>
+<p>Can be a nice source of harassment or deterrent if you have a safe position, but no fitting ground to air launcher.</p>
+<p>AP mode is slightly better against <strong>MAXes</strong> with Kinetic Armor and / or at range.</p>
+<h4>Engi’s deployables</h4>
+<p>It’s not confirmed by testing, but firemode choice shouldn’t matter against Spitfire Turrets, while MANA turrets take more than triple damage from AP firemode.</p>
+<p>Hadrlight Barriers take 75 AP rounds to destroy, confirmed by testing on PTS. This is faster than killing it with the default Rocket Launcher.</p>
+<p>\[/spoiler\]</p>
+<h2>Betelgeuse 54-A</h2>
+<p>| DAMAGE | 143 @ 10m – 112 @ 65m |  | RATE OF FIRE | 750 RPM |  | VELOCITY | 540 m/s |  | AMMO | 50\<em> / infinity |  | RELOAD TIME | 4.58 sec\</em> / 7.44 sec | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/07/Betelgeuse-54-A.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Auto</p>
+<p>Hip CoFs: 2.25 / 2.5 / 2.5 / 3.25 / 0.1</p>
+<p>ADS CoFs: 0.1 / 0.2 / 0.1 / 0.4 / 0.04</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 40m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 1.05 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.25 / 0</p>
+<p>Vertical Recoil: 0.4</p>
+<p>First Shot Recoil Multiplier: 2.25x</p>
+<p>Recoil Angle: 0 / 0</p>
+<p>Horizontal Recoil: 0.22 / 0.22</p>
+<p>Horizontal Recoil Tolerance: 0.8</p>
+<p>Recoil Recovery Delay: 80</p>
+<p>Recoil Recovery Rate: 13</p>
+<p>Betelgeuse 54-A, also known as “Beetle Juice”, is a variant of the starting <a href="http://cmdrcyrious.com/planetside2/weapons/lmgs/#Orion_VS54" target="_blank" rel="noopener noreferrer"><strong>Orion</strong></a>. Instead of conventional ammunition, Betelgeuse uses the <strong>Heat Mechanic</strong>, which effectively gives you unlimited amount of spare ammunition.</p>
+<p>Betelgeuse also has 0.25 seconds longer Equip Time.</p>
+<p>Overall, Betelgeuse is an interesting and popular weapon, but suffers from strong recoil and poor accuracy, and it cannot even mount a Forward Grip to improve the situation.</p>
+<h3>Heat Mechanics</h3>
+<p><code>Heat Capacity: 1000</code></p>
+<p><code>Heat Per Shot: 20</code></p>
+<p><code>Heat Recovery Delay: 0.5 sec</code></p>
+<p><code>Heat Recovery Rate: 240 per sec</code></p>
+<p><code>Overheat Penalty: 3.28 sec</code></p>
+<p>Firing the weapon accumulates Heat. When you stop firing, after Heat Recovery Delay, the weapon will start cooling down, at Heat Recovery Rate. If you overheat the weapon, instead of Heat Recovery Delay, you will suffer the Overheat Penalty.</p>
+<p>Betelgeuse can fire 50 shots before overheating. <em><strong>This is confirmed by in-game testing.</strong></em> It takes 4.58 seconds to recover heat from 49 shots, and 7.44 sec if you overheat the weapon.</p>
+<p>Betelgeuse will cool down even when not equipped, which makes it very convenient for Heavy Assaults: you can engage an enemy, and then switch to a sidearm or Rocket Launcher, and Betelgeuse will be fully “reloaded” by the time you equip it back again.</p>
+<h2>Recent Comments</h2>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

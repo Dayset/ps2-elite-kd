@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>C4 — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>C4</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd>Iridar (Institoros)</dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/planetside2/equipment/utility-items/c4/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/planetside2/equipment/utility-items/c4/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2016-04-26</dd></div>
+      <div><dt data-i18n="arc.attrSnapshot">Snapshot date</dt><dd>20230519110304</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Wayback</dd></div>
+      <div><dt data-i18n="arc.attrNote">Note</dt><dd>Wayback snapshot; live copy empty</dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<p>C4 is an explosive satchel charge, deployed with right click, and detonated with left click.</p>
+<p><strong>You can use the <a href="http://cmdrcyrious.com/toolbox/" target="_blank" rel="noopener noreferrer">Toolbox</a> to calculate exact C4 damage PlanetSide 2 units.</strong></p>
+<h2>Cost</h2>
+<p><strong>Rank 1: 200 Certs.</strong></p>
+<p>Allows to carry and deploy 1 brick of C4.</p>
+<p><strong>Rank 2: 500 Certs.</strong></p>
+<p>Allows to carry and deploy 2 bricks of C4.</p>
+<p>Spawning with one brick of C4 costs 75 Nanites.</p>
+<p>C4 is available to all classes, except MAXes and Infiltrators. Must be unlocked for each class individually.</p>
+<h2>Damage</h2>
+<p><strong>1250 @ 2.5m – 10 @ 5m</strong> (<strong><a href="https://www.reddit.com/r/Planetside/comments/72tl1d/ha_resist_shield/dnlb35c/" target="_blank" rel="noopener noreferrer">source</a></strong>)</p>
+<p><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Resistances" target="_blank" rel="noopener noreferrer"><strong>Resist Type</strong></a> 11 – “C-4”. Not affected by <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Armor" target="_blank" rel="noopener noreferrer">Armor</a></strong>.</p>
+<p>MAXes and all vehicles have <strong>negative resistance</strong> to C4, meaning they take bonus damage from it.</p>
+<p>Harasser (-75%)</p>
+<p>MAX (-65%)</p>
+<p>Flash (-100%)</p>
+<p>Sunderer (-40%)</p>
+<p>Lightning (-100%)</p>
+<p>Magrider (-100%)</p>
+<p>Vanguard (-140%)</p>
+<p>Prowler (-100%)</p>
+<p>ESF (-150%)</p>
+<p>Liberator (-80%)</p>
+<p>Galaxy (-30%)</p>
+<p>Valkyrie (-150%)</p>
+<p>ANT (-40%)</p>
+<p><strong><a href="http://cmdrcyrious.com/planetside2/equipment/suit-slots/#Flak_Armor" target="_blank" rel="noopener noreferrer">Flak Armor 5</a></strong> reduces C4 damage to infantry by 50%. You will get a special indicator if you damage a target equipped with Flak Armor.</p>
+<p><strong><a href="http://cmdrcyrious.com/planetside2/vehicles/" target="_blank" rel="noopener noreferrer">Vehicles</a></strong> and <strong><a href="http://cmdrcyrious.com/planetside2/classes/max/" target="_blank" rel="noopener noreferrer">MAXes</a></strong> can reduce C4 damage with <strong>Ordnance Armor 3</strong> for MAXes, <strong>Blockade Armor</strong> for Sunderers and <strong>Flanker Armor</strong> for tanks.</p>
+<ul><li><strong>One C4 brick kills:</strong><ul><li>MAXes without Ordnance Armor 3 within 2.5m.</li><li>Infantry without Flak Armor within 3m.</li><li>ESF without Composite Armor. ESF with Composite Armor will be put into burning state.</li><li>Valkyries without Composite Armor will be put into burning state.</li></ul></li></ul>
+<ul><li><strong>Two C4 bricks kill:</strong><ul><li>MAXes with Ordnance Armor 3 within 3m.</li><li>MBTs without Flanker Armor within 2.5m. MBTs with <strong>Flanker Armor</strong> will be put into burning state.</li><li>Lightnings without Flanker Armor within 3m, and Lightnings with Flanker Armor within 2.5m.</li><li>Harassers.</li></ul></li></ul>
+<ul><li><strong>Three C4 bricks kill:</strong><ul><li>Sunderers without Blockade Armor</li><li>ANTs</li><li>MBTs with Flanker Armor.</li><li>Liberators without Composite Armor 2+</li></ul></li></ul>
+<ul><li><strong>Four C4 bricks kill:</strong><ul><li>Liberator with full Composite Armor.</li></ul></li></ul>
+<h2>Deployment</h2>
+<p>Placing and detonating one brick takes about 1.6 seconds.</p>
+<p>Two bricks take 2.6 seconds.</p>
+<p>Deploying and detonating C4 does not make you appear on the enemy minimap like shooting does. But the enemy can silently Q-spot your deployed C4 to warn allies about it.</p>
+<p>C4 can be thrown to a distance of around 7m. C4 sticks to vehicles, MAXes, surfaces, ceilings, other deployables and <strong><a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/c4-sticks-to-frag.webm" target="_blank" rel="noopener noreferrer">even grenades</a></strong>, but not infantry. It’s a common trick to <a href="https://www.youtube.com/watch?v=-MmN4shhMGg" target="_blank" rel="noopener noreferrer"><strong>attach C4 to your own vehicle</strong></a> and use it to deliver the C4 to the target.</p>
+<p>Engineer’s <strong><a href="http://cmdrcyrious.com/planetside2/classes/engineer/#Demolitions_Pouch" target="_blank" rel="noopener noreferrer">Demolitions Pouch</a></strong> Suit Slot allows to carry and deploy one additional C4 brick per rank of Suit Slot, up to 2. So up to 4x C4 in total.</p>
+<p>C4 does not despawn if you change class or resupply at the terminal, but <strong>you cannot deploy more C4 than you can carry with yourself</strong>. Attempting to deploy additional brick will result in first C4 brick disappearing.</p>
+<p><strong>Example:</strong> you’re a Light Assault with C4 Rank 2. You can carry and deploy 2x C4. If you deploy both bricks, then resupply at a terminal, you will have 2x C4 deployed and 2x C4 carried with yourself. If you try to deploy a third brick, first brick will disappear. But you can detonate first 2x C4 bricks, and then deploy 2x C4 more.</p>
+<p><strong>C4 ARX</strong>, which can be unlocked through Explosives Directives, has a separate placement limit. Together with regular C4, and if you use <strong>Demolition Pouch 2</strong>, you can have up to 8 bricks deployed at the same time. <a href="https://www.reddit.com/r/Planetside/comments/5pmf20/guide_how_to_solo_a_deployment_shield_sunderer/dcsf12s/" target="_blank" rel="noopener noreferrer"><strong>Prooflink</strong></a>.</p>
+<p>Deployed C4 <strong>can be deconstructed</strong> by Engineer’s Repair Tool, same as Tank Mines. C4 is also destroyed without detonation by EMP grenades from enemy Infiltrators.</p>
+<p>C4 does not disappear if you die, but it does when you respawn. Revives don’t count as respawning.</p>
+<h2>Detonation</h2>
+<p>Simplest way is with the C4 detonator (left click), which has a 0.5 second startup time.</p>
+<p>If you deploy C4 with one class, and then switch to any other class with C4 equipped, you can detonate already deployed C4 with detonator.</p>
+<p>Bullets and other explosives will also detonate C4. You can even place a C4 brick on a Flash with machine gun in such a way, that you’ll be able to <strong><a href="http://youtu.be/1QL8fZta2fk" target="_blank" rel="noopener noreferrer">detonate the C4 with Flash’s machine gun</a></strong> – which would mean suicide, of course.</p>
+<p>The player that detonated C4 – by any means – will receive the credit for kills. It doesn’t matter whose C4 it was. However, if another player detonates your C4, you both will receive XP.</p>
+<h2>Known Bugs</h2>
+<p>All of these bugs haven’t been seen for a long time, it’s possible all of them have been fixed by now.</p>
+<ul><li>Sometimes C4 disappears after throwing.</li><li>Sometimes C4 detonates not where you have placed it, but where the C4 brick was several seconds ago. This is especially apparent when trying to C4 moving vehicles.</li><li>As a possible repercussion of this bug, sometimes C4 attached to your own vehicle does not do full damage to nearby enemies, so putting C4 on your Flash and suicide bombing isn’t reliable.</li><li>When you click the C4 Detonator, and then equip a weapon, on enemy screen <strong><a href="https://www.youtube.com/watch?v=SAvKiby7mlo" target="_blank" rel="noopener noreferrer">you will appear firing that weapon</a></strong>. You will even appear on enemy minimap, if the weapon isn’t suppressed. The amount of shots you take with the weapon is equal to amount of detonation clicks you made.</li></ul>
+<h2>Tips and Tricks</h2>
+<p>C4 can also be used to destroy deployables, such as spawn beacons, motion spotters, shield regeneration fields, etc. This is useful when it’s too dangerous to go and try to destroy these deployables in person. For example, you can throw C4 over the wall that has spawn beacon behind it.</p>
+<p>Similarly, C4 can be used to kill enemies that are behind cover.</p>
+<p>Deploying and detonating C4 does not cancel redeploy timer, even if you damage or kill someone with it. Possibly a bug. (unconfirmed after CAI).</p>
+<p><strong><a href="http://cmdrcyrious.com/planetside2/classes/light-assault/" target="_blank" rel="noopener noreferrer">Light Assault</a></strong> is considered the best class to use C4 with, because using C4 requires being close to the target, and Light Assault is the best at it, be it through sheer speed of Ambusher Jets, or taking flanking routes over otherwise impassable terrain with other jets.</p>
+<p>It’s nearly impossible to C4 an occupied vehicle that is paying attention and actively tries to avoid it. Fortunately, it’s humanly impossible to be prepared for everything all the time. So wait until the vehicle crew gets distracted, and charge in.</p>
+<p>Bad drivers are prone to tunnel vision, staying in one position for prolonged period of time, they rarely have a competent gunner, if any at all, and make a mistake of parking near walls, cliffs and towers, opening you a convenient way of attack.</p>
+<p>Here’s a piece of <a href="https://forums.daybreakgames.com/ps2/index.php?threads/malleo-arma.181634/" target="_blank" rel="noopener noreferrer">lawn gnome’s HA guide on destroying vehicles</a>:</p>
+<p>… approaching unseen is the best option you have. Remember, you do not have a cloaking device, so you must be careful. If you can see your target, then he can potentially see you.</p>
+<p>Before you begin, look at the territory around your target and plan out a proper approach. Always do whatever you can to avoid approaching at eye level. If you must pass through an area at eye level within view of the target – do it quickly, remain in such areas as little as possible. The ideal approach is through a low valley of some kind, after that a high hill works well, but DO NOT linger as a silhouette on the horizon.</p>
+<p>Finally, if neither of those is available, dashing from cover to cover can be viable.</p>
+<p>Remember to look at your target as little as possible. Use your minimap to keep yourself apprised of the location and facing of your prey. Watch the shots they fire to determine which direction they are looking, and thus where their attention is directed.</p>
+<h2>Recent Comments</h2>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

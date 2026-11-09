@@ -14,7 +14,9 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (f) => fs.readFileSync(path.join(ROOT, f), "utf8");
 const exists = (f) => fs.existsSync(path.join(ROOT, f));
 
-const PAGES = ["index.html", "live.html", "columns.html", "privacy.html", "updates.html", "misc.html", "ranks.html", "build-log.html", "outfits.html", "weapon-compare.html", "weapon-adad.html", "oracle/index.html"];
+const PAGES = ["index.html", "live.html", "columns.html", "privacy.html", "updates.html", "misc.html", "ranks.html", "build-log.html", "outfits.html", "weapon-compare.html", "weapon-adad.html", "archive.html", "oracle/index.html"];
+// Rendered archive pages (scripts/build-archive.mjs): same third-party / tracker guards as PAGES.
+const ARCHIVE_PAGES = fs.readdirSync(path.join(ROOT, "archive/pages")).filter((f) => f.endsWith(".html")).map((f) => `archive/pages/${f}`);
 const SITE_JS = [
   ...fs.readdirSync(ROOT).filter((f) => /\.(m?js)$/.test(f)),
   ...fs.readdirSync(path.join(ROOT, "oracle/js")).filter((f) => f.endsWith(".js")).map((f) => `oracle/js/${f}`),
@@ -37,7 +39,7 @@ test("no runtime dependencies (NOTICE says so)", () => {
 });
 
 test("pages load no third-party scripts, styles, fonts, frames or images", () => {
-  for (const page of PAGES) {
+  for (const page of [...PAGES, ...ARCHIVE_PAGES]) {
     const html = read(page);
     for (const m of html.matchAll(/<(script|link|iframe|img|source|video|audio|embed|object)\b[^>]*>/gi)) {
       const tag = m[0];
@@ -56,7 +58,7 @@ test("pages load no third-party scripts, styles, fonts, frames or images", () =>
 
 test("no analytics, trackers or error reporters", () => {
   const TRACKERS = /google-analytics|googletagmanager|(?<![A-Za-z])gtag\(|plausible\.io|umami\.is|static\.cloudflareinsights|beacon\.min\.js|sentry|hotjar|clarity\.ms|connect\.facebook|matomo|segment\.com|mixpanel/i;
-  for (const f of [...PAGES, ...SITE_JS]) assert.doesNotMatch(read(f), TRACKERS, `${f}: tracker found (update PRIVACY.md first)`);
+  for (const f of [...PAGES, ...ARCHIVE_PAGES, ...SITE_JS]) assert.doesNotMatch(read(f), TRACKERS, `${f}: tracker found (update PRIVACY.md first)`);
 });
 
 test("the site never writes a cookie (only clears old ones)", () => {

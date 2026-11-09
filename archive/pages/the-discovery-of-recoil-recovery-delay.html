@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>The “Discovery” of Recoil Recovery Delay | CMDRCyrious.com — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>The “Discovery” of Recoil Recovery Delay | CMDRCyrious.com</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd>CMDRCyrious</dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/the-discovery-of-recoil-recovery-delay/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/the-discovery-of-recoil-recovery-delay/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2016-11-20</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Live</dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<p>For someone who considers himself a weapon mechanics guru, I’ve been woefully negligent. For a long time we had access to a peculiar statistic: <strong>Recoil Recovery Delay</strong>.</p>
+<p>It can be pulled from <a href="http://cmdrcyrious.com/weapon-stats/" target="_blank" rel="noopener noreferrer">DBG API.</a></p>
+<h2>What is Recoil Recovery Delay?</h2>
+<p><strong>Recoil Recovery Delay</strong> is the delay before your crosshair starts returning to its original position after you have stopped firing, measured in milliseconds.</p>
+<p>The speed of the crosshair movement depends on another statistic – <strong>Recoil Decrease</strong>, also known as <strong>Recoil Recovery Rate</strong>, measured in degrees per second.</p>
+<p>Knowing these two statistics and <strong>Vertical Recoil</strong>, you can judge weapon’s affinity for tap firing and short bursting.</p>
+<p>Using the old <a href="https://docs.google.com/spreadsheets/d/1Or5LdB5WGntOIN6wPyvmziyBZLeZQW2AYHpkbK5rvoY/edit#gid=13" target="_blank" rel="noopener noreferrer">weapon stats spreadsheet</a> by /u/cheesecrackers as basis for my original research years ago, I’ve been led to believe that Recoil Recovery Delay is always equal to weapon’s <strong>Refire Time</strong> – time between shots, based on weapon’s <strong>Rate of Fire</strong>.</p>
+<p>Turns out, it’s a little more complicated.</p>
+<h2>How it works</h2>
+<p>The Recoil Recovery Delay values listed in DBG API – could be more correctly called “added” Recoil Recovery Delay. A shift, or an offset.</p>
+<p>To calculate the true delay before the crosshair movement starts, you need to <em><strong>add</strong></em> listed Recoil Recovery Delay to weapon’s Refire Time.</p>
+<p><code>True Delay = Recoil Recovery Delay + Refire Time</code></p>
+<h3>Example</h3>
+<p>You fire a burst with <a href="http://cmdrcyrious.com/planetside2/weapons/assault-rifles/#T1_Cycler" target="_blank" rel="noopener noreferrer"><strong>T1 Cycler</strong></a>. It has:</p>
+<p>Recoil Recovery Delay: 80ms</p>
+<p>Refire Time: 80ms</p>
+<p><code>True Delay = 80 + 80 = 160 ms = 0.16 seconds</code></p>
+<p>After final shot in the burst, 0.16 seconds will pass before the crosshair starts moving back.</p>
+<p>You’ll notice that Recoil Recovery Delay in this case is equal to Refire Time, and it’s also true for many other weapons. This is probably what led cheesecrackers to believe that True Delay is equal to Refire Time. I guess he never ran a slow-mo tests to confirm it, and neither did I – until recently.</p>
+<p>However, there are a lot of weapons which have Recoil Recovery Delay equal to zero, and the <strong><a href="https://forums.daybreakgames.com/ps2/index.php?threads/pc-hotfix-11-18.243591/" target="_blank" rel="noopener noreferrer">recent patch</a></strong> even set negative Recoil Recovery Delay for some weapons.</p>
+<p>And as an even crazier exception, Tomoe has increased Recoil Recovery Delay of 4 times the Refire Rate.</p>
+<h2>What the November patch changed</h2>
+<p>Currently, Battle Rifles, Semi Auto Scout Rifles and Semi Auto Sniper Rifles have negative Recoil Recovery Delay.</p>
+<p>|  | <strong>Semi Auto Scout Rifles</strong> | <strong>Semi Auto Sniper Rifles</strong> | <strong>Battle Rifles</strong> |  | <strong>Refire Time, ms</strong> | 235 | 260 | 180 |  | <strong>Recoil Recovery Delay, ms</strong> | -118 | -130 | -30 |  | <strong>True Delay, ms</strong> | 117 | 130 | 150 |  | <strong>Recoil Recovery Rate,   degrees / sec</strong> | 8 | 10 | 15 |  | <strong>Vertical Recoil, degrees</strong> | 1 | 1.2 | 0.6 |  | <strong>Recoil Recovery Time per shot</strong> | 0.125s | 0.12s | 0.04 | </p>
+<p>These Scout and Sniper rifles have True Delay of 0.5x the Refire Time, while most automatic weapons have True Delay of 2x Refire Time.</p>
+<p>Unfortunately, at this time I lack the capacity to create a side by side video. But you can already guess that reduced Recoil Recovery Delay gives them unprecedented tap firing speed, as crosshair starts moving back almost instantly after the shot, without purpose-less-ly hanging in air.</p>
+<p>This is less noticeable on Battle Rifles, however they have greater Recoil Recovery Rate, lesser Vertical Recoil and shorter Refire Time. They already excel at tap firing.</p>
+<p><strong>Tomoe</strong>‘s unique situation is described in <a href="http://cmdrcyrious.com/nsx-tomoe-highly-technical-weapon-guide/#Recoil" target="_blank" rel="noopener noreferrer">another article</a>.</p>
+<h2>Closing Thoughts</h2>
+<p>Recoil Recovery Delay is an important statistics for judging weapon’s capability to burst fire, and it should be considered on equal grounds to Recoil Recovery Rate and Vertical Recoil.</p>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

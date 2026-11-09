@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>Rate of Fire vs Framerate | CMDRCyrious.com — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>Rate of Fire vs Framerate | CMDRCyrious.com</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd>CMDRCyrious</dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/rate-of-fire-vs-framerate/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/rate-of-fire-vs-framerate/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2018-02-23</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Live</dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<p>It’s a somewhat widely known phenomenon that the Rate of Fire of PlanetSide 2 weapons depends on your PC’s performance. Getting killed because your PC lags too much is bad enough, but dying because your gun literally shoots slower than the other guys’ is just horrible.</p>
+<p>Unfortunately, this seems to be the limitation of PlanetSide 2’s engine, and there’s not much the current development team can do to fix it.</p>
+<p>There is a lot of drama revolving around this issue, and there seems to be a lot of myths or unclear information, so I decided to run my own set of tests to find out what exactly causes the reduction in Rate of Fire, and how strong this effect is.</p>
+<p>Usually game’s performance is bottlenecked either by CPU or GPU (Graphics Card). I wanted to figure out which of the two causes Rate of Fire issues.</p>
+<h2>GPU Bound Results</h2>
+<p>| <strong>Weapon</strong> | <strong>Settings</strong> | <strong>FPS Cap</strong> | <strong>FPS</strong> | <strong>Time, sec</strong> | <strong>Expected Time</strong> |  | <strong>EM6</strong> (600 RPM) | Very Low | Uncapped | \~200 | \~20.3 (98%) | 19.9 |  |  | Usual Settings | Uncapped | \~180 | \~20.7 (96%) |  |  |  |  | RTSS FPS Limiter = 120 | 120 | \~21.2 (94%) |  |  |  |  | RTSS FPS Limiter = 150 | 150 | \~21 (95%) |  |  |  |  | Smoothing | \~120 | \~20.3 (98%) |  |  |  | RQ = 1.41 | Uncapped | \~100 | \~21.6 (92%) |  |  |  | RQ = 2.0 | Uncapped | \~50 | \~23.1 (86%) |  |  | <strong>M18 Rotary</strong> (1000 RPM) |  | Uncapped | \~60 | \~3.6 | 3.54 |  |  |  | RTSS FPS Limiter = 30 | 30 | \~3.6 |  |  | <strong>Kobalt</strong> (Sunderer) (550 RPM) |  | Uncapped | \~50 | \~16.3 | 16.25 |  |  |  | RTSS FPS Limiter = 30 | 30 | \~16.3 |  |  | <strong>EM6</strong> (600 RPM) |  | MaximumFPS = 45 | 43 | \~20.3 (98%) | 19.9 |  |  |  | RTSS FPS Limiter = 45 | 45 | \~24.1 (83%) |  |  |  |  | Smoothing | \~54 | \~21.5 (93%) |  |  | <strong>Gauss SAW</strong> (500 RPM) |  | Uncapped | \~50 | \~13.7 (87%) | 11.88 |  | <strong>Watchman</strong> (857 RPM) |  | Uncapped |  | \~10.9 (80%) | 8.68 |  |  |  | RTSS FPS Limiter = 30 | 30 | \~12.6 (69%) |  | </p>
+<p>For most of my tests I used <strong>EM6</strong> with Extended Mags. It has convenient 600 RoF, which means the time period between two shots should be equal to 0.1 seconds. There are 199 time periods between 200 shots, so firing them should take 19.9 seconds.</p>
+<p>To establish some baselines, first I recorded the time to empty a magazine using my <a href="https://pastebin.com/9LFgLqAy" target="_blank" rel="noopener noreferrer"><strong>Usual Settings</strong></a>, and then with all settings set to <strong>Very Low</strong>. In both cases I wasn’t capping FPS in any way, and RoF was close to expected values.</p>
+<p><strong>Test methodology:</strong> I went to Koltyr, stepped outside of the spawn building, and fired at full auto. I recorded using my shitty phone, as I wanted to avoid any potential impact from my own PC. I kinda forgot to disable Shadowplay’s background recording, though. I ran each test only once, and it’s possible the results would be inconsistent.</p>
+<p>Then I used RTSS to cap FPS at 120, and then at 150. In both cases there was a negative impact to Rate of Fire.</p>
+<p>Then I enabled Smoothing, which caps FPS at your monitor’s Refresh Rate. In my case, this is 120 Hz. That fixed the Rate of Fire issues.</p>
+<p>Then I created a GPU-bound scenario by increasing <strong>Render Quality</strong> to 1.41, making the game render at double resolution, putting a lot of raw workload on my GTX 1060 3 GB. This had a noticeable negative impact to Rate of Fire.</p>
+<p>Then I made GPU-bound situation more severe by increasing Render Quality to 2.0, making the game render at quadruple resolution. That reduced RoF even further, and introduced some horrible <strong>Input Lag</strong>.</p>
+<p>Thanks to <a href="https://www.reddit.com/r/Planetside/comments/7e7mbr/tweak_guide_for_reducing_input_lag_in_planetside_2/" target="_blank" rel="noopener noreferrer"><strong>/u/Octiceps</strong></a>, we know that being GPU bound causes <strong>Input Lag</strong>, and indeed, it felt like an eternity would pass between moving the mouse and seeing the crosshair move on screen. According to my measurements, the delay was around 0.1 seconds, but it felt much longer, and the game would definitely be unplayable.</p>
+<p>Capping the FPS by any means should remove the Input Lag. First I used <strong>RTSS</strong> to cap FPS at 45. That removed Input Lag, but impacted Rate of Fire even further.</p>
+<p>Then I set an FPS limit through <strong>UserOptions.ini</strong> by setting <strong>MaximumFPS</strong> to 45. That removed Input Lag and solved the Rate of Fire issues.</p>
+<p>Note that according to Octiceps, using MaximumFPS to cap FPS still adds some Input Lag, but it seems miles better than being GPU bound, and I couldn’t feel any during my short tests.</p>
+<p>I also ran a test with Smoothing enabled while GPU bound. In this case having an FPS cap at 120 should not have affected anything, but it’s possible that Smoothing actually does something else behind the scenes. And indeed the RoF impact was lower than while simply being GPU-bound, but it’s possible this was just a statistical margin of error. Since I’m lazy and ran each test only once, there’s no way to tell.</p>
+<p>Finally, I wanted to test whether low RoF or high RoF weapons are more affected, so I removed the FPS Cap and ran tests with 500 RPM <strong>Gauss SAW</strong> and 857 RPM <strong>Watchman</strong>. As you can see from the results, the impact to higher RoF Watchman was nearly double.</p>
+<p>Per <a href="https://www.reddit.com/r/Planetside/comments/7zrgmi/test_rate_of_fire_vs_framerate/dur48ls/" target="_blank" rel="noopener noreferrer"><strong>/u/Punisherlceman’s suggestion</strong></a>, I ran tests with a couple of vehicle weapons, and surprisingly they seem to be unaffected by this issue at all. Even when I used RTSS to limit FPS at 30, which made the Watchman fire at 69% of its intended Rate of Fire.</p>
+<h2>CPU Bound Results</h2>
+<p>| <strong>Weapon</strong> | <strong>Settings</strong> | <strong>FPS</strong> | <strong>Time, sec</strong> | <strong>Expected Time</strong> |  | <strong>EM6</strong> (600 RPM) | 1 Core, 1200 MHz | \~25 | \~24.4 sec (82%) | 19.9 |  |  | 4 Cores, 1200 MHz | \~65 | \~21.8 sec (91%) |  |  |  | 1 Core, 4500 MHz | \~120 | \~20.6 sec (97%) |  | </p>
+<p>My CPU is Core i5 7600k. To create a CPU-bound scenario, I went to BIOS and manually reduced its maximum multiplier to 12 and disabled 3 of the 4 cores, as well as reduced memory frequency to 2133 MHz.</p>
+<p>For the test I set all settings to Very Low to make sure the FPS is not GPU-bound.</p>
+<p>It didn’t feel like there’s any Input Lag, but all animations would play at super low FPS, the famous “<a href="https://clips.twitch.tv/SingleEsteemedSlothEagleEye" target="_blank" rel="noopener noreferrer"><strong>Doom Animations</strong></a>“.</p>
+<p>There was a significant impact to Rate of Fire. Then I increased the number of active cores to 4, and impact to RoF was not as huge, but it was still there. “Doom Animations” went away as the number of cores increased, so we can conclude that laggy animations happen when the CPU cannot handle several threads at the same time.</p>
+<p>Normally my CPU runs at 4500 MHz, and RAM at 3000 MHz, so I went back to these settings, but once again left only one active core. I would still get laggy animations, but negative impact to RoF all but evaporated.</p>
+<p>During these tests the PlanetSide’s FPS counter was showing \[GPU\] half the time, in a situation where being GPU-bound is practically impossible, which just goes to show that indicator cannot be trusted.</p>
+<p>It’s worth noting that while CPU-bound, the framarate fluctuated like crazy.</p>
+<h2>Second PC Results</h2>
+<p>| <strong>Weapon</strong> | <strong>Settings</strong> | <strong>FPS</strong> | <strong>Time, sec</strong> | <strong>Expected Time</strong> |  | <strong>EM6</strong> (600 RPM) | Low Settings, Uncapped FPS | \~65 | \~21 sec (95%) | 20 |  |  | High Settings, Uncapped FPS | \~38 | \~20.8 sec (95%) |  |  |  | Low Settings, Capped FPS | 53 | \~20.5 (98%) |  | </p>
+<p>I ran one more round of tests on my brother’s PC, who’s using entry-level Ryzen R3 1200, overclocked to 3.8 or 3.9 GHz, and an obsolete HD5770, middle of the road graphics card from 2009.</p>
+<ul><li>“Low Settings” = Very Low preset with Ultra Textures.</li><li>“High Settings” = Ultra Preset with Shadows Disabled.</li><li>Render Distance of 800m and FullHD resolution in both cases.</li></ul>
+<p>Similar to before, there was considerable Input Lag while GPU-bound with uncapped FPS. Using MaximumFPS in UserOptions.ini to cap FPS at 55 removed Input Lag and mostly solved RoF issues.</p>
+<p>It’s interesting to note that even in worst case scenario RoF impact was not as severe as on my machine.</p>
+<h2>Conclusions</h2>
+<ul><li>Rate of Fire is reduced when you are:<ul><li>GPU-bound at low FPS.</li><li>Using RTSS to cap FPS.</li><li>CPU-bound by frequency.</li></ul></li><li>It’s possible to have reduced RoF without any Input Lag.</li><li>You don’t need high FPS to fire at nearly full RoF.</li><li>RoF issues can be solved by:<ul><li>Having very high FPS.</li><li>Setting an FPS Cap through MaximumFPS in UserOptions.ini just below your usual FPS.</li><li>Using Smoothing if your FPS is usually above your monitor’s Refresh Rate.</li><li>Preferring weapons with low Rate of Fire.</li></ul></li></ul>
+<p>This set of tests is not intended as the last word on this topic, I mainly just wanted to see the problem with my own eyes and confirm tests done <a href="https://www.reddit.com/r/Planetside/comments/5meifs/fps_affecting_rof_in_ps2_2017/dc3chq5/" target="_blank" rel="noopener noreferrer"><strong>/u/ChasseurDePorcinet and /u/Datnade</strong></a>, and <a href="https://www.reddit.com/r/Planetside/comments/7qva5v/rpm_vs_fps_test_2_it_is_not_tied_to_fps_but_gpu/" target="_blank" rel="noopener noreferrer"><strong>/u/Ahorns</strong></a>, as well as rule out Input Lag as the primary cause.</p>
+<p>I’ve been using RTSS for a while at 90 fps so I was alarmed and ran some tests : I got an average of 21.74 time to empty the EM6 which is 92% rof.</p>
+<p>Using smoothing is out of the question since my pc certainly can’t handle 144+ fps in PS2 at all times and the point of capping in the first place is to have stable frametimes.</p>
+<p>I switched to the MaximumFPS solution, and my frametimes were jittery and induced stuttering exactly like what that guy had https://old.reddit.com/r/Planetside/comments/bhypyz/your\_game\_stutters\_a\_lot\_try\_rtss\_to\_get/ and in short the game was absolutely unplayable.</p>
+<p>A comment in the reddit thread suggested that you could have the best of both worlds by using both rtss and MaximumFPS, but in my tests, whatever MaximumFPS was set to : 250, 93, 91, the rof stayed at 92%.</p>
+<p>So my conclusion is this : if MaximumFPS introduces jittery frametime and stuttering for you (I’d be interested to know if it happens for everyone) and if your monitor has a refresh rate far above what PS2 can run at which is most 120+hz owners since PS2 runs like shit in big fights, then your only choice is to use RTSS and suffer from the slight handicap that reduced rof will bring.</p>
+<p>Good stuff as always 🙂</p>
+<p>Here some more helpful info (especially for G-Sync users): http://www.blurbusters.com/gsync/gsync101/</p>
+<p>e.g. comparison between ingame and external framerate limiters: https://www.blurbusters.com/gsync/gsync101-input-lag-tests-and-settings/11/</p>
+<p>Optimal settings: https://www.blurbusters.com/gsync/gsync101-input-lag-tests-and-settings/14/</p>
+<p>Sadly PlanetSide (or the Forgelight Engine in general) is one ofthe rare occasions, where RTSS isn’t the best limiter to reduce input lag, but instead also doesn’t help with the ROF issue.</p>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

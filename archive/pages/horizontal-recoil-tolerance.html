@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>Horizontal Recoil Tolerance | CMDRCyrious.com — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>Horizontal Recoil Tolerance | CMDRCyrious.com</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd>CMDRCyrious</dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/horizontal-recoil-tolerance/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/horizontal-recoil-tolerance/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2016-05-22</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Live</dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<h2>Introduction</h2>
+<p>Horizontal Recoil Tolerance is the most mysterious and elusive recoil characteristic. We all knew what it’s supposed to do: set a limit on just how far Horizontal Recoil can take you from initial aiming position.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Horizontal Recoil Tolerance</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Horizontal-Recoil-Tolerance-1024x552.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>There were many hints, starting with the datamined name of this stat, and ending with <a href="https://www.youtube.com/watch?v=60WQ05-vn1g" target="_blank" rel="noopener noreferrer">this video</a> by Vanu Labs.</p>
+<p>However, nobody was able to figure out how to translate the datamined HRT values into what can be seen in game.</p>
+<h2>How everybody thinks it works</h2>
+<p>Let’s take the infamous Gauss SAW as an example:</p>
+<p><code>Horizontal Recoil: 0.175 / 0.175</code></p>
+<p><code>Horizontal Recoil Tolerance: 0.525</code></p>
+<p>Instantly it becomes obvious that 0.525 is divisible by 0.175 without residue:</p>
+<p><code>0.525 / 0.175 = 3</code></p>
+<p>So the logical conclusion would be that Gauss SAW can kick up to 3 times into one direction, after which Horizontal Recoil Tolerance forces it to bounce in the opposite direction.</p>
+<p>But that assumption is wrong. Gauss SAW can only kick up to 2 times in the same direction.</p>
+<p>This comes from multiple in-game tests, where I record a high resolution video of firing a weapon, and then watch it frame by frame and document how crosshair moves after each shot.</p>
+<p>Here’s an example of such recording:</p>
+<p>And here’s the recorded recoil path from that video example:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Gauss SAW recoil path</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/full-path.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>You can clearly see that Gauss SAW recoils only up to 2 times in the same direction. More recorded recoil paths:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">SAW HRT no grip</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/SAW-HRT-no-grip.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>It’s not just Gauss SAW, this is confirmed by testing other weapons as well; they all bounce less than this theory suggests. I have a notebook full of these scribbles:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">manual testing</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/WP_20160522_02_07_43_Pro-1024x575.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>It’s obvious that the first theory about Horizontal Recoil Tolerance is wrong.</p>
+<p>For years nobody was able to offer a correct theory, mostly from lack of interest or necessary knowledge.</p>
+<p>In the meantime, the solution is painfully simple, and if not for misleading HRT values, we’d crack that nut much earlier.</p>
+<h2>How it actually works</h2>
+<p>If you imagine HRT as an angle, the center of that angle is the position of your first shot. If the gun recoils left several times and exceeds the left <strong>half of tolerance</strong>, it will be forced to to recoil right at least once.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">HRT explanation</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/HRT-explanation-1.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>HRT is split in halves by crosshair position of a first shot in a burst, so that’s what we care about – half of tolerance, not the whole value.</p>
+<p>If we return to our example with Gauss SAW:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Gauss Saw Horizontal Recoil Tolerance</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/h8CgbDf-1.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">full path - HRT</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/full-path-HRT.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Accumulated horizontal recoil from 2 shots of Gauss SAW is equal to 0.35, which is greater than half of tolerance: 0.2625. That is why Gauss SAW can only recoil twice in the same direction.</p>
+<p>So the fact that 0.525 can be divided by horizontal recoil without residue has no meaning at all. It’s a nasty coincidence, nothing more.</p>
+<p>I have tested and retested this theory many times with at least 12 different weapons, and it remains consistent and predictable.</p>
+<p>The possibility that it works somehow differently behind the scenes still exists, but it is small.</p>
+<p>The funny part is that HRT could take different values without affecting anything. Gauss SAW could have Tolerance anywhere between 0.36 and 0.69, and the result would be exactly the same – still kick only up to 2 times in the same direction.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">HRT deviation</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/HRT-deviation.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>This leads to funny and unexpected things. For example:</p>
+<p><code>T32 Bull: 0.18 / 0.18 Recoil, 0.5 Tolerance</code></p>
+<p><code>T16 Rhino: 0.2 / 0.2 Recoil, 0.7 Tolerance</code></p>
+<p><code>TMG-50: 0.175 / 0.175, 0.7 Tolerance</code></p>
+<p>T32 Bull has much lower Tolerance than T16 Rhino, yet they both kick up to 2 times in one direction.</p>
+<p>TMG-50 has same tolerance as T16 Rhino, but lower Horizontal Recoil, so it kicks up to 3 times in one direction, giving it a wider recoil pattern.</p>
+<h2>How HRT can be used</h2>
+<p>Horizontal Recoil is the most unpredictable and uncontrollable part of the whole recoil system. You can’t compensate for random.</p>
+<p>Horizontal Recoil Tolerance brings a piece of order into this chaos. Horizontal Recoil can bounce wildly all it wants, but only within the bounds of HRT.</p>
+<p>Knowing how HRT works, you can calculate the width of the recoil pattern: the distance between the extremities of Horizontal Recoil:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">recoil pattern width</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/recoil-pattern-width-1.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Notice that Width is always larger than HRT, because Horizontal Recoil can exceed half of HRT once.</p>
+<h2>Calculations</h2>
+<p>First you will have to calculate the maximum amount of horizontal recoil kicks in the same direction:</p>
+<p><code>N_Kicks = Round_Down ((HRT / 2) / Horizontal Recoil Minimum) + 1</code></p>
+<p>In other words, to calculate the number of kicks, you have to divide HRT by 2, then divide the result by Minimum Horizontal Recoil, then round the result down, and then increase it by one.</p>
+<p>\[spoiler title=”No, you can’t just round the result up instead.”\]</p>
+<p>This is easier to explain on an example:</p>
+<p>Let’s take Reaper DMR:</p>
+<p><code>Horizontal Recoil: 0.2 / 0.2</code></p>
+<p><code>Tolerance: 0.4</code></p>
+<p><code>Half of tolerance: 0.2</code></p>
+<p>Let’s calculate the number of kicks rounding up, instead of rounding down and then adding 1.</p>
+<p><code>Round_Up(0.2 / 0.2) = Round_Up(1) = 1</code></p>
+<p>According to these calculations, Reaper DMR should kick only once in the same direction, similarly to Pulsar C.</p>
+<p>Let’s test that. Here’s a recorded recoil pattern from in-game testing:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://i.imgur.com/VqKcAkQ.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>As you can see, Reaper DMR can kick up to 2 times in the same direction. This is because accumulated horizontal recoil can be equal to half HRT and still kick further.</p>
+<p>In other words, accumulated recoil has to exceed half HRT to be forced to kick back.</p>
+<p>\[/spoiler\]</p>
+<p>For example:</p>
+<p><code>T5 AMC</code></p>
+<p><code>Horizontal Recoil: 0.2 / 0.2</code></p>
+<p><code>Horizontal Recoil Tolerance: 0.45</code></p>
+<p><code>HRT / 2 = 0.225</code></p>
+<p><code>0.225 / 0.2 = 1.125</code></p>
+<p><code>Round it down to 1, then increase by 1</code></p>
+<p><code>N_Kicks = 2</code></p>
+<p>Confirmed by in-game testing.</p>
+<p>When you know the maximum amount of kicks, you can calculate the total width of the recoil pattern:</p>
+<p><code>Width = N_Kicks <em> Horizontal Recoil Maximum </em> 2</code></p>
+<p>For T5 AMC:</p>
+<p><code>Recoil Pattern Width = 0.2 <em> 2 </em> 2 = 0.8 degrees</code></p>
+<p>This means that as long as target’s <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Angular_Size" target="_blank" rel="noopener noreferrer">Angular Size</a> is less or equal to 0.8 degrees, you are guaranteed to hit it, from the standpoint of Horizontal Recoil.</p>
+<h2>Unexpected implications</h2>
+<p><em>Attention! The following issue was fixed in <a href="https://forums.daybreakgames.com/ps2/index.php?threads/game-update-7-7.241708/" target="_blank" rel="noopener noreferrer">7/7/2016 patch</a>. It no longer works this way!</em></p>
+<p>As you know, <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/#Forward_Grip_Advanced_Forward_Grip" target="_blank" rel="noopener noreferrer">Forward Grip / Advanced Forward Grip</a> reduce both Horizontal Recoil and Tolerance.</p>
+<p>But the reduction in recoil is percentage-based, while reduction in Tolerance is a flat amount. So in certain conditions equipping a Forward Grip may increase the number of kicks, and sometimes even <strong>increase the width</strong> of the recoil pattern.</p>
+<p>Essentially making it a <strong>downgrade</strong>, making the weapon <strong>worse</strong> at what it’s supposed to make it better.</p>
+<p><strong><a href="http://cmdrcyrious.com/planetside2/weapons/carbines/#Pulsar_C" target="_blank" rel="noopener noreferrer">Pulsar C</a></strong> is the most prominent example of that:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Pulsar C HRT no Grip</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/Pulsar-C-HRT-no-Grip.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Pulsar C HRT Grip</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/Pulsar-C-HRT-Grip.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>This is confirmed by in-game testing.</p>
+<p>Advanced Forward Grip still reduces horizontal recoil per shot, so in that sense, it will make recoil a bit smoother. But it will be able to bounce in wider bounds, making it less consistent and predictable.</p>
+<p>So basically Pulsar C is likely to perform <em><strong>better</strong></em> at ranged shooting <em><strong>without</strong></em> Forward Grip. How crazy is that, huh?</p>
+<p>This is mostly because of how accurate is Pulsar C by default – it’s one of two weapons that can only kick once in the same direction, with the other gun being Gauss Compact Burst.</p>
+<p>There are other weapons affected negatively by Forward Grip, but it’s not as black and white with them.</p>
+<p>Let’s use Gauss SAW again:</p>
+<p><code>Horizontal Recoil: 0.175 / 0.175</code></p>
+<p><code>Horizontal Recoil Tolerance: 0.525</code></p>
+<p><code>Half of tolerance: 0.2625</code></p>
+<p><code>With Advanced Forward Grip:</code></p>
+<p><code>Horizontal Recoil: 0.175 * 0.67 = 0,11725</code></p>
+<p><code>Tolerance: 0.525 - 0.05 = 0.475</code></p>
+<p><code>Half of tolerance: 0.2375</code></p>
+<p><code>Round_Down(0.2625 / 0.175) + 1 = 2</code></p>
+<p>Without AFG, SAW kicks up to 2 times in the same direction.</p>
+<p><code>Round_Down(0.2375 / 0.11725) + 1 = 3</code></p>
+<p>With AFG, it takes 3 horizontal recoil bounces to exceed half of tolerance:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">SAW HRT grip ++</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/SAW-HRT-grip-.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Gauss Saw Horizontal Recoil Tolerance</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/h8CgbDf-1.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>This is confirmed by in-game testing.</p>
+<p>But is it actually a bad thing? If we calculate the width of the recoil pattern in both cases:</p>
+<p><code>No grip, width = 0.175 <em> 2 </em> 2 = 0.7</code></p>
+<p><code>AFG, width = 0.11725 <em> 3 </em> 2 = 0.7035</code></p>
+<p>So the difference in recoil pattern width is negligible, while the reduction in Horizontal Recoil per shot is substantial, which is important for firing in short bursts, which is done a lot with Gauss SAW.</p>
+<p>So despite the fact that AFG increases the number of kicks for Gauss SAW, it remains a noticeable upgrade.</p>
+<h2>Handout</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">sheet</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/sheet-300x200.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong><a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/HRT-vs-AFG-FG.xlsx" target="_blank" rel="noopener noreferrer">This Excel Spreadsheet</a></strong> contains recoil statistics of 76 automatic and burst weapons, along with calculations for number of kicks, and how they are affected by Forward Grip.</p>
+<p>These recoil stats were <a href="https://forums.daybreakgames.com/ps2/index.php?threads/take-off-forward-grip-from-your-pulsar-c-thx-wrel.232007/page-5#post-3265059" target="_blank" rel="noopener noreferrer">pulled from DBG API</a>, which contains their exact values – in DBG database weapon stats often have values like “0,174999999999999”, while in online spreadsheets they are rounded to “0,175”.</p>
+<p>This kind of imprecision can be crucial in calculating the number of bounces.</p>
+<p>According to my calculations, Forward Grip / Advanced Forward Grip increases the number of kicks and width of the recoil pattern by a noticeable amount for these weapons:</p>
+<ul><li>Orion VS54</li><li>VX29 Polaris</li><li>T9 CARV S</li><li>TAR</li><li>Equinox VE2</li><li>Pulsar C</li></ul>
+<p>Forward Grip <em><strong>should not be used</strong></em> with these weapons. Outside of short bursting of 2-3 rounds, it will only make things worse.</p>
+<p>There is also a category of weapons where Forward Grip increases the amount of kicks, but the increase to width of the recoil pattern is negligible, and Forward Grip largely remains an upgrade for them:</p>
+<ul><li>NC6 Gauss SAW</li><li>Carnage AR</li><li>Corvus VA55</li></ul>
+<p>Finally, we have AF-4 Cyclone. Its horizontal recoil varies by a great amount, so Forward Grip will sometimes increase the number of kicks, and sometimes it won’t.</p>
+<p>Overall, I don’t recommend using Forward Grips on SMGs, but for <a href="http://cmdrcyrious.com/planetside2/weapons/smgs/#Attachments" target="_blank" rel="noopener noreferrer">other reasons</a>.</p>
+<h2>Conclusion</h2>
+<p>Horizontal Recoil Tolerance remained a blind spot of PS2 weapon community for a long time, and I’m happy to finally shed some light on it.</p>
+<p>There is still much to do in theorycrafting of PlanetSide 2, but now we finally can predict a weapon’s recoil pattern just from its stats.</p>
+<p>Please feel free to comment me with any questions regarding PS2 weapon mechanics.</p>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

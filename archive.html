@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title data-i18n="arc.title">📚 Archive</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-head">
+      <a class="arc-back" href="index.html" data-i18n="arc.back">← Back to the stats</a>
+      <div class="arc-headtext">
+        <h1 data-i18n="arc.title">📚 Archive</h1>
+        <p class="arc-sub" data-i18n="arc.sub">The CMDRCyrious / Iridar PlanetSide 2 knowledge archive — preserved here because the original is vanishing.</p>
+      </div>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+
+    <section class="arc-panel">
+      <h2 data-i18n="arc.whatH">What this is</h2>
+      <p data-i18n="arc.whatP">A preservation archive of the PlanetSide 2 knowledge base that CMDRCyrious hosted at cmdrcyrious.com — above all, Iridar's work: the Weapon Mechanics guide, the Construction System guide, the “Highly Technical” analysis method, the Weapon Analysis Toolbox, and the videos. CMDRCyrious spent years hosting and preserving Iridar's guides, tools, and videos; this archive takes over that role. We are the knowledge database now.</p>
+      <h2 data-i18n="arc.whyH">Why it exists</h2>
+      <p data-i18n="arc.whyP">The data is vanishing while we watch. On 2026-11-09, when this archive was made, the live site still answered HTTP 200 for every page — but 64 of its 159 pages served no article body at all in their static HTML: navigation shell, empty content. Of those 64, 51 were recovered from the Wayback Machine and 1 (Weapon Mechanics) was already held as a 2023 snapshot; 12 pages have no Wayback snapshot anywhere and their text is lost. That is the state of the record as of 2026-11-09, and the reason this archive exists.</p>
+      <h2 data-i18n="arc.whoH">Who this is for</h2>
+      <p data-i18n="arc.whoP">Someone looking for this information 10 years from now. Every entry is written to stand on its own: original author and date, source URL, snapshot or archive date, what the item is, its lineage (who built on whom), and its currency status — still working, outdated, dead, or lost — with the verification date where one is known. No entry assumes you were here when it was made.</p>
+    </section>
+
+    <section class="arc-panel">
+      <h2 data-i18n="arc.linH">Lineage — who built on whom</h2>
+      <ol class="arc-lineage">
+        <li data-i18n-html="arc.lin1"><strong>Iridar (2016–2018)</strong> wrote the Weapon Mechanics guide, the Construction System guide, the “Highly Technical” analysis method, the Weapon Analysis Toolbox spreadsheet, and the angular-size research. He also made the videos.</li>
+        <li data-i18n-html="arc.lin2"><strong>CMDRCyrious</strong> hosted and preserved Iridar's work on cmdrcyrious.com — guides, Toolbox, videos, the Weapon Simulator — and added his own highly-technical weapon guides, mechanics explainers, and calculators on top of it.</li>
+        <li data-i18n-html="arc.lin3"><strong>Halospud</strong> wrote the Infantry Guide that CMDRCyrious linked from his infantry-guides page; it credits Iridar and teaches the movement layer Iridar's numbers don't cover.</li>
+        <li data-i18n-html="arc.lin4"><strong>EmperorDorf (2022–2023)</strong> built the Weapon Surgeon simulator on Iridar's Toolbox stats — his stats page is Iridar's Toolbox data. His projectile-radius finding (0.03 m) then corrected Iridar's angular-size research, closing the exact in-game vs model gap Iridar himself had found and published in 2017.</li>
+        <li data-i18n-html="arc.lin5"><strong>This archive (2026-11-09)</strong> takes over CMDRCyrious's preservation role, because the live site is already losing pages.</li>
+      </ol>
+      <p data-i18n="arc.linAngular">The angular-size correction runs through the whole collection: Iridar's angular-size research predicted headshot rates from target angular size. In 2017 he tested it himself in VR and found 57% headshots observed against 44% predicted. In that same thread, u/BoatsFriends proposed the projectile-size hypothesis; Iridar confirmed a large bullet hitbox. In 2023 Dorf quantified it: a 0.03 m projectile radius reproduces Iridar's numbers exactly. Anything here built on angular size is dead for that reason, and is marked so. The replacement is Dorf's method: simulate with a 0.03 m projectile radius.</p>
+    </section>
+
+    <section class="arc-panel">
+      <h2 data-i18n="arc.legH">How to read the currency statuses</h2>
+      <table class="arc-legend">
+        <tbody>
+          <tr><td><span class="arc-badge arc-st-verified">✅ Verified working (2026)</span></td><td>Checked in the live game by Dayset in 2026. The one hard currency fact in this archive.</td></tr>
+          <tr><td><span class="arc-badge arc-st-timeless">🕰️ Method timeless, data dated</span></td><td>The math and mechanics still hold; the weapon numbers are from the stated year.</td></tr>
+          <tr><td><span class="arc-badge arc-st-outdated">⚠️ Largely outdated</span></td><td>The game systems described have changed since; the exceptions that still work are named.</td></tr>
+          <tr><td><span class="arc-badge arc-st-dead">💀 Dead (kept for history)</span></td><td>The research or method was disproven — by its own author, or by later measurement. Kept because the correction is part of the story.</td></tr>
+          <tr><td><span class="arc-badge arc-st-lost">❌ Lost</span></td><td>The text is unrecoverable: the live copy is empty and no Wayback snapshot exists. What remains is noted honestly.</td></tr>
+          <tr><td><span class="arc-badge arc-st-pending">⏳ Pending</span></td><td>Not yet captured when this archive was made. The URL and the reason are recorded so a later reader can try again.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="arc-panel">
+      <h2 data-i18n="arc.coreH">The Iridar core</h2>
+      <p data-i18n="arc.coreP">These seven items are the core of the archive. Everything else supports them.</p>
+      <div class="arc-core">
+        <article class="arc-card">
+          <h3><a href="archive/pages/planetside2__weapons__weapon-mechanics.html">PlanetSide 2 Weapon Mechanics</a></h3>
+          <p class="arc-card-meta">Iridar · 2016-04-25 · <span class="arc-badge arc-st-timeless">🕰️ Method timeless, data dated</span></p>
+          <p>The complete guide to how PlanetSide 2 weapons work: cone of fire (including the stance-change rules behind the ideal-ADAD rhythm), recoil, bloom and recovery, damage calculation, attachments. The single most important document in this archive.</p>
+        </article>
+        <article class="arc-card">
+          <h3><a href="archive/pages/construction-system-guide.html">Construction System Guide</a></h3>
+          <p class="arc-card-meta">Iridar · 2018 · <span class="arc-badge arc-st-outdated">⚠️ Largely outdated</span></p>
+          <p>The full construction guide: modules, the core, placement, and the preview-placement trick. Modules and the core are gone since 2018 — except the preview-placement trick, which still works in 2026. Also saved as a Wayback snapshot and a mirror copy.</p>
+        </article>
+        <article class="arc-card">
+          <h3><a href="archive/pages/highly-technical-how-to-analyze-a-weapon.html">“Highly Technical: How to analyze a weapon”</a></h3>
+          <p class="arc-card-meta">CMDRCyrious (Iridar's method) · 2017-07-03 · <span class="arc-badge arc-st-timeless">🕰️ Method timeless, data dated</span></p>
+          <p>The method paper: which weapon stats to look at to properly analyze a weapon — CoF bloom three ways, CoF recovery, initial accuracy, ADS speed as a survival trait. Worked comparison: NSX Tanto vs NS-11C.</p>
+        </article>
+        <article class="arc-card">
+          <h3><a href="archive/Iridars-Toolbox-v6h.zip" download>Iridar's Weapon Analysis Toolbox (spreadsheet, v6h)</a></h3>
+          <p class="arc-card-meta">Iridar · 2018-08-19 · <span class="arc-badge arc-st-timeless">🕰️ Method timeless, data dated</span></p>
+          <p>The Toolbox itself: 10 sheets, per-weapon damage, CoF per stance, bloom, recoil statistics, Monte Carlo horizontal deviation. 194 weapons. Data is 2018 (old Nanoweave, pre-rebalance); the method is timeless.</p>
+        </article>
+        <article class="arc-card">
+          <h3><a href="archive/pages/video-toolbox-spotlight.html">“Weapon Analysis Toolbox Spotlight” (video)</a></h3>
+          <p class="arc-card-meta">Iridar · 2017 · <span class="arc-badge arc-st-mixed">⚠️ Mixed</span></p>
+          <p>A walkthrough of the Toolbox: Gauss SAW vs Nanoweave TTK, HVA effects, the Recoil page, Cyclone vs Armistice. The CoF analysis in it is dead by the author's own warning (angular size); the rest is a 2017-era feature tour. No video file stored; transcript unavailable.</p>
+        </article>
+        <article class="arc-card">
+          <h3><a href="archive/pages/angular-size-reddit-post.html">Angular Size testing post (Reddit)</a></h3>
+          <p class="arc-card-meta">u/Iridar51 · 2017-09-10 · <span class="arc-badge arc-st-dead">💀 Dead (kept for history)</span></p>
+          <p>The post where Iridar published his own debunk: the Eridani VR test gave 57% headshots observed against 44% predicted. The hinge of the whole collection — the moment the old model died and the radius model was born. Saved by hand as a browser snapshot on 2026-11-09, post and 23 comments.</p>
+        </article>
+        <article class="arc-card">
+          <h3><a href="archive/pages/video-preview-placement.html">“[MECHANIC] Preview placement before construction” (video)</a></h3>
+          <p class="arc-card-meta">Iridar · 2018 · <span class="arc-badge arc-st-verified">✅ Verified working (2026)</span></p>
+          <p>The video demonstration of the construction preview-placement trick. The trick it shows — Ctrl+F11 to hide the weapon + E to place without starting construction — was verified still working in the live game in 2026. No video file stored; the video has no speech.</p>
+        </article>
+      </div>
+      <p data-i18n-html="arc.coreHalospud">Supporting material: Halospud's Infantry Guide — <a href="archive/pages/halospud-part2-shooting-mechanics-1v1-basics.html">Part 2: Shooting Mechanics and 1v1 Basics</a> and <a href="archive/pages/halospud-part4-movement-tricks.html">Part 4: Movement Tricks</a> — teaches the movement layer the numbers don't cover.</p>
+    </section>
+
+    <section class="arc-panel">
+      <h2 data-i18n="arc.toolH">The Toolbox spreadsheet</h2>
+      <p data-i18n="arc.toolP">Iridar's Weapon Analysis Toolbox, v6h (2018-08-19), as CMDRCyrious hosted it. Dorf's Weapon Surgeon stats page is this data, and the Ideal ADAD Calculator computes its still-shot counts from this sheet. Download it here — the original upload link is one of the things that can vanish next.</p>
+      <p><a class="arc-dl" href="archive/Iridars-Toolbox-v6h.zip" download data-i18n="arc.toolDl">⬇️ Download Iridar's Toolbox v6h (.zip, 414 KB)</a></p>
+    </section>
+
+    <section class="arc-panel">
+      <h2 data-i18n="arc.invH">Full inventory</h2>
+      <div class="arc-tools">
+        <input id="arcSearch" type="search" autocomplete="off" spellcheck="false" placeholder="Search titles…" data-i18n-placeholder="arc.searchPh" aria-label="Search titles" data-i18n-aria-label="arc.searchPh" />
+        <div class="arc-filters" role="group" aria-label="Filter by status">
+          <button type="button" data-filter="all" class="arc-filter on" data-i18n="arc.fAll">All</button>
+          <button type="button" data-filter="ok" class="arc-filter" data-i18n="arc.fOk">Readable</button>
+          <button type="button" data-filter="lost" class="arc-filter" data-i18n="arc.fLost">Lost</button>
+          <button type="button" data-filter="video" class="arc-filter" data-i18n="arc.fVideo">Videos</button>
+        </div>
+      </div>
+      <p id="arcCount" class="arc-count" role="status" aria-live="polite"></p>
+      <div class="arc-table-wrap">
+        <table class="arc-table">
+          <thead>
+            <tr><th data-i18n="arc.colTitle">Title</th><th data-i18n="arc.colWords">Words</th><th data-i18n="arc.colSource">Source</th><th data-i18n="arc.colStatus">Status</th></tr>
+          </thead>
+          <tbody id="arcRows">
+        <!-- BEGIN ARCHIVE INVENTORY (generated by scripts/build-archive.mjs) -->
+          <tr data-title="[fwf] fish with feet | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/fwf-fish-with-feet.html">[FwF] Fish with Feet | CMDRCyrious.com</a></td><td class="arc-num">248</td><td>Live</td><td></td></tr>
+          <tr data-title="[mechanic] preview placement before construction" data-status="video" data-currency="verified"><td><a href="archive/pages/video-preview-placement.html">[MECHANIC] Preview placement before construction</a></td><td class="arc-num">—</td><td>YouTube (record only)</td><td><span class="arc-badge arc-st-verified">✅ Verified working (2026)</span></td></tr>
+          <tr data-title="[merc]mercenaries" data-status="ok" data-currency=""><td><a href="archive/pages/mercmercenaries.html">[MERC]Mercenaries</a></td><td class="arc-num">491</td><td>Wayback</td><td></td></tr>
+          <tr data-title="[nma]new model army | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/nmanew-model-army.html">[NMA]New Model Army | CMDRCyrious.com</a></td><td class="arc-num">359</td><td>Live</td><td></td></tr>
+          <tr data-title="a guide for aspiring small squad point-holders (taking bases against overpopulation with a small squad) | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/small-squad-point-holding.html">A guide for aspiring small squad point-holders (taking bases against overpopulation with a small squad) | CMDRCyrious.com</a></td><td class="arc-num">3538</td><td>Live</td><td></td></tr>
+          <tr data-title="about planetside 2 | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__about.html">About PlanetSide 2 | CMDRCyrious.com</a></td><td class="arc-num">490</td><td>Live</td><td></td></tr>
+          <tr data-title="advanced specialization program | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/advanced-specialization-program.html">Advanced Specialization Program | CMDRCyrious.com</a></td><td class="arc-num">908</td><td>Live</td><td></td></tr>
+          <tr data-title="af-4 cyclone: highly technical weapon guide" data-status="ok" data-currency=""><td><a href="archive/pages/af-4-cyclone-highly-technical-weapon-guide.html">AF-4 Cyclone: Highly Technical Weapon Guide</a></td><td class="arc-num">2846</td><td>Wayback</td><td></td></tr>
+          <tr data-title="anti-personnel mines | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__equipment__utility-items__anti-personnel-mines.html">Anti-Personnel Mines | CMDRCyrious.com</a></td><td class="arc-num">490</td><td>Live</td><td></td></tr>
+          <tr data-title="assault rifles" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__weapons__assault-rifles.html">Assault Rifles</a></td><td class="arc-num">7924</td><td>Wayback</td><td></td></tr>
+          <tr data-title="at progress planetside 2 | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside22.html">at progress Planetside 2 | CMDRCyrious.com</a></td><td class="arc-num">396</td><td>Live</td><td></td></tr>
+          <tr data-title="auraxium smgs: what changed and why | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/auraxium-smgs-what-changed-and-why.html">Auraxium SMGs: what changed and why | CMDRCyrious.com</a></td><td class="arc-num">861</td><td>Live</td><td></td></tr>
+          <tr data-title="automated command system | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/automated-command-system.html">Automated Command System | CMDRCyrious.com</a></td><td class="arc-num">1425</td><td>Live</td><td></td></tr>
+          <tr data-title="basic class directives | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__basic-class-directives.html">Basic Class Directives | CMDRCyrious.com</a></td><td class="arc-num">2161</td><td>Live</td><td></td></tr>
+          <tr data-title="basic training directives | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__basic-training-directives.html">Basic Training Directives | CMDRCyrious.com</a></td><td class="arc-num">1092</td><td>Live</td><td></td></tr>
+          <tr data-title="battle rifles" data-status="ok" data-currency=""><td><a href="archive/pages/battle-rifles.html">Battle Rifles</a></td><td class="arc-num">4323</td><td>Wayback</td><td></td></tr>
+          <tr data-title="beginner guides" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides.html">Beginner Guides</a></td><td class="arc-num">464</td><td>Wayback</td><td></td></tr>
+          <tr data-title="bullet damage calculator" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__tools-and-useful-links__bullet-damage-calculator.html">Bullet Damage Calculator</a></td><td class="arc-num">856</td><td>Wayback</td><td></td></tr>
+          <tr data-title="c4" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__equipment__utility-items__c4.html">C4</a></td><td class="arc-num">1331</td><td>Wayback</td><td></td></tr>
+          <tr data-title="carbines" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__weapons__carbines.html">Carbines</a></td><td class="arc-num">10838</td><td>Wayback</td><td></td></tr>
+          <tr data-title="character progression and currencies | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__character-progression-and-currencies.html">Character Progression and Currencies | CMDRCyrious.com</a></td><td class="arc-num">1945</td><td>Live</td><td></td></tr>
+          <tr data-title="claymore guide by bvllish | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/claymore-guide-by-bvllish.html">Claymore Guide by Bvllish | CMDRCyrious.com</a></td><td class="arc-num">335</td><td>Live</td><td></td></tr>
+          <tr data-title="close range sniping guide by davregis | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/close-range-sniping-guide-by-davregis.html">Close Range Sniping Guide by Davregis | CMDRCyrious.com</a></td><td class="arc-num">1302</td><td>Live</td><td></td></tr>
+          <tr data-title="combat medic loadout: swiss army knife | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/combat-medic-loadout-swiss-army-knife.html">Combat Medic Loadout: Swiss Army Knife | CMDRCyrious.com</a></td><td class="arc-num">1817</td><td>Live</td><td></td></tr>
+          <tr data-title="combined arms initiative and critical mass update has arrived! | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/combined-arms-initiative-and-critical-mass-update-has-arrived.html">Combined Arms Initiative and Critical Mass Update has arrived! | CMDRCyrious.com</a></td><td class="arc-num">187</td><td>Live</td><td></td></tr>
+          <tr data-title="common problems and misconceptions | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__common-problems-and-misconceptions.html">Common Problems and Misconceptions | CMDRCyrious.com</a></td><td class="arc-num">1420</td><td>Live</td><td></td></tr>
+          <tr data-title="communication and interaction | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__communication.html">Communication and Interaction | CMDRCyrious.com</a></td><td class="arc-num">946</td><td>Live</td><td></td></tr>
+          <tr data-title="community and videos" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__community-and-videos.html">Community and Videos</a></td><td class="arc-num">118</td><td>Wayback</td><td></td></tr>
+          <tr data-title="construction system guide" data-status="ok" data-currency="outdated"><td><a href="archive/pages/mirror__iridar__construction-system-guide.html">Construction System Guide</a></td><td class="arc-num">6903</td><td>Mirror</td><td><span class="arc-badge arc-st-outdated">⚠️ Largely outdated</span></td></tr>
+          <tr data-title="construction system guide" data-status="ok" data-currency="outdated"><td><a href="archive/pages/wayback__iridar__construction-system-guide.html">Construction System Guide</a></td><td class="arc-num">6501</td><td>Wayback</td><td><span class="arc-badge arc-st-outdated">⚠️ Largely outdated</span></td></tr>
+          <tr data-title="construction system guide | cmdrcyrious.com" data-status="ok" data-currency="outdated"><td><a href="archive/pages/construction-system-guide.html">Construction System Guide | CMDRCyrious.com</a></td><td class="arc-num">7123</td><td>Live</td><td><span class="arc-badge arc-st-outdated">⚠️ Largely outdated</span></td></tr>
+          <tr data-title="continents and strategy | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__continents.html">Continents and Strategy | CMDRCyrious.com</a></td><td class="arc-num">2917</td><td>Live</td><td></td></tr>
+          <tr data-title="critical mass alerts | cmdrcyrious.com" data-status="lost" data-currency=""><td><a href="archive/pages/planetside2__critical-mass-alerts.html">Critical Mass Alerts | CMDRCyrious.com</a></td><td class="arc-num">394</td><td>❌ LOST</td><td><span class="arc-badge arc-st-lost">❌ Lost</span></td></tr>
+          <tr data-title="custom voice channels" data-status="ok" data-currency=""><td><a href="archive/pages/custom-voice-channels.html">Custom Voice Channels</a></td><td class="arc-num">541</td><td>Wayback</td><td></td></tr>
+          <tr data-title="cutebeaver’s camo guide | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__equipment__camo.html">CuteBeaver’s Camo Guide | CMDRCyrious.com</a></td><td class="arc-num">295</td><td>Live</td><td></td></tr>
+          <tr data-title="cutebeaver's parkour guide | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/parkour-guide.html">CuteBeaver's Parkour Guide | CMDRCyrious.com</a></td><td class="arc-num">3242</td><td>Live</td><td></td></tr>
+          <tr data-title="engineer" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__classes__engineer.html">Engineer</a></td><td class="arc-num">3064</td><td>Wayback</td><td></td></tr>
+          <tr data-title="epic montage – “dangerous” | cmdrcyrious.com" data-status="lost" data-currency=""><td><a href="archive/pages/epic-montage-dangerous.html">Epic Montage – “Dangerous” | CMDRCyrious.com</a></td><td class="arc-num">181</td><td>❌ LOST</td><td><span class="arc-badge arc-st-lost">❌ Lost</span></td></tr>
+          <tr data-title="equipment" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__equipment.html">Equipment</a></td><td class="arc-num">124</td><td>Wayback</td><td></td></tr>
+          <tr data-title="facility and continent benefits" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__facility-and-continent-benefits.html">Facility and Continent Benefits</a></td><td class="arc-num">366</td><td>Wayback</td><td></td></tr>
+          <tr data-title="find an outfit. | cmdrcyrious.com" data-status="lost" data-currency=""><td><a href="archive/pages/find-an-outfit.html">Find an Outfit. | CMDRCyrious.com</a></td><td class="arc-num">523</td><td>❌ LOST</td><td><span class="arc-badge arc-st-lost">❌ Lost</span></td></tr>
+          <tr data-title="first person shooter basics | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__fps-basics.html">First Person Shooter Basics | CMDRCyrious.com</a></td><td class="arc-num">1268</td><td>Live</td><td></td></tr>
+          <tr data-title="fps vs rof vs physx" data-status="ok" data-currency=""><td><a href="archive/pages/fps-vs-rof-vs-physx.html">FPS vs RoF vs PhysX</a></td><td class="arc-num">429</td><td>Wayback</td><td></td></tr>
+          <tr data-title="frag grenades" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__equipment__frag-grenades.html">Frag Grenades</a></td><td class="arc-num">525</td><td>Wayback</td><td></td></tr>
+          <tr data-title="game update chronicles" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__tools-and-useful-links__game-update-chronicles.html">Game Update Chronicles</a></td><td class="arc-num">11545</td><td>Wayback</td><td></td></tr>
+          <tr data-title="game update chronicles - 2013" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__tools-and-useful-links__game-update-chronicles__game-update-chronicles-2013.html">Game Update Chronicles - 2013</a></td><td class="arc-num">462</td><td>Wayback</td><td></td></tr>
+          <tr data-title="game update chronicles - 2014" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__tools-and-useful-links__game-update-chronicles__game-update-chronicles-2014.html">Game Update Chronicles - 2014</a></td><td class="arc-num">2386</td><td>Wayback</td><td></td></tr>
+          <tr data-title="game update chronicles - 2017" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__tools-and-useful-links__game-update-chronicles__game-update-chronicles-2017.html">Game Update Chronicles - 2017</a></td><td class="arc-num">1954</td><td>Wayback</td><td></td></tr>
+          <tr data-title="game update chronicles – 2015 | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__tools-and-useful-links__game-update-chronicles__game-update-chronicles-2015.html">Game Update Chronicles – 2015 | CMDRCyrious.com</a></td><td class="arc-num">1139</td><td>Live</td><td></td></tr>
+          <tr data-title="game update chronicles – 2016 | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__tools-and-useful-links__game-update-chronicles__game-update-chronicles-2016.html">Game Update Chronicles – 2016 | CMDRCyrious.com</a></td><td class="arc-num">2061</td><td>Live</td><td></td></tr>
+          <tr data-title="game update chronicles – 2018 | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__tools-and-useful-links__game-update-chronicles__game-update-chronicles-2018.html">Game Update Chronicles – 2018 | CMDRCyrious.com</a></td><td class="arc-num">1544</td><td>Live</td><td></td></tr>
+          <tr data-title="game update chronicles – 2019 | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__tools-and-useful-links__game-update-chronicles__game-update-chronicles-2019.html">Game Update Chronicles – 2019 | CMDRCyrious.com</a></td><td class="arc-num">2482</td><td>Live</td><td></td></tr>
+          <tr data-title="game update chronicles – 2020 | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__tools-and-useful-links__game-update-chronicles__game-update-chronicles-2020.html">Game Update Chronicles – 2020 | CMDRCyrious.com</a></td><td class="arc-num">4922</td><td>Live</td><td></td></tr>
+          <tr data-title="halospud — planetside 2 infantry guide, part 2: shooting mechanics and 1v1 basics" data-status="ok" data-currency="timeless"><td><a href="archive/pages/halospud-part2-shooting-mechanics-1v1-basics.html">Halospud — Planetside 2 Infantry Guide, Part 2: Shooting Mechanics and 1v1 Basics</a></td><td class="arc-num">3339</td><td>Google Docs</td><td><span class="arc-badge arc-st-timeless">🕰️ Method timeless, data dated</span></td></tr>
+          <tr data-title="halospud — planetside 2 infantry guide, part 4: movement tricks" data-status="ok" data-currency="timeless"><td><a href="archive/pages/halospud-part4-movement-tricks.html">Halospud — Planetside 2 Infantry Guide, Part 4: Movement Tricks</a></td><td class="arc-num">3170</td><td>Google Docs</td><td><span class="arc-badge arc-st-timeless">🕰️ Method timeless, data dated</span></td></tr>
+          <tr data-title="hardware | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__performance-guide__hardware.html">Hardware | CMDRCyrious.com</a></td><td class="arc-num">3888</td><td>Live</td><td></td></tr>
+          <tr data-title="heavy assault" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__classes__heavy-assault.html">Heavy Assault</a></td><td class="arc-num">2848</td><td>Wayback</td><td></td></tr>
+          <tr data-title="heavy weapons" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__weapons__heavy-weapons.html">Heavy Weapons</a></td><td class="arc-num">1596</td><td>Wayback</td><td></td></tr>
+          <tr data-title="highly technical weapon comparison: 143 @ 698 lmgs" data-status="ok" data-currency=""><td><a href="archive/pages/highly-technical-weapon-comparison-143-698-lmgs.html">Highly Technical Weapon Comparison: 143 @ 698 LMGs</a></td><td class="arc-num">5095</td><td>Wayback</td><td></td></tr>
+          <tr data-title="highly technical: how to analyze a weapon" data-status="ok" data-currency="timeless"><td><a href="archive/pages/highly-technical-how-to-analyze-a-weapon.html">Highly Technical: How to analyze a weapon</a></td><td class="arc-num">2941</td><td>Wayback</td><td><span class="arc-badge arc-st-timeless">🕰️ Method timeless, data dated</span></td></tr>
+          <tr data-title="highly technical: nsx tanto vs ns-11c | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/highly-technical-nsx-tanto-vs-ns-11c.html">Highly Technical: NSX Tanto vs NS-11C | CMDRCyrious.com</a></td><td class="arc-num">3256</td><td>Live</td><td></td></tr>
+          <tr data-title="home" data-status="ok" data-currency=""><td><a href="archive/pages/home.html">Home</a></td><td class="arc-num">791</td><td>Wayback</td><td></td></tr>
+          <tr data-title="horizontal recoil stability calculator | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/horizontal-recoil-stability-calculator.html">Horizontal Recoil Stability Calculator | CMDRCyrious.com</a></td><td class="arc-num">801</td><td>Live</td><td></td></tr>
+          <tr data-title="horizontal recoil tolerance | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/horizontal-recoil-tolerance.html">Horizontal Recoil Tolerance | CMDRCyrious.com</a></td><td class="arc-num">1821</td><td>Live</td><td></td></tr>
+          <tr data-title="how forward grips were fixed | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/how-forward-grips-were-fixed.html">How Forward Grips were fixed | CMDRCyrious.com</a></td><td class="arc-num">510</td><td>Live</td><td></td></tr>
+          <tr data-title="how to benchmark planetside 2 | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/how-to-benchmark-planetside-2.html">How to benchmark PlanetSide 2 | CMDRCyrious.com</a></td><td class="arc-num">1184</td><td>Live</td><td></td></tr>
+          <tr data-title="how to capture planetside 2 base | cmdrcyrious.com" data-status="lost" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__how-to-capture-a-base.html">How to capture PlanetSide 2 base | CMDRCyrious.com</a></td><td class="arc-num">411</td><td>❌ LOST</td><td><span class="arc-badge arc-st-lost">❌ Lost</span></td></tr>
+          <tr data-title="how to get more certification points | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__how-to-get-more-certification-points.html">How to get more Certification Points | CMDRCyrious.com</a></td><td class="arc-num">703</td><td>Live</td><td></td></tr>
+          <tr data-title="how to get to the battle | cmdrcyrious.com" data-status="lost" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__how-to-get-to-the-battle.html">How to get to the battle | CMDRCyrious.com</a></td><td class="arc-num">414</td><td>❌ LOST</td><td><span class="arc-badge arc-st-lost">❌ Lost</span></td></tr>
+          <tr data-title="how to kill enemies | cmdrcyrious.com" data-status="lost" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__how-to-kill.html">How to kill enemies | CMDRCyrious.com</a></td><td class="arc-num">407</td><td>❌ LOST</td><td><span class="arc-badge arc-st-lost">❌ Lost</span></td></tr>
+          <tr data-title="how to record and upload videos | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/how-to-record-and-upload-planetside-2-videos.html">How to Record and Upload Videos | CMDRCyrious.com</a></td><td class="arc-num">8110</td><td>Live</td><td></td></tr>
+          <tr data-title="how to survive" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__how-to-survive.html">How to survive</a></td><td class="arc-num">343</td><td>Wayback</td><td></td></tr>
+          <tr data-title="how to use daybreak census api | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/how-to-use-daybreak-census-api.html">How to use Daybreak Census API | CMDRCyrious.com</a></td><td class="arc-num">3806</td><td>Live</td><td></td></tr>
+          <tr data-title="http://cmdrcyrious.com/planetside2/weapons/ | cmdrcyrious.com" data-status="lost" data-currency=""><td><a href="archive/pages/http-cmdrcyrious-com-planetside2-weapons.html">http://cmdrcyrious.com/planetside2/weapons/ | CMDRCyrious.com</a></td><td class="arc-num">369</td><td>❌ LOST</td><td><span class="arc-badge arc-st-lost">❌ Lost</span></td></tr>
+          <tr data-title="ideal burst length calculator | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/ideal-burst-length-calculator.html">Ideal Burst Length Calculator | CMDRCyrious.com</a></td><td class="arc-num">1219</td><td>Live</td><td></td></tr>
+          <tr data-title="infantry guides" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__infantry-guides.html">Infantry Guides</a></td><td class="arc-num">99</td><td>Wayback</td><td></td></tr>
+          <tr data-title="infiltrator cosmetics in darkness | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/infiltrator-armors-in-darkness.html">Infiltrator Cosmetics in Darkness | CMDRCyrious.com</a></td><td class="arc-num">424</td><td>Live</td><td></td></tr>
+          <tr data-title="infiltrator loadout: nightshade | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/infiltrator-loadout-nightshade.html">Infiltrator Loadout: Nightshade | CMDRCyrious.com</a></td><td class="arc-num">675</td><td>Live</td><td></td></tr>
+          <tr data-title="infiltrator’s handbook: what to do if you get caught? | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/infiltrators-handbook-what-to-do-if-you-got-caught.html">Infiltrator’s Handbook: what to do if you get caught? | CMDRCyrious.com</a></td><td class="arc-num">742</td><td>Live</td><td></td></tr>
+          <tr data-title="iridar's weapon analysis toolbox | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/toolbox.html">Iridar's Weapon Analysis Toolbox | CMDRCyrious.com</a></td><td class="arc-num">3488</td><td>Live</td><td></td></tr>
+          <tr data-title="jet pack mechanics video guide | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/jet-pack-mechanics-video-guide.html">Jet Pack Mechanics Video Guide | CMDRCyrious.com</a></td><td class="arc-num">208</td><td>Live</td><td></td></tr>
+          <tr data-title="join the cyrious army! | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/enlist-today.html">Join the Cyrious Army! | CMDRCyrious.com</a></td><td class="arc-num">394</td><td>Live</td><td></td></tr>
+          <tr data-title="known alert rewards | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/known-alert-rewards.html">Known Alert Rewards | CMDRCyrious.com</a></td><td class="arc-num">888</td><td>Live</td><td></td></tr>
+          <tr data-title="laggy animations vs adad spam | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/laggy-animations-vs-adad-spam.html">Laggy Animations vs ADAD Spam | CMDRCyrious.com</a></td><td class="arc-num">653</td><td>Live</td><td></td></tr>
+          <tr data-title="leading a squad in planetside 2 | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__leading-a-squad.html">Leading a squad in PlanetSide 2 | CMDRCyrious.com</a></td><td class="arc-num">1258</td><td>Live</td><td></td></tr>
+          <tr data-title="light assault" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__classes__light-assault.html">Light Assault</a></td><td class="arc-num">14696</td><td>Wayback</td><td></td></tr>
+          <tr data-title="lmgs" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__weapons__lmgs.html">LMGs</a></td><td class="arc-num">9845</td><td>Wayback</td><td></td></tr>
+          <tr data-title="med kits and restoration kits | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__equipment__utility-items__med-kits-and-restoration-kits.html">Med Kits and Restoration Kits | CMDRCyrious.com</a></td><td class="arc-num">589</td><td>Live</td><td></td></tr>
+          <tr data-title="mg-h1 watchman: highly technical weapon guide" data-status="ok" data-currency=""><td><a href="archive/pages/mg-h1-watchman-highly-technical-weapon-guide.html">MG-H1 Watchman: Highly Technical Weapon Guide</a></td><td class="arc-num">3592</td><td>Wayback</td><td></td></tr>
+          <tr data-title="mission system" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__mission-system.html">Mission System</a></td><td class="arc-num">168</td><td>Wayback</td><td></td></tr>
+          <tr data-title="mouse settings | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__performance-guide__mouse-settings.html">Mouse settings | CMDRCyrious.com</a></td><td class="arc-num">3265</td><td>Live</td><td></td></tr>
+          <tr data-title="new patch | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/new-patch.html">New Patch | CMDRCyrious.com</a></td><td class="arc-num">266</td><td>Live</td><td></td></tr>
+          <tr data-title="new version of toolbox released! | cmdrcyrious.com" data-status="lost" data-currency=""><td><a href="archive/pages/new-version-of-toolbox-released.html">New version of Toolbox released! | CMDRCyrious.com</a></td><td class="arc-num">167</td><td>❌ LOST</td><td><span class="arc-badge arc-st-lost">❌ Lost</span></td></tr>
+          <tr data-title="new weapon guides released! | cmdrcyrious.com" data-status="lost" data-currency=""><td><a href="archive/pages/new-weapon-guides-released.html">New weapon guides released! | CMDRCyrious.com</a></td><td class="arc-num">172</td><td>❌ LOST</td><td><span class="arc-badge arc-st-lost">❌ Lost</span></td></tr>
+          <tr data-title="ns-15m2 vs automatic scout rifle | cmdrcyrious.com" data-status="lost" data-currency=""><td><a href="archive/pages/ns-15m2-vs-automatic-scout-rifle.html">NS-15M2 vs Automatic Scout Rifle | CMDRCyrious.com</a></td><td class="arc-num">279</td><td>❌ LOST</td><td><span class="arc-badge arc-st-lost">❌ Lost</span></td></tr>
+          <tr data-title="nsx fujin: highly technical weapon guide" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__equipment__nsx-fujin.html">NSX Fujin: Highly Technical Weapon Guide</a></td><td class="arc-num">1657</td><td>Wayback</td><td></td></tr>
+          <tr data-title="nsx naginata - weapon guide | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/nsx-naginata-highly-technical-weapon-guide.html">NSX Naginata - Weapon Guide | CMDRCyrious.com</a></td><td class="arc-num">2314</td><td>Live</td><td></td></tr>
+          <tr data-title="nsx tengu: highly technical weapon guide" data-status="ok" data-currency=""><td><a href="archive/pages/nsx-tengu-highly-technical-weapon-guide.html">NSX Tengu: Highly Technical Weapon Guide</a></td><td class="arc-num">2693</td><td>Wayback</td><td></td></tr>
+          <tr data-title="nsx tomoe: highly technical weapon guide | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/nsx-tomoe-highly-technical-weapon-guide.html">NSX Tomoe: Highly Technical Weapon Guide | CMDRCyrious.com</a></td><td class="arc-num">2824</td><td>Live</td><td></td></tr>
+          <tr data-title="nsx yumi: highly technical weapon guide" data-status="ok" data-currency=""><td><a href="archive/pages/nsx-yumi-highly-technical-weapon-guide.html">NSX Yumi: Highly Technical Weapon Guide</a></td><td class="arc-num">2336</td><td>Wayback</td><td></td></tr>
+          <tr data-title="os and setup | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__performance-guide__os-and-setup.html">OS and Setup | CMDRCyrious.com</a></td><td class="arc-num">1796</td><td>Live</td><td></td></tr>
+          <tr data-title="performance and customization guide updates | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/performance-and-customization-guide-updates.html">Performance and Customization Guide updates | CMDRCyrious.com</a></td><td class="arc-num">249</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2.html">PlanetSide 2</a></td><td class="arc-num">172</td><td>Wayback</td><td></td></tr>
+          <tr data-title="planetside 2 – a newbie’s experience: what i like | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside-2-a-newbies-experience-what-i-like.html">PlanetSide 2 – A Newbie’s Experience: What I Like | CMDRCyrious.com</a></td><td class="arc-num">1384</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 bases | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__bases.html">PlanetSide 2 Bases | CMDRCyrious.com</a></td><td class="arc-num">3002</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 character customization | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__character-customization.html">PlanetSide 2 Character Customization | CMDRCyrious.com</a></td><td class="arc-num">345</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 classes | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__classes.html">PlanetSide 2 Classes | CMDRCyrious.com</a></td><td class="arc-num">329</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 combat medic | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__classes__combat-medic.html">PlanetSide 2 Combat Medic | CMDRCyrious.com</a></td><td class="arc-num">6857</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 community events | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__community-and-videos__community-organized-events.html">PlanetSide 2 Community Events | CMDRCyrious.com</a></td><td class="arc-num">295</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 factions | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__factions.html">PlanetSide 2 Factions | CMDRCyrious.com</a></td><td class="arc-num">908</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 glossary | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__glossary.html">PlanetSide 2 Glossary | CMDRCyrious.com</a></td><td class="arc-num">566</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 gunplay guide | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__weapons__gunplay-guide.html">PlanetSide 2 Gunplay Guide | CMDRCyrious.com</a></td><td class="arc-num">8562</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 implants | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__equipment__implants.html">PlanetSide 2 Implants | CMDRCyrious.com</a></td><td class="arc-num">8828</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 infantry loadout | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__loadout.html">PlanetSide 2 Infantry Loadout | CMDRCyrious.com</a></td><td class="arc-num">638</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 infiltrator | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__classes__infiltrator.html">PlanetSide 2 Infiltrator | CMDRCyrious.com</a></td><td class="arc-num">3792</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 max | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__classes__max.html">PlanetSide 2 MAX | CMDRCyrious.com</a></td><td class="arc-num">1906</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 melee weapons | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__weapons__melee-weapons.html">PlanetSide 2 Melee Weapons | CMDRCyrious.com</a></td><td class="arc-num">2987</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 minimap guide | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__minimap.html">PlanetSide 2 Minimap Guide | CMDRCyrious.com</a></td><td class="arc-num">744</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 outfits | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__join-an-outfit.html">PlanetSide 2 Outfits | CMDRCyrious.com</a></td><td class="arc-num">379</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 performance guide | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__performance-guide.html">PlanetSide 2 Performance Guide | CMDRCyrious.com</a></td><td class="arc-num">370</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 quick start guide | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__starter-guide.html">PlanetSide 2 Quick Start Guide | CMDRCyrious.com</a></td><td class="arc-num">1257</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 spawning rules | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__spawning-rules.html">PlanetSide 2 Spawning Rules | CMDRCyrious.com</a></td><td class="arc-num">801</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 spotting guide | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__spotting.html">PlanetSide 2 Spotting Guide | CMDRCyrious.com</a></td><td class="arc-num">471</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 squads and platoons | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__squads-and-platoons.html">PlanetSide 2 Squads and Platoons | CMDRCyrious.com</a></td><td class="arc-num">821</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 stalker infiltrator | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/stalker-infiltrator-guide.html">PlanetSide 2 Stalker Infiltrator | CMDRCyrious.com</a></td><td class="arc-num">11359</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 starter guide" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__starter-guide-archive.html">PlanetSide 2 Starter Guide</a></td><td class="arc-num">139</td><td>Wayback</td><td></td></tr>
+          <tr data-title="planetside 2 suit slots | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__equipment__suit-slots.html">PlanetSide 2 Suit Slots | CMDRCyrious.com</a></td><td class="arc-num">3434</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 tips | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__tips-for-beginners.html">PlanetSide 2 Tips | CMDRCyrious.com</a></td><td class="arc-num">515</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 tools and links | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__tools-and-useful-links.html">PlanetSide 2 Tools and Links | CMDRCyrious.com</a></td><td class="arc-num">517</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 utility items | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__equipment__utility-items.html">PlanetSide 2 Utility Items | CMDRCyrious.com</a></td><td class="arc-num">199</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 vehicles | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__vehicles.html">PlanetSide 2 Vehicles | CMDRCyrious.com</a></td><td class="arc-num">6761</td><td>Live</td><td></td></tr>
+          <tr data-title="planetside 2 weapon simulator | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside-2-weapon-simulator.html">PlanetSide 2 Weapon Simulator | CMDRCyrious.com</a></td><td class="arc-num">1332</td><td>Live</td><td></td></tr>
+          <tr data-title="premium membership | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__premium-membership.html">Premium Membership | CMDRCyrious.com</a></td><td class="arc-num">268</td><td>Live</td><td></td></tr>
+          <tr data-title="progressing your character | cmdrcyrious.com" data-status="lost" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__progressing-your-character.html">Progressing your character | CMDRCyrious.com</a></td><td class="arc-num">410</td><td>❌ LOST</td><td><span class="arc-badge arc-st-lost">❌ Lost</span></td></tr>
+          <tr data-title="rate of fire vs framerate | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/rate-of-fire-vs-framerate.html">Rate of Fire vs Framerate | CMDRCyrious.com</a></td><td class="arc-num">1960</td><td>Live</td><td></td></tr>
+          <tr data-title="recoil scaling mechanics explained | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/recoil-scaling-mechanics-explained.html">Recoil Scaling Mechanics Explained | CMDRCyrious.com</a></td><td class="arc-num">217</td><td>Live</td><td></td></tr>
+          <tr data-title="recommended early certifications | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__recommended-early-certifications.html">Recommended Early Certifications | CMDRCyrious.com</a></td><td class="arc-num">3393</td><td>Live</td><td></td></tr>
+          <tr data-title="results of the testing related to my angular size research: debunked as wrong?" data-status="ok" data-currency="dead"><td><a href="archive/pages/angular-size-reddit-post.html">Results of the testing related to my Angular Size research: debunked as wrong?</a></td><td class="arc-num">2419</td><td>Hand-saved (MHTML)</td><td><span class="arc-badge arc-st-dead">💀 Dead (kept for history)</span></td></tr>
+          <tr data-title="rocket launchers" data-status="ok" data-currency=""><td><a href="archive/pages/rocket-launchers.html">Rocket Launchers</a></td><td class="arc-num">7782</td><td>Wayback</td><td></td></tr>
+          <tr data-title="scout rifles" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__weapons__scout-rifles.html">Scout Rifles</a></td><td class="arc-num">1511</td><td>Wayback</td><td></td></tr>
+          <tr data-title="settings | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__performance-guide__settings.html">Settings | CMDRCyrious.com</a></td><td class="arc-num">4568</td><td>Live</td><td></td></tr>
+          <tr data-title="shotguns" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__weapons__shotguns.html">Shotguns</a></td><td class="arc-num">6737</td><td>Wayback</td><td></td></tr>
+          <tr data-title="sidearms" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__weapons__sidearms.html">Sidearms</a></td><td class="arc-num">11748</td><td>Wayback</td><td></td></tr>
+          <tr data-title="smgs" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__weapons__smgs.html">SMGs</a></td><td class="arc-num">5229</td><td>Wayback</td><td></td></tr>
+          <tr data-title="smoke | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__equipment__smoke.html">Smoke | CMDRCyrious.com</a></td><td class="arc-num">625</td><td>Live</td><td></td></tr>
+          <tr data-title="sniper rifles" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__weapons__sniper-rifles.html">Sniper Rifles</a></td><td class="arc-num">8392</td><td>Wayback</td><td></td></tr>
+          <tr data-title="social directives | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__social-directives.html">Social Directives | CMDRCyrious.com</a></td><td class="arc-num">366</td><td>Live</td><td></td></tr>
+          <tr data-title="spawn beacon" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__spawn-beacon.html">Spawn Beacon</a></td><td class="arc-num">153</td><td>Wayback</td><td></td></tr>
+          <tr data-title="suggested settings | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__performance-guide__suggested-settings.html">Suggested Settings | CMDRCyrious.com</a></td><td class="arc-num">291</td><td>Live</td><td></td></tr>
+          <tr data-title="tank mines" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__equipment__utility-items__tank-mines.html">Tank Mines</a></td><td class="arc-num">308</td><td>Wayback</td><td></td></tr>
+          <tr data-title="teamwork" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__beginner-guides__teamwork.html">Teamwork</a></td><td class="arc-num">341</td><td>Wayback</td><td></td></tr>
+          <tr data-title="the “discovery” of recoil recovery delay | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/the-discovery-of-recoil-recovery-delay.html">The “Discovery” of Recoil Recovery Delay | CMDRCyrious.com</a></td><td class="arc-num">715</td><td>Live</td><td></td></tr>
+          <tr data-title="the guardian shield" data-status="ok" data-currency=""><td><a href="archive/pages/the-guardian-shield.html">The Guardian Shield</a></td><td class="arc-num">336</td><td>Wayback</td><td></td></tr>
+          <tr data-title="the gunslinger loadout | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/the-gunslinger-loadout.html">The Gunslinger Loadout | CMDRCyrious.com</a></td><td class="arc-num">995</td><td>Live</td><td></td></tr>
+          <tr data-title="tig's sunderer placement guide" data-status="ok" data-currency=""><td><a href="archive/pages/tigs-sunderer-placement-guide.html">Tig's Sunderer Placement Guide</a></td><td class="arc-num">107</td><td>Wayback</td><td></td></tr>
+          <tr data-title="tldr_chronicles | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__tools-and-useful-links__game-update-chronicles__tldr_chronicles.html">TLDR_chronicles | CMDRCyrious.com</a></td><td class="arc-num">1853</td><td>Live</td><td></td></tr>
+          <tr data-title="toolbox updated" data-status="ok" data-currency=""><td><a href="archive/pages/toolbox-updated.html">Toolbox updated</a></td><td class="arc-num">123</td><td>Wayback</td><td></td></tr>
+          <tr data-title="upcoming melee changes | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/explanation-of-upcoming-melee-changes.html">Upcoming melee changes | CMDRCyrious.com</a></td><td class="arc-num">857</td><td>Live</td><td></td></tr>
+          <tr data-title="vr training | cmdrcyrious.com" data-status="lost" data-currency=""><td><a href="archive/pages/vr-training.html">VR Training | CMDRCyrious.com</a></td><td class="arc-num">398</td><td>❌ LOST</td><td><span class="arc-badge arc-st-lost">❌ Lost</span></td></tr>
+          <tr data-title="vs lmgs: ursa vs flare ve6" data-status="ok" data-currency=""><td><a href="archive/pages/vs-lmgs-ursa-vs-flare.html">VS LMGs: Ursa vs Flare VE6</a></td><td class="arc-num">1281</td><td>Wayback</td><td></td></tr>
+          <tr data-title="weapon analysis toolbox spotlight" data-status="video" data-currency="mixed"><td><a href="archive/pages/video-toolbox-spotlight.html">Weapon Analysis Toolbox Spotlight</a></td><td class="arc-num">—</td><td>YouTube (record only)</td><td><span class="arc-badge arc-st-mixed">⚠️ Mixed</span></td></tr>
+          <tr data-title="weapon attachments" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__weapons__weapon-attachments.html">Weapon Attachments</a></td><td class="arc-num">4419</td><td>Wayback</td><td></td></tr>
+          <tr data-title="weapon mechanics" data-status="ok" data-currency="timeless"><td><a href="archive/pages/planetside2__weapons__weapon-mechanics.html">Weapon Mechanics</a></td><td class="arc-num">11112</td><td>Wayback</td><td><span class="arc-badge arc-st-timeless">🕰️ Method timeless, data dated</span></td></tr>
+          <tr data-title="weapon stats | cmdrcyrious.com" data-status="ok" data-currency=""><td><a href="archive/pages/weapon-stats.html">Weapon Stats | CMDRCyrious.com</a></td><td class="arc-num">920</td><td>Live</td><td></td></tr>
+          <tr data-title="weapons" data-status="ok" data-currency=""><td><a href="archive/pages/planetside2__weapons.html">Weapons</a></td><td class="arc-num">228</td><td>Wayback</td><td></td></tr>
+          <tr data-title="working on something" data-status="ok" data-currency=""><td><a href="archive/pages/working-on-something.html">Working on something</a></td><td class="arc-num">160</td><td>Wayback</td><td></td></tr>
+        <!-- END ARCHIVE INVENTORY -->
+          </tbody>
+        </table>
+      </div>
+      <p class="arc-note" data-i18n="arc.invNote">“Live” means the live site's own HTML still contained the article on 2026-11-09. “Wayback” means the live copy was empty and the text was recovered from a Wayback snapshot (date in the file's header). “Lost” means neither source has it.</p>
+    </section>
+
+    <section class="arc-panel">
+      <h2 data-i18n="arc.lostH">Lost — 12 pages</h2>
+      <p data-i18n="arc.lostP">Checked via the Wayback availability API and the CDX API on 2026-11-09. These texts are unrecoverable from any source tried. Each page still holds what survives of it — usually just the title and page metadata.</p>
+      <ul class="arc-lost-list">
+        <!-- BEGIN ARCHIVE LOST LIST (generated by scripts/build-archive.mjs) -->
+          <li><a href="archive/pages/planetside2__critical-mass-alerts.html">Critical Mass Alerts | CMDRCyrious.com</a> — Critical Mass alerts page (Shell only)</li>
+          <li><a href="archive/pages/epic-montage-dangerous.html">Epic Montage – “Dangerous” | CMDRCyrious.com</a> — A montage video post (Title only; video not saved)</li>
+          <li><a href="archive/pages/find-an-outfit.html">Find an Outfit. | CMDRCyrious.com</a> — Outfit finder page (Shell only)</li>
+          <li><a href="archive/pages/planetside2__beginner-guides__how-to-capture-a-base.html">How to capture PlanetSide 2 base | CMDRCyrious.com</a> — Beginner stub (Shell only)</li>
+          <li><a href="archive/pages/planetside2__beginner-guides__how-to-get-to-the-battle.html">How to get to the battle | CMDRCyrious.com</a> — Beginner stub (Shell only)</li>
+          <li><a href="archive/pages/planetside2__beginner-guides__how-to-kill.html">How to kill enemies | CMDRCyrious.com</a> — Beginner stub (Shell only — but its description survives: &quot;in order to hit anything you have to remember two things: suppress recoil by pulling your mouse and fire in bursts to manage your cone of fire&quot;)</li>
+          <li><a href="archive/pages/http-cmdrcyrious-com-planetside2-weapons.html">http://cmdrcyrious.com/planetside2/weapons/ | CMDRCyrious.com</a> — A redirect-artifact URL (not a real page) (Shell only)</li>
+          <li><a href="archive/pages/new-version-of-toolbox-released.html">New version of Toolbox released! | CMDRCyrious.com</a> — Short Toolbox release announcement (Shell only)</li>
+          <li><a href="archive/pages/new-weapon-guides-released.html">New weapon guides released! | CMDRCyrious.com</a> — Short new-guides announcement (Shell only)</li>
+          <li><a href="archive/pages/ns-15m2-vs-automatic-scout-rifle.html">NS-15M2 vs Automatic Scout Rifle | CMDRCyrious.com</a> — NS-15M2 vs automatic scout rifle comparison (Shell only — a real loss; nearby comparison posts survive)</li>
+          <li><a href="archive/pages/planetside2__beginner-guides__progressing-your-character.html">Progressing your character | CMDRCyrious.com</a> — Beginner stub (Shell only)</li>
+          <li><a href="archive/pages/vr-training.html">VR Training | CMDRCyrious.com</a> — VR Training page (Shell only)</li>
+        <!-- END ARCHIVE LOST LIST -->
+      </ul>
+    </section>
+
+    <section class="arc-panel">
+      <h2 data-i18n="arc.pendH">Still pending</h2>
+      <p data-i18n="arc.pendP">Two things were not captured when this archive was made. The Angular Size post was pending too, until it was saved by hand later the same day — it is in the inventory above. What is still missing: transcripts for both Iridar videos. YouTube rate-limited the transcript fetch (HTTP 429) and blocks this IP range for transcripts. Titles and channels are confirmed via oEmbed; the video records above carry the content notes. If you are reading this later, try the video pages in a normal browser first.</p>
+    </section>
+
+    <section class="arc-panel">
+      <h2 data-i18n="arc.methH">How it was made</h2>
+      <p data-i18n="arc.methP">Inventoried from the site's sitemaps (170 URLs; 159 PlanetSide 2 pages kept, 11 non-PS2 skipped). Every kept page's raw HTML was downloaded from the live site; 64 of 159 had empty bodies, 51 were recovered from the Wayback Machine (trust the CDX API, not the availability API — it falsely reported 45 pages as having no snapshot), and 33 Wayback downloads arrived gzip-encoded and had to be gunzipped in place. HTML was converted to markdown with trafilatura; the two Halospud Google Docs came from the Docs export endpoint. Nothing here was republished or uploaded anywhere else; this is a local archive, now hosted on this site. The full method notes and inventory live in the repo at archive/src/INDEX.md.</p>
+    </section>
+
+    <footer class="arc-page-foot">
+      <a href="index.html" data-i18n="arc.back">← Back to the stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution on each page. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="archive.mjs?v=20261109-archive1"></script>
+</body>
+</html>

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>Weapon Attachments — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>Weapon Attachments</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd>Iridar (Institoros)</dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/planetside2/weapons/weapon-attachments/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/planetside2/weapons/weapon-attachments/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2016-04-27</dd></div>
+      <div><dt data-i18n="arc.attrSnapshot">Snapshot date</dt><dd>20230519110859</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Wayback</dd></div>
+      <div><dt data-i18n="arc.attrNote">Note</dt><dd>Wayback snapshot; live copy empty</dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<p>Attachments allow to customize weapons to serve better in a particular situation. Most attachments come with downsides, so sometimes it’s better to leave some attachment slots empty.</p>
+<p>All weapons have five attachment slots: scope, barrel, rail, ammo and camouflage. Some weapons don’t have access to any attachment in a specific slot. For example, most starting weapons have no access to ammo attachments.</p>
+<p>Normally, there can be only one attachment in a specific slot (e.g., you can’t equip 2 scopes at the same time), but there are exceptions: Auraxium Weapons come with unique predetermined set of attachments, and some of them have two rail attachments at the same time.</p>
+<h2>Datamined stats</h2>
+<p>Not all information about attachment effects is available in-game. Thankfully, this information is available in <strong><a href="http://cmdrcyrious.com/weapon-stats/#Daybreak_Census_API" target="_blank" rel="noopener noreferrer">Census API</a></strong>, and can be pulled manually or using <strong><a href="http://cmdrcyrious.com/toolbox/" target="_blank" rel="noopener noreferrer">Weapon Analysis Toolbox</a></strong>.</p>
+<h2>Scopes</h2>
+<p>By default, most weapons use Iron Sights, which provide 1.35x magnification.</p>
+<p>It’s better to upgrade to Reflex Sights, because Iron Sights obstruct a big portion of your view. Iron Sights also don’t always show where your weapon is shooting, because they wobble all around when you move or fire, while the center of Cone of Fire is always in the exact middle of the screen.</p>
+<p>Reflex Sights’ crosshair always remains in the exact middle of the screen, which allows for greater accuracy.</p>
+<h2>HS/NV (IRNV) scope</h2>
+<p>This overlay scope offers 1.35x magnification and highlights infantry, turrets and vehicles with hot white saturation, even through smoke.</p>
+<p>Cloaked objects, mines and other deployables are not highlighted. When you aim through this scope, it completely conceals the weapon model, which usually takes a big portion of the screen below the crosshair. You also shouldn’t see your own muzzle flash through HS/NV.</p>
+<p>HS/NV scope has several drawbacks:</p>
+<ul><li>Limited range, which depends on the graphic settings you’re playing at. At Medium or High Graphics Quality, HS/NV has about double the effective range of Low graphics, especially when you enable Fog Shadows.</li><li>Compared to Iron Sights and low magnification Reflex sights, it takes at least 0.1 seconds longer for you to Aim Down Sights with HS/NV scope.</li><li>Scope itself has a large model, and when moving around can obstruct your hip fire vision.</li><li>Cloaked infiltrators are much harder to see through this scope.</li></ul>
+<p>Generally I don’t recommend using this scope, unless you have issues detecting enemies, or playing with a smoke loadout.</p>
+<h2>1x, 2x, 3.4x and 4x reflex scopes</h2>
+<p>Standard reflex scopes. Only difference is strength of the magnification and different crosshairs.</p>
+<p>1x reflex scope provides 1.35x magnification and is unlocked by default for all starting weapons.</p>
+<p>Note that you can <a href="http://cmdrcyrious.com/planetside2/performance-guide/#Custom_reflex_reticle_color" target="_blank" rel="noopener noreferrer">change the reticle color</a> via UserOptions.ini.</p>
+<h2>6x scope</h2>
+<p>This high magnification overlay scope is available to select few weapons intended for long range combat. Does not have scope sway.</p>
+<h2>6x – 12x sniper scopes</h2>
+<p>Overlay sniper scopes. They all have sway, which you can suppress by holding \[Hold Breath\] key – usually Left Shift.</p>
+<p>Long range Semi Auto Sniper Rifles have a Ballistic Computer attachment that removes scope sway from all scopes.</p>
+<p>“Close range” semi auto and bolt action sniper rifles do not have access to high magnification scopes, and instead have access to 1x through 4x reflex scopes without scope sway.</p>
+<h2>Which scope to use?</h2>
+<p>This often comes down to personal preference, but weapon choice also affects the decision.</p>
+<p>For beginners it’s recommended to stick with with 2x Reflex scopes on automatic weapons, and 3.4x – 4x scopes on semi-auto weapons. Higher magnification scope helps to identify enemies at range.</p>
+<p>But in general, it is better to use 1x reflex on most automatic weapons. Using a low magnification scope helps controlling vertical recoil, reduces the effects of screenshake from explosions and flinch from beng shot, provides wider field of vision and helps to conveniently aim even at very close distances. And with some practice and <a href="http://cmdrcyrious.com/planetside-2-mouse-sensitivity-guide/" target="_blank" rel="noopener noreferrer">proper mouse sensitivity</a>, it is equally potent in ranged shooting.</p>
+<p>Weapons with high vertical recoil, like Gauss SAW, Pulsar C, AC-X11 are generally better used with 1x scopes, while weapons with mild vertical recoil, like NS-11A, can be conveniently used with 2x scopes.</p>
+<p>That said, players at highest tier have proven that it’s possible to perform outstandingly with any scope from 1x to 4x (on automatics). So try everything and use what you like, without fear that you’re missing out on some secret OP technique, because there is none.</p>
+<h2>Barrel Attachments</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">suppressors</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Suppressors-300x38.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h2>Suppressor</h2>
+<p>Changes weapon’s firing sound, removes muzzle flash and prevents the user from appearing on enemy minimap when firing. Available to almost all primary weapons and sidearms.</p>
+<p><strong>Bonuses:</strong></p>
+<ul><li>You don’t appear on enemy minimap after shooting.</li><li>Removes muzzle flash (doesn’t remove tracers).</li><li>When you kill an enemy with a suppressed weapon, you don’t appear on his death map.</li><li>You don’t get spotted when you wound or kill someone equipped with the <strong><a href="http://cmdrcyrious.com/planetside2/equipment/implants/#Counter-Intelligence" target="_blank" rel="noopener noreferrer">Counter-Intelligence</a></strong> implant.</li><li>Suppressor changes the sound of your gun, but in some cases that sound doesn’t get quieter, so nearby enemies may still hear your shots.</li></ul>
+<p><strong>Penalties:</strong></p>
+<ul><li>Sidearm Suppressor Penalties are all over the place and can be found <strong><a href="http://cmdrcyrious.com/planetside2/weapons/sidearms/#Sidearm_Suppressor_Penalties" target="_blank" rel="noopener noreferrer">here</a></strong>.</li><li>Decreases projectile speed by 15%.</li></ul>
+<p>Reduction to projectile speed increases bullet drop and makes hitting distant enemies slightly harder, especially if they are moving.</p>
+<ul><li>Reduces <strong>Minimum Damage Range:</strong><ul><li>by 10m for SMGs</li><li>by 20m for other weapons</li></ul></li></ul>
+<p>This causes the weapon to deal less damage at range, and sometimes it means needing an extra bullet to kill.</p>
+<p>Penalties to Velocity and Minimum Damage Range can be counteracted by <strong>High Velocity Ammunition</strong>.</p>
+<p>Some weapons have only one tier of damage drop off, and for them, the Suppressor’s penalty to Minimum Damage Range is much less relevant because they require an additional bullet to kill a target outside of maximum damage range anyway. Of course, bullets will still do reduced damage, which can be important in case of leg shot or shots at already wounded targets.</p>
+<h3>Weapons that go well with a Suppressor</h3>
+<ul><li>Weapons with low damage degradation; reduction in minimum range is less noticeable on them.</li><li>Weapons with high rate of fire; requiring an additional bullet to kill due to reduced damage ranges is less noticeable on them.</li><li>Weapons with high bullet velocity; as suppressor’s reduction in velocity is percentage-based.</li><li>Weapons with “big enough” damage per magazine. For example, first generation SMGs will not have enough ammo to kill a shielded HA at range, even with good accuracy.  <ul><li>An example of ideal Suppressed weapon is <strong><a href="http://www.youtube.com/watch?v=hXVdjWZdTWU" target="_blank" rel="noopener noreferrer">TORQ-9</a></strong> assault rifle, which possesses all of the above qualities.</li></ul></li></ul>
+<h2>Flash Suppressor</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">flash\_suppressors</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Flash_Suppressors-300x44.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Bonus:</strong> removes muzzle flash, making you harder to detect visually while shooting, especially at night.</p>
+<p><strong>Penalty:</strong> increases minimap detection range by 15m. By default, firing detection range is 50m for LMGs and 40m for other weapons. No other effects.</p>
+<p><strong>Analysis:</strong> increasing minimap detection range is comparatively small penalty. It will come as a disadvantage if you’re trying to remain undetected on a flanking position, a bit away from combat. Single dots often attract attention of attentive players, as usually it’s easy to flank a single enemy.</p>
+<p>At night, muzzle flash is blindingly bright, and enemies will prioritize targets with muzzle flashes. Removing the muzzle flash will increase your stealth.</p>
+<p>Flash Suppressor doesn’t hide your tracers, but unless the enemy can see you directly, tracers will only give away a general direction. And you can make yourself harder to see by using an appropriate camouflage and generally trying to stay hidden.</p>
+<p>Also, tracers are less visible when fired at close range directly at you. It’s possible to kill people before they even realize you’re firing at them.</p>
+<p>Flash Suppressor is worth using as a standard barrel attachment, unless you have a reason to use another barrel attachment, or trying to stay away from enemy minimap without using a suppressor.</p>
+<p>Flash Suppressor will especially be great at night or with smoke loadouts.</p>
+<p>An example of perfect use of a Flash Suppressor:</p>
+<p>You sit in dark camouflage in front of equally dark wall or terrain. You see an enemy HA running past you, you open fire.</p>
+<p>HA activates his overshield and turns towards you, but he can’t see you camouflaged, and there’s no muzzle flash. He’s confused; he knows that fire is coming from that direction, but he can’t see your exact position.</p>
+<p>Even if he finally sees you, he lost too much time, and even if he opens fire and hits you, he can’t kill you before you finish killing him.</p>
+<p>Check out this Wrel’s video about muzzle flashes</p>
+<h2>Compensator</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">compensators</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Compensators-300x38.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Usually available to precision weapons meant for longer range engagements.</p>
+<p><strong>Bonus:</strong></p>
+<ul><li>Reduces Vertical Recoil by 15%. Exceptions: <strong><a href="http://cmdrcyrious.com/planetside2/weapons/carbines/#AC-X11" target="_blank" rel="noopener noreferrer">AC-X11</a></strong> (20%), <a href="http://cmdrcyrious.com/planetside2/weapons/assault-rifles/#Reaper_DMR" target="_blank" rel="noopener noreferrer"><strong>Reaper DMR</strong></a> and <a href="http://cmdrcyrious.com/planetside2/weapons/assault-rifles/#SABR-13" target="_blank" rel="noopener noreferrer"><strong>SABR-13</strong></a> (25%).</li></ul>
+<p><strong>Penalties:</strong></p>
+<ul><li>Increases Hip Fire Cones of Fire by 20%.</li><li>Increases minimap detection range by 35m. By default, it is 50m for most LMGs and 40m for all other unsuppressed automatic weapons.</li></ul>
+<p>Reducing Vertical Recoil makes recoil easier to manage, and helps with burst or single shot firing:</p>
+<ul><li>weapon accumulates less recoil, so crosshair will return to its original position sooner</li><li>shots are grouped closer together because barrel is kicked less for each shot.</li></ul>
+<p>However, compensating vertical recoil during sustained fire is only a matter of how fast to pull your mouse in the opposite direction to recoil, so compensator doesn’t really help with that.</p>
+<p>As you may have understood from <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Recoil_Mechanics" target="_blank" rel="noopener noreferrer">Recoil Mechanics</a>, vertical recoil is the most predictable and consistent recoil component. If you practice and make a conscious effort of controlling vertical recoil, you won’t need the compensator.</p>
+<p>Compensator is great on weapons with low rate of fire, but strong vertical recoil per shot, such as Reaper DMR, AC-X11 and Gauss SAW.</p>
+<p>Compensator is great for large, long-range fights, where you always amidst allies and you don’t care about concealment, and unlikely to encounter an enemy at close range.</p>
+<p>Compensator can also be helpful to players with exceptional aiming and target acquisition skills, that go primarily for headshots, or at least start the fight with a burst of headshots.</p>
+<p>In this case not only does the compensator makes the weapon more stable, but also reduces the effect of first shot recoil multiplier. Compensator can be used in this manner with any weapon that has access to it, even an SMG. But to take advantage of that you’d have to be in the top 1% of PS2 playerbase, so hold your horses.</p>
+<h2>Rail Attachments</h2>
+<h2>Forward Grip / Advanced Forward Grip</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">forward\_grips</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Forward_Grips.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Basic Forward Grip is available to most primary weapons, while Advanced Forward Grip is available to weapons specialized for long range fighting. Forward grip is used to make a weapon more effective at range by reducing the horizontal <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Recoil_Mechanics" target="_blank" rel="noopener noreferrer"><strong>recoil</strong></a>.</p>
+<p><strong>Bonuses:</strong></p>
+<ul><li>Reduces Horizontal Recoil per shot by 25% (33% for Advanced Forward Grip)</li><li>Reduces Horizontal Recoil Tolerance by 25% (33% for Advanced Forward Grip)</li><li>Reduces Recoil Angle by 25% (33% for Advanced Forward Grip), if there is any.</li><li>Reduces Vertical Recoil by 15% on semi auto sniper rifles.</li></ul>
+<p>Because this reduction is percentage-based, the absolute values of <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Unvaried_horizontal_recoil_varied_recoil_angle" target="_blank" rel="noopener noreferrer">Recoil Angle Variance</a> or <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Varied_horizontal_recoil_unvaried_recoil_angle" target="_blank" rel="noopener noreferrer">Horizontal Recoil Variance</a> are also reduced.</p>
+<p><strong>Penalty:</strong> increased <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Equip_time" target="_blank" rel="noopener noreferrer">Equip Time</a>:</p>
+<ul><li>by 20ms for shotguns</li><li>by 50ms for SMGs</li><li>by 100-150 ms for most other weapons.</li></ul>
+<h3>Example</h3>
+<p>Let’s use GD-7F as an example. Note that I don’t actually recommend using Forward Grip with GD-7F, it is purely to explain how exactly FG works.</p>
+<p><strong>Default stats:</strong> </p>
+<ul><li>Equip Time: 0.55s</li><li>Horizontal Recoil: 0.225 / 0.3<ul><li>Horizontal Recoil Variance: 0.3 – 0.225 = 0.075</li></ul></li><li>Horizontal Recoil Tolerance: 0.625</li><li>Recoil angle: -19 / -17.5.<ul><li>Recoil Angle Variance: 19 – 17.5 = 1.5 degrees.</li></ul></li></ul>
+<p><strong>Stats with Forward Grip:</strong></p>
+<ul><li>Equip Time: 0.8s</li><li>Horizontal Recoil: 0.16875 / 0.225<ul><li>Horizontal Recoil Variance: 0.05625</li></ul></li><li>Horizontal Recoil Tolerance: 0.469</li><li>Recoil angle: -14.25 / -13.125<ul><li>Recoil Angle Variance: 1.125 degrees.</li></ul></li></ul>
+<p>As you can see, because reductions to horizontal recoil and recoil angle are percentage based, forward grip also reduces absolute variances, making the gun more stable. In other words, forward grip reduces the amplitude of randomness in weapon’s recoil pattern.</p>
+<p>You could say that Forward Grip reduces the <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Recoil_Pattern_Width" target="_blank" rel="noopener noreferrer">width of the recoil pattern</a>.</p>
+<h3>Laser Sight / Advanced Laser Sight</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Laser Sight</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Laser_Sight.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Basic Laser Sight is available to most primary weapons and sidearms, while Advanced Laser Sight is available to weapons specialized for close range fighting.</p>
+<p><strong>Bonuses:</strong></p>
+<ul><li>Reduces Hip Fire Cones of Fire for all stances except jumping by 33% (40% for Advanced Laser Sight).</li></ul>
+<p><strong>Penalty:</strong> </p>
+<ul><li>Can give away your position with laser sticking out of your gun.</li></ul>
+<p>The “laser sight” doesn’t actually create any red dot, the laser effect is purely cosmetic. It can be turned off (default keybind is “X”), and will still provide the benefit. Laser becomes visible to enemies only at close range, like 5-10m.</p>
+<p>It’s possible that turned off laser sight can still be visible to some enemies, and it sticks through walls.</p>
+<p>Overall, the “demasking” effect is very minor, and isn’t something you should be concerned with.</p>
+<p>Laser sight is a very strong attachment for anyone who intends to hip fire. High hip fire accuracy can be viewed as a defensive trait, that will allow you to hip fire from greater range, and use your full speed to dodge enemy fire. It will also increase the range where you can reliably hip fire for headshots, if you possess that aiming skill.</p>
+<h2>Darklight Flashlight</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Darklight Flashlight</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Flashlight.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Available to most primary weapons and sidearms. Primarily, used to to illuminate cloaked enemy infiltrators, as seen in this video:</p>
+<p>Turned on flashlight gives away your position, so remember to turn off the flashlight at any time you’re not actively using it. Because of the demasking effect, flashlight is an ineffective way of combatting darkness. HS/NV scope is a better solution.</p>
+<p><strong>Tip</strong>: even if the wielder of the darklight flashlight is dead, the flashlight on his gun on his corpse will still produce the cone of light, and it will still illuminate cloaked infiltrators.</p>
+<p><strong>Tip</strong>: the player using the flashlight will see his cone of light differently from other players.</p>
+<p>Here’s Wrel’s flashlight review (outdated, doesn’t cover the aspect of illuminating cloaked infiltrators):</p>
+<h2>Extended Magazine</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Extended Mags</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Extended_Mags.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Available to some LMGs, SMGs, Heavy Weapons and shotguns.</p>
+<p><strong>Bonuses:</strong></p>
+<ul><li><a href="http://cmdrcyrious.com/nsx-naginata-highly-technical-weapon-guide/" target="_blank" rel="noopener noreferrer"><strong>NSX Naginata</strong></a>: +45 rounds per mag (up from 90)</li><li>Other LMGs, <a href="http://cmdrcyrious.com/planetside2/weapons/heavy-weapons/#X2_Lasher" target="_blank" rel="noopener noreferrer"><strong>X2 Lasher</strong></a>, <a href="http://cmdrcyrious.com/planetside2/weapons/heavy-weapons/#T7_Mini-Chaingun" target="_blank" rel="noopener noreferrer"><strong>T7 MCG</strong></a>: doubles magazine size</li><li><strong><a href="http://cmdrcyrious.com/planetside2/weapons/heavy-weapons/#NC05_Jackhammer" target="_blank" rel="noopener noreferrer">NC05 Jackhammer</a></strong>: +3 rounds per mag</li><li><strong><a href="http://cmdrcyrious.com/planetside2/weapons/smgs/" target="_blank" rel="noopener noreferrer">SMGs</a></strong>: +10 rounds per mag</li><li><strong><a href="http://cmdrcyrious.com/nsx-tomoe-highly-technical-weapon-guide/" target="_blank" rel="noopener noreferrer">NSX Tomoe</a></strong>: +2 rounds per mag</li><li><a href="http://cmdrcyrious.com/planetside2/weapons/carbines/#NSX_Tanto" target="_blank" rel="noopener noreferrer"><strong>NSX Tanto</strong></a>: +6 rounds per mag</li><li><a href="http://cmdrcyrious.com/planetside2/weapons/smgs/#NSX_Tengu" target="_blank" rel="noopener noreferrer"><strong>NSX Tengu</strong></a>: +4 rounds per mag</li><li><strong><a href="http://cmdrcyrious.com/planetside2/weapons/shotguns/" target="_blank" rel="noopener noreferrer">Shotguns</a></strong>: +2 rounds per mag</li></ul>
+<p><strong>Penalties:</strong> </p>
+<ul><li>No direct penalties. On weapons with tube magazines, increases maximum reload time, but not a strong downside, considering the reload process can be interrupted at any time after a small delay.</li></ul>
+<p>Ext. Mags work nicely together with Ammo Belt suit slot. For example, for NS-7 PDW SMG, each level of Ammo Belt will increase your ammo pool by 30 rounds, but if you use Ext. Mags, each level of Ammo Belt will give you +40 rounds.</p>
+<h2>Underbarrel Attachments</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">underbarrel\_shotguns</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Underbarrel_shotguns-300x25.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Underbarrel Attachments are additional tools or weapons that can be attached to the Rail slot of some of the primary weapons.</p>
+<p>Press \[1\] to switch to your Underbarrel Attachment with your weapon drawn. Press \[1\] again to <a href="http://www.youtube.com/watch?feature=player_detailpage&amp;amp;v=knV1H163ISE&amp;amp;t=32" target="_blank" rel="noopener noreferrer">switch back</a>.</p>
+<p>Ammunition for Underbarrel Attachments can be resupplied from Engineer’s Ammo Packs.</p>
+<h3>Availability</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/underbarrel-attachments.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>As you can see, Underbarrel Attachments are available on a number of weapons, most notable being <strong>Select Fire</strong> <strong><a href="http://cmdrcyrious.com/planetside2/weapons/assault-rifles/#Select_Fire_Variants" target="_blank" rel="noopener noreferrer">Assault Rifles</a></strong> and <strong><a href="http://cmdrcyrious.com/planetside2/weapons/carbines/#Select_Fire_carbines" target="_blank" rel="noopener noreferrer">Carbines</a></strong>. However, these weapons have a distinct problem: they mostly have directly worse stats than other ARs and Carbines.</p>
+<p>Underbarrel attachments already come with an opportunity cost of not being able to use another rail attachment, which is vital for increasing performance of the weapon.</p>
+<p>Using underbarrel attachments on already subpar weapons double dips in that opportunity cost, and in the end you get a doubly “meh” weapon with a situational tool glued to it.</p>
+<p>So underbarrel attachments make sense only on weapons that don’t benefit much from other rail attachments: <strong><a href="http://cmdrcyrious.com/battle-rifles/" target="_blank" rel="noopener noreferrer">Battle Rifles</a></strong> and <a href="http://cmdrcyrious.com/nsx-yumi-highly-technical-weapon-guide/" target="_blank" rel="noopener noreferrer"><strong>NSX Yumi</strong></a>, or weapons that already come with a “free” underbarrel shotgun: <strong><a href="http://cmdrcyrious.com/planetside2/weapons/carbines/#Auraxium_carbines" target="_blank" rel="noopener noreferrer">Auraxium Carbines</a></strong> and <a href="http://cmdrcyrious.com/planetside2/weapons/shotguns/#The_Brawler" target="_blank" rel="noopener noreferrer"><strong>NC Shotgun – The Brawler</strong></a>.</p>
+<p>Exact stats of these attachments <a href="https://www.reddit.com/r/Planetside/comments/5mphc0/underbarrel_attachments_exact_stats_from_census/" target="_blank" rel="noopener noreferrer">have been found in Census API:</a></p>
+<h3>Underbarrel Grenade Launcher (UBGL)</h3>
+<p><em>Careful: loud music.</em></p>
+<p>\[spoiler title=”Detailed stats”\]</p>
+<p><code>Switch Time: 0.8 sec</code></p>
+<p>Direct Damage: 500</p>
+<p><code>Indirect Damage: 700 @ 0.1m - 50 @ 5m</code></p>
+<p>Splash damage to infantry is applied on direct hits, so direct hits with UBGL deal 1200 damage and can one-hit-kill most infantry targets.</p>
+<p>On direct hits, UBGL deals moderate damage to MAXes and minor damage to vehicles:</p>
+<ul><li>\~33.3% damage of default ESF’s health</li><li>\~25% of default Harasser’s health</li><li>\~14% of Lightning’s health from the side. 12.5% in front armor.</li><li>48.75% of MAX’s health (33.75% in full Ordnance Armor)</li></ul>
+<p><code>Headshot Damage Multiplier: 2x</code></p>
+<p>Headshot Damage Multiplier of 2x gives UBGL an interesting application of one-shotting almost all infantry targets on a headshot at close range. Or you can combo a UBGL body shot with a quick knife swing.</p>
+<p><code>Leg Shot Damage Multiplier: 1x</code></p>
+<p> <code>Reload Time: 3 seconds</code></p>
+<p> <code>Projectile Speed: 45 m/s</code></p>
+<p> <code>Projectile Gravity: 7</code></p>
+<p> <code>Projectile Lifespan: 3 seconds</code></p>
+<p><code>Arming Distance: 10 meters</code></p>
+<p>Due to this Arming Distance, grenades will not explode when fired at target closer than 10m, but direct damage is still applied to all targets. Since vehicles do not receive splash damage, it makes no difference whether you are outside Arming Distance or not.</p>
+<p><code>Hip Accuracy: 1 / 2.5</code><strong>\</strong>* / 1.5 / 2</p>
+<p><strong>\</strong>* – it appears that UBGL is bugged, and is the most inaccurate while crouch moving.</p>
+<p><code>(crouching still, crouch moving, standing still, standing moving)</code></p>
+<p> <code>Flying / Jumping: 7</code></p>
+<p> <code>Fire Detect Range: 50m</code></p>
+<p>Ammunition Resupply Time: 5 seconds</p>
+<p><strong>API Link</strong></p>
+<p><strong>Underbarrel Grenade Launcher increases weapon’s Equip Time by 0.15 seconds.</strong> </p>
+<p>\[/spoiler\]</p>
+<p>Launches a grenade that flies on a ballistic trajectory and detonates on impact. Comes with three grenades, including one in the barrel. Needs to be reloaded after each shot.</p>
+<p>Direct hits will One-Hit-Kill most infantry targets, and deal minor damage to vehicles. Deals moderate splash damage to infantry near the explosion, but less than a frag grenade, and the damage quickly drops off with distance.</p>
+<p>Due to heavy Projectile Drop and low velocity, UBGL is only effective within 100m or so. For best accuracy, you need to stop moving and crouch.</p>
+<p>Overall, UBGL is the most versatile underbarrel attachment, but it’s also the hardest to use effectively. It is a great tool to have, and has a ton of utility, such as finishing off vehicles or infantry behind cover, damaging MAXes, or even going for a cheeky melee combo or close range one-shot headshot. Not even mentioning the obvious of “shooting into crowds of infantry”.</p>
+<p>However, remember to fish for direct hits, and try to combine it with other sources of splash damage, such as a Frag Grenade, or ~~stealing some kills~~ assisting an allied tank.</p>
+<h3>Underbarrel Shotgun (UBS)</h3>
+<p>\[spoiler title=”Detailed stats”\]</p>
+<p> <code>Switch Time: 0.55 sec</code></p>
+<p>Damage: 130 @ 8m - 50 @ 18m x 10 pellets</p>
+<p> <code>Headshot Damage Multiplier: 1.5x</code></p>
+<p> <code>Leg Shot Damage Multiplier: 0.9x</code></p>
+<p> <code>Pellet Spread: 3.0 degrees</code></p>
+<p>Approximate effective range:</p>
+<ul><li>6m if you stand still and ADS</li><li>3.5m if you hip fire while on the move</li></ul>
+<p><code>Reload Time: 2.5 seconds</code></p>
+<p> <code>Projectile Speed: 300 m/s</code></p>
+<p> <code>Hip Accuracy: 1 / 1.5 / 1.5 / 2</code></p>
+<p> <code>Flying / Jumping: 6</code></p>
+<p> <code>ADS Accuracy: 0.1 / 0.35 / 0.1 / 0.9</code></p>
+<p> <code>Fire Detect Range: 40m</code></p>
+<p> <code>ADS Movespeed Modifier: 0.75x</code></p>
+<p><a href="https://cmdrcyrious.com/planetside2/weapons/weapon-attachments/&amp;lt;https://census.daybreakgames.com/s:iridar/get/ps2/fire_group_to_fire_mode?&amp;amp;c:limit=40&amp;amp;fire_group_id=656&amp;amp;c:join=fire_mode_2%5Eon:fire_mode_id%5Eto:fire_mode_id(player_state_group%5Eon:player_state_group_id%5Eto:player_state_group_id%5Elist:1" target="_blank" rel="noopener noreferrer">API Link</a>&gt;)</p>
+<p>\[/spoiler\]</p>
+<p>Fires a load of buckshot, powerful enough to One Hit Kill most infantry targets at close range. Has to be reloaded after each shot, 4 shots total, including one loaded.</p>
+<p>UB shotgun can be great in clutch CQC moments, if you can switch to it behind cover, and then step out and unload at the nearest enemy. It’s less effective in panic situations, since the time it takes to switch to the shotgun is comparable to TTK of most primary weapons.</p>
+<p>The problem with UB shotgun is that it’s not very reliable in terms of One Hit Killing the target. As with all shotguns, its effectiveness heavily depends on luck, if target is wounded, if it’s moving, if it has nanoweave or overshilelds. Overall, like with any other shotgun, if you want consistency, you have to be standing right next to the target.</p>
+<p>And if you fail to OHK your target, and you can’t run away, you are going to be at a disadvantage, since it will take time for you to switch to another weapon.</p>
+<h3>Underbarrel Smoke Grenade Launcher (UBSGL)</h3>
+<p>\[spoiler title=”Detailed stats”\]</p>
+<p><code>Switch Time: 0.8 sec</code></p>
+<p>Direct Damage: 250</p>
+<p> <code>Headshot Damage Multiplier: 2x</code></p>
+<p> <code>Leg Shot Damage Multiplier: 1x</code></p>
+<p> <code>Reload Time: 2.5 seconds</code></p>
+<p> <code>Projectile Speed: 45 m/s</code></p>
+<p> <code>Projectile Gravity: 7</code></p>
+<p> <code>Projectile Lifespan: 30 seconds</code></p>
+<p> <code>Arming Distance: 10 meters</code></p>
+<p><code>Hip Accuracy: 1 / 2.5 / 1.5 / 2</code></p>
+<p><code>(crouching still, crouch moving, standing still, standing moving)</code></p>
+<p> <code>Flying / Jumping: 7</code></p>
+<p> <code>Fire Detect Range: 50m</code></p>
+<p>Ammunition Resupply Time: 5 seconds</p>
+<p><a href="https://cmdrcyrious.com/planetside2/weapons/weapon-attachments/&amp;lt;https://census.daybreakgames.com/s:iridar/get/ps2/fire_group_to_fire_mode?&amp;amp;c:limit=40&amp;amp;fire_group_id=668&amp;amp;c:join=fire_mode_2%5Eon:fire_mode_id%5Eto:fire_mode_id(player_state_group%5Eon:player_state_group_id%5Eto:player_state_group_id%5Elist:1,fire_mode_to_projectile%5Eon:fire_mode_id%5Eto:fire_mode_id(projectile%5Eon:projectile_id%5Eto:projectile_id" target="_blank" rel="noopener noreferrer">API Link</a>)&gt;)</p>
+<p>\[/spoiler\]</p>
+<p>Fires a grenade that flies on a ballistic trajectory and produces a <a href="http://cmdrcyrious.com/planetside2/equipment/smoke/" target="_blank" rel="noopener noreferrer"><strong>thick cloud of smoke</strong></a> on impact. Smoke lasts \~9 seconds. Comes with three grenades, including one loaded. Direct hits will injure infantry, but not vehicles. Grenades will not produce smoke when fired within Arming Distance of 10m.</p>
+<p>On a headshot, Smoke Launcher can be used to combo kill infantry with a knife strike.</p>
+<h2>Vented Power Core</h2>
+<p>Vented Power Core makes Long Reload as fast as Short Reload at the cost of increasing weapon’s Minimum and Maximum Recoil Angles by 5 degrees. Vented Power Core is available only to a few VS weapons:</p>
+<p>Recoil Angle penalty is negligible, the real penalty for using Vented Power Core is the opportunity cost of not being able to use other Rail Attachments, such as Forward Grip and Laser Sight, which will have a much more profound effect on actual weapon performance than Long Reload penalty.</p>
+<p>Overall, it’s impossible to recommend Vented Power Core to anyone for any reason, because to benefit from it, you need to dump your whole magazine, reload your weapon, and then engage an enemy in the time frame where a Short Reload would be over, but not Long Reload. It’s an impossible amount of stars to align.</p>
+<h2>Comfort Grip</h2>
+<p>Comfort Grip is a rail attachment that: <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Comfort Grip</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2018/10/NC-Forward-Grip-e1539348672959.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span></p>
+<ul><li>Reduces weapon’s <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Equip_time" target="_blank" rel="noopener noreferrer">Equip and Unequip Times</a></strong> by 30%.</li><li>Reduces Horizontal Recoil and Horizontal Recoil Tolerance by 20%.</li><li>Increases Hip Fire CoFs by 20%. Note that this penalty will stack with a similar penalty from <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/#Compensator" target="_blank" rel="noopener noreferrer">Compensator</a></strong>.</li></ul>
+<p>Comfort Grip is a fairly rare attachment, available only for:</p>
+<p>Comfort Grip is a somewhat contradictory attachment, since neither of these weapons really care about Horizontal Recoil. However, both Infiltrator and Engineer tend to switch between their equipment a lot, so Comfort Grip’s reduction to equip times is a good quality of life improvement, although it’s unlikely to matter in a life-or-death situation.</p>
+<p>Penalty to Hip Fire CoFs is something to be reckoned with. While neither of the weapons are particularly hip-fire focused, they <em>are</em> occasionally fired from the hip, and since this is a rail attachment, it’s mutually exclusive with Laser Sight, so you can’t compensate the penalty that way.</p>
+<h2>Ammo</h2>
+<h2>High Velocity Ammunition (HVA)</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">high velocity bullet</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/high-velocity-bullet.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Bonuses:</strong></p>
+<ul><li>Increases bullet velocity by 10%.</li><li>Extends minimum damage range by 20m.</li></ul>
+<p><strong>Penalty:</strong></p>
+<ul><li>Decreases maximum damage range by 2m.</li></ul>
+<p>HVA is used to make the weapon more effective at range, and to counter Suppressor’s penalties.</p>
+<p>HVA is useful to any weapon with more than 1 tier of damage degradation, such as most ARs and LMGs, and especially for carbines, as velocity and minimum damage range are usually their weakest stats.</p>
+<h3>Example</h3>
+<p>Let’s analyze HVA on the example of VS carbine <strong>Pulsar C</strong>.</p>
+<p><strong>Default stats:</strong></p>
+<ul><li>Damage model: 167 @ 10m – 125 @ 70m<ul><li>6 shots to kill within 10m</li><li>7 shots to kill from 11m to 44m</li><li>8 shots to kill at 45m+</li></ul></li><li>Velocity: 515 m/s.</li></ul>
+<p><strong>Stats with HVA:</strong></p>
+<ul><li>Damage model: 167 @ 8m – 125 @ 90m<ul><li>6 shots to kill within 8m</li><li>7 shots to kill from 9m to 55m</li><li>8 shots to kill at 56m+</li></ul></li><li>Velocity: 566 m/s.</li></ul>
+<p>Increasing minimum damage range results in up to \~8% damage increase, depending on range to the target.</p>
+<p>This minor damage boost will push back the intermediate bullets-to-kill threshold, reducing the number of shots to kill a full health target from 44m to 55m.</p>
+<p>It will also come in handy when you’ll inevitably have to deal with wounded players or nanoweave armor.</p>
+<h2>Soft Point Ammo</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2018/02/SPA-300x75.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>SPA is usually available to close combat weapons and is used to increase their effectiveness within 10-20m.</p>
+<p><strong>Bonus:</strong> </p>
+<ul><li>Extends maximum damage range by 5m.</li></ul>
+<p><strong>Penalty:</strong></p>
+<ul><li>Reduces bullet velocity by 10%.</li></ul>
+<p>The main purpose of SPA is to push further away the range at which the weapon will need an extra bullet to kill a player. There is also a marginal increase to all damage within weapon’s damage ranges.</p>
+<p>The velocity penalty will make it slightly harder to hit enemies at range, especially if they are moving. It’s not recommended to combine SPA with a Suppressor.</p>
+<h2>Slug Ammunition</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">slug ammunition</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/i5p2iu.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Covered in the <a href="http://cmdrcyrious.com/planetside2/weapons/shotguns/#Slug_Ammunition" target="_blank" rel="noopener noreferrer">shotgun guide</a>.</p>
+<h2>SPRW Ammunition</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2018/02/SPRW-Ammo-e1518145419403.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Increases Projectile Velocity at the cost of reducing Magazine Size. SPRW Ammo is available only to a few NC weapons:</p>
+<ul><li><a href="http://cmdrcyrious.com/planetside2/weapons/smgs/#MGR-S1_Gladius" target="_blank" rel="noopener noreferrer"><strong>MGR-S1 Gladius</strong></a>: +25% Velocity, -4 Rounds per Magazine</li><li><a href="http://cmdrcyrious.com/planetside2/weapons/lmgs/#MGR-L1_Promise" target="_blank" rel="noopener noreferrer"><strong>MGR-L1 Promise</strong></a>: +25% Velocity, -25 Rounds per Magazine</li></ul>
+<h2>Unstable Ammunition</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/12/Unstable-Ammunition.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Increases projectile’s hitbox, making shots easier to hit. Reduces Headshot Damage Multiplier from 2x to 1.2x. Unstable Ammunition is available only to a few VS weapons:</p>
+<ul><li><strong>VE-S Canis</strong></li><li><a href="http://cmdrcyrious.com/planetside2/weapons/lmgs/#VE-H_Maw" target="_blank" rel="noopener noreferrer"><strong>VE-H Maw</strong></a></li></ul>
+<p>In essence, Unstable Ammunition reduces weapon’s skill floor and skill ceiling at the same time. It makes it easier to hit enemies by firing in their general direction, but harder to concentrate your fire at a specific point, such as enemy’s head. It also makes projectiles more likely to hit cover.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/12/canis-unstable-ammo-1.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Both of these shots would hit</p>
+<h2>Recent Comments</h2>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

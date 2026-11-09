@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>Highly Technical: How to analyze a weapon — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>Highly Technical: How to analyze a weapon</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd>CMDRCyrious</dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/highly-technical-how-to-analyze-a-weapon/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/highly-technical-how-to-analyze-a-weapon/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2017-07-03</dd></div>
+      <div><dt data-i18n="arc.attrSnapshot">Snapshot date</dt><dd>20230519110613</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Wayback</dd></div>
+      <div><dt data-i18n="arc.attrStatus">Status</dt><dd><span class="arc-badge arc-st-timeless">🕰️ Method timeless, data dated</span><p class="arc-attr-note">The Effective Range section is dead (it depended on the angular-size research). Everything else in it is mechanics, not numbers.</p></dd></div>
+      <div><dt data-i18n="arc.attrNote">Note</dt><dd>Wayback snapshot; live copy empty</dd></div>
+      <div><dt data-i18n="arc.attrRaw">Original source file</dt><dd><a href="../raw/wayback__highly-technical-how-to-analyze-a-weapon.html" target="_blank" rel="noopener noreferrer">wayback__highly-technical-how-to-analyze-a-weapon.html</a>, <a href="../raw/highly-technical-how-to-analyze-a-weapon.html" target="_blank" rel="noopener noreferrer">highly-technical-how-to-analyze-a-weapon.html</a></dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<p>Most people understand weapon statistics at a basic level, like <em>“more damage is good”</em>. But sometimes they look at the wrong statistics, or make wrong conclusions. With this guide I hope to explain which weapon stats you should look at if you want to properly analyze a weapon.</p>
+<p>You’re going to need:</p>
+<ol><li>Understanding of <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/" target="_blank" rel="noopener noreferrer">Weapon Mechanics</a></strong>.</li><li>Knowledge of <strong><a href="http://cmdrcyrious.com/how-to-use-daybreak-census-api/" target="_blank" rel="noopener noreferrer">how to use the Daybreak Census API</a></strong> to access detailed weapon stats</li><li>A set of tools, such as <strong><a href="http://cmdrcyrious.com/planetside-2-weapon-simulator/" target="_blank" rel="noopener noreferrer">Weapon Simulator</a></strong> and <strong><a href="http://cmdrcyrious.com/toolbox/" target="_blank" rel="noopener noreferrer">Toolbox</a></strong></li><li>At least 100-200 kills with the weapon are highly recommended.</li></ol>
+<p>It’s worth noting that Weapon Analysis is essentially <em>theorycrafting</em>, and theory can and will differ from practice, and practice always takes priority. The main point of Weapon Analysis is to explain <em>WHY</em> a weapon behaves a certain way.</p>
+<h2>Damage</h2>
+<p>There are many ways you can look at weapon’s damage. First is damage itself:</p>
+<p><code>Max Damage @ Max Damage Range - Min Damage @ Min Damage Range</code></p>
+<p>You can read all about it <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Damage" target="_blank" rel="noopener noreferrer">here</a></strong>. To quickly recap:</p>
+<p><strong>Bullet Damage is more important for ranged combat</strong>, where individual hits are easier to get than sustained automatic fire. High bullet damage also makes it harder to regulate incoming damage on the receiving end.</p>
+<p><strong>In close quarters, DPS becomes a more important statistic.</strong> </p>
+<p><code>DPS = Bullet Damage * Rate of Fire / 60</code></p>
+<p>Overall, it’s preferalbe to use DPS rather than TTK to judge a weapon’s damage output, since DPS is always objective, and does not depend on the target having a certain amount of HP or resistances. PlanetSide 2 targets are diverse, and besides infantry can include a lot of other targets. Infantry health itself is highly variable as well.</p>
+<p>We can’t talk about damage and DPS without mentioning <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Fire_Rate" target="_blank" rel="noopener noreferrer"><strong>Rate of Fire</strong></a>. High Rate of Fire is crucial for CQC, as it makes damage output more consistent, and makes it easier to always inflict at least some damage to the enemy.</p>
+<p>Of course, we can’t completely ignore <strong>TTK</strong>. It is an important tool for analyzing weapon’s performance against typical targets. The most common scenarios are standard infantry (1000 effective HP) and full nanoweave infantry (1250). I prefer to go for “worst case scenario”, and mostly look at full nanoweave numbers.</p>
+<p>Contextually, it may be important to take a look at TTK against Infiltrators (900 effective HP). A good example would be Commissioner, which has noticeably lower TTK against them.</p>
+<p>For semi auto weapons, <strong>Bullets-to-Kill</strong> is arguably more important than TTK, as it determines how many “clicks” you need to kill the target.</p>
+<p><code>BTK = Round_Up(Target Health / Bullet Damage)</code></p>
+<p><code>TTK = (BTK - 1) * Refire Time</code></p>
+<p><code>Refire Time = 60 / Rate of Fire</code></p>
+<p>Weapon’s damage will change depending on range to the target, and so will DPS, TTK and BTK. It’s important to analyze the weapon fully, over its whole effective range. Many people make the mistake of taking a look only at maximum damage numbers.</p>
+<p><strong>Headshot and Legshot damage modifiers</strong> are important as well.</p>
+<h2>Magazine Size</h2>
+<p>This stat on its own is fairly useless, since it doesn’t take bullet damage into account. <strong>Damage Per Magazine</strong> is a more objective statistic, so that’s what you should be mainly looking at.</p>
+<p><code>DPM = Damage * Clip Size</code></p>
+<p>DPM affects how reliably a user can take out at least one target before needing to reload, and how many enemies can be killed in one magazine, which is useful in flanking situations.</p>
+<p>Obviously, the more DPM- the better, but after a certain plateau of \~6000 DPM, it stops mattering in regards to reliably killing one target, and we enter the realm of the weapon being able to sustain through several engagement, or continuously damage MAXes or light vehicles.</p>
+<p>There is also a certain plateau where DPM can get dangerously low. Eridani and Tomoe are such weapons. I’d say the weapon needs at least 4000 DPM to be wielded somewhat comfortably. Anything lower, and you get a strictly 1v1 ambush weapon.</p>
+<p>Due to damage degradation, DPM will vary at different ranges, so you’ll have to take that into account as well.</p>
+<p>More DPM reduces the chance of being forced into <strong>Long Reload</strong>.</p>
+<h2>Ammo Pool</h2>
+<p>This is the amount of ammunition a player carries with him. <strong>More ammo is always good</strong>, and it decides how independent a player can be; how much does he need to rely on things like <strong><a href="http://cmdrcyrious.com/planetside2/equipment/suit-slots/#Ammunition_Belt" target="_blank" rel="noopener noreferrer">Ammo Belt</a></strong> and <strong><a href="http://cmdrcyrious.com/planetside2/equipment/implants/#Ammo_Printer" target="_blank" rel="noopener noreferrer">Ammo Printer</a></strong>, and how tethered he is to engineers and terminals.</p>
+<p><strong>Ammo Pool isn’t a factor for most weapons</strong>, as they have more spare ammo than an average player can realistically spend in one life, but there are exceptions, such as Stalkers using burstfire sidearms.</p>
+<p>Same as Clip Size, you should take bullet damage into account. Up to you which range you want to use.</p>
+<h2>Reload Time</h2>
+<p>Reload time mostly speaks to user comfort rather than combat effectiveness. Mostly you should be looking at Short Reload, since it’s much more likely to encounter, unless we’re talking about a weapon with low DPM.</p>
+<p>Reload time is more important for CQC weapons. Ironically, they usually have longer reloads than ranged weapons. Reload time is less important for Infiltrator and Light Assault, since they often can find a safe haven to reload &amp; recharge, or die during attempted ambush before having a chance to enter a reload.</p>
+<h2>Effective Range</h2>
+<h2>Initial Accuracy</h2>
+<h3>Hip Firing</h3>
+<p>For Hip Firing, you want to mainly be looking at <strong>Standing Moving CoF</strong>.</p>
+<p><strong>For high damaging semi-auto weapons</strong>, the smaller the CoF – the better. Commissioner is a great example – due to its great initial accuracy, it can land devastating headshots from the hip even if the enemy is a quite a few meters away.</p>
+<p><strong>For automatic and burst fire weapons,</strong> smaller CoFs are better only to a certain plateau of \~1.5 – 2.0 degrees. Smaller than that and Hip Fire becomes **<a href="http://cmdrcyrious.com/af-4-cyclone-highly-technical-weapon-guide/#Why_good_hip_fire_is_important" target="_blank" rel="noopener noreferrer"><em>too accurate</em></a>**, and it becomes difficult to spray enemies in close quarters.</p>
+<h3>Aiming Down Sights</h3>
+<p>All CoFs are relevant, and you always want them to be as small as possible. However, you are still mainly looking at <strong>Standing Moving CoF</strong>, since it is the most common and safest stance.</p>
+<h2>Cone of Fire Bloom</h2>
+<p>There are several ways you can look at CoF Bloom.</p>
+<p><strong>1) CoF Bloom per shot</strong> itself. It’s more important for semi-auto weapons, especially those that don’t spam shots, like Semi Auto Sniper Rifles.</p>
+<p><strong>2) CoF Bloom Per Second</strong> = CoF Bloom \* Rate of Fire / 60</p>
+<p>This statistic matters only in one specific scenario: if the user goes full auto, but momentarily loses crosshair placement on the target. I.e. he’s shooting past the target for a few moments.</p>
+<p>A weapon with low CoF Bloom Per Second can just return the crosshair placement on the enemy and keep firing.</p>
+<p>A weapon with high CoF Bloom Per Second will likely have to restart the burst, losing a bit of TTK, and subjecting the user to FSRM and Recoil Recovery. If the user doesn’t restart the burst, he’s risking to lose even more TTK, because CoF blooms too much.</p>
+<p><strong>3) CoF Bloom Per Point of Damage Done</strong> = CoF Bloom / Bullet Damage</p>
+<p>This statistic with an extra long name ties weapon’s damage output to accuracy loss. This allows you to objectively determine which weapon requires more burst firing, even with perfect accuracy, and regardless of weapon’s RoF or DPS.</p>
+<h2>CoF Recovery</h2>
+<p>It seems that all weapons follow the same principle: after a final shot in a burst, the weapon waits for a Refire Time, and then starts recovering CoF at a rate of 20 degrees per second.</p>
+<p>PS2 weapon mechanics allow to have an additional CoF recovery delay, but none of the weapons use it.</p>
+<p>Knowing this you could calculate ideal delay between bursts, based on accumulated CoF, but it would be next to impossible for a player to take advantage of it.</p>
+<h2>Burst Firing</h2>
+<p>Together, Initial Accuracy and CoF Bloom determine <em><strong>how much you need</strong></em> to burst fire a weapon. But <em><strong>how good</strong></em> is a weapon at burst firing is mostly determined by recoil statistics.</p>
+<h2>Angular Size Research</h2>
+<p>There is no single definition for weapon’s effective range. I prefer to use this one:</p>
+<p><code>Effective range is range where an automatic weapon can reliably kill an enemy in one long burst, ignoring recoil and assuming perfect crosshair placement.</code> </p>
+<p>Normally, we would rely on Angular Size research to determine the effective range of the weapon, but unfortunately it was <strong><a href="https://www.reddit.com/r/Planetside/comments/6z5uax/results_of_the_testing_related_to_my_angular_size/" target="_blank" rel="noopener noreferrer">proven to be wrong</a></strong>, and at this time there is no way to even approximately calculate it.</p>
+<h2>Recoil Analysis</h2>
+<p>All of these recoil statistics can be calculated via <strong><a href="http://cmdrcyrious.com/toolbox/#Recoil_Page" target="_blank" rel="noopener noreferrer">Toolbox</a></strong>.</p>
+<h2>Stability</h2>
+<h3>Average Horizontal Deviation</h3>
+<p>This is the average distance between the crosshair during firing and its original position. Small AHD statistically guarantees the weapon will not deviate from the center too much, and it’ll be easier to hold aim on target.</p>
+<h3>Maximum Horizontal Deviation</h3>
+<p>This statistic doesn’t matter very much, but abnormally big difference between MHD and AHD can indicate that the weapon can sometimes spin out of control, despite being fairly controllable otherwise. A <strong>Probability Distribution Graph</strong> should show how likely it is.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">NSX Tengu Horizontal Recoil</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/06/Tengu-recoil-pattern-1.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>On average, MHD should be about 2.5 times larger than AHD. Lower is good.</p>
+<h3>Recoil Angle Variance</h3>
+<p><code>RAV = ABS(ABS(Maximum Recoil Angle) - ABS(Minimum Recoil Angle))</code></p>
+<p>High RAV can mess with the whole Recoil Pattern, and it makes burst firing especially hard.</p>
+<h3>Rate of Fire</h3>
+<p>The faster a gun fires, the faster Horizontal Recoil can screw you over.</p>
+<h2>Ease of Handling</h2>
+<h4>Vertical Recoil Per Second</h4>
+<p><code>VRPS = Vertical Recoil / Refire Time = Vertical Recoil * RoF / 60</code></p>
+<p>VRPS is a more objective alternative to Vertical Recoil Per Shot, and it’s directly proportional to the speed at which you need to drag the mouse to compensate for Vertical Recoil.</p>
+<p>Low VRPS makes a gun considerably more convenient, it increases weapon’s effective range, effectiveness of burst firing, and makes it easier to get multiple headshots with first few shots.</p>
+<h4>Rate of Fire</h4>
+<p>With VRPS being equal, it is preferable to have higher RoF. A combination of Low Vertical Recoil Per Shot and High RoF is more comfortable for the user than high Vertical Recoil Per Shot and Low RoF.</p>
+<p>The best example would be the notorious <strong>Gauss SAW</strong>, which gets a lot of heat for its Vertical Recoil, despite the fact that it has lower VRPS than <strong>CARV</strong> and <strong>Orion</strong> even without the Compensator.</p>
+<h3>Average Recoil Angle</h3>
+<p><code>ARA = (Maximum Recoil Angle + Minimum Recoil Angle) / 2</code></p>
+<p>In theory, it’s possible to fully compensate for the Recoil Angle, as long as there isn’t too much variance. In practice, same as with Vertical Recoil, lower angle is always good, and it is preferable to have the gun recoil straight up.</p>
+<h2><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Recoil_Recovery_Delay" target="_blank" rel="noopener noreferrer">Recoil Recovery</a></h2>
+<p>These statistics are important for tap firing and burst firing.</p>
+<h2>Projectile Speed</h2>
+<p>Determines how comfortable is the weapon at range, how much the user needs to compensate for bullet drop (if this weapon’s bullets are affected by Gravity at all), or lead a moving target, how fast can the user adapt to target’s movement.</p>
+<p>High velocity increases weapon’s affinity to being Suppressed. It doesn’t matter that much on CQC weapons, but generally – the more, the better.</p>
+<p>When coupled with <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Projectile_Lifespan" target="_blank" rel="noopener noreferrer">Projectile Lifespan</a>, determines weapon’s maximum range. Usually it’s not important, but can be crucial in certain edge cases, like super long range sniping:</p>
+<p>Spectre’s bullets have lifespan of 1.25 seconds. Normal velocity is 570, suppressed velocity is 570 \* 0.6 = 342. That would put theoretical maximum range at 712m normal and 427m suppressed.</p>
+<h2>Misc. Stats</h2>
+<p>These stats are of some importance, and should be considered and put on display.</p>
+<p><strong>Equip Time</strong> determines how good is a weapon for <a href="https://youtu.be/_H0dYEjR-jA?t=93" target="_blank" rel="noopener noreferrer"><strong>quickdrawing</strong></a>. For example, a Combat Medic might prefer a weapon with a shorter Equip Time to be able to faster switch to it if he gets caught with a Med Tool in hands. Same thing for other classes.</p>
+<p>Equip Time also affects how fast a weapon recovers after a <strong><a href="http://cmdrcyrious.com/planetside2/weapons/melee-weapons/#Quick-Knife_Mechanics" target="_blank" rel="noopener noreferrer">quick melee</a></strong> attack or a grenade throw.</p>
+<p><strong>Faction.</strong> Having a cross-faction weapon can be both a blessing and a curse, since it will make it impossible for both allies and enemies to identify the user as belonging to a certain faction, judging by the sound alone.</p>
+<p>This is just something to keep in mind, since the overall impact of this factor cannot be measured objectively.</p>
+<p><strong>Scope-In Time.</strong> How long does it take to ADS. Normally, it would be a crucial stat, but it’s usually the same for weapons within their category, so it’s not an important point for weapon analysis.</p>
+<p><strong>Sprint Recovery.</strong> A delay before a weapon can be fired after you stop sprinting. Especially important for CQC weapons, though, once again, it’s the same for most weapons.</p>
+<p><strong>Fire Detect Range.</strong> Self-explanatory.</p>
+<p><strong>ADS Speed Multiplier.</strong> The higher, the better. A lot of people don’t understand relationships between percentages, and don’t realize that 75% ADS equates to 50% faster movement during ADS.</p>
+<p>Higher ADS Speed is a survival trait, as it allows to dodge more of enemy fire while dishing out accurate shots yourself.</p>
+<h2>Specific Cases</h2>
+<h2>Bolt Action and Pump Action</h2>
+<p>For these weapons, the most important statistic is <strong><a href="http://cmdrcyrious.com/how-to-use-daybreak-census-api/#Additional_Fields" target="_blank" rel="noopener noreferrer">Chamber Duration</a></strong>, as it determines their effective rate of fire.</p>
+<h2>Spool-Up Weapons</h2>
+<p>Some weapons, like T7 MCG, start firing at lower RoF, and then gradually spool up to their maximum rate of fire. So you have to look at three stats:</p>
+<ol><li><a href="http://cmdrcyrious.com/how-to-use-daybreak-census-api/#Additional_Fields" target="_blank" rel="noopener noreferrer">Initial RoF</a></li><li><a href="http://cmdrcyrious.com/how-to-use-daybreak-census-api/#Additional_Fields" target="_blank" rel="noopener noreferrer">Spool Up Time</a></li><li>Maximum RoF</li></ol>
+<h2>Shotgun</h2>
+<p><strong>Total Damage Per Shot.</strong> Mostly important for quick-melee combos, and determines weapon’s performance in ideal situations, though it’s important to realize that shotguns very rarely meet them.</p>
+<p><strong>Damage Per Shot</strong> = Pellet Damage \* Pellets</p>
+<p><strong>Pellets Per Shot</strong>. Speaks to weapon’s consistency. With all else being equal, it’s better to have as many pellets as possible, as it reduces the effects of RNG.</p>
+<p><strong>Pellet Spread.</strong> Affects weapon’s effective range. It’s always important to take into account Cone of Fire as well, and look at <strong>Pellet Coverage</strong>:</p>
+<p><strong>Pellet Coverage</strong> = Pellet Spread + Cone of Fire</p>
+<p>This is shotguns’ version of “Initial CoF”.</p>
+<p>Cone of Fire affects where Pellet Spread can land, and overall makes the weapon less consistent by double dipping into RNG. Ideally, you don’t want to have any CoF at all.</p>
+<p>Pellet Spread is what makes a shotgun, so while smaller Pellet Spread makes the weapon more accurate and increases effective range, you still want to have <em><strong>some</strong></em> spread.</p>
+<p>Ideally, you want Hip Pellet Spread to be somewhere around 1.5 – 2.0 degrees, and ADS Pellet Spread around 0.5 – 1.0 degrees.</p>
+<h2>Burst-Fire Weapon</h2>
+<p>Very similar to analyzing an automatic weapon, but with a concession that the weapon can be harder to use optimally.</p>
+<p>The requirement to click at a very specific rate of fire can make it harder to reach maximum rate of fire, and it can be harder to keep the crosshair over the target, as the user also has to compensate for uneven recoil while clicking.</p>
+<p>Complete lack of a semi-auto mode on a burst weapon should be counted as a disadvantage, as it means the gun can’t be tap-fired to snipe deployables or players massively out of weapon’s effective range, though obviously those are niche uses that are likely to be meaningless for most players.</p>
+<p>In addition to shots to kill, it may be prudent to also look at “bursts to kill”.</p>
+<p>Obviously, <strong>First Shot Recoil Multiplier</strong> plays a big role. It’s kind of controversial. On one hand, you want FSRM to be as small as possible, to ensure the first two shots in a burst land as closely as possible. On the other hand, you want FSRM to be close to 1x, so the recoil is evenly distributed during the burst, so it is easier for the user to emulate a fully automatic weapon. One thing is certain: you definitely don’t want FSRM to exceed 1x.</p>
+<p><strong>Vertical Recoil Per Shot</strong> is important as well. On weapons with long bursts, Vertical Recoil Per Second could be a more objective stat to look at.</p>
+<p><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Fixed_Burst_Weapons" target="_blank" rel="noopener noreferrer"><strong>Look up this</strong></a> on how to calculate damage per second and damage per minute of a fixed burst weapon, and keep in mind that burst weapons tend to have <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Recoil_scaling" target="_blank" rel="noopener noreferrer"><strong>recoil scaling</strong></a>.</p>
+<h2>Semi Auto Weapon</h2>
+<p>For semi auto weapon, Vertical Recoil and Tap Firing Speed, as well as CoF Recovery are the most important statistics.</p>
+<p>When looking at TTK and BTK, it could be prudent to look at how many bodyshots a weapon needs after a headshot opener. E.g. one of big advantages of Commissioner over Underboss is that Commissioner has much longer range of 1 headshot + 1 bodyshot combo.</p>
+<p>Or the fact that Blackhand reliably kills an enemy with 1 headshot + 1 bodyshot within \~60m, makes it considerably more comfortable to use.</p>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

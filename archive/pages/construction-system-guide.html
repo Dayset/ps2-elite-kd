@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>Construction System Guide | CMDRCyrious.com — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>Construction System Guide | CMDRCyrious.com</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd>CMDRCyrious</dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/construction-system-guide/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/construction-system-guide/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2016-05-03</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Live</dd></div>
+      <div><dt data-i18n="arc.attrStatus">Status</dt><dd><span class="arc-badge arc-st-outdated">⚠️ Largely outdated</span><p class="arc-attr-note">Construction has changed heavily since 2018: the modules are gone (replaced), the core is gone. Exception — the preview-placement trick (Ctrl+F11 + E) still works in 2026.</p></dd></div>
+      <div><dt data-i18n="arc.attrRaw">Original source file</dt><dd><a href="../raw/construction-system-guide.html" target="_blank" rel="noopener noreferrer">construction-system-guide.html</a></dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<p>PlanetSide 2 Construction System allows players to build their own bases to create fortifications and provide support for the war effort. Building and sustaining bases requires mining <strong>Cortium</strong> with a special <strong><a href="http://cmdrcyrious.com/planetside2/vehicles/" target="_blank" rel="noopener noreferrer">vehicle</a></strong> – <strong>ANT</strong>.</p>
+<h2>Cortium </h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Icon Cortium</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/Icon_Cortium.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">planetside 2 cortium</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/Cortium_Nodes_All-1024x481.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Cortium crystals spawn randomly all over the world of PlanetSide 2. Depending on size, they contain 2 000, 6 000 or 35 000 Cortium.</p>
+<p>ANTs can mine Cortium from these crystals. Fully mined Cortium crystals disappear and respawn later.</p>
+<h2>ANT</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">planetside 2 ANT</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/ant-img.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Cost:</strong> 200 Nanites <strong>Health:</strong> 4000</p>
+<p><strong>Crew (4)</strong>: driver/miner, secondary miner/gunner, 2 passengers.</p>
+<p>ANT – Advanced Nanite Transport – mining and construction vehicle. The driver controls a mining tool in front, and there’s another mining tool on top of the ANT, which can be replaced by a <a href="http://cmdrcyrious.com/planetside2/vehicles/#Common_Vehicle_Certifications" target="_blank" rel="noopener noreferrer"><strong>secondary weapon</strong></a>. ANTs have the same weapon selection as Sunderers.</p>
+<p>ANTs are relatively fast and maneuverable, and with the right upgrades become very good at climbing hills.</p>
+<p><strong>Capacity:</strong> ANTs carry up to 8 000 Cortium by default, upgradeable to 10 000.</p>
+<p><strong>Mining:</strong> to mine Cortium, drive up to a Cortium crystal and press and hold “fire” button to activate the mining laser:</p>
+<ul><li>Default Yellowjacket laser at the front mines at a rate of \~200 Cortium per second and does not overheat.</li><li>Top mining laser has the same mining rate, but overheats quickly.</li><li><strong>WLT-Howler</strong> is an alternative front laser, which has a higher mining rate, but quickly overheats.</li></ul>
+<p>ANT HUD has 2 bars: left bar represents the amount of Cortium in ANT’s cargo hold, and the right bar shows how much Cortium remains in the crystal you’re mining. You can mine in third person, though you won’t be able to see the capacity HUD.</p>
+<p><strong>Siege weaponry:</strong> ANT’s <strong>Top Mining Laser</strong> and <strong>WLT-Howler</strong> can be used to deal intense damage to constructed objects.</p>
+<p><strong>Mineral Radar:</strong> ANT will passively detect nearby Cortium deposits and show then on the minimap. This passive ability can be upgraded to increase detection range.</p>
+<p><strong>Deploy:</strong> ANTs can be deployed (default key “B”), giving access to a <a href="http://cmdrcyrious.com/construction-system-guide/#Construction_Terminals" target="_blank" rel="noopener noreferrer"><strong>Construction Terminal</strong></a> on the back.</p>
+<p><strong>Special Utility</strong>: in addition to <strong><a href="http://cmdrcyrious.com/planetside2/vehicles/#Common_Vehicle_Certifications" target="_blank" rel="noopener noreferrer">common vehicle Utility Slots</a></strong>, ANTs have access to special abilities:</p>
+<ul><li><strong>Transport Cloak</strong> – while active, cloaks the ANT. Without <strong>Vehicle Stealth</strong> certifications, a cloaked ANT will still be visible on the minimap of nearby enemies.</li><li><strong>C-Barrier</strong> – while active, increases <strong>Armor</strong> by 20% for all sides except bottom.</li><li><strong>Turbo</strong> – provides a boost to acceleration and maximum speed.</li></ul>
+<p>Using these abilities requires and spends <strong>Cortium</strong>.</p>
+<p><strong>Turbo</strong> is the most consistently useful ability, including running away, climbing hills, ramming enemy vehicles, or just moving between Cortium Nodes a bit faster, and it doesn’t care whether you’re soloing or working in a squad. At the same time, it is also the hardest to use properly and drains the most Cortium.</p>
+<ul><li>Just a light tap on the Turbo will bump up your maximum speed if you’re moving across flat terrain.</li><li>ANT Turbo works like a rocket, and it doesn’t require ANT’s wheels to be touching the ground in order to boost your speed.</li></ul>
+<p><strong>Reinforced Armor:</strong> this defensive certification will increase ANT’s <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Health" target="_blank" rel="noopener noreferrer"><strong>Health</strong></a> by 10%.</p>
+<h2>ANT Certifications</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">ANT certifications</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/ANT-certifications-1024x529.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/ANT-certifications.jpg" target="_blank" rel="noopener noreferrer">(click to enlarge)</a></p>
+<h3>Recommended Certifications</h3>
+<p>These recommendations apply to mostly solo builders that want to avoid direct confrontation with the enemy or working as a part of a larger group.</p>
+<ul><li><strong>Cortium Capacity:</strong> +1000 for <strong>50 Certs.</strong></li><li><strong>Mineral Radar 2 and 3:</strong> detects Cortium within 400m. <strong>300 Certs</strong> in total.</li><li><strong>C300 Turbo Engine 1: 150 Certs</strong>.<ul><li><strong>Or Transport Cloak 1</strong>: <strong>50 Certs</strong> and <strong>Vehicle Stealth 2</strong>: <strong>130 Certs</strong>.</li></ul></li><li><strong>Racer Chassis 2: 300 Certs</strong> in total.</li><li><strong>Basilisk: 200 Certs</strong>. Reliable, easy to use, versatile and dirt-cheap.</li></ul>
+<h2>Construction Terminals</h2>
+<ul><li>ANT construction terminal</li></ul>
+<ul><li>Cortium Silo Terminal</li></ul>
+<p><em>Construction Terminals</em></p>
+<p><strong>Deployed ANTs</strong> and <a href="http://cmdrcyrious.com/construction-system-guide/#Cortium_Silo" target="_blank" rel="noopener noreferrer"><strong>Cortium Silos</strong></a> provide access to <strong>Construction Terminals.</strong></p>
+<p>Each time you want to build something, you have to <strong>buy</strong> it from a Construction Terminal. You can <strong>buy</strong> it with Cortium stored inside, or with Certification Points.</p>
+<p>By default, players can <strong>buy</strong>: Cortium Silo, AI Turret, Rampart Wall and Bunker.</p>
+<p>Other schematics must be first <strong>unlocked</strong> with Certification Points or Daybreak Cash. Schematics unlocked with Daybreak Cash will be unlocked for all characters on your account.</p>
+<p>Once you <strong>buy</strong> a construction item, it will appear in your inventory, and remain there until you place it or log out. You are free to move to other locations, switch weapons and spawn vehicles.</p>
+<p>However, if you respawn or redeploy, the object will disappear from your inventory, wasting the resources spent on it. Also, your inventory can hold only one construction item at a time, so if you try to buy another item, the first one will disappear.</p>
+<h2>How to build</h2>
+<p>To build a bought item, select it in your inventory. You will see a blueprint before you.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">building template</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/building-template-1-300x241.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">construction system controls</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/construction-controls-300x241.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h2><strong>Controls and Restrictions</strong></h2>
+<ul><li>Hold left or right mouse button to rotate the blueprint. Hold “Ctrl” to slow down the rotation.</li><li>Hold both mouse buttons and move the mouse back or forward to move the blueprint away or closer to you.</li><li>You have to make sure that <strong>blue spheres</strong> on the blueprint are under ground, and <strong>green spheres</strong> are above the ground.</li><li>Press the action key (default “E”) to start construction.</li><li>Blueprints can be placed only on ground, and not on large objects, such as bridges or rocks.</li></ul>
+<p>After placement, it takes 45 seconds for an object to fully construct. While under construction, player-constructed objects take much more damage, and they can be damaged by small arms.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">consctruction item limit</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/consctruction-limit.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Each schematic can be built by an individual player only a limited amount of times. This limit is shown at the top right corners of all construction items’ icons in the build menu.</p>
+<p>This limitation is tied to specific players, so, for example, two players can build up to 6 Rampart Walls together.</p>
+<h3>Exclusion Area</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/Exclusion-Area-300x169.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Some construction objects cannot be placed too close to each other, this is called <strong>“exclusion area”</strong>. It is supposed to be indicated by a red ring on the ground, but often it’s not displayed at all.</p>
+<h3><strong>No-construction Zones</strong></h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/no-construction-zones-270x300.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Most of the “conventional” PlanetSide 2 <strong><a href="http://cmdrcyrious.com/planetside2/beginner-guides/bases/" target="_blank" rel="noopener noreferrer">bases</a></strong> have circular <strong>no-construction zones</strong>  around them. These zones become visible whenever you’re in an ANT, or trying co construct something.</p>
+<p>ANTs can’t be deployed inside those zones, and you cannot place any blueprints inside them. Additionally, no-construction zones are protected from <a href="http://cmdrcyrious.com/construction-system-guide/#The_Flail" target="_blank" rel="noopener noreferrer"><strong>Flail</strong></a> and <a href="http://cmdrcyrious.com/construction-system-guide/#Glaive_IPC" target="_blank" rel="noopener noreferrer"><strong>Glaive</strong></a> constructed artillery, but not from <a href="http://cmdrcyrious.com/construction-system-guide/#Orbital_Strike_Uplink" target="_blank" rel="noopener noreferrer"><strong>Orbital Strikes</strong></a>.</p>
+<p>You are free to build anywhere outside <strong>no-construction zones</strong>, including enemy territory.</p>
+<p>A coordinated outfit squad can purchase a bunch of items, load up in a Galaxy, fly deep behind enemy lines, drop and raise up a whole base within minutes. Then they can hack or construct a vehicle terminal, spawn a bunch of ANTs and start mining Cortium for their Silo.</p>
+<h3>Previewing Placement</h3>
+<p><em>Credit: thanks to <strong><a href="https://www.reddit.com/r/Planetside/comments/8u8lne/some_questions_for_construction_experienced_people/e1dvjfc/" target="_blank" rel="noopener noreferrer">/u/Rip17</a></strong> for explaining this feature.</em></p>
+<p>There is a trick you can use to preview the placement of a constructed object before you actually begin construction. For example, this is useful when trying to build several Rampart Walls without any gaps between them.</p>
+<p>To preview placement, press Ctrl + F11 to “hide weapon”, and then hit “E”. The object will remain in place, allowing you to move around and check placement.</p>
+<p>Press Ctrl + F11 again to “show weapon”, and then you can hit “E” again to begin construction, or swap to another inventory item to cancel placement.</p>
+<h2>Ikanam Biolab and Others</h2>
+<p>Most of the “conventional” PlanetSide 2 bases have <strong><a href="http://cmdrcyrious.com/construction-system-guide/#No-construction_Zones" target="_blank" rel="noopener noreferrer">no-construction zones</a></strong> around them, but there are exceptions, like <strong>Ikanam Biolab</strong>, located on <strong><a href="http://cmdrcyrious.com/planetside2/beginner-guides/continents/#Amerish" target="_blank" rel="noopener noreferrer">Amerish</a></strong>.  Players are allowed and encouraged to build their own bases on top of the Ikanam’s structure.</p>
+<p>In addition, there are several bases without no-construction zones that consist of just a <strong><a href="http://cmdrcyrious.com/planetside2/beginner-guides/bases/#Capture_Points" target="_blank" rel="noopener noreferrer">Vehicle Capture Point</a></strong>.</p>
+<h2>Schematics</h2>
+<ul><li>All constructed objects can be repaired by using Engineer’s <strong>Repair Tool</strong> on the <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/Rampart-Wall-repair-console.jpg" target="_blank" rel="noopener noreferrer"><strong>small blue console</strong></a>. Every constructed object has one.</li><li>“Hard” objects, like Turrets and Structures can be damaged only by weapons capable of damaging armored vehicles, and they don’t take friendly fire damage.</li><li>“Soft” objects, like Modules, Spawn Tubes and Spires, can be damaged by all weapons and they take 70% reduced friendly fire damage.</li><li>The <a href="http://cmdrcyrious.com/planetside2/beginner-guides/communication/#The_Q-menu" target="_blank" rel="noopener noreferrer"><strong>Q-menu</strong></a> can be used to restrict access to many constructed objects.</li></ul>
+<h2>Core</h2>
+<h3>Cortium Silo</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">cortium silo</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/Cortium-Silo-1-300x150.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Unlock cost:</strong> free <strong>Build cost:</strong> 2000 Cortium</p>
+<p><strong>Cortium Drain Rate:</strong>2 / sec</p>
+<p><strong>Limit per player:</strong>1</p>
+<p><strong>Exclusion Area with other Silos:</strong>\~210m</p>
+<p><strong>Cortium Silo</strong> is the heart of any constructed base.</p>
+<p>Many constructed objects will continuously drain Cortium from the silo. Drain starts when the object is fully constructed, and persists until the object is destroyed.</p>
+<p>While you <em><strong>can</strong></em> construct objects outside of a Silo’s range, they will <strong>decay</strong> rapidly and disappear within minutes, even if they don’t require a constant supply of Cortium to function (e.g. a <strong><a href="http://cmdrcyrious.com/construction-system-guide/#Pillbox" target="_blank" rel="noopener noreferrer">Pillbox</a></strong>).</p>
+<p>Constructed objects and Silo itself will also start decaying if the Silo runs out of Cortium, so it is extremely important to always keep some Cortium in the Silo. Note that Silo itself has a small Cortium drain.</p>
+<p>Silo’s owner and their squadmates will receive a warning when Cortium level falls below 1000.</p>
+<p>Silo can store up to 50 000 Cortium. A small light atop of the silo and bars on its sides will indicate the stored amount.</p>
+<p>Silo costs 2 000 Cortium to build, but it spawns with 2 000 Cortium inside, so it’s essentially a free building. You can deposit Cortium into a Silo from an ANT the same way you mine minerals – drive up and hold “fire”. Once deposited, Cortium cannot be extracted from Silos.</p>
+<p><strong>Tip:</strong> You can deposit Cortium into a silo <strong>while it’s being built.</strong></p>
+<p>Silo provides access to a <a href="http://cmdrcyrious.com/construction-system-guide/#Construction_Terminals" target="_blank" rel="noopener noreferrer"><strong>Construction Terminal</strong></a>. By default, any ally can deposit Cortium into your Silo or access the terminal to build something, but you can use the Silo’s <strong><a href="http://cmdrcyrious.com/planetside2/beginner-guides/communication/#The_Q-menu" target="_blank" rel="noopener noreferrer">Q-menu</a></strong> to restrict access.</p>
+<p>Owner of the Silo and his squadmates can access <a href="http://cmdrcyrious.com/construction-system-guide/#Deconstruction_Tool" target="_blank" rel="noopener noreferrer"><strong>Deconstruction Tool</strong></a> from a <strong>Construction Terminal</strong>, and deconstruct anything inside the Silo’s power range, so you have a bit of control of what other players are building, and you can delete unwanted structures.</p>
+<h3>Elysium Spawn Tube</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/spawn-tube.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Unlock cost:</strong> 500 Certs / 249 DBC.</p>
+<p><strong>Build cost:</strong> 400 Cortium.</p>
+<p><strong>Cortium Drain Rate:</strong> 0 / sec</p>
+<p><strong>Limit per player:</strong> 1</p>
+<ul><li>When powered by a nearby Silo, provides a <strong><a href="http://cmdrcyrious.com/planetside2/beginner-guides/spawning-rules/#Elysium_Spawn_Tube" target="_blank" rel="noopener noreferrer">respawn point</a></strong> for nearby allies.</li><li>Tube’s owner is awarded a small amount of XP for every respawn.</li><li>Spawn Tube takes small arms damage and has about 10 000 effective health against bullets, meaning that 2-3 magazines from an average rifle will take it out.</li><li>Spawn Tube begins to function as a spawn point the moment it is placed, before it is fully built. Unclear if bug. (Thanks to <strong>Danath</strong> for this info).</li></ul>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/matrixing-updated.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Binding:</strong> any allied player can walk up and press the action key to bind to the Spawn Tube. This will allow the player to respawn on this particular Tube from anywhere on the continent. A player can be bound only to one Tube at a time.</p>
+<p><strong>Note:</strong> this functionality is currently broken, and it’s possible to respawn on any Tube from any range.</p>
+<h2>Modules</h2>
+<p>These small box-like objects enhance other constructed items around them. Modules require a constant supply of Cortium from a nearby Silo in order to function.</p>
+<p>Different modules can be placed near each other, but modules of the same type have a 25m <strong><a href="http://cmdrcyrious.com/construction-system-guide/#Exclusion_Area" target="_blank" rel="noopener noreferrer">exclusion radius</a></strong> around them.</p>
+<h3>Turret AI Module</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Turret AI Module</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/Turret-AI-Module.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Makes nearby constructed <strong><a href="http://cmdrcyrious.com/construction-system-guide/#Turrets" target="_blank" rel="noopener noreferrer">Turrets</a></strong> automated. They will automatically target nearby enemies, and return fire when fired upon from longer ranges. Turrets can still be manned and targeted manually, if need be.</p>
+<p>Additionally, <a href="http://cmdrcyrious.com/construction-system-guide/#The_Flail" target="_blank" rel="noopener noreferrer"><strong>Flail</strong></a> and <a href="http://cmdrcyrious.com/construction-system-guide/#Glaive_IPC" target="_blank" rel="noopener noreferrer"><strong>Glaive IPC</strong></a> artillery cannons require an AI Module to function.</p>
+<h3>Repair Module</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Repair Module</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/Repair-Module.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Automatically repairs nearby constructed items, except the Repair Module itself.</p>
+<h3>Skywall Shield Module</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Skywall Shield Module</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/Skywall-Shield-Module.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Creates an <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/Orange-ray-from-active-HIVE.jpg" target="_blank" rel="noopener noreferrer"><strong>aerial shield</strong></a> 15m above the module. The shield:</p>
+<ul><li>Blocks all projectiles from above, including those fired by allies. Projectiles from below can pass freely.</li><li>Vehicles touching the shield will take \~1500 damage once.</li><li>Infantry touching the shield will be EMPd.</li></ul>
+<p>Firing at the shield does not damage the module, but <strong><a href="https://youtu.be/M-7ReXznnkA?t=75" target="_blank" rel="noopener noreferrer">with enough concentrated fire, the shield can be taken down</a>.</strong> In that event, an allied player has to interact with the Skywall Shield Module to reset it.</p>
+<p>Aerial shield will be temporarily disrupted if hit by <a href="http://cmdrcyrious.com/construction-system-guide/#Glaive_IPC" target="_blank" rel="noopener noreferrer"><strong>Glaive IPC</strong></a> constructed artillery.</p>
+<h3>Structure Shield Module</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Structure Shield Module</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/Structure-Shield-Module.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Creates one-way shields in the loopholes in nearby <strong><a href="http://cmdrcyrious.com/construction-system-guide/#Structures" target="_blank" rel="noopener noreferrer">Structures</a></strong> to allow allied players to fire from safety.</p>
+<ul><li>Shielded Bunker</li></ul>
+<ul><li>Shielded Rampart Wall</li></ul>
+<ul><li>View through tower shield</li></ul>
+<ul><li>View through garage shield</li></ul>
+<p>Creates vehicle shields in Sunderer’s Garage entrances. In case of Sunderer Garage, shields will stop projectiles from both sides, but they will allow enemy infantry to pass through.</p>
+<ul><li>Shielded Garage</li></ul>
+<ul><li>Shielded Garage</li></ul>
+<p>The player can interact with the Structure Shield Module to make affected constructed objects invulnerable for a short time. Interacting takes 5 seconds, invulnerability lasts for 30 seconds, after which there is a 30 second cooldown. Invulnerability is lost if the module is destroyed.</p>
+<h3>Alarm Module</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Alarm Module</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/Alarm-Module.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>This module will alert the owner and their squad when an enemy is detected or a construct is attacked within 100 meters of it.</p>
+<h3>Reinforcements Module</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Reinforcements Module</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/Reinforcements-Module-300x150.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>If you have a Sunderer deployed in range of this module, allied infantry will be able to deploy from across the whole continent on that Sunderer, as long as the base meets the requirements to be “<a href="http://cmdrcyrious.com/planetside2/beginner-guides/spawning-rules/#Reinforcements_Needed" target="_blank" rel="noopener noreferrer"><strong>reinforcements needed</strong></a>“. Generally, this means that there are more enemies in the <strong><a href="http://cmdrcyrious.com/planetside2/beginner-guides/continents/#Regions" target="_blank" rel="noopener noreferrer">region</a></strong> than allies.</p>
+<p>| <strong>Module</strong> | <strong>Cortium Cost</strong> | <strong>Limit per player</strong> | <strong>Effective Radius</strong> | <strong>Cortium Drain Rate</strong> | <strong>Unlock Cost</strong> |  |  |  |  |  |  |  | <strong>Certs</strong> | <strong>DBC</strong> |  | Repair | 300 | 3 | 25m | 0.5 | 500 | 249 |  | Turret AI | 500 | 2 | 20m |  | 1000 | 399 |  | Skywall | 500 | 1 | 40m |  | 1500 | 799 |  | Structure Shield | 300 | 2 | 35m |  | 1000 | 399 |  | Alarm | 400 | 1 | 100m |  | 1000 | 399 |  | Reinforcements | 1000 | 1 | 25m |  | 1250 | 399 | </p>
+<h2>Structures</h2>
+<p>In addition to providing cover for defending infantry, these fortifications can and should be used to protect key base Modules and Spawn Tubes.</p>
+<h3>Bunker</h3>
+<ul><li>Bunker</li></ul>
+<ul><li>Bunker Infantry Terminal</li></ul>
+<p><strong>Unlock cost:</strong> free</p>
+<p><strong>Build cost:</strong> 400 Cortium</p>
+<p><strong>Cortium Drain Rate:</strong> 0 / sec</p>
+<p><strong>Limit per player:</strong> 2</p>
+<p>Durable fortification with firing areas for infantry on the first floor, and an open area on top. When powered by a nearby Silo, Bunkers provide access to an <strong>Infantry Terminal</strong>.</p>
+<ul><li>Two Modules, one Bunker</li></ul>
+<ul><li>Elysium Spawn Tube in Bunker</li></ul>
+<p>If deployed low enough, Bunker’s corridor can conceal a <strong>Spawn Tube</strong> and 1-2 <strong>Modules</strong>. Usually, this doesn’t result in a blocked exit.</p>
+<h3>Infantry Tower</h3>
+<ul><li>Infantry Tower</li></ul>
+<ul><li>Infantry Tower Entrance</li></ul>
+<ul><li>Infantry Tower Stairs</li></ul>
+<ul><li>Infantry Tower Inside</li></ul>
+<ul><li>Infantry Tower Roof</li></ul>
+<ul><li>Shielded Infantry Tower</li></ul>
+<p><strong>Unlock cost:</strong> 1500 Certs / 799 DBC</p>
+<p><strong>Build cost:</strong> 500 Cortium</p>
+<p><strong>Cortium Drain Rate:</strong> 0 / sec</p>
+<p><strong>Limit per player:</strong> 1</p>
+<p>A large tower structure that can be occupied by infantry. The roof hatch can be used by enemies to get into the Tower. When affected by a Structure Shield module, the hatch gains a shield which blocks large projectiles, but will still let through enemy players and C4</p>
+<h3>Pillbox</h3>
+<ul><li>Pillbox 1</li></ul>
+<ul><li>Pillbox 2</li></ul>
+<ul><li>Inside Pillbox</li></ul>
+<ul><li>Pillbox Entrance</li></ul>
+<p><strong>Unlock cost:</strong> 1000 Certs / 399 DBC</p>
+<p><strong>Build cost:</strong> 400 Cortium</p>
+<p><strong>Cortium Drain Rate:</strong> 0 / sec</p>
+<p><strong>Limit per player:</strong> 1</p>
+<p>Fortified structure with shooting areas for infantry. The roof hatch can be used by enemies to get into the Pillbox. When affected by a Structure Shield module, the hatch gains a shield which blocks large projectiles, but will still let through enemy players and C4.</p>
+<p>Pillbox can be used to hide up to five Modules, with the entrance blocked by a <strong><a href="http://cmdrcyrious.com/construction-system-guide/#Elysium_Spawn_Tube" target="_blank" rel="noopener noreferrer">Spawn Tube</a></strong>. Keep in mind that allies, yourself included, cannot pass through the Tube either.</p>
+<p>Modules in a Pillbox, with the entrance blocked by a Spawn Tube. It’s not invulnerable, killing the Spawn Tube lets you get in, a there is a gap between the tube and door frame through which one can shoot through.</p>
+<p>The intention is to make it harder to just “snipe” modules from some arcane angle.</p>
+<p>When building in such a way, you have to put the Pillbox first, and only then build inside. You also have to make sure that Pillbox’s floor is below the ground.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">compact base pillbox</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/screenshot_20180623-23-17-11-300x169.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Alternatively, you can put the Spawn Tube deeper inside the Pillbox, and leave the entrance open, but then Pillbox will fit at least one Module fewer.</p>
+<h3>Sunderer Garage</h3>
+<ul><li>Garage</li></ul>
+<ul><li>Garage</li></ul>
+<ul><li>Sunderer</li></ul>
+<ul><li>Spawn Tube</li></ul>
+<p><strong>Unlock cost:</strong> 1500 Certs / 799 DBC</p>
+<p><strong>Build cost:</strong> 500 Cortium</p>
+<p><strong>Cortium Drain Rate:</strong> 0 / sec</p>
+<p><strong>Limit per player:</strong> 1</p>
+<p>A large multi-purpose structure. The Garage can provide cover to a single <strong>Sunderer</strong>, and still have enough room left for <strong>Structure Shield Module</strong>, <strong>Reinforcements Module</strong> and <strong>Pain Spire</strong>.</p>
+<p>Alternatively, the garage can house an <strong>Elysium Spawn Tube</strong>, all five <strong>Modules</strong>, and a <strong>Pain Spire</strong>. It can also be used as a base entrance. Any MBT will fit through the garage.</p>
+<h3>Vehicle Ramp</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/Vehicle-Ramp-e1529254280622-300x169.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Unlock cost:</strong> 1000 Certs / 399 DBC</p>
+<p><strong>Build cost:</strong> 300 Cortium</p>
+<p><strong>Cortium Drain Rate:</strong> 0 / sec</p>
+<p><strong>Exclusion Radius with other Ramps:</strong> 0m</p>
+<p><strong>Limit per player:</strong> 2</p>
+<p>A multi-purpose vehicle ramp. Among other applications, can be potentially used to allow only one-way movement of vehicles in a narrow space.</p>
+<h2>Defense</h2>
+<h3>Turrets</h3>
+<ul><li>Hoplon AA Turret – Full Sized Pic</li></ul>
+<ul><li>Hoplon AA Turret</li></ul>
+<ul><li>AI Turret</li></ul>
+<ul><li>AV Turret</li></ul>
+<ul><li>Low Profile AV Turret</li></ul>
+<ul><li>Turret Entrance</li></ul>
+<p><strong>Cortium Drain Rate:</strong> 0 / sec</p>
+<p><strong>Exclusion Radius between all Turrets:</strong> 20m</p>
+<p>Mannable turrets for base defense. There are AI, AA and AV versions. Turrets use heat ammo mechanic, but they’re not affected by <a href="http://cmdrcyrious.com/planetside2/beginner-guides/bases/#AMP_Station" target="_blank" rel="noopener noreferrer"><strong>AMP Station</strong></a> bonus to turret cooldown.</p>
+<p>Despite looking like a common base Flak turret, constructed <strong>Hoplon AA Turret</strong> does not have a Flak effect, and functions more like a simple machinegun, such as Walker. Worth noting that when manned by a player, the AA turret is about as effective against infantry as the dedicated anti-infantry turret, though it has more limited aiming angles downwards.</p>
+<p>Turrets don’t require power to function, and it is possible to build them anywhere outside no-construction zones to temporarily fortify a specific area. Without Silo, turrets will decay within minutes, though.</p>
+<p>Turrets can be <strong>automated</strong> via <strong><a href="http://cmdrcyrious.com/construction-system-guide/#Turret_AI_Module" target="_blank" rel="noopener noreferrer">Turret AI Module</a></strong>, in which case they will automatically attack respective targets within <strong>Attack First Radius</strong>, and engage enemies within <strong>Return Fire Radius</strong> if they damage the Turret or another constructed object nearby. In this case, the turret will keep tracking the enemy for 10 seconds, even if they leave the <strong>Return Fire Radius</strong>, though in that case the turret will stop firing.</p>
+<p><strong>Notes:</strong></p>
+<ul><li>Automated AA Turrets will target enemy drop pods.</li><li>Automated turrets ignore cloaked units.</li><li>Automated turrets engage only their intended targets, e.g. AV turret will not target infantry.</li></ul>
+<p>| <strong>Turret</strong> | <strong>Cortium Cost</strong> | <strong>Limit per player</strong> | <strong>Attack First Radius</strong> | <strong>Return Fire Radius</strong>  | <strong>Unlock Cost</strong> |  |  |  |  |  |  |  | <strong>Certs</strong> | <strong>DBC</strong> |  | AI | 400 | 1 | 50m | 300m | Free |  |  | AA | 400 | 1 | 150m | 500m | 500 | 249 |  | AV (High Profile) | 400 | 1 <strong>\</strong>* | 100m | 300m | 500 | 249 |  | AV (Low Profile) | 300 |  |  |  | 1000 | 499 | </p>
+<p><strong>\</strong>* – both variants of the AV turret count for the same limit. You can have only one built.</p>
+<h3>Rampart Wall</h3>
+<ul><li>Rampart Wall</li></ul>
+<ul><li>Lumifiber Rampart Wall</li></ul>
+<p><strong>Unlock cost:</strong> free</p>
+<p><strong>Build cost:</strong> 400 Cortium</p>
+<p><strong>Cortium Drain Rate:</strong> 0 / sec</p>
+<p><strong>Limit per player:</strong> 3</p>
+<p>A long horizontal wall with firing areas for infantry. Height of the wall can be varied greatly, creating a low wall just to protect infantry, or a high wall to provide cover for vehicles and structures.</p>
+<p><strong>Lumifiber Rampart Wall</strong> – has Lumifiber faction-colored trim. Counts to the same limit as Rampart Wall.</p>
+<h3>Blast Wall</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Blast Wall</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/Blast-Wall-300x150.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Unlock cost:</strong> 1000 Certs / 399 DBC</p>
+<p><strong>Build cost:</strong> 300 Cortium</p>
+<p><strong>Cortium Drain Rate:</strong> 0 / sec</p>
+<p><strong>Limit per player:</strong> 2</p>
+<p>A large wall that can withstand a moderate amount of damage. Unaffected by <strong>Structure Shield Module</strong>.</p>
+<h3>Vehicle Gate</h3>
+<ul><li>Unpowered Vehicle Gate without structure shield module</li></ul>
+<ul><li>Unpowered Vehicle Gate</li></ul>
+<ul><li>Hidden Structure Shield Module</li></ul>
+<ul><li>Powered Vehicle Gate</li></ul>
+<p><strong>Unlock cost:</strong> 1000 Certs / 399 DBC</p>
+<p><strong>Build cost:</strong> 400 Cortium</p>
+<p><strong>Cortium Drain Rate:</strong> 0.5 / sec</p>
+<p><strong>Exclusion Radius with other Gates:</strong> 0m</p>
+<p><strong>Limit per player:</strong> 2</p>
+<p>Provides a frame for a large force field that blocks enemy vehicles and all projectiles in both directions. Must be powered by a nearby Silo in order to generate the force field. <strong>Structure Shield Module</strong> is <em><strong>not</strong></em> required to generate the force field.</p>
+<h2>Tactical</h2>
+<h3>Orbital Strike Uplink</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/orbital-strike-uplink-1024x576.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Unlock cost:</strong> 2000 Certs / 1499 DBC</p>
+<p><strong>Build cost:</strong> 3000 Cortium</p>
+<p><strong>Cortium Drain Rate:</strong> 4 / sec</p>
+<p><strong>Exclusion Radius with another Uplinks:</strong> 500m</p>
+<p><strong>Limit per player:</strong> 1</p>
+<p>When powered by a nearby Silo, and after a sufficient charging time, the Uplink can unleash devastating Orbital Strikes at nearby enemy positions, including standard lattice bases.</p>
+<h4>Mechanics</h4>
+<p>When powered by a Silo, the Uplink passively gains <strong>charge</strong> over time. As the charge increases, so does the Uplink’s <strong>striking distance:</strong></p>
+<ul><li>Striking distance starts at 0m and increases by \~50 meters per minute.</li><li><strong>Minimum striking distance is 200m</strong> (\~4 minutes charge time) and it is displayed on the map as an orange circle.</li><li><strong>Current striking distance</strong> is displayed as a yellow circle, and the current charge level is indicated by power bars on the Uplink itself.</li><li><strong>Maximum striking distance is 800m</strong> (15 minutes charge time).</li><li>Enemies within \~700-800m of the Uplink can see the current striking distance on the map.</li></ul>
+<p>Firing an Orbital Strike <strong>consumes charge</strong> from the Uplink <strong>based on the used striking distance</strong>. For example, an Orbital Strike within 33% of maximum striking distance will consume 33% of the Uplink’s maximum charge. So if the Uplink is sufficiently charged, it is possible to  to call in several close range Orbital Strikes in a row.</p>
+<p>Owner of the Uplink or his squad members can equip an <strong><a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/orbital-strike-target-designator.jpg" target="_blank" rel="noopener noreferrer">Orbital Strike Target Designator</a></strong> from the Uplink’s terminal:</p>
+<ul><li><strong>The Designator</strong> fires darts to mark the location for the Orbital Strike. It can shoot only while aiming down sights, and has a short range of \~60m.</li><li>Redeploying or respawning will remove the Designator from your inventory.</li><li>Uplink’s owner always gets credit for kills, regardless who used the Target Designator.</li><li>Uplink has to be powered by a Silo in order to fire.</li></ul>
+<p>After a target has been designated, it takes a few seconds for the Orbital Strike to fire. All nearby units, including enemies, are warned about incoming strike via radio message, and can see the strike’s indicator on the minimap.</p>
+<p>Orbital Strike deals devastating damage in a relatively small radius of \~40m, killing all units and destroying all constructed items, and then the damage starts tapering off. The damage is applied in a full column, meaning it will destroy targets even at a flight ceiling.</p>
+<p>Orbital Strike will also knock back nearby units, especially infantry, often it is the fall damage that kills them.</p>
+<p>Infantry inside buildings will be knocked back, and can receive collision damage, but not direct damage from the OS itself.</p>
+<p><strong>Damage to friendly units is greatly reduced</strong>, to the point that you can call Orbital Strikes at your own Constructed Bases that are being overrun with enemies, and the OS is likely to deal less damage than enemies would.</p>
+<h4>Destroying an Orbital Strike Uplink</h4>
+<p>Orbital Strike Uplinks are notoriously hard to destroy due to (now fixed) bugs and lack of understanding of some of the mechanics.</p>
+<p>The Orbital Strike Uplink behaves differently depending on whether it is powered by Silo or not.</p>
+<p><strong>When powered</strong>, the Uplink’s chassis (the antenna spire) becomes invulnerable to all damage. The only way to destroy a powered Uplink is to destroy the <strong>core</strong>.</p>
+<p>However, while powered, the whole Uplink, including the core, gains an invisible layer of shields that absorb quite a lot of damage. You can take the shields down and expose the core for \~10 seconds by shooting anywhere the chassis with any AV weapon.</p>
+<ul><li>Shields around the Core</li></ul>
+<ul><li>Exposed Core</li></ul>
+<p>Exposed core can be damaged even by small arms fire. However, if you don’t destroy the core fast enough, shields will regenerate.</p>
+<p><strong>When not powered</strong>, the Uplink can be destroyed by directly damaging the chassis by any AV weapon. However, unpowered Uplink doesn’t have a core.</p>
+<p>Depending on situation, it may be faster to destroy the Silo, and then kill the Uplink by destroying its chassis.</p>
+<p>However, if Silo is well protected and constantly getting repairs, while the Uplink is exposed, and you can sustain damage for a lot of time, you can take down the Uplink’s shields and destroy the core. I believe this circumvents enemy attempts to repair the Uplink as well.</p>
+<p>When destroyed, the Uplink deals a large amount of damage to everything nearby.</p>
+<p><strong>Note:</strong> there have been some indications that Uplink’s chassis being indestructible while powered by a Silo is not intended behavior.</p>
+<h3>The Flail</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Glaive I{C</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/Glaive.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Unlock cost:</strong> 1500 Certs / 799 DBC</p>
+<p><strong>Build cost:</strong> 500 Cortium</p>
+<p><strong>Cortium Drain Rate:</strong> 0 / sec</p>
+<p><strong>Exclusion Radius with other Artillery:</strong> 0m</p>
+<p><strong>Limit per player:</strong> 1</p>
+<p><strong>Flail</strong> is a long range artillery piece; it fires salvos of four anti-vehicle shells on locations painted by a special <strong>Dart Device</strong>. Only targets outside no-constructed zones can be designated. Flail is mostly useful for attacking other constructed bases, however it is countered by <strong>Skywall Shields</strong>.</p>
+<h4>Mechanics</h4>
+<p>When Flail is powered by a Silo and connected to a <strong>Turret AI Module</strong>, its owner and their squadmates can access the <strong>Dart Device</strong> from the Flail.</p>
+<p>The Dart Device fires invisible darts that slowly fly on a ballistic trajectory with a lot of projectile drop. It is technically possible to designate targets hundreds of meters away, but the dart can be tricky to hit. Dart Device is lost if player respawns or redeploys.</p>
+<p>Flail has a minimum range of 100m, and a maximum range of 600m.</p>
+<p><strong>Darts will self-destruct when fired into no-construction zones</strong>, but they can be fired <em>from</em> no-construction zones.</p>
+<p>There is about a 15 second delay between the dart hitting and shells hitting the target, depending on how much the Flail’s turret has to turn to face the target.</p>
+<p>Dart Device has an unlimited supply of darts, but there is a \~15 second cooldown between uses. Weird things can happen if you try to fire two darts back to back. Second barrage may not fire at all, or the second dart can change the location of the first barrage.</p>
+<p>Flail fires a salvo of 4 shells that deal splash damage to vehicles and infantry. These shells do not seem to have a direct damage component. Flail’s targeting indicator on the minimap is visible to enemies.</p>
+<p>Each shell deals up to 750 damage, which scales down to about 450 damage at 20m or 25m.</p>
+<p>Flail’s shells use <strong>Damage Type 46</strong>. As far as we know, it’s not used by any other weapon, and no units have special resistances to it.</p>
+<p>Shells land fairly close to the dart, and in a tight grouping, but there is still a drift of several meters, so targets at the very edge of the splash zone can take damage from one or several shells depending on chance.</p>
+<p>A full Blockade Armor Sunderer (6000 health) survives one salvo with about 30% health remaining.</p>
+<p>A Deployment Shield Sunderer survives one salvo with very roughly 40% health remaining, and will be destroyed by a second salvo.</p>
+<p>It is assumed that a good hit with a Flail’s salvo will “one shot” every other ground vehicle, except maybe for MBTs.</p>
+<h3>Glaive IPC</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Glaive I{C</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/Glaive.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Unlock cost:</strong> 1500 Certs / 799 DBC</p>
+<p><strong>Build cost:</strong> 500 Cortium</p>
+<p><strong>Cortium Drain Rate:</strong> 0 / sec</p>
+<p><strong>Limit per player:</strong> 1</p>
+<p><strong>Exclusion Radius with other Artillery:</strong> 0m</p>
+<p><strong>Damage Resist Type:</strong> 46</p>
+<p><strong>Glaive Ionized Particle Cannon</strong> is an artillery piece intended to disrupt constructed bases within 1000m range. <strong>Glaive requires a Turret AI Module to function.</strong></p>
+<p>Glaive fires volleys of three shells with a large spread. Each shell:</p>
+<ul><li>Deals up to 550 damage, including to vehicles.</li><li>Will temporarily disrupt <strong><a href="http://cmdrcyrious.com/construction-system-guide/#Skywall_Shield_Module" target="_blank" rel="noopener noreferrer">Skywall Shield</a></strong> if the aerial shield is hit.</li><li>Will disrupt shields generated by <strong><a href="http://cmdrcyrious.com/construction-system-guide/#Structure_Shield_Module" target="_blank" rel="noopener noreferrer">Structure Shield Module</a></strong> and <strong><a href="http://cmdrcyrious.com/construction-system-guide/#Vehicle_Gate" target="_blank" rel="noopener noreferrer">Vehicle Gates</a></strong> – their shields will start flicking on and off.</li></ul>
+<p>Base owner or their squadmates can interact with the Glaive to equip an <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/targeting-dart.jpg" target="_blank" rel="noopener noreferrer"><strong>IPC Targeting Dart</strong></a>, which can designate targets between 100m and 1000m from the Glaive.</p>
+<p>Unlike Flail and Orbital Strike, Glaive will keep pounding at a designated area for at least several minutes with multiple salvos. Skywall Shields disrupted by Glaive will automatically regenerate, just in time to be disabled by the next volley.</p>
+<p>This means that if a base is protected by a Skywall Shield module, it will cancel each other out with the Glaive. However, if multiple Glaives are used to bombard the same area, or if there is no Skywall Shield in place, then Glaive will be able to damage and disrupt other constructed objects it hits.</p>
+<h3>Routing Spire</h3>
+<ul><li>Routing Spire</li></ul>
+<ul><li>Router Pad</li></ul>
+<p><strong>Unlock cost:</strong> 500 Certs / 399 DBC</p>
+<p><strong>Build cost:</strong> 300 Cortium</p>
+<p><strong>Cortium Drain Rate:</strong> 1 / sec</p>
+<p><strong>Limit per player:</strong> 1</p>
+<p><strong>Exclusion Radius with other Spires:</strong> 50m</p>
+<p>Routing Spire provides access to a deployable Router Pad, which (for now) can be placed anywhere on the continent to provide a respawn point for allies within 300m of the pad. Router Pad can be deployed in lattice bases, including buildings’ rooftops and underground tunnels.</p>
+<p>Pad’s owner is awarded with a small amount of XP for every respawn.</p>
+<p>A Router Pad in the right place can make all the difference during attack or defense, but it is also easily destroyed even by small arms fire.</p>
+<p>Currently, the Router Pad will remain operation even if the Routing Spire is destroyed or loses power, but this is a bug. Intentional behavior is that Router Pad gets destroyed.</p>
+<p>Router Pad occupies the same inventory slot as other purchased constructed objects, and it will disappear from your inventory if you respawn or redeploy.</p>
+<h3>Pain Spire</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Pain Spire</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/Pain-Spire-300x169.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Unlock cost:</strong> 500 Certs / 399 DBC</p>
+<p><strong>Build cost:</strong> 300 Cortium</p>
+<p><strong>Cortium Drain Rate:</strong> 1 / sec</p>
+<p><strong>Limit per player:</strong> 3</p>
+<p><strong>Damage Resist Type:</strong> 23</p>
+<p><strong>Exclusion Radius with other Spires:</strong> 50m</p>
+<p>Pain Spires deal 100 damage per second to enemy infantry and MAXes in a 15m radius. Pain Spires seem to be the most useful when constructing all-in-one bases in <a href="http://cmdrcyrious.com/construction-system-guide/#Sunderer_Garage" target="_blank" rel="noopener noreferrer"><strong>Sunderer Garages</strong></a>. Vehicle Shields generated by Structure Shield Module will protect modules inside the Garage, while the Pain Spire will keep the enemy infantry out.</p>
+<ul><li>Pain Spire can be destroyed by small arms, and it has about 20 000 effective health against bullets, meaning that 4-5 magazines out of an average rifle will take it out.</li><li>2x C4 leave Pain Spire with about 20% health left.</li></ul>
+<h2>Support</h2>
+<ul><li>Instead of Nanites, spawning <strong><a href="http://cmdrcyrious.com/planetside2/vehicles/" target="_blank" rel="noopener noreferrer">vehicles</a></strong> at constructed vehicle terminals costs Cortium, equal to 2x amount of the usual vehicle’s price in Nanites.</li><li>Terminals can be hacked by enemy infiltrators, but they won’t be able to spawn vehicles.</li></ul>
+<h3>Light Air Terminal</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Light Air Terminal</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/Air_terminal.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Unlock cost:</strong> 2000 Certs / 1499 DBC</p>
+<p><strong>Build cost:</strong> 500 Cortium</p>
+<p><strong>Cortium Drain Rate:</strong> 0 / sec</p>
+<p><strong>Limit per player:</strong> 1</p>
+<p>The Light Air Terminal can be used to spawn <strong><a href="http://cmdrcyrious.com/planetside2/vehicles/#Empire-Specific_Fighters" target="_blank" rel="noopener noreferrer">ESFs</a></strong> and <strong><a href="http://cmdrcyrious.com/planetside2/vehicles/#Valkyrie" target="_blank" rel="noopener noreferrer">Valkyrie</a></strong>. The air pad will also resupply ammunition to allied aircraft.</p>
+<h3>Light Vehicle Terminal</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Light Vehicle Terminal</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/Vehicle_terminal.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Unlock cost:</strong> 2000 Certs / 1499 DBC</p>
+<p><strong>Build cost:</strong> 500 Cortium</p>
+<p><strong>Cortium Drain Rate:</strong> 0 / sec</p>
+<p><strong>Limit per player:</strong> 1</p>
+<p>The Light Vehicle Terminal can be used to spawn <strong><a href="http://cmdrcyrious.com/planetside2/vehicles/#Flash" target="_blank" rel="noopener noreferrer">Flash</a></strong>, <strong><a href="http://cmdrcyrious.com/planetside2/vehicles/#Harasser" target="_blank" rel="noopener noreferrer">Harasser</a></strong>, <strong><a href="http://cmdrcyrious.com/planetside2/vehicles/#Sunderer" target="_blank" rel="noopener noreferrer">Sunderer</a></strong>, and <strong><a href="http://cmdrcyrious.com/planetside2/vehicles/#Lightning" target="_blank" rel="noopener noreferrer">Lightning</a></strong>.</p>
+<h3>Vehicle Ammo Dispenser</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Vehicle Ammo Dispenser</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/Ammo-Dispenser.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Unlock cost:</strong> 1000 Certs / 399 DBC</p>
+<p><strong>Build cost:</strong> 500 Cortium</p>
+<p><strong>Cortium Drain Rate:</strong> 0.5 / sec</p>
+<p><strong>Limit per player:</strong> 1</p>
+<p>When powered by a nearby silo, Ammo Dispenser will resupply ammo for nearby ground vehicles.</p>
+<h2>Decoration</h2>
+<h4>Faction Banner</h4>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Faction Banner</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/faction_banner-132x300.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Unlock cost:</strong> 299 DBC</p>
+<p><strong>Build cost:</strong> 700 Cortium</p>
+<p><strong>Cortium Drain Rate:</strong> 0 / sec</p>
+<p><strong>Limit per player:</strong> 1</p>
+<p>Increases morale of nearby allied units, and incurs a similar penalty to enemies.</p>
+<h2>Field Tools</h2>
+<p>All Field Tools and artillery targeting darts are <strong>mutually exclusive</strong>. Only one can be equipped at a time.</p>
+<h3>Deconstruction Tool</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/Deconstruction-Tool.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>This tool can be used by owner of the Silo to delete unwanted constructed objects within that Silo’s power radius.</p>
+<h2>Useful Tools</h2>
+<p>This excel sheet by Ascidon aka SoSaltySalt can quickly calculate costs for different construction objects and the drain rate, as well as how far an OSU can charge with a certain amount of cortium as well as the time it takes.</p>
+<h2>Credits and Closing</h2>
+<p>Since the Construction System is so open and modular, players are allowed to build all kinds of different bases for many purposes, and the potential impact of a constructed base will increase exponentially with some teamwork involved.</p>
+<p>For example, a constructed base with vehicle terminals can help sustain a vehicle push over an open ground, while providing cover for anti-air units and potentially some artillery support with the Flail.</p>
+<p>Any base with an Orbital Strike Uplink can project a lot of firepower into neighboring territories, while a fortified encampment with turrets, walls and bunkers can serve as an effective roadblock, when placed into a tight canyon or near a bridge.</p>
+<p>However, all Constructed Bases share an important feature – regardless of how many layers of passive defense you stack up, the base will still easily fall to even one enemy player, if they are determined enough. Every base needs defenders and a constant supply of Cortium to stay operational. Depending on how well they are placed, passive defenses can delay enemies for a variable amount of time, but that’s about it.</p>
+<p>Overall, outside of the Orbital Strike shenanigans, the Construction System struggles to find place in the overall meta of the game due to many difficulties associated with Construction, such as the annoyance of farming minerals in a mostly non-combat vehicle, huge cert investments, and the overall time cost it takes to mine Cortium and build something that you can potentially never benefit from, and something that can be undone by a single enemy. So despite huge potential and uniqueness, Construction System is mostly ignored by the community in favor of less complicated gameplay.</p>
+<p>Some information in this post is shamelessly stolen from <a href="https://www.reddit.com/r/Planetside/wiki/construction_system" target="_blank" rel="noopener noreferrer">this reddit thread</a>, and <a href="https://forums.daybreakgames.com/ps2/index.php?threads/is-there-a-detailed-source-for-construction-info.240225/#post-3389699" target="_blank" rel="noopener noreferrer">Demigan’s posts</a> on forums, as well as <a href="https://www.youtube.com/watch?v=GYRi_wEYams" target="_blank" rel="noopener noreferrer">this video by Yamiks</a>.</p>
+<p>Huge thanks to <strong><a href="https://www.reddit.com/r/Planetside/comments/8sbj0a/tested_new_construction_cortium_cost_for/" target="_blank" rel="noopener noreferrer">/u/Dimistros</a></strong> for testing the Cortium drain rate values.</p>
+<p>flail is not designed to remove skyshield</p>
+<p>ipc is designed to remove it.</p>
+<p>Vehicle terminals can be hacked and used contrary to current information, but I think the criteria to spawn vehicles is that the silo needs to have &gt; 20k Cortium in it.</p>
+<p>Spawn Tube:</p>
+<p>“Note: this functionality is currently broken, and it’s possible to respawn on any Tube from any range.”</p>
+<p>Looks like they fixed this, can’t spawn in my own spawn tube from too far without binding.</p>
+<p>Reinforcements Module</p>
+<p>“If you have a Sunderer deployed in range of this module,”</p>
+<p>Its area of effect highlights the Spawntube, so I guess it works with it too. Hard to tell for sure</p>
+<p>Destroying an Orbital Strike Uplink</p>
+<p>Seems like they finally fixed this, they are rather easy to destroy now, powered by silo or not.</p>
+<p>Core’s shield goes down with about 3 Vulcan-H extended magazines. Once the core is destroyed the explosion will happen in 5 seconds. Explosion will destroy an MBT close enough, but barely damages even modules.</p>
+<p>Forgot to add, Pain Spire, like Spawn Tube, becomes active the moment it is deployed.</p>
+<p>I’m a little tight on the certs side, do you think that Skyguard, turret AI module alone are sufficient enough to sustain a orbital strike on a server in off peak. I don’t want to spend too much and I don’t really want to man the base, probably just drop down a spawn beacon in place as a poor mans ellisium tube and once completed entirely block off access the the outside world protecting whats inside of it.</p>
+<p>You confused me there for a minute with “Skyguard”. I assume you meant Skywall. Skygard is an AA flak cannon for the Lightning.</p>
+<p>Like I said in Closing, I hold the opinion that passive defenses by themselves can delay the enemy, but not protect your base, even from a single enemy.</p>
+<p>If you’re tight on certs, I wouldn’t spend them on anything related to Construction. Just leave your base naked and hope nobody bothers with it.</p>
+<p>However, I don’t usually build OS bases myself, so you should ask for more expert opinion on reddit or discord.</p>
+<p>“While you can construct objects outside of a Silo’s range, they will decay rapidly and disappear within minutes, even if they don’t require a constant supply of Cortium to function (e.g. a Pillbox).”</p>
+<p>Is correct to a point. If you place a repair module INSIDE the silos range and within range of the object OUTSIDE of its range, the module will keep the object from decaying. I build all my PMB’s (compounds) with my structures outside the perimeter of the silo to maintain clear fields of fire within the compound. I place them outside a gate with the entrance facing the gate. I place structure shield modules, repair modules and Pain Spires on the inside of the silo perimeter to block the entrances to those objects from infiltrators. I place a ramp facing the open area of the gate on the INSIDE of the perimeter to prevent access to specialized Sunderers from entering those gates. I leave one gate available for access into and out of the compound. My compound defense is constructed along the silo perimeter (100 meters from the silo) with a Wall, then a Gate, then a Wall, then a Gate and so on. This allows spacing enough to place a pain spire at every Gate. My turrets, ideally are placed with the AV and AA on the OUTSIDE of the perimeter protected by the same repair modules protecting the buildings. The are visible to anybody from afar, whether they are inside or outside of the perimeter anyway so why clutter the inner areas with them. The exception is the Anti Personnel turrets place 50 meters from the silo all around it. I place two Flails and Glaives (a battery) in my compounds. One battery inside and one outside the perimeter but close enough to be repaired by the repair modules and powered by the AI modules. They must face each other on the opposite compass points, 200 meters from each other. I call this PMB structure a Carousel Compound because when you look at it from the air all the structures outside the walls look like a Carousel. You can look at the ideal compound (though not supportable with cortium in most cases) at my facebook page /YankeeBastid in the video section.</p>
+<p>”</p>
+<p>By default, players can buy: Cortium Silo, AI Turret, Rampart Wall, Bunker and HIVE.” Should be amended to drop “and HIVE.”</p>
+<p>Fixed, thanks.</p>
+<p>Some minor notes/corrections:</p>
+<p>“Cortium is more likely to spawn near warpgates (source, could be outdated)”</p>
+<p>Definetly not. There is always a lot of Cortium in some areas that are closer to the center than to one of the corners of the map.</p>
+<p>“Siege weaponry: ANT’s mining lasers can be used to deal intense damage to constructed objects.”</p>
+<p>Not the default mining laser. Top mounted (I think) and Howler (fact)</p>
+<p>ANT Turbo: unlike Harasser/Flash turbo, it doesn’t just give you extra acceleration, it actually propels the ANT. A Harasser on a slide too steep to be climbed will not move despite the turbo, while the ANT will move upwards without the wheels touching the ground.</p>
+<p>Controls and Restrictions</p>
+<p>Hold LControl to rotate slowly.</p>
+<p>Elysium Spawn Tube:</p>
+<p>it becomes a spawn option the moment you place it, even before is finished (most probably a bug)</p>
+<p>Thanks for your contributions, I will add them to the guide.</p>
+<p>On turbo – didn’t the Flash turbo used to work the same way? I vividly recall people pretty much flying with it. Was it changed?</p>
+<p>“If the Routing Spire is destroyed or loses power, the Router Pad will be destroyed”</p>
+<p>Is incorrect. A router pad will survive even if the silo runs dry or the spire is destroyed.</p>
+<p>Hmm, well that’s clearly not intentional, but I’ll add this for the time being. Thanks.</p>
+<p>I cannot avoid replication of some of the data used in your excellent article. I can try to paraphrase, but cannot escape the data facts. To save conflict some of your bulleted data may be used in our documents. Is that ok with you?</p>
+<p>You’re free to copy paste the whole thing, if you want, as long as you provide credit, and I’d recommend a link to this page in case of future updatesm</p>
+<p>As an avid construction engineer, it is true that without a trained support squad an intruder could wreak havoc to your PMB, there are plenty of ways to defeat them now after the changes. The pain spire is an example. Placed appropriately it can deter solo incursions into the compound. Knowing where to place spitfires and personnel mines are also good deterrents. Keeping the interior of the compound free from structural clutter and an open field of fire reduces the impact of Gal drops. Dual Flails within a PMB is an awesome deterrent. AI modules protected with mines and spitfires and AP turrets impedes the insurgent long enough for reinforcement. Placing a router object hidden outside the PMB along with the traditional Spawn tube and squad beacon inside gives defenders more then ample ways to respond. There is more I could add, but we are still learning ways to use all that has changed, and changed for the good.</p>
+<p>The maximum range to deploy on a router is 300 meters, not 100. This was confirmed by Drew, and I documented it on video at facebook.com/yankeebastid.</p>
+<p>Thanks, fixed!</p>
+<p>I have yet to find a range limit on routers. I’ve placed the Spire next to the Warpgate and then flew more than 1km away to place the Pad.</p>
+<p>Might be very late fellow Auraxian, but routers have no distance. You can place them as far as you like from the routing spire.</p>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

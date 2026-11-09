@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>How Forward Grips were fixed | CMDRCyrious.com — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>How Forward Grips were fixed | CMDRCyrious.com</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd>CMDRCyrious</dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/how-forward-grips-were-fixed/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/how-forward-grips-were-fixed/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2016-07-08</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Live</dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<p>In the <a href="https://forums.daybreakgames.com/ps2/index.php?threads/game-update-7-7.241708/" target="_blank" rel="noopener noreferrer">patch</a> that came live on 7/7/2016, Forward Grips were fixed:</p>
+<ul><li>“Fixed an error where some Forward Grips would incorrectly increase the number of horizontal “kicks” in one direction”</li></ul>
+<p>I’d like to take a moment to explain what exactly has changed.</p>
+<h2>How it worked before</h2>
+<p>Previously, Forward Grips reduced Horizontal Recoil by a percent, and Horizontal Recoil Tolerance by a flat amount.</p>
+<p>For example, standard Forward Grip would reduce Horizontal Recoil by 25% and Tolerance by 0.05 degrees.</p>
+<p><a href="http://cmdrcyrious.com/horizontal-recoil-tolerance/#Unexpected_implications" target="_blank" rel="noopener noreferrer">In case of some weapons</a>, it could result in increasing the maximum number of horizontal recoil kicks in one direction, and increase the width of the recoil pattern (all pictures are clickable):</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Pulsar C recoil comparison - side by side</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/07/Pulsar-C-old-1024x831.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Pulsar C recoil comparison – side by side</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Pulsar C recoil comparison - overlay</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/07/Pulsar-C-old-2.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Pulsar C recoil comparison – overlayed</p>
+<p>The problem was occurring in this equation:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">formula 1</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/07/formula-1.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Number of kicks, “N\_Kicks” is important for calculating the width of the recoil pattern:</p>
+<p><code>Width = N</code>&lt;sub&gt;kicks&lt;/sub&gt; \<em> Horizontal Recoil Maximum \</em> 2</p>
+<p>So the problem was that HRT and Horizontal Recoil Minimum got affected in a different way. HRT was reduced by a flat amount, and Horizontal Recoil by a percentage multiplier:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">formula 2</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/07/formula-2.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>In certain combination of variables, that would cause recoil to have an extra kick, which increased the width of the recoil pattern.</p>
+<h2>How it works now</h2>
+<p>Now Forward Grips reduce both Horizontal Recoil and Tolerance by the same percent.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">formula 3</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/07/formula-3.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Since HRT and Horizontal Recoil Minimum are separated from each other by the fraction sign, the X multipliers from the Forward Grip cancel each other out, and Forward Grip cannot possibly have any effect on the number of kicks:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">formula 1</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/07/formula-1.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Pulsar C recoil comparison - side by side</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/07/Pulsar-C-new.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Pulsar C recoil comparison – side by side</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Pulsar C recoil comparison - overlayed</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/07/Pulsar-C-new-2-1024x611.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Pulsar C recoil comparison – overlayed</p>
+<p>For vast majority of weapons, Forward Grip did no cause any issues, but there were 5-6 weapons where Forward Grip could actually reduce their horizontal stability – basically doing the opposite of what it’s supposed to.</p>
+<p>With these changes, Forward Grip will always correctly reduce the total width of the recoil pattern.</p>
+<p>You can expect updated version of the Weapon Simulator to release soon, reflecting these changes.</p>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

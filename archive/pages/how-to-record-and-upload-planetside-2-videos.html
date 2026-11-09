@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>How to Record and Upload Videos | CMDRCyrious.com — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>How to Record and Upload Videos | CMDRCyrious.com</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd>CMDRCyrious</dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/how-to-record-and-upload-planetside-2-videos/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/how-to-record-and-upload-planetside-2-videos/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2017-10-10</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Live</dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<p>This guide will cover the basics of recording, editing and uploading PlanetSide 2 videos. Keep in mind that I’m far from being a professional in this area, so I’ll just share whatever information I’ve picked up along the way. There’s probably an easier and simpler way to do everything described here.</p>
+<h2>Theory</h2>
+<h2>Containers</h2>
+<p>First, let’s take a look at videofiles themselves. A videofile is basically a container, a shell. It has a certain <strong>extension</strong>, such as .mp4, .mkv, .avi, etc. Inside that shell there are:</p>
+<ul><li>Header.</li><li>Video Track.</li><li>Audio Track(s).</li><li>Optional Subtitle Track(s).</li></ul>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/IMG0033076.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Videofile’s header</strong>, represented by a blue square on the right picture, describes the information stored inside the container. Header format is the only real difference between containers, and it determines what the container can and cannot store.</p>
+<p>As you probably know, any file is not simply a box, it is a reaaaaaaaally long sequence of ones and zeroes. To make it easier to continuously playback the video file, its Video, Audio and Subtitle Tracks are all split in small segments, and intermixed inside the container.</p>
+<p>This makes it easy for the videoplayer to interact with the storage device where the video file is located. For example, first it reads first minute of Video Track, then the first minute of Audio Track, then first minute of Subtitles, then the videoplayer piles them together and starts playing the video, and you start watching it. In the meantime, the videoplayer starts reading the second minute of video, and so on.</p>
+<p>The process of splitting the Tracks on segments is called multiplexing, or muxing. It is always done when the video is recorded.</p>
+<p>The process of restoring continuous video, audio and subtitle streams from these segments is called demultiplexing, or demuxing. It is always done when the video is played.</p>
+<h2>Encoding and Decoding</h2>
+<p>Video is a sequence of images, replacing each other so rapidly that the human eye is fooled and feels like it’s looking at actually moving objects. But any video can be paused and watched frame by frame. So the process of playing a video file is, in the nutshell, the process of displaying lots and lots of pictures, accompanied by synchronized audio.</p>
+<p>Let’s make some calculations, just for fun, to figure out just how much information has to be processed in order to record and store one minute of video.</p>
+<p>Let’s say you want to record a 1 minute video with 30 frames per second (FPS) and 1920 x 1080 pixel resolution.</p>
+<p>It takes 32 bits, or 4 bytes to encode the color of each specific pixel. So each frame of video contains:</p>
+<p><code>1920 x 1080 x 4 = 8 294 400 bytes of information.</code> </p>
+<p>That’s 8 100 kilobytes, or 7.91 megabytes (MB). So each frame of video “weighs” 7.91 MB. And we wanted 30 frames per second. So each second of video would take:</p>
+<p> <code>7.91 * 30 = 237 MB</code></p>
+<p>And a 1 minute video would take:</p>
+<p><code>14 238 MB of storage space.</code> </p>
+<p>That’s <em>13.9 gigabytes.</em></p>
+<p>An 1.5 hour film would “weigh” <strong>1.22 terabytes.</strong></p>
+<p>Wow, that’s a lot, even by today’s standards. However, all this time we’ve been talking about <em><strong>uncompressed</strong></em> video.  Obviously, nobody wants to deal with such absurdly large files. Not to mention it would be technically impossible, most storage devices would struggle to transfer so much raw data in order to be able to play the video file in real time.</p>
+<p>So Video and Audio Tracks in <strong>videofiles are always compressed:</strong></p>
+<ul><li>Compressing these tracks to save space is called <em><strong>encoding.</strong></em> It’s a process similar to archiving normal files, but it’s more complex.</li><li>And the process of uncompressing to actually play the video file is called <em><strong>decoding</strong></em>.</li><li>The special program that handles encoding and decoding is called a <em><strong>codec</strong></em>.</li></ul>
+<p>So when a video is encoded by a certain codec, you need a copy of that codec to actually play the video.</p>
+<p>As technology has evolved over the years, so did the codecs. Old, less efficient codecs are constantly being replaced by newer, better codecs. That’s why there’s so many issues related to playing video files and compatibility.</p>
+<p>Incidentally, recording and playing audio is very similar, and too requires the use of certain codecs, most popular being the notorious MP3 format.</p>
+<h3>How does that relate to recording</h3>
+<p>For simplicity’s sake, let’s say that you’re recording a video of display – what you are already seeing and hearing. So you have some raw video and audio coming to your display and speakers. Then the process of recording a video would involve these steps:</p>
+<ol><li>Capturing the raw Video and Audio streams and copying them.</li><li>Encoding (compressing) Video and Audio streams using certain codecs.</li><li>Multiplexing (intermixing) the resulting Video and Audio Tracks and storing them in a videofile container on your storage device.</li></ol>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/encoding-1024x1012.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Capturing and encoding the videostream takes a lot of computer’s resources. That’s why the humanity has been forced to take some <strong>compromises</strong> and improve <strong>technology</strong>.</p>
+<h3>Technology</h3>
+<p>There are several different technologies that are used to make it easier for a computer to encode video.</p>
+<h4>Hardware Acceleration</h4>
+<p>Eggheads have come up with a <strong>special chip</strong> that can encode a Video Stream. You can imagine it as a black box, that inputs a real time raw Video and Audio streams, and outputs an already neatly encoded and packaged video file to be stored on a storage device.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/41bbXPp1UrL._SL500_AC_SS350_-e1507597667849.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Originally, these <strong>hardware encoders</strong> were used in separate devices, that you could plug into your PC as a middle chain between your display and the graphics card. This video capture device would capture and encode the video stream, and store the resulting video file on your PC.</p>
+<p>Hardware Acceleration is most useful during real-time video encoding (recording a video), as it allows the PC to encode a video without actually putting any significant load on the CPU or the Graphics Card.</p>
+<h4>Hardware GPU Acceleration</h4>
+<p>Most modern Graphics Cards have a <strong>built-in hardware encoder</strong>:</p>
+<p>nVidia Graphics Cards use NVENC – nVidia Encoder – utilized by Shadowplay, part of <strong><a href="https://www.nvidia.com/en-us/geforce/geforce-experience/#source=gss" target="_blank" rel="noopener noreferrer">GeForce Experience</a></strong>. Shadowplay also takes advantage of a couple of proprietary technologies that <strong><a href="https://forums.guru3d.com/threads/msi-afterburner-3-0-0-beta-16-2013-10-25.382760/page-4#post-4687310" target="_blank" rel="noopener noreferrer">help reduce the impact of capturing frames</a></strong>.</p>
+<p>AMD Graphics Cards have a similar technology, called AMD VCE – Video Coding Engine – utilized by <a href="https://www.amd.com/en/technologies/radeon-relive" target="_blank" rel="noopener noreferrer"><strong>AMD ReLive</strong></a>.</p>
+<h4>Software GPU Acceleration</h4>
+<p>The process of encoding a video is a task that requires doing same actions to a large volume of data, and it massively benefits from multi-threading.</p>
+<p>For example, if you have a CPU that can work on 8 threads simultaneously, you could split each frame on 8 parts, and let each thread handle each part.</p>
+<p>However, despite the rise of multithreading in the last decade, CPUs still don’t handle it that well.</p>
+<p>And that’s where <strong>Software GPU Acceleration</strong> comes in. The heart of each Graphics Card is a GPU – Graphical Processing Unit. It consists of hundreds or even thousands of small processors, each capable of applying a simple instruction to a piece of data.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/cpu-vs-gpu.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Normally, GPUs only handle creating and relaying 2d and 3d images to the display. But there is a number of technologies, such as nVidia CUDA, that allow GPUs to execute basically any other program.</p>
+<p>Naturally, due to differences in core architecture, only tasks that massively benefit from multithreading are ran on the GPU.</p>
+<p>Using Software GPU Acceleration is different from using a built-in hardware encoder. Executing a video encoding program on the GPU would actually put a signicant load on it. For this reason, Software GPU Acceleration is more useful during <strong>transcoding.</strong> Some programs (not described in this guide) give you an option to use Software GPU Acceleration to speed up video rendering process.</p>
+<h3>Compromises</h3>
+<p>There is an eternal compromise between <strong>encoding speed</strong>, <strong>file size</strong> and <strong>video quality</strong>. Encoding a video with higher quality and/or smaller file size will take more resources and time. It will also take more resources to play the video after.</p>
+<p><strong>Example:</strong> if you need a simple analogy, imagine it like this: you’re going on a trip and you need to gather a backpack with your things. You can quickly shove everything in the backpack, but it will be inefficient use of space. You’ll be lucky if you can close the zipper, and such a backpack won’t be convenient to wear.</p>
+<p>In contrast, you can organize your backpack with meticulous precision, and “tetris” your things so everything neatly fits with each other. You probably would be able to store twice as many things in half the space. Though a problem may arise if you need to take out your toothbrush from somewhere at the bottom of the pack 😉</p>
+<p><strong>Example 2:</strong> let’s talk about something closer to video: encoding images. Oh yes, image files are too usually compressed.</p>
+<p>Bitmap files (.bmp) are uncompressed images, they contain information about every single pixel. And JPEG and PNG are the popular compression algorithms. Here are three images:</p>
+<ul><li>PNG Source</li></ul>
+<ul><li>JPEG Low</li></ul>
+<ul><li>JPEG High</li></ul>
+<p>Click each image to enlarge it:</p>
+<ul><li>To the left, you see the source image in PNG format. <strong>254 KB filesize.</strong> No additional compression has been done, so it doesn’t take any resources to compress it.</li><li>In the middle, there’s a low quality JGEP file. <strong>22.5 KB filesize</strong>. Because it’s so rough, it barely takes any resources to compress it, and the result is a small file as well.</li><li>To the right, there’s a high quality JPEG, with 5 progressive scans. <strong>111 KB filesize.</strong> This is the optimal image – it has excellent quality while achieving lowest filesize possible, but it also takes the most resources to compress.</li></ul>
+<p>Encoding a video is a similar process. <strong>Resources, quality, filesize – choose two.</strong> </p>
+<h3>Efficiency and I-Frames</h3>
+<p>The process of recording videos is always a <em><strong>race for efficiency</strong></em>. The goal is to record in highest quality possible while spending as little resources as possible, and having an <em><strong>acceptable</strong></em> filesize.</p>
+<p>Modern encoders are highly advanced, and in order to increase efficiency, they can encode neighboring frames to reference each other. For example, let’s take these 4 frames:</p>
+<p>Here we can see a sliding door slightly opening. You will notice that these frames are actually almost identical, and a modern encoder will take full advantage of it.</p>
+<p>It will be as if the encoder is telling your PC: <em>“Okay, here’s this first frame, it has double doors and some guy’s hand on the foreground. And the next 3 frames – oh, they’re basically the same, just with doors opening slowly”</em>.</p>
+<p>So a videofragment with these 4 frames will take very little space. The original frame, used as a basis for the following frames, is called an <strong>I-Frame</strong>. If an I-Frame is corrupted or removed, several frames near it will also suffer from artifacts.</p>
+<p>In contrast, the next 3 frames:</p>
+<p>These frames are also similar, but there’s actually a lot of whole-screen movement going on, and it’s more random than sliding doors in the first example. The encoder still has some tricks to help with this, but the resulting videofragment will still be larger than in the first example.</p>
+<h3>Bitrate</h3>
+<p><strong>Bitrate</strong> is the amount of data that describes one second of video. A larger, “heavier” video file will have higher bitrate. Higher bitrate does not necessarily translate to better quality:</p>
+<ul><li>A good codec will provide a higher quality video with lower bitrate.</li><li>The same codec, depending on encoding parameters, can produce files with same bitrate, but different quality, or same quality and different bitrates.</li></ul>
+<p>Bitrate is measured in bits per second. For example, an average youtube 1080p video will have the bitrate of \~5 megabits per second.</p>
+<p>Do not confuse <a href="https://en.wikipedia.org/wiki/Megabit" target="_blank" rel="noopener noreferrer"><strong>megabits</strong></a> and <a href="https://en.wikipedia.org/wiki/Megabyte" target="_blank" rel="noopener noreferrer"><strong>megabytes</strong></a>. The latter is approximately 8 times larger, depending on exact definition.</p>
+<p>Bitrate can be <strong>constant</strong> or <strong>variable</strong>. It’s as simple as it sounds, a videofile with constant bitrate will have the same amount of data per second of the video, regardless of how much action is happening on the screen.</p>
+<p>An optimized file will have variable bitrate. During rapid action scenes, the bitrate will rise, and it will be lowered during calm scenes with mostly same frames.</p>
+<p>Obviously, you want to go for variable bitrate whenever possible. The problem is – encoding a video with a variable bitrate basically takes twice the effort. First you have to encode the video, and only then can you take a look where it is being inefficient, and trim the excess fat. This is known as <strong>two-pass encoding</strong>.</p>
+<p>For simplicity’s sake, most hardware encoders only support initial encoding with constant bitrate. No matter how much action is happening – or not happening – on the screen, the resulting filesize will be the same.</p>
+<h3>Example</h3>
+<p>Let’s say you record a short PlanetSide 2 session.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/timeline-1024x577.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>This graph represents the amount of action on the screen, and how it changes with time.</p>
+<p>At first, there’s not that much action, because you left your character AFK at a warpgate, while you yourself went to make some tea. There was one spike of on-screen activity when some random Galaxy flew by.</p>
+<p>Then you went to fight, and there was some decent amount of action going on. Why, you even pulled off a crazy noscope that nearly gave you vertigo. However, your killstreak was cut short by a bodyshot from BR1 bolt baby. For some time you pondered at meaning of life while starting at the deathscreen, and then ragequit, just after you clicked “save video”.</p>
+<p>All this time your recording software was recording at a constant bitrate:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/timeline3-1024x371.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>During times of low activity, that bitrate proved to be excessive, and a lot of it was wasted.</p>
+<p>It was generally enough during high activity, and you recorded a nice and smooth, high quality video.</p>
+<p>There was only one moment, during that crazy 360 noscope where that bitrate wasn’t enough, and there is some <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/pixelation.png" target="_blank" rel="noopener noreferrer"><strong>noticeable pixelation</strong></a> during a few frames.</p>
+<p>In the end, we have:</p>
+<ul><li>A file with generally acceptable quality, but about half of it is a waste of space, and there is one moment where bitrate wasn’t quite high enough to ensure good quality.</li><li>To ensure good quality at all times, you could increase the constant bitrate, but that would mean wasting even more space.</li><li>To save space, you could reduce constant bitrate, but then there would be a higher risk of running into quality issues.</li></ul>
+<p>One potential solution to this dilemma is <strong>transcoding</strong>.</p>
+<h2>Transcoding</h2>
+<p><strong>Transcoding</strong> is a process of decoding a video, and then encoding it again. This encoding is usually done using a different codec, or different encoding settings.</p>
+<p>Let’s assume that your goal is to record high quality video. Naturally, for highest quality you wish to record with highest bitrate possible. This gives the hardware encoder the necessary breathing room to record every single detail while not spending too much processing power, but it results in large, inefficient files.</p>
+<p>So in order to save space, you can later transcode your videofiles, using different settings, such as <strong>higher profile</strong> and <strong>variable bitrate</strong>.</p>
+<p><strong>Encoding profile</strong> is a compilation of settings that determines how much processing power is being spent on each second of the video. Using a higher profile results in smaller files and better quality, but takes more processing power.</p>
+<p>So after transcoding, that involved two-pass encoding, the resulting, optimized video file would look like this:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/timeline4-1024x345.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>You’re also likely to benefit from a higher profile, saving even more space. The only problem is that would require time and processing power. Transcoding even a short video might potentially take hours.</p>
+<p>Some video editing programs allow you to utilize <strong>Software GPU Encoding</strong>, so if you have a powerful Graphics Card, you can potentially accelerate the process of transcoding by using some of its power.</p>
+<p>However, there won’t be a night and day difference. A much faster way to save space is to <a href="http://cmdrcyrious.com/how-to-record-and-upload-planetside-2-videos/#Cutting_without_transcoding" target="_blank" rel="noopener noreferrer">cut recorded videos without transcoding</a>.</p>
+<h2>Recording Video</h2>
+<h2>General Recommendations</h2>
+<p><strong>Use native resolution.</strong> E.g. if you play on 1080p, then you want to be recording in 1080p as well, unless this gives you performance issues, in which case obviously you want to be recording at lower resolution.</p>
+<p><strong>Set bitrate as high as possible.</strong> 50 000 000 bits per second (50 mbps) is a good guideline for 1920 x 1080 recordings at 60 FPS. You can always shave off extra bitrate with <strong>transcoding</strong> later.</p>
+<h2>Hardware Accelerated Recording</h2>
+<h3><a href="https://www.amd.com/en/technologies/radeon-relive" target="_blank" rel="noopener noreferrer">AMD ReLive</a> and <a href="https://www.nvidia.com/en-us/geforce/geforce-experience/#source=gss" target="_blank" rel="noopener noreferrer">nVidia Shadowplay</a></h3>
+<p>This is the best option for a simple consumer, assuming you have a compatible Graphics Card. You can check list of compatible cards here:</p>
+<ul><li><a href="https://www.geforce.com/geforce-experience/system-requirements" target="_blank" rel="noopener noreferrer"><strong>nVidia</strong></a> – you’re interested in “Share and SHIELD PC Streaming” field.</li><li><a href="https://www.amd.com/en/technologies/radeon-relive" target="_blank" rel="noopener noreferrer"><strong>AMD</strong></a> – scroll down to “Encoding Support”.</li></ul>
+<p>Both tools take advantage of <a href="http://cmdrcyrious.com/how-to-record-and-upload-planetside-2-videos/#Technology" target="_blank" rel="noopener noreferrer"><strong>Hardware GPU Acceleration</strong></a>, utilizing a special chip in your Graphics Card to encode the video.</p>
+<p>However, there is still a small impact to performance, due to how DirectX frame capture works. Fortunately, Shadowplay and – possibly – ReLive have access to <strong><a href="https://forums.guru3d.com/threads/msi-afterburner-3-0-0-beta-16-2013-10-25.382760/page-4#post-4687310" target="_blank" rel="noopener noreferrer">proprietary technologies</a></strong> that reduce this performance hit.</p>
+<p>These tools are extremely similar, and share these traits:</p>
+<ul><li><strong>The ability to toggle the recording on and off</strong>, so you can record whole play sessions.</li><li><strong>The ability to continuously record without permanently storing the recording.</strong> Last few minutes of the recording will be saved only when you press a certain key combination.  This is really convenient, as you can play normally, and press “save” only when something interesting happens.</li><li><strong>The ability to take screenshots.</strong></li><li><strong>Optional ability to record microphone audio and insert webcam video</strong> into the recording.</li><li><strong>The ability to stream video to twitch and similar services.</strong> That said, streaming usually has lower bitrate, and Shadowplay doesn’t seem to be able to produce acceptable video quality for this purpose. Not sure about ReLive.</li><li><strong>In-game overlay</strong> with configuration.</li></ul>
+<p>Installing, configuring and using these tools is more or less trivial. Follow <strong><a href="http://cmdrcyrious.com/how-to-record-and-upload-planetside-2-videos/#General_Recommendations" target="_blank" rel="noopener noreferrer">general recommendations</a></strong> above.</p>
+<p>If you’re given an option, <strong>use a more advanced codec: HEVC x265 &gt; AVC x264.</strong> Unless this gives you technical difficulties or unsatisfying quality, obviously.</p>
+<h3>Intel QuickSync</h3>
+<p>Intel HD Graphics, integrated into Intel CPUs, too have a built-in hardware encoder, called Intel QuickSync.</p>
+<p>If your dedicated Graphics Card is too old and does not support Shadowplay or ReLive, you may want to try and take advantage of QuickSync.</p>
+<p>Normally, if you have a dedicated GPU installed, integrated GPU goes offline, but you can circumvent that by going into UEFI or BIOS settings and enabling “Integrated GPU multi-monitor” setup or something along those lines. The exact wording will change depending on your motherboard.</p>
+<p>Load Windows and install Intel HD Graphics drivers. They should be easy to find on official Intel site if you just google for “\&lt;your CPU name&gt; integrated graphics drivers”.</p>
+<p>Restart after you install drivers and that should be enough for Intel QuickSync option to appear as encoding method in <strong>OBS Studio</strong> and probably other recording software as well.</p>
+<p>If it doesn’t, you may need to <strong><a href="https://www.youtube.com/watch?v=4c4_qSWEg2U" target="_blank" rel="noopener noreferrer">configure a fake multi-monitor setup.</a></strong> This will make it so the output from your dedicated GPU is copied to the output of integrated GPU, and then you will be able to use QuickSync to capture and encode that video stream.</p>
+<p>Keep in mind this can potentially reduce performance.</p>
+<p>If you don’t have a dedicated Graphics Card, intel QuickSync should work without any additional fiddling with UEFI / BIOS.</p>
+<p>QuickSync seems to be fully capable of recording in 1080p60, and with 50 mbps of bitrate provides excellent video quality.</p>
+<h3>Other options</h3>
+<p>Shadowplay and – possibly – ReLive have access to some <strong><a href="https://forums.guru3d.com/threads/msi-afterburner-3-0-0-beta-16-2013-10-25.382760/page-4#post-4687310" target="_blank" rel="noopener noreferrer">proprietary technologies</a></strong> that reduce the performance impact of capturing video, so they are honestly your best bet. But, if for some reason you can’t or don’t want to use them, you can use other recording software.</p>
+<p>The biggest <em>potential</em> differences between recording tools is video encoding method, and most gaming-related tools will be able to take advantage of Graphics Cards’ built-in hardware encoders. Assuming they use the same encoding settings, they will record video almost as well as Shadowplay or ReLive would.</p>
+<p>So usually user interface will be the biggest difference. Some tools are also capable of software encoding in case hardware acceleration is not available.</p>
+<p>It’s like choosing from several cars, which all have the same engine under the hood. Your choice will depend on whether you like convertible trunk or colored exhaust pipes.</p>
+<p>Notable options:</p>
+<ul><li><a href="http://cmdrcyrious.com/how-to-record-and-upload-planetside-2-videos/#OBS_Studio" target="_blank" rel="noopener noreferrer"><strong>OBS Studio</strong></a> – gives you lots of settings to tweak, and records in good quality.</li><li><a href="http://cmdrcyrious.com/how-to-record-and-upload-planetside-2-videos/#Playstv" target="_blank" rel="noopener noreferrer"><strong>Plays.tv</strong></a> – generally, should be almost as good as Shadowplay and ReLive.</li><li><a href="https://www.overwolf.com/" target="_blank" rel="noopener noreferrer"><strong>Overwolf</strong></a>‘s <a href="https://www.overwolf.com/apps/entertainment" target="_blank" rel="noopener noreferrer"><strong>Game Capture</strong></a> and <strong>Replay HUD</strong> modules – doesn’t let you choose bitrate, so records in worse quality than any other tool I’ve tested, but has a cool “watch instant replay” feature, and comes with a robust overlay kit which you might find convenient. In this case, being able to record videos is more of an added feature rather than main focus.</li></ul>
+<p>All of these tools are capable of software encoding, though plays.tv will not let you choose it if you have hardware acceleration available.</p>
+<h2>Hardware Recording</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/livegamerhd-300x214.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>This would involve using a special video capture and encoding device. From my experience using such devices, if you want to record in high quality, you’re gonna have to spend a considerable sum of money.</p>
+<p>I have experience using a <a href="https://www.amazon.com/dp/B00I0QZMPE/ref=cm_sw_su_dp" target="_blank" rel="noopener noreferrer"><strong>relatively cheap</strong></a> device, back when Shadowplay didn’t work so good, and I was worried about performance loss. This specific device claims to be able to record in 1080p, and it can, but on closer inspection a lot of downsides come to light:</p>
+<ul><li>It doesn’t allow more than 60 Hz through it, so I couldn’t enjoy my 120 Hz monitor while recording.</li><li>It records 1080p footage only in 30 FPS.</li><li>Even those 30 FPS are “fake”. It actually records in 15 FPS, and then interpolates every second frame, so the resulting video looks bad. <a href="https://www.youtube.com/watch?v=sxNPg8vIDaM" target="_blank" rel="noopener noreferrer"><strong>This video</strong></a> was recorded by this device. It’s not that bad, but lacks smoothness of a 60 FPS video.</li></ul>
+<p>You could purchase a more expensive and potentially better device, but realistically you may find out that purchasing a Graphics Card capable of using ReLive or Shadowplay is cheaper.</p>
+<h2>Software Recording</h2>
+<p>This should be your last resort for recording while playing, as it would require your CPU to encode the video. You’re likely to experience a performance loss, and you would have to compromise video quality and filesize even more.</p>
+<h3><a href="https://plays.tv/" target="_blank" rel="noopener noreferrer">Plays.tv</a></h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/playstv-e1507694144526-300x60.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><a href="https://www.amd.com/en/technologies/radeon-relive" target="_blank" rel="noopener noreferrer"><strong>Plays.tv</strong></a> is a collection of free software and hosting services for recording and sharing gaming videos. Similar to Shadowplay and Relive, it can work in continuous recording mode, and save only last few minutes of gameplay when you press a key.</p>
+<p>Normally, Plays.tv automatically detects and uses Hardware Accelerated Encoding – it will use nVidia NVENC or AMD VCE, if available. However, as a fallback option, it can use software encoding as well. Expect worse quality and performance.</p>
+<h3><a href="https://obsproject.com/download" target="_blank" rel="noopener noreferrer">OBS Studio</a></h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/1473076151_est26p.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><a href="https://obsproject.com/download" target="_blank" rel="noopener noreferrer"><strong>OBS Studio</strong></a> is free software for streaming and recording. It too can take advantage of hardware accelerated encoding, but can also utilize software encoding if need be. You can also configure it to save last few minutes of video at a keypress.</p>
+<p>After fiddling with its settings for hours, I was able to record in 1080p30 or 720p60. In either case there was no noticeable performance loss, but trying to record at 1080p60 with any settings invariably ended in laggy videos with skipped frames and desynchronized audio.</p>
+<h4>Software Recording with OBS Studio</h4>
+<p>When you first launch OBS Studio, it will look like this:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/OBS-1-1024x719.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>(1)</strong> OBS Studio can potentially capture information from several sources, and choose which one to connect to the output. This is mostly useful while streaming.</p>
+<p>Since we want to record gameplay, click the plus sign and choose “Game Capture”. The default settings are fine.</p>
+<p><strong>(2)</strong> Mute the microphone if you don’t want it to be recorded.</p>
+<p><strong>(3)</strong> Click “Settings”.</p>
+<p>First, go to “Advanced” and set “Process Priority” to “High”.</p>
+<p>Then, go to “Video”.</p>
+<ul><li>In “Base Resolution”, select your game’s resolution.</li><li>In “Output Resolution”, select the resolution of your recording. Recording in resolution smaller than the game’s resolution takes less resources, and may be necessary if your CPU struggles to record in full resolution.</li><li>Similarly, select an FPS value. Recording in higher FPS produces a more smooth video, but takes proportionally more resources.</li><li>Same story with “Downscale Filter”. Lanzcos provides best results, but requires the most processing.</li></ul>
+<p>Finally, go to “Output”. These settings are good for recording in 1080p at 30 FPS:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/obs-settings.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Notes:</strong> </p>
+<p><strong>Bitrate</strong> – allows for greater quality, but increase recordings’ filesize. Outside of absurdly high values, there shouldn’t be an impact on performance.</p>
+<p><strong>Encoder Preset</strong> – this one is weird. Preset determines how much CPU time is allocated to encoding one frame of the recording. If you were transcoding a video, slower preset would simply increase the time it takes to encode, but reduce resulting file size.</p>
+<p>But when dealing with real-time recording, you have to make sure that encoder finishes encoding one frame before it’s time to encode the next. If you don’t, there will be lags and skipped frames in the recording. So generally you want to set to fastest preset possible.</p>
+<p>As long as you keep bitrate high enough, faster preset should not negatively affect the quality of the recording.</p>
+<p><strong>Recording path</strong> – if your system has several storage devices, it is preferable to save the recording on a separate drive from your system and game drives.</p>
+<p><strong>Recording format</strong> – normally, you’d want to choose .mp4 here, but it might give you issues when stopping the recording, which could corrupt everything you’ve recorded, so select .mkv instead.</p>
+<p>All done! Launch the game, then Alt + TAB to the OBS Studio, click “Start Recording” and switch back to the game. You can also do it via hotkeys.</p>
+<h4>Save last X minutes of video</h4>
+<p>You can also configure OBS to continuously record everything you do in-game, but save the footage only on a keypress. To do so, go to “Settings” -&gt; “Output” and enable “Replay Buffer”.</p>
+<p>Keep in mind <strong>OBS Studio writes Replay Buffer into RAM</strong>, so unless you have a ton of it, go easy on “Maximum Replay Time”.</p>
+<p>Then go to “Hotkeys” and find “Save Replay” field.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/replay-buffer-save.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Set up a convenient key for yourself, but something that you won’t press accidentally. Something like Ctrl + F1 should work fine.</p>
+<p>Keep in mind this mode works separately from the normal recording. When you wish for OBS to work in this mode, click “Start Replay Buffer” instead of “Start Recording”.</p>
+<h4>Troubleshooting</h4>
+<p>If your recordings are laggy and have skipped frames, decrease FPS and/or Output Resolution on “Video” tab of settings.</p>
+<h2>Recording Audio</h2>
+<p><em>(c) Wrel</em></p>
+<h2>Basic Editing</h2>
+<h2>Avidemux</h2>
+<p><strong><a href="http://fixounet.free.fr/avidemux/" target="_blank" rel="noopener noreferrer">Avidemux</a></strong> is a piece of free software. It’s simple, yet robust. Its main features include <strong>basic cutting</strong> and <strong>transcoding</strong> videos.</p>
+<p><a href="https://handbrake.fr/" target="_blank" rel="noopener noreferrer"><strong>Handbrake</strong></a> is a popular alternative to Avidemux, and it is also free.</p>
+<h3>Cutting without transcoding</h3>
+<p>This is a very fast way of cutting excess footage. It lets you save some space while spending minimal time and resources.</p>
+<p><strong>1) Start Avidemux.</strong></p>
+<p><strong>2) Drag and drop the file you wish to cut.</strong></p>
+<p>You can use Avidemux to watch the videofile and decide which parts do you want to cut out.</p>
+<p>You can drag and drop several files to join them together in one video.</p>
+<p><strong>3) Select areas you wish to delete by using “A” and “B” buttons.</strong></p>
+<ul><li><strong>Clicking “A” sets the starting marker.</strong> If you have not placed an end marker yet, you will automatically select all of the remaining video.</li><li><strong>Clicking “B” sets the end marker.</strong> If you have not placed a starting marker yet, this will automatically select all of the video up until this moment.</li><li>Selected segment of the video will be marked by a blue outline.</li></ul>
+<p>While doing cutting without transcoding, <strong>it is recommended to cut video only from an I-Frame to an I-Frame</strong>. This helps to avoid some potential issues. You can navigate between I-Frames by pressing <strong>Up</strong> and <strong>Down</strong> on the keyboard.</p>
+<p><strong>4) Delete selected areas</strong> by pressing “Del” on the keyboard, or clicking Edit -&gt; Delete in program menu at the top.</p>
+<p><strong>5) Select “Copy” at Video Output and Audio Output. Select “MP4v2 Muxer” in Output Format.</strong> If you get any errors, try “MP4 Muxer” instead.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/avidemux-1024x555.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>6) Click “Save”</strong> and select a location for a cut version of the file.</p>
+<p>All done! If you don’t intend to do any additional editing, you can upload the resulting video file right away.</p>
+<h4>Example</h4>
+<p><a href="https://youtu.be/IOW5mD59vrU" target="_blank" rel="noopener noreferrer"><strong>Here</strong></a> I have a 5 minute Shadowplay recording of me running around as VS LA.</p>
+<p>The video starts with me running out of carbine ammo, and then sidearm ammo. Then I resupply, run around some more, and get killed by NC sniper. Then I respawn on a Sunderer and go on another short killstreak, and then die again. Then I redeploy to another fight entirely, but don’t accomplish anything before the video ends.</p>
+<p>I decided to cut out some pointless running around in the middle, as well as cut away the whole ending part of the video. Here is how:</p>
+<p><a href="https://youtu.be/oKp8VPGpV7c" target="_blank" rel="noopener noreferrer"><strong>And here is the result</strong></a>. It is 3:21 in length. One minute and 39 seconds of the video was  cut away, and the filesize was reduced from 1.59 GB to 1.16 GB.</p>
+<h3>Setting FPS</h3>
+<p>Recording software does not always strictly enforce FPS. Sometimes it can vary a bit, and that can be enough for yotube to screw you over, and prevent the uploaded video from having proper 60 FPS.</p>
+<p>To make sure that does not happen, you can specify the desired FPS of your video:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/resample-FPS-1024x709.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<ul><li>Click Filters.</li><li>In the list of <strong>Available Filters</strong> find <strong>Resample FPS</strong> and double click it.</li><li>In the popup window, enter 60 FPS and click “Ok”.</li><li>Save the video.</li></ul>
+<h3>Transcoding</h3>
+<p>Transcoding a file will let you save even more space at no discernable quality loss, but it will take processing time.</p>
+<p>Transcoding involves re-encoding the original Video Track with a different encoder, or at least with different parameters. This can get complicated, since there is a ton of different codecs available, with hundreds of different configurations. It will require a lot of experimentation until you can arrive at a good compromise between transcoding time, quality and filesize.</p>
+<p>In the meantime, I’ve had good results with these settings:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/avidemux-hevc-1-1024x747.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<ol><li>Select Video Ouput as HEVC (x265) and click “Configure”.</li><li>In the opened window, select Encoding Mode as <strong>Constant Rate Factor</strong> (Single Pass), and move the “Quality” slider to “24”. Click “OK”.</li><li>Select Output Format as “MP4 Muxer” and Save the video.</li></ol>
+<p>These settings basically tell the Encoder that you don’t care about filesize or bitrate, and that you wish to have consistently high quality throughout the video. And the encoder accomplishes just that – it keeps exactly as much bitrate as needed, while trimming down all of the excess fat.</p>
+<p>Encoding process of the same same 3:21 video from the last example took \~11.5 minutes. <a href="https://www.youtube.com/watch?v=Pj47COy2hQU" target="_blank" rel="noopener noreferrer"><strong>The resulting videofile</strong></a> had size of 270 MB, which is more than 4 times smaller than the original 1.16 GB file. Constant bitrate of 50 mbps of the original was replaced with 11 mpbs of average bitrate. <strong>There was no discernable quality loss</strong>, even when I saved a frame from the same action scene of both videos and compared them under magnification.</p>
+<h3>Automatic transcoding on Youtube</h3>
+<p>Youtube automatically transcodes all uploaded videos, and creates several versions of them, each with different resolution. And there is usually a significant quality loss along the way. <strong>Youtube <a href="https://support.google.com/youtube/answer/1722171?hl=en" target="_blank" rel="noopener noreferrer">recommends</a> 15 mbps for 1080p60 video</strong>. However, you’ll be lucky if the video has half that bitrate after youtube re-encodes it.</p>
+<p>That said, **the bitrate and quality of the uploaded file <em>do</em> matter.** Compare these videos:</p>
+<ul><li><a href="https://www.youtube.com/watch?v=IOW5mD59vrU" target="_blank" rel="noopener noreferrer"><strong>Original Shadowplay file</strong></a> with constant bitrate of 50 mbps.</li><li><strong><a href="https://www.youtube.com/watch?v=Pj47COy2hQU" target="_blank" rel="noopener noreferrer">Transcoded and cut file</a></strong> with variable bitrate of 11 mbps on average, using x265 codec at high quality.</li><li><a href="https://www.youtube.com/watch?v=tMd77fsZ-6s" target="_blank" rel="noopener noreferrer"><strong>Transcoded and cut file</strong></a> with constant bitrate of 16 mbps, using NVENC (nVidia Hardware Encoder); this <em>should be</em> an equivalent of making the original Shadowplay recording at 16 mbps instead of maximum 50.</li></ul>
+<p>If we compare the same frame from each video:</p>
+<ul><li>Source Quality (on my PC)</li></ul>
+<ul><li>Orig 50 mpbs</li></ul>
+<ul><li>HEVC x265 11 mpbs</li></ul>
+<ul><li>NV ENC 16 mbps</li></ul>
+<p>The leftmost frame is a screenshot from that video file on my hard drive, so it has “source” quality. A good basis for comparison; ideally, we would want to reach the same level of quality on youtube.</p>
+<p>If you open these screenshots side by side and zoom in, you could reach these <strong>conclusions:</strong></p>
+<ul><li>All three videos have noticeably lower quality than source image.</li><li>There’s no discernable difference between the original file, and the file transcoded using x265 codec. Maaaaaaybeeeee the latter is slightly better, and only if you look really hard.</li><li>The video encoded with NV ENC at 16 mpbs clearly has the worst quality.</li></ul>
+<p>This demonstrates that if you wish to upload quality videos to youtube, you cannot be recording your videos at lower initial bitrate. If you really need storage space, recording at maximum bitrate, and then cutting and/or transcoding footage is a better option, though it requires more effort as well.</p>
+<h3>Fooling Youtube</h3>
+<p><a href="https://www.youtube.com/watch?v=bjlEi4QAMGc" target="_blank" rel="noopener noreferrer"><strong>There is a way</strong></a> you could trick youtube to give your video higher bitrate – <strong>resize it to a higher resolution:</strong></p>
+<ul><li>Higher resolution videos are allowed to have higher bitrate.</li><li>In addition to higher bitrate allocation, 2560×1440 (2k) or 4120×2160 (4k) videos are transcoded using VP9 codec with a higher profile.</li></ul>
+<p>If you use 2k or 4k resolution, to fully benefit from increased quality your viewers will have to manually select 2k or 4k resolution, if it’s not native for their display. However, even at 1080p the quality should increase due to youtube using better encoding settings.</p>
+<p><a href="https://www.youtube.com/watch?v=6ZuARLjBWog" target="_blank" rel="noopener noreferrer"><strong>Here is the same video</strong></a> from previous examples, transcoded with x265 codec, but this time resized to 2k resolution. Let’s compare the same frame from each video:</p>
+<ul><li>Source Quality (on my PC)</li></ul>
+<ul><li>HEVC x265 11 mpbs</li></ul>
+<ul><li>1440p video – 1080p screen</li></ul>
+<ul><li>Youtube 1440p no sharpen</li></ul>
+<ul><li>First screen is source quality on my PC.</li><li>Second screen is x265 transcoded video from before.</li><li>Third screen is 1440p video, viewed at 1080p.</li><li>Fourth screen is 1440p video, viewed at 1440p.</li></ul>
+<p><strong>Conclusions:</strong></p>
+<ul><li>Even when viewed at same 1080p, the 1440p clearly has better quality than x265 transcoded 1080p video, which had the best quality in previous comparison.</li><li>1440p is also a bit more crispy than 1080p version of the same video.</li><li>However, both still can’t quite reach the source quality. But hey, progress is progress.</li></ul>
+<h3>Resizing the Video</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/avidemux-resize-1024x712.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>To resize a video:</p>
+<ol><li>Click Filters</li><li>In the list of <strong>Available Filters</strong> find <strong>swsResize</strong>, and double click it.</li><li>In the popup window, set the Aspect Ratio and resolution that you wish to have.<ul><li>Going one step above should be enough. So if you recorded in 720p, go to 1080p, and if you recorded in 1080p, then increase to 1440p.</li></ul></li><li>Keep the Resizing Method as Lanzcos3</li><li>Click “Ok”.</li><li>Save the video.</li></ol>
+<p>swsResize does not seem to be capable of resizing to 3840 x 2160 (4k) resolution, so 1440p is as high as you can go with it.</p>
+<p>A transcode with resizing takes slightly longer than simple transcoding. In this case, it took \~13 minutes, up from 11.5 minutes.</p>
+<h3>Sharpening</h3>
+<p>Sharpening is the opposite of blurring, it makes the picture more clear and crispy, but can potentially add “noise”, so balance is important.</p>
+<p>Sharpening can slightly increase visual quality when dealing with bitrate constraints, such as Youtube’s. Especially when you’re uploading a resized video with upscaled resolution.</p>
+<p>Avidemux gives you a choice of 3 different sharpening filters, each with its own configuration parameters:</p>
+<ul><li>Asharp</li><li>Mshapr</li><li>Sharpen convolution</li></ul>
+<p>Ideally, you want to try all filters, with different configurations, and see which settings give you the best quality on youtube while taking the least processing time. I’ve done a quick test, using each sharpening filter with default settings. I didn’t precisely measure rendering time, but it felt more or less equal.</p>
+<h4><a href="https://www.youtube.com/watch?v=PzPGRkNVt74" target="_blank" rel="noopener noreferrer">ASharp</a></h4>
+<ul><li>PC Source no sharpen</li></ul>
+<ul><li>Youtube 1440p no sharpen</li></ul>
+<ul><li>Youtube 1080p ASharp</li></ul>
+<ul><li>Youtube 1440p ASharp</li></ul>
+<h4><a href="https://www.youtube.com/watch?v=ZHV6ZSOo64A" target="_blank" rel="noopener noreferrer">Sharpen convolution</a></h4>
+<ul><li>PC Source no sharpen</li></ul>
+<ul><li>Youtube 1440p no sharpen</li></ul>
+<ul><li>Youtube 1080p Sharpen Convo</li></ul>
+<ul><li>Youtube 1440p Sharpen Convo</li></ul>
+<h4><a href="https://www.youtube.com/watch?v=lViBX55JLL0" target="_blank" rel="noopener noreferrer">MSharp</a></h4>
+<ul><li>PC Source no sharpen</li></ul>
+<ul><li>Youtube 1440p no sharpen</li></ul>
+<ul><li>Youtube 1080p MSharp</li></ul>
+<ul><li>Youtube 1440p MSharp</li></ul>
+<p>In each of these galleries:</p>
+<ol><li>First image is original source video, as it appears on the PC without any sharpening.</li><li>Second image is sharpened video how it appears on PC.</li><li>Third image is sharpened video how it appears on youtube at 1080p.</li><li>Fourth image is sharpened video how it appears on youtube at 1440p.</li></ol>
+<h4>Conclusions</h4>
+<p>To my eye, it seems that:</p>
+<ul><li>Sharpen convolution has barely noticeable positive effect.</li><li>ASharp makes some things more visible, but it also introduces ugly pixelated artifacts.</li><li>MSharp seems to have the best effect, increasing image quality and detail in a subtle way.</li></ul>
+<p>Keep in mind that all of these tests have been done on default settings, which could potentially be far from optimal. But <strong>on default settings, MSharp seems to be the best.</strong></p>
+<h3>Multitasking</h3>
+<p>Needless to say, you can perform all of these actions at once. You can add both <strong>swsResize</strong> and <strong>Resample FPS</strong> filters, as well as change Video Output codec before saving the video.</p>
+<p>Obviously, the more actions you’re performing at the same time, the longer the process will take, often in a geometrical progression. That’s how we arrive from simple cutting taking a few second to rendering a 3-minute video for several hours.</p>
+<h2>Advanced Editing</h2>
+<p>This will require you to use more advanced software. Feel free to take advantage of any of the <a href="http://www.techradar.com/news/software/applications/the-best-free-video-editor-1330136" target="_blank" rel="noopener noreferrer"><strong>Free Video Editors</strong></a>, or consider purchasing or pirating a more professional tool, such as <strong>Adobe After Effects CC</strong> or <strong>Vegas Pro</strong>.</p>
+<p>I’d like to give you a few examples on basic tasks you could do with a pro-grade video editing tool, and since the only one I use is Vegas Pro, we’ll have to use that.</p>
+<p>Any pro-grade video editor should be able to handle these tasks, but they all work in different ways, and have different interfaces. It certainly takes a while to learn a “large” program like that. Fortunately, google is ripe with all kinds of tutorials.</p>
+<h2>Interface and Basics</h2>
+<p>Quick tips for Vegas Pro:</p>
+<ul><li>Press “U” to ungroup clips. By default, a video clip is grouped with its sound and you can’t delete one without the other.</li><li>On an audio clip, right click -&gt; Normalize. This will bump the volume to the usual 0db standard.</li></ul>
+<p>The basic algorithm of working with Vegas Pro is such:</p>
+<ol><li>Import all of the media files you’re going to be working with. This includes video, audio and image files.</li><li>Move media files to the Track Bar and arrange them as you like. Vegas Pro gives you the ability to create as many video and audio tracks as you need, which function like layers in a photo editor. For example, if you’d like to add some music to a recording of a gameplay session, you simply drag it on a separate audio track.</li><li>Add filters and special effects, if you want.</li><li>Render (transcode) the video.</li></ol>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/vegas-interface-1024x554.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h2>Creating a project</h2>
+<p>Start the program. Click <strong>File -&gt; Import -&gt; Media</strong> and select files you wish to import. This includes video files, audio files and images.</p>
+<p>You can also drag and drop media items directly in the <strong>Project Media subwindow</strong> at the upper left, or the <strong>Track Bar</strong> on the bottom.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/vegas-import-1024x555.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/project-settings.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Click <strong>File -&gt; Properties</strong> to configure your project:</p>
+<ul><li>Set resolution of your future project.</li><li>If you’re working with a 60 FPS recording, set <strong>FPS</strong> to directly 60 FPS.</li><li>Set <strong>Full-resolution rendering quality</strong> to Best.</li><li>Set <strong>Resample mode</strong> to Disable resample.</li></ul>
+<p>Switch to the Audio tab.</p>
+<ul><li>Set <strong>Resample and stretch quality</strong> to Best.</li><li>If you intend to work with audio files with higher <strong>Sample rate</strong> and <strong>Bit depth</strong> than default Vegas settings, increase them as well. It’s not a big deal if you’ve got no idea what this does, just leave the default settings then.</li></ul>
+<h2>Cutting</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/seeker-1024x554.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>I don’t know proper name for this interface element, so I’m gonna call it “<strong>Seeker Cursor</strong>“:</p>
+<ol><li>Move seeker cursor to the moment in the video that you wish to cut from.</li><li>Press “<strong>S</strong>” on the keyboard or click <strong>Edit -&gt; Split</strong>. This will split the media element in two parts.</li><li>Press”Del” or click <strong>Edit -&gt; Delete</strong> to remove unneeded part.</li></ol>
+<h2>Transitions</h2>
+<p>This refers to “transition” between two pieces of video or image media on a Track Bar.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/transitions-1024x554.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<ol><li>Drag two media pieces on top of each other so they overlap. This will create a basic transition when one video track gradually blends into another video track.</li><li>You can right click the area where two videos overlap and click <strong>Transition properties</strong> to add a more flashy transition effect. This will open a list of transition plug-ins. Double click on a plug-in to choose it. Feel free to experiment with different plug-ins and settings.</li></ol>
+<h2>Fade In / Fade Out effects</h2>
+<p>This refers to making a video gradually appear from darkness, or gradually disappear into darkness.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/Fade-out-1.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/Fade-out-2-1.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<ol><li>Find the start or the end of a video track.</li><li>Put your mouse over the small blue triangle in the corner. It will noticeably change cursor.</li><li>Click and drag to create a Fade In or Fade Out effect. This is mutually exclusive with <strong>transitions</strong>.</li><li>Same as with a transition, you can right click the Fade In or Fade Out area and click <strong>Transition Properties</strong> to add some special effects.</li></ol>
+<h2>Adding Audio</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/vegas-audio-1024x554.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Adding an additional audio track is as simple as adding any other media. Simply drag and drop the piece of audio media to the Track Bar.</p>
+<h2>Zoom, pan and crop</h2>
+<p>In this example, I will show you how to zoom, pan and crop a media piece.</p>
+<p>First, click <strong>Event Pan / Crop</strong> button at the top right corner of a media piece. Then, I show how to:</p>
+<ol><li>zoom in or out of the whole media piece.</li><li>pan the “camera” around the media piece. <ul><li>when you see the whole interface going crazy and jumping, it’s me pressing Ctrl + Z to undo the last action.</li></ul></li><li>zoom into a particular corner of a media piece, such as chat and minimap.</li></ol>
+<p>After that I show how to overlay an enlarged minimap over the video:</p>
+<ol><li>First, I add a video track and copy paste the media piece to it.</li><li>This will also copy the video’s audio track, which is not needed, so I delete the video track (from the second try, first I accidentally delete the media piece instead).</li><li>Then I crop the overlaying video to make only the minimap visible.</li><li>The next step is to pan and zoom out of the whole overlaying video track. To do that, we have to enter the Track Motion editing mode.</li></ol>
+<p>The same principle can be applied to overlaying a logo or image.</p>
+<h2>Adding Text</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/vegas-text-1024x554.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<ol><li>If you don’t have an empty Video Track, click <strong>Insert -&gt; Video Track</strong>.</li><li>Click <strong>Insert -&gt; Text</strong>, or right click on empty Video Track space and choose <strong>Insert Text Media</strong>.</li><li>This will open the text editor.</li></ol>
+<ul><li>Avoid typical mistakes, such as making the text too large or linger for too long on the screen, or not long enough.</li><li>Adding a colored or black outline to the text will make it more readable.</li></ul>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/vegas-text2.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<ul><li>In the future, you can return to the text editor by clicking the blue-ish film button at the top right corner.</li><li>Text media is treated as any other piece of media, and can have a transition or fade in / fade out effect.</li></ul>
+<h2>Filters</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/10/vegas-fx-1024x554.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>To add special effects to an individual piece of media, simply click the <strong>fx</strong> button at the top right corner of it. Double click on an effect to add it. You can add multiple effects.</p>
+<p>You can also add effects to a whole video track. To do so, simply click a similar <strong>fx</strong> button on the video track. If you don’t see this button, you will have to add it:</p>
+<ol><li>Click the button with three horizontal bars at the top left corner of a video track.</li><li>Click <strong>Edit Visible Button Set</strong>.</li><li>Enable <strong>Track FX</strong> and click OK.</li></ol>
+<h4>Notable filters</h4>
+<p><strong>Timecode</strong> – adds a black bar with time. Mostly useful when trying to measure certain things. For example, I used Timecode to figure out precise time between two pump action shotgun shots before I was taught how to use DBG API to find that info. Make sure to select <strong>Timecode Format</strong> as <strong>Time</strong>.</p>
+<p><strong>Sharpen</strong> – same as <strong><a href="http://cmdrcyrious.com/how-to-record-and-upload-planetside-2-videos/#Sharpening" target="_blank" rel="noopener noreferrer">Avidemux’s sharpen</a></strong>, although you get much fewer settings to fiddle with.</p>
+<p><strong>Brightness and Contrast</strong> – among other things, useful in making a night footage more visible. Keep in mind that youtube’s transcoding will affect video’s brightness and contrast as well, so first upload a few samples with different Brightness and Contrast settings to make sure you’re getting best quality.</p>
+<h2>Slow-mo or fast forward</h2>
+<p>In this video I show how to add a slow-mo or fast-forward effect.</p>
+<ol><li>First, cut out the piece of media that you wish to slow down or accelerate.</li><li>Then, <strong>hold Ctrl</strong> and click and drag the edge of the media piece. Simple as that.</li><li>If you’re adding a slow-mo effect, make sure to right click media’s audio track, click “Properties”, select “Method” as “Classic” and check “Lock to stretch”. This will make your slowed audio sound much better.</li></ol>
+<h2>Rendering</h2>
+<p>When you’re all done, it’s time to render (transcode) the video. This process is generally very simple to <a href="http://cmdrcyrious.com/how-to-record-and-upload-planetside-2-videos/#Transcoding-2" target="_blank" rel="noopener noreferrer"><strong>transcoding with Avidemux</strong></a>. Your concerns will be filesize, rendering time and resulting video quality.</p>
+<p>Click <strong>File -&gt; Render As</strong>.</p>
+<p>To the left, you will see a list of <strong>formats</strong>, and to the right a list of <strong>templates</strong> for rendering in these formats.</p>
+<p>You’re mostly interested in rendering in AVC (h264) or HEVC (h265). The latter results in smaller filesize at the cost of increased rendering time.</p>
+<p>Depending on your version of Vegas, you may not have access to HEVC, and AVC could be called differently:</p>
+<ul><li>MAGIX AVC/AAC MP4</li><li>MainConcept AVC</li><li>Sony AVC</li><li>etc</li></ul>
+<p>It really doesn’t matter, the core principle is the same – transcoding using h264 codec.</p>
+<p>Select format on the left, and any template on the right. Click “Customize Template” and, well, customize the template.</p>
+<p>If you’re interested in retaining as much quality as possible, simply set “Average Bitrate” to the constant bitrate of your recorded footage. E.g. if you’re recording with Shadowplay at 50 mbps, then enter 50 000 000 into average bitrate here.</p>
+<p>This already ensures you’re gonna get best possible quality, tuning other settings won’t affect much.</p>
+<p>Unfortunately, Vegas doesn’t let you render with <strong>Constant Rate Factor</strong> instead of <strong>Average Bitrate</strong>. If you really want to get as small file as possible while keeping the best quality possible, you should simply render in Vegas with these settings, and then <a href="http://cmdrcyrious.com/how-to-record-and-upload-planetside-2-videos/#Transcoding-2" target="_blank" rel="noopener noreferrer"><strong>transcode</strong></a> the resulting video with Avidemux using Constant Rate Factor.</p>
+<h2>Closing</h2>
+<p>Hopefully, at the very least, this guide has shown you what it takes to make a video. Feel free to ask questions or correct me on any wrongful statements.</p>
+<p>One thing I notice on your video, which happened with my ASUS is the screen lag in your video capture. Not only in screen capture, but just the regular video preview screen lags even when your not recording. Is that something you have ever had to deal with? I also was pissed at RealTek sound ,which is the default sound program on my ASUS laptop. Extremely low quality! And extremely flawed. Every time the computer updates or restarts I get this high pitched feedback that I’m pretty sure has destroyed my speakers by now. It keeps squealing until you have to manually go in and turn down the microphone. Idk man, my ASUS was a piece of shit.</p>
+<p>Not sure what video lag you’re talking about, can you be more specific?</p>
+<p>As for “squealing until you turn down the microphone”, looks like you have a feedback loop problem. In some system configurations, speakers will play whatever comes into the microphone, and if the microphone hears the produced sound, it will try to play that again, essentially creating an endless loop. You just need to remove the link between the microphone and speakers, which is done differently depending on your operating system.</p>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

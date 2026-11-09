@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>FPS vs RoF vs PhysX — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>FPS vs RoF vs PhysX</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd>CMDRCyrious</dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/fps-vs-rof-vs-physx/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/fps-vs-rof-vs-physx/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2018-06-30</dd></div>
+      <div><dt data-i18n="arc.attrSnapshot">Snapshot date</dt><dd>20230519114414</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Wayback</dd></div>
+      <div><dt data-i18n="arc.attrNote">Note</dt><dd>Wayback snapshot; live copy empty</dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<p>It’s a <strong><a href="http://cmdrcyrious.com/rate-of-fire-vs-framerate/" target="_blank" rel="noopener noreferrer">well-established fact</a></strong> that Rate of Fire of PlanetSide 2 infantry weapons will vary depending on player’s framerate, getting especially bad when being GPU-bound at low framerate.</p>
+<p><strong><a href="https://www.reddit.com/r/Planetside/comments/8ogu92/planetside_2_gameplay_with_ryzen_2400g_let_me/e03tbfh/" target="_blank" rel="noopener noreferrer">A fellow redditor alluded</a></strong> that this may be potentially caused by PhysX somehow being tied to weapon mechanics, and PhysX does run on GPU by default.</p>
+<p>So I decided to run a series of tests to determine whether forcing PhysX to run on CPU fixes the problem. Too long, didn’t read – it doesn’t.</p>
+<p>|  | <strong>FPS</strong> | <strong>Time, sec</strong> |  | <strong>Expected values</strong> |  | 8.68 |  | <strong>PhysX on GPU (Auto)</strong> |  |  |  | <strong>Uncapped FPS</strong> | \~175 | 9.176 (94.6%) |  | <strong>GPU Bound</strong> | \~54 | 10.81 (80.3%) |  | <strong>FPS Cap</strong> | \~59 | 8.98 (96.7%) |  | <strong>PhysX on CPU</strong> |  |  |  | <strong>Uncapped FPS</strong> | \~185 | 9.19 (94.5%) |  | <strong>GPU Bound</strong> | \~56 | 10.71 (81%) |  | <strong>FPS Cap</strong> | \~59 | 9.03 (96.1%) |  | <strong>Uncapped FPS,  CPU @ 1200 MHz</strong> | \~60 | 10.18 (85.3%) | </p>
+<p>I’ve used Shadowplay and Sony Vegas to record and measure how long it takes to fire one 125 round magazine from Watchman. I’ve ran multiple tests, using <a href="http://cmdrcyrious.com/wp-content/uploads/2018/06/settings.png" target="_blank" rel="noopener noreferrer"><strong>these settings</strong></a> in all cases.</p>
+<p>GPU Bound refers to setting Render Quality to 2.0 in UserOptions.ini. This forces the game to render at quadruple resolution, significantly increasing the load on the Graphics Card.</p>
+<p>FPS Cap refers to setting MaximumFPS to 60 in UserOptions.ini. In my previous tests, this provided the best results in fixing the FPS vs RoF problem.</p>
+<p>For one final test, I set the frequency of my Core i5 7600k to 1200 MHz to emulate a weak PC and create a CPU-bound scenario.</p>
+<p>As you can see from the numbers, it doesn’t matter whether you run PhysX on CPU or GPU.</p>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

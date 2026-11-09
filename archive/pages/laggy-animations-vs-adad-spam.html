@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>Laggy Animations vs ADAD Spam | CMDRCyrious.com — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>Laggy Animations vs ADAD Spam | CMDRCyrious.com</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd>CMDRCyrious</dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/laggy-animations-vs-adad-spam/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/laggy-animations-vs-adad-spam/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2018-02-24</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Live</dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<p>Some of you may have noticed that enemy movement gets kinda jerky in big battles. This is especially annoying when you’re trying to hit headshots, and have enemy’s head jerk out right from under your crosshair.</p>
+<p>There is also a known phenomenon known as “<strong>ADAD Warping</strong>“, which happens when the enemy rapidly switches strafing direction in a firefight, and their player models appears to be teleporting left and right rather than smoothly walking.</p>
+<p>During my recent tests on the subject of <a href="http://cmdrcyrious.com/rate-of-fire-vs-framerate/" target="_blank" rel="noopener noreferrer"><strong>Rate of Fire vs Framerate</strong></a>, I discovered a reliable way to trigger laggy animations – reduce the number of active cores. If you have a CPU that can work only on 4 threads or less at the same time, you may get laggy animations in big battles, or when you a lot of background processes running. However, reducing the number of active CPU cores to 1 allows to reliably trigger laggy animations at all times, even if you’ll still have acceptable framerate.</p>
+<p>So I developed a theory that laggy animations could have something to do with warping, and performed a simple test – asked a friend to ADAD while I was recording with 1 active core, and with all 4.</p>
+<p>To exclude the possibility of recording having an impact on the PC, I had to use my shitty phone to record the video, so pardon the quality.</p>
+<p>The video shows an interesting thing. Even with laggy animations, enemy’s <em>position</em> in the world changes smoothly. However, enemy’s player <em>model</em> is jerking and twitching. Landing headshots on such a derpy hitbox would be impossible.</p>
+<p>It seems the ADAD Warping is caused by server lag after all. But jerky animations are a problem nonetheless, and to avoid being affected by it:</p>
+<ul><li>Disable as many background processes and services as possible before launching the game. Consider using <a href="https://www2.razerzone.com/cortex/boost" target="_blank" rel="noopener noreferrer"><strong>Razer Gamebooster</strong></a> if you don’t know how to do that.</li><li>Upgrade your CPU to something with more cores in it, giving preference to CPUs with Hyper Threading or SMT technology – it’s <a href="https://www.reddit.com/r/Planetside/comments/7zvsf8/test_laggy_animations_vs_adad_spam/dus6sc8/" target="_blank" rel="noopener noreferrer"><strong>been confirmed</strong></a> they solve this issue for the most part.</li><li>In big battles shoot for enemy’s center mass instead of head.</li><li>If all else fails, avoid big battles.</li></ul>
+<p>I think the biggest concern to most is facing laggy players, not lagging themselves. How would it be if someone recorded you ADADing with only one core active? I’m on Discord if you want someone to record goaten#1214</p>
+<p>I have two PCs, so I can handle it. I doubt having one core active will change how movement is sent, but I’m going to be running a CPU-bound test anyway, so may as well take a look at that.</p>
+<p>I ran the test, and as expected being CPU bound on my PC didn’t change how my movement is perceived on other PCs. However, I vaguely recall that during my previous tests while I was using only one core at 1200 MHz I saw “Connection Quality: Bad” warning, so maybe if the CPU is extremely weak that’ll interfere with PC’s ability to effectively communicate within the network, and that can potentially appear as warping to enemies.</p>
+<p>It’s hard to call an advantage because at that point you’re literally playing at 20 FPS in Warpgate.</p>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

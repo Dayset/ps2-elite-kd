@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>Automated Command System | CMDRCyrious.com — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>Automated Command System | CMDRCyrious.com</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd>CMDRCyrious</dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/automated-command-system/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/automated-command-system/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2016-05-16</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Live</dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<h2>INTRODUCTION</h2>
+<p><em>Before we start: if you liked this idea, make sure to upvote it on <a href="https://www.reddit.com/r/Planetside/comments/4jkluj/suggestion_automatic_command_system_mission/" target="_blank" rel="noopener noreferrer">reddit</a>. This is the best way to get devs’ attention.</em></p>
+<p>Lack of overarching, unified command structure is an old issue with PS2.</p>
+<p>Map markers, command chat and mission system are the only tools we have, and they are not enough.</p>
+<p>Platoon commanders of large outfits may choose to cooperate, or they may choose not to, but even if they wanted to, it’s not easy for them to communicate, and decide on objectives for each other.</p>
+<p>Over time, people have offered different solutions to this problem, like voting in players to take over command for whole faction.</p>
+<p>That’s not a good idea, since it depends too much on keeping the same people in game for too long. There always must be a commander online, so we would need multiple commanders, and we would arrive to the same situation that we have now – when several people are in charge, nobody is in charge.</p>
+<p>This also leaves the problem of solo players that don’t want to bother with high organization, essentially leaving them without an easy way to be a team player for their faction.</p>
+<p>Another problem is that it takes a lot of bureaucracy – boring accounting of how many people should be taken to which base, how many vehicles and players of certain class they will need. Nobody wants that job.</p>
+<p>Just recently PS2 set the precedent of eliminating a piece of boringness by introducing AI elements – everybody knows how boring it is to sit in a turret and wait for an enemy attack that may never come, so we have AI modules for turrets to automate the process of overwatching.</p>
+<p>I suggest same measures to be taken to eliminate the boring bureaucracy and take over command over each faction.</p>
+<h2>AUTOMATED COMMAND SYSTEM</h2>
+<p>The idea behind Command System is to let an AI do the boring accounting part of the game, automate communications, create clearly defined assignments for people to accept and be rewarded for, and allow combat leaders to actually lead and handle the tactical part of the game, letting the machine decide on strategy.</p>
+<p>We already have parts of this Command System:</p>
+<p>personality in form of the portrait and voice of faction commanders: impressed brass, benevolent papa Vanu and passive-aggressive NC chick.</p>
+<p>mission system that assigns objectives to individual players.</p>
+<p>What I suggest is to upscale this system.</p>
+<h2>HOW IT WILL WORK</h2>
+<p>Based on which fights are available from the lattice system, Command System creates a list of missions for each faction.</p>
+<p>I.e. “attack that base” or “defend this base”.</p>
+<p>Each objective is assigned an empty platoon.</p>
+<p>All players can browse that list and accept a mission by joining the assigned platoon.</p>
+<p>One of the players becomes platoon leader, and now it is his duty to fulfill the mission outlayed before him by the system.</p>
+<p>The basic ruleset is that: player becomes platoon leader if he’s the only player in a squad, other players can vote other players to leading, and he can also voluntarily give up his position to anyone who would accept it.</p>
+<p>There could be several methods to ensure that players that accept the mission have incentive to follow it through: earn XP only in mission area, receive larger XP bonus only if and when the fight for objective is complete.</p>
+<p>So in addition to current “freelance” platoons that redeploy all over the world as they please, we will have platoons assigned to certain objectives, and players themselves pick an objective they want to commit to.</p>
+<p>Due to XP incentives, playing in an objective assigned platoon should be more rewarding than playing in a free platoon.</p>
+<p>The Command System will automatically limit the platoon size based on enemy presence and scale of the objective, so this should help balance out the number of people in fights, and since each side has a self-interest in completing the objective, this should lead to long and interesting fights.</p>
+<p>That’s how it will work on the large scale.</p>
+<h2>ON THE SMALL SCALE</h2>
+<p>Within the platoon, Command System will create jobs/assignments, like “Sunderer Pilot”, “Air Support”, “Armor Support”, “Infantry Support”, “Infantry Assault”, etc.</p>
+<p>Players in the platoon can choose any assignment they would like, and receive rewards for playing in accordance with it. Or not choose an assignment, and play as they see fit.</p>
+<p>I.e. “Armor Support” player is expected to pull a tank, and he will get bonus points for killing enemy vehicles with it. He may also receive a nanite discount for pulling said vehicle.</p>
+<p>Command System will also create an automatic “gunner” job for each vehicle with an empty “gunner” slot.</p>
+<p>This way, the Command System will motivate combined arms while keeping the number of force multipliers within reason. Players will still be free to pull 48 tanks and bombard spawn with it, but they may receive better rewards if they approach the fight in a more balanced manner.</p>
+<p>The Command System can fuel the fire with dynamic rewards. I.e. if there are no Sunderers in the platoon, the first player to accept the job of a Sunderer pilot will receive bigger bonuses than subsequent.</p>
+<p>This is what the Directive System tried to accomplish, but ultimately failed, instead only seen as the wall of grind to separate from shiny directive rewards.</p>
+<h2>ON INDIVIDUAL SCALE (SKILL)</h2>
+<p>Skill should be rewarded, everyone can agree with that. In PS2, we’re blessed with a huge community that has players of all skill levels, and a huge amount of playstyles available.</p>
+<p>The gap between worst playstyle of a worst player to the best of the best is planetary in scale.</p>
+<p>To manage personal skill, the Command System will record the “performance index” of each player at each job.</p>
+<p>So each player will have his personal performance index at being an air support player, at leading a squad, at infantry combat, and his impact in general.</p>
+<p>The game will continuously update the performance index of each player, and reward him accordingly.</p>
+<p>For example, by default, medics receive 75 XP reward for resurrecting an ally.</p>
+<p>An average combat medic who accepted “Infantry Support” assignment from the Command System, will receive 25 XP bonus for reviving an ally, for a 100 XP total.</p>
+<p>Private Johnny is a seasoned combat medic, and he has proven that he can do the job of two combat medics, i.e. revive twice as many people, heal twice the hitpoints, etc.</p>
+<p>His Infantry Support Performance Index is = 2.0</p>
+<p>Johnny’s XP bonus will be multiplied by performance index, so he will receive 50 XP bonus for reviving a player.</p>
+<p>The Command System will also create less Infantry Support assignments when it sees Johnny at work.</p>
+<p>So the Command System will not only try to equalize the number of people in a fight, it will also try to equalize their combined impact (skill).</p>
+<h2>THE AIR GAME</h2>
+<p>Air to ground aircraft are notoriously hard to deal with from the ground.</p>
+<p>Aircraft are known for their mobility, and the ability to quickly arrive in a fight, and air to air pilots could come and assist against air to ground aircraft, but they suffer from lack of communication, and they spend too much time wandering and looking for action.</p>
+<p>In addition to platoons tied to specific objectives, the Command System will create broad, continent-wide platoons, like like “air domination” or “air support”.</p>
+<p>For example, whenever players spot an enemy aircraft, the AA pilots in “air domination” squad will be informed about it by the command system, and they may choose to go intercept said enemy aircraft.</p>
+<h2>IT COULD BE MORE</h2>
+<p>Obviously there are multiple details that have to be addressed, loopholes to be plugged before the Command System will be ready even on the concept level.</p>
+<p>I’m just trying to relay the idea of using an AI for unified faction command to gently enforce the meta, while letting the players play the game instead of having a headache on how to work around allied and enemy zergs.</p>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

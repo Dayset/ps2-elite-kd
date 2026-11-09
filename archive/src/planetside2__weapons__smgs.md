@@ -1,0 +1,629 @@
+# PlanetSide 2 SMGs
+
+- **Source (live):** https://cmdrcyrious.com/planetside2/weapons/smgs/ — live copy returns HTTP 200 but its static HTML contains no article body (verified 2026-11-09); content below is from the Wayback Machine.
+- **Source (archived):** https://web.archive.org/web/20231201041126/https://cmdrcyrious.com/planetside2/weapons/smgs/
+- **Snapshot date:** 20231201041126
+- **Saved:** 2026-11-09
+- **Raw HTML (archived):** `raw/wayback__planetside2__weapons__smgs.html`
+- **Raw HTML (live, empty body):** `raw/planetside2__weapons__smgs.html`
+
+---
+
+---
+title: SMGs
+author: Institoros
+url: http://cmdrcyrious.com/planetside2/weapons/smgs/
+hostname: cmdrcyrious.com
+description: SMGs are small automatic weapons for close quarters combat. They can be used by all classes and offer the best Hip Fire accuracy , and don't slow down the user as much while aiming. All this means that SMG is a defensive or dueling weapon, perfect for dodging enemy fire while showering them with bu
+sitename: CMDRCyrious.com
+date: "2016-04-27"
+fingerprint: be013ef2d028d4db
+---
+SMGs are small automatic weapons for close quarters combat. They can be used by all classes and offer the best Hip Fire accuracy , and don’t slow down the user as much while aiming.
+
+All this means that SMG is a defensive or dueling weapon, perfect for dodging enemy fire while showering them with bullets. But these advantages are overcompensated by short effective range of \~20m, and even within that short effective range they require good gunplay skills from the user.
+
+… Most firefights happen in the range bracket where Carbines edge out SMGs. You have to find means to get close while avoiding detection.
+
+
+Infiltrators are kinda stuck with just SMGs if they want a weapon for aggressive CQC fighting, but every other class has a strong alternative in their **[AR](http://cmdrcyrious.com/planetside2/weapons/assault-rifles/#Close_and_Medium_Range)**, **[LMG](http://cmdrcyrious.com/planetside2/weapons/lmgs/#Close_Range_LMGs)** or **[Carbine](http://cmdrcyrious.com/planetside2/weapons/carbines/#DPS_Carbines)** lineup.
+
+# SMG Mechanics
+
+![NSX Tengu blueprint](http://cmdrcyrious.com/wp-content/uploads/2017/06/Tengu-blueprint-1-1024x486.jpg)
+
+
+SMGs obey the same **[weapon mechanics](http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/)** as other automatic weapons. But all SMGs share a set of traits:
+
+**Excellent hip fire accuracy** SMGs have the smallest hip fire cones of fire by default, as well as access to Advanced Laser Sight.
+
+Additionally, SMGs have the same CoF Bloom for hip firing as for ADSing. For most automatic weapons, hip fire CoF Bloom is double of ADS CoF Bloom. This means that SMGs have accurate sustained hip fire.
+
+Combine all of that and you get the most accurate hip fire weapon in the game.
+
+In fact, SMG spray in close quarters may be ***too*** tight, making it difficult to consistently hit enemies, as if you were aiming down sights. That’s a part of what makes them difficult to use.
+
+**CoF Bloom per point of damage done inconsistency**
+
+Normally, CoF Bloom per shot is balanced around bullet damage – weapons that do high damage per shoot, have higher bloom per shot, and vice versa. So normally weapons bloom roughly the same per point of damage done.
+
+However, 125 damage tier SMGs have the same CoF Bloom per shot as 143 damage SMGs, so they bloom more per point of damage done.
+
+| Damage Tier | Bloom per Shot, degrees | Bloom per point of damage done | 
+| 200 (Tengu) | 0.07 | 0.07 / 200 = 3.5 \* 10-4 | 
+| 167 | 0.06 | 0.06 / 167 = 3.6 \* 10-4 | 
+| 143 | 0.05 | 0.05 / 143 = 3.5 \* 10-4 | 
+| 125 | 0.05 | 0.05 / 125 = 4 \* 10-4 | 
+
+This means that 125 damage tier SMGs become inaccurate during sustained fire more quickly than other SMGs.
+
+**Good mobility while aiming down sights**
+
+Even an SMG will still be more accurate while ADSing, and SMGs have 0.75x ADS movespeed multiplier, meaning that you will be able to move 50% faster while aiming with an SMG than with other weapons, which usually have 0.5x ADS movement speed modifier.
+
+SMGs have the same (bad) ADS Cones of Fire for all stances, so they don’t get any additional accuracy by remaining stationary. So you’re heavily encouraged to be mobile and stay on the move.
+
+**Simple recoil pattern**
+
+SMGs have strong Horizontal Recoil – random side to side shaking, but little vertical recoil – consistent directional pull. SMGs barely require, but barely allow any recoil control.
+
+**High rate of fire and damage per second**
+
+Relatively high rate of fire makes SMGs more consistent in close quarters combat.
+
+Most SMGs have just “above average” DPS, which is not high enough that to just overpower the enemy. You will still have to rely on headshots to prevail.
+
+**Strong damage degradation**
+
+Most SMGs lose 4 tiers of damage over range. For example, Armistice has damage model of 125 @ 6m – 84 @ 42m, so over 36m it degrades from 125 -> 112 -> 100 -> 91 -> 84.
+
+That’s a lot of damage degradation over a short range. The further the enemy is away from you, the less “bite” your SMG will have.
+
+**Small magazines**
+
+Most – but not all – SMGs have small magazines, and struggle at engaging more than 1 target at a time. They have access to Extended Mags attachment, and it helps with that a bit, but it is mutually exclusive with Advanced Laser Sight, so you’ll have to choose between efficiency and longevity.
+
+- Strong degradation and poor accuracy mean that SMGs especially struggle at taking out remote enemies within one magazine.
+- High rate of fire means that aiming mistakes are punished severely. Fire for a moment past the target, and you might not have enough ammo to finish it off.
+
+**Short effective range** of \~20-25m due to low bullet velocity, poor accuracy, strong horizontal recoil and strong damage degradation.
+
+# Attachments
+
+**Recommended [attachments](http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/):**
+
+- SPA is a no-brainer and should always be used.
+- Advanced Laser Sight should always be used on high-capacity SMGs. On first generation SMGs, Extended Mags can be a better choice if you go with Suppressor, and in some other cases. Check weapon specific sections for recommendations.
+- Flash Suppressor is a good filler. It will make you a bit harder to detect in certain situations, but can also give away your position to enemies way outside your effective range. Don’t use Flash Suppressor if you’re not a Light Assault or Infiltrator, but still have a flanking playstyle.
+
+**Do not use:**
+
+- **Forward Grip**, because at ranges where you would notice the reduction in horizontal recoil, SMG will just do too little damage to remain effective. NS-7 PDW can be an exception and serve as a pseudo-carbine, but it’s not optimal.
+- **Compensator** is generally not recommended, as usually SMGs have very low vertical recoil by default, and Compensator has strong drawbacks, including a penalty to hip fire accuracy. But there are [testimonies](https://forums.daybreakgames.com/ps2/index.php?threads/i-will-analyze-your-cloaker-footage-and-provide-feedback-on-how-to-improve.216764/page-2#post-3129000) of very skilled and successful players that Compensator helps them get multiple headshots with NS-7 PDW (compensator is probably not the reason for their success).
+
+# How to use an SMG
+
+The primary SMG playstyle is aggressive CQC playstyle, where you take advantage of SMGs’ high DPS to kill an enemy quickly, and best hip fire accuracy and 75% ADS to dodge fire and survive.
+
+All SMGs can be used for that purpose, but they have different quirks and perks around them. For more detailed info check weapon specific sections, but here’s the broad overview. Depending on situation, you have these combat options available:
+
+- If the enemy is way outside your effective range – run to cover. From there you can wait for the enemy to come to you, or find a flanking route that would get you close to the enemy. If there’s no cover around, or you’ll be killed before you get to it, you’ll have to fight as a last ditch effort. Who knows, maybe the enemy is already almost dead and just needs a mean stare.
+- If the enemy is within range and you’re under fire, or about to be under fire – strafe erratically while unloading at the enemy at full auto. You’ll have to use own judgement whether to ADS or hip fire. It depends on the weapon the enemy is using, range to the target, amount of rounds you have left in magazine, how many HP the enemy has, your SMG’s attachments, etc.
+- Against Heavy Assaults with overshields, it’s almost always recommended to aim down sights and go for headshots, unless you’re using a high capacity SMG, in which case you can spray body shots with hip fire, or if the enemy is very close, and you can hip fire for headshots.
+- In general, hip firing for headshots is a sure way to kill an enemy very quickly in close quarters, while moving fast and being as safe as anyone can be in a gunfight.
+- Without extended mags, low-capacity SMGs barely have enough ammo to kill a Heavy Assault with overshields, or two unaware targets. Try to never confront more than 1 enemy. Reload timing and controlling your engagements are paramount.
+- SMGs are close range weapons with small magazines, so get used to using your knife and sidearm a lot.
+
+# Video Reviews
+
+(this review is outdated, Cyclone [has received recoil nerfs](https://forums.daybreakgames.com/ps2/index.php?threads/game-update-10-24.243218/) and how has effective range in line with Armistice and Eridani)
+
+# First Generation SMGs
+
+These SMGs have the highest effective DPS. Due to some faction-specific flavor, they achieve this in slightly different ways.
+
+|  | Damage model w/ SPA | RoF | DPS | CoF Bloom (Per Second) | DPM (Ex.Mags) | 
+| **Armistice** | 125 @ 11m – 84 @ 42m | 896 | 1866 | 0.05 (0.74) | 3750 (5000) | 
+| **Eridani** | 143 @ 15m – 91 @ 40m | 750 | 1787 | 0.05 (0.62) | 3575 (5005) | 
+| **Cyclone** | 167 @ 11m – 100 @ 46m | 652 | 1814 | 0.06 (0.65) | 4175 (5845) | 
+
+## SMG-46 Armistice
+
+![SMG-46 Armistice](http://cmdrcyrious.com/wp-content/uploads/2016/04/SMG-46-Armistice.png)
+
+![SMG-46 Armistice stats](http://cmdrcyrious.com/wp-content/uploads/2016/04/SMG-46-Armistice-stats.png)
+
+
+Armistice aka “Farmistice” has the highest Rate of Fire and raw DPS among all SMGs, it’s a typical bullet hose weapon, very reliable and easy to use in face to face CQC fights.
+
+Due to highest CoF Bloom per second and low damage per bullet, it has the most limited effective range, unless [you get lucky with horizontal recoil](https://www.youtube.com/watch?v=vPYF2wBdWsI).
+
+Crazy rate of fire severely punishes any misses – shoot past the target for a second, and there goes half your magazine.
+
+As all 125 damage weapons, Armistice has the same CoF bloom per shot as 143 damage weapons, so during sustained fire it grows inaccurate quite fast.
+
+Out of all SMGs, Armistice gets the most benefit from ALS, and the least benefit from Extended Mags. ALS recommended.
+
+Among 1st gen SMGs, Armistice is hurt the least by the Suppressor due to highest in class rate of fire.
+
+## Eridani SX5
+
+![Eridani SX5](http://cmdrcyrious.com/wp-content/uploads/2016/04/Eridani-SX5.png)
+
+![Eridani SX5 Stats](http://cmdrcyrious.com/wp-content/uploads/2016/04/Eridani-SX5-Stats.png)
+
+
+Eridani has the best CoF bloom per second and extended maximum damage range, and the optimal combination of bullet damage and rate of fire, which leads to the longest effective hip fire range in the game.
+
+Unfortunately, super low damage per magazine is extremely prohibitive, you’re likely to get one good burst and that’s it, making Extended Mags almost a necessity. Small magazine size is somewhat compensated by a very quick short reload of just 1.75 seconds.
+
+## AF-4 Cyclone
+
+![](http://cmdrcyrious.com/wp-content/uploads/2016/04/AF-4-Cyclone.png)
+
+![AF-4 Cyclone stats](http://cmdrcyrious.com/wp-content/uploads/2016/04/AF-4-Cyclone-stats.png)
+
+
+Cyclone deals more damage per shot than an average SMG, but fires a bit slower. While this makes Cyclone slightly less consistent in close quarters spraying, it does provide an increased effective range.
+
+Cyclone has both high damage per magazine, and a fast short reload.
+
+167 damage tier gives Cyclone a very quick 3 headshot kill within maximum damage range at TTK of just 0.184 seconds.
+
+All of this combined makes for a weapon that is often called the best SMG in the game.
+
+Consider Extended Mags if you use a Suppressor or if you have a flanking playstyle, while ALS is better for face to face fights.
+
+Check out **[Highly Technical Weapon Guide for Cyclone](http://cmdrcyrious.com/af-4-cyclone-highly-technical-weapon-guide/)** if you’d like to learn more.
+
+# High Capacity SMGs
+
+These SMGs have huge damage per magazine, but suffer in other areas for it.
+
+**Advantages:**
+
+- Enough ammo to reliably kill at least one enemy, even if it’s a tough target and you miss a lot or if it’s outside effective range.
+- Higher potential while flanking – able to take out multiple enemies during a surprise attack.
+- Less punished by Suppressors (also thanks to high RoF)
+- You can hip fire more freely and don’t worry as much about ammo management in general.
+
+Super high magazine size is not as useful in a direct firefight, as usually you won’t survive against multiple enemies long enough to need all that ammo.
+
+High capacity SMGs are very similar between factions:
+
+## Blitz GD-10
+
+![GD-10 Blitz](http://cmdrcyrious.com/wp-content/uploads/2016/04/GD-10-Blitz.png)
+
+![Blitz GD-10 stats](http://cmdrcyrious.com/wp-content/uploads/2016/04/Blitz-GD-10-stats.png)
+
+
+GD-10 Blitz has the most stable recoil pattern among high-capacity SMGs, which allows the user to squeeze out a few additional meters of effective range.
+
+## PDW-16 Hailstorm
+
+![PDW-16 Hailstorm](http://cmdrcyrious.com/wp-content/uploads/2016/04/PDW-16-Hailstorm.png)
+
+![PDW-16 Hailstorm stats](http://cmdrcyrious.com/wp-content/uploads/2016/04/PDW-16-Hailstorm-stats.png)
+
+
+Hailstorm aka “Failstorm” is disadvantaged by low DPS, and has too much value put into magazine size and reload speed. It struggles in non-flanking scenarios, and in good faith, I cannot recommend using this weapon.
+
+## Sirius SX12
+
+![Sirius SX12](http://cmdrcyrious.com/wp-content/uploads/2016/04/Sirius-SX12.png)
+
+![Sirius SX12 Stats](http://cmdrcyrious.com/wp-content/uploads/2016/04/Sirius-SX12-Stats.png)
+
+
+Sirius is unremarkable. Shortest effective range due to strongest in class horizontal recoil.
+
+Assuming SPA, they all have the damage model of: 125 @ 11m – 84 @ 42m
+
+|  | **RoF** | **Mag. Size** | **Reload Speed** | **Horizontal Recoil** | **Vertical Recoil** | **Recoil Angle** | 
+| **Blitz** | 845 | 50 | 3.5 / 2.5 | 0.3 / 0.3 | 0.2 | 20 / 20 | 
+| **Sirius** | 845 | 50 | 3.4 / 2.4 | 0.4 / 0.4 | 0.17 | 0 / 0 | 
+| **Hailstorm** | 800 | 60 | 2.8 / 2.25 | 0.3 / 0.33 | 0.2 | 17 / 20 | 
+
+
+# Empire Specific SMGs
+
+![](http://cmdrcyrious.com/wp-content/uploads/2017/12/Hybrid-Suppressor-e1512679782694.png)
+
+
+This set of empire-specific SMGs has interesting mechanics or unique attachments. They are also the only weapons to have access to **Hybrid Suppressor**, which reduces Projectile Velocity by 20%, but has no other negative effects.
+
+They feature low to average DPS, but high magazine capacity.
+
+## MG-S1 Jackal
+
+| DAMAGE | 167 @ 6m – 100 @ 46m | 
+| RATE OF FIRE | 600 RPM | 
+| VELOCITY | 400 m/s | 
+| AMMO | 30 / 230 | 
+| RELOAD TIME | 2 sec / 2.6 sec | 
+| UNLOCK COST | 1000 ![Certification Points](http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png) or 699 ![Daybreak Cash](http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png) | 
+
+![MG-S1 Jackal](http://cmdrcyrious.com/wp-content/uploads/2017/12/MG-S1-Jackal.png)
+
+
+Auto
+
+Hip CoFs: 1 / 1.25 / 1 / 1.5 / 0.06
+
+ADS CoFs: 0.3 / 0.3 / 0.3 / 0.3 / 0.06
+
+Headshot Damage Multiplier: 2x
+
+Minimap Detect Range: 40m
+
+ADS Movespeed Multiplier: 0.75x
+
+Equip / Unequip Time: 0.65 sec / 0.25 sec
+
+ADS Time To / From: 0.15sec / 0.15 sec
+
+Projectile Lifespan / Gravity: 1.5 / 11.25
+
+Vertical Recoil: 0.15
+
+First Shot Recoil Multiplier: 2x
+
+Recoil Angle: 15 / 15
+
+Horizontal Recoil: 0.3 / 0.35
+
+Horizontal Recoil Tolerance: 0.6
+
+Recoil Recovery Delay: 100
+
+Recoil Recovery Rate: 18
+
+**Attachments:** Forward Grip, Advanced Laser Sight, Darklight Flashlight, BX Adapter, Hybrid Suppressor, Soft Point Ammunition
+
+**Jackal** is a fairly generic, but effective weapon, basically a TR version of the **Cyclone**. Jackal has lower DPS, but more stable and easier recoil, excellent magazine capacity and fast reloads.
+
+![BX Adapter](http://cmdrcyrious.com/wp-content/uploads/2017/12/BX-Adapter-e1512680487393.png)
+
+
+**BX Adapter** is a unique rail attachment, available only to the Jackal. It reduces magazine capacity by 9 rounds, and adds a secondary fire mode.
+
+In BX Adapter firemode, after a charge up delay, Jackal fires all 9 rounds in one extremely fast burst, frontloading a lot of damage.
+
+\[spoiler title=”BX Adapter Firemode Stats”\]
+**Damage:** 125 @ 6m – 84 @ 42m
+
+Pellets / Spread: 2 / 2.0
+
+Rate of Fire: 1000 RPM
+
+Headshot Damage Multiplier: 2x
+
+**Hip CoFs:** 1 / 1.25 / 1 / 1.5
+
+CoF Bloom: 0.06
+
+Vertical Recoil: 0.2
+
+FSRM: 2x
+
+Horizontal Recoil: 0.3 / 0.3
+
+Horizontal Recoil Tolerance: 1
+
+Fire Detect Range: 40m
+
+\[/spoiler\]
+**BX Adapter** has a lot of mechanical quirks about it:
+
+- You cannot ADS while in BX Adapter firemode.
+- It takes 0.5 seconds to switch in and out of the firemode.
+- Charge up delay is roughly equal to 0.8 seconds.
+- Reloading in either firemode will also reload the other firemode.
+- After you fire a BX Adapter burst, a reload will start automatically, but you can interrupt it and switch back to your normal firemode and keep using it as long as you have ammo remaining.
+- You cannot sprint while charging up, but you can sprint while firing. This is hardly important, since the burst lasts less than a second.
+- BX Adapter is mutually exclusive with Hybrid Suppressor.
+
+BX Adapter splits each of the 9 rounds into two, each dealing up to 125 damage, frontloading a total of 125 \* 2 \* 9 = 2250 damage. During the BX Adapter burst, Jackal deals up to 4167 DPS. Of course, the necessary accuracy is only achievable at point blank range.
+
+Despite looking awesome on paper, BX Adapter remains lackluster in actual combat due to poor accuracy and charge up delay that feels like an eternity, and it is completely unusable against aware enemies. You could try and charge the burst as you’re stepping out of cover, but it’s hard to time properly, and you’re unlikely to kill a full health enemy with Nanoweave just with the burst alone, and switching back to normal firemode will take time as well.
+
+**Hybrid Suppressor** reduces projectile velocity to mere 200 m/s (180 m/s with SPA), basically turning the weapon into a nailgun. Cannot be used with BX Adapter equipped.
+
+*(Review starts at **[2:54](https://youtu.be/KFZRem5jir4?t=2m54s)**. Note that review author missed the fact BX Adapter splits every 167 shot into two 125 ones). This video is outdated: Hybrid Suppressor now has only 20% velocity penalty.*
+
+## MGR-S1 Gladius
+
+| DAMAGE | 200 @ 6m – 112 @ 50m | 
+| RATE OF FIRE | 522 RPM | 
+| VELOCITY | 400 m/s | 
+| AMMO | 26 / 182 | 
+| RELOAD TIME | 2 sec / 3 sec | 
+| UNLOCK COST | 1000 ![Certification Points](http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png) or 699 ![Daybreak Cash](http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png) | 
+
+![](http://cmdrcyrious.com/wp-content/uploads/2017/12/MGR-S1-Gladius.png)
+
+
+Auto
+
+Hip CoFs: 1.25 / 1.5 / 1.25 / 1.75 / 0.07
+
+ADS CoFs: 0.35 / 0.35 / 0.35 / 0.35 / 0.07
+
+Headshot Damage Multiplier: 2x
+
+Minimap Detect Range: 40m
+
+ADS Movespeed Multiplier: 0.75x
+
+Equip / Unequip Time: 0.65 sec / 0.25 sec
+
+ADS Time To / From: 0.15sec / 0.15 sec
+
+Projectile Lifespan / Gravity: 1.5 / 11.25
+
+Vertical Recoil: 0.23
+
+First Shot Recoil Multiplier: 1.6x
+
+Recoil Angle: 12 / 12
+
+Horizontal Recoil: 0.22 / 0.35
+
+Horizontal Recoil Tolerance: 0.5
+
+Recoil Recovery Delay: 80
+
+Recoil Recovery Rate: 18
+
+**Attachments:** Soft Point Ammunition, Hybrid Suppressor, Darklight Flashlight, Forward Grip, Advanced Laser Sight, SPRW Ammunition
+
+**Gladius** is a pocket [**AC-X11**](http://cmdrcyrious.com/planetside2/weapons/carbines/#AC-X11), with extreme damage per shot, large magazine, high velocity and negligible recoil.
+
+Compared to **Cyclone**, Gladius is at a clear disadvantage in close quarters, where 200 damage weapons are hard countered by [**Nanoweave Armor**](http://cmdrcyrious.com/planetside2/equipment/suit-slots/#Nanoweave_Armor), which increases bodyshot time-to-kill by up to 50%. Within 11m, Cyclone kills in same 3 headshots as Gladius, but does it faster and easier.
+
+However, Gladius has one of the longest effective ranges among SMGs, if not ***the*** longest, and its extreme alpha damage should not be treated lightly. It is a specialist weapon; you have to engage enemies at range, or go for precision headshots, in which case Gladius will kill a standard infantry target within 25m in just 3 shots.
+
+Keep in mind you won’t by sniping anything with the Gladius. It’s still an SMG with 4 tiers of damage degradation, and to top it off, it has increased ADS CoFs of 0.35 degrees.
+
+![](http://cmdrcyrious.com/wp-content/uploads/2017/12/SPRW-Ammunition-e1512683856328.png)
+
+
+[**SPRW Ammunition**](http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/#SPRW_Ammunition) increases Projectile Velocity by 25% at the cost of reducing Magazine Size by 4 rounds. Normally, this wouldn’t be a meaningful bonus to an SMG with 400 m/s base velocity. However, SPRW ammo completely nullifies the velocity penalty of the Hybrid Suppressor, leaving the Magazine Size at workable 22 rounds, basically allowing Gladius to have a “free” suppressor.
+
+## VE-S Canis
+
+| DAMAGE | 167 @ 10m – 100 @ 46m | 
+| RATE OF FIRE | 550 -> 667 RPM | 
+| VELOCITY | 375 m/s | 
+| AMMO | 40 / 240 | 
+| RELOAD TIME | 1.74 sec / 2.9 sec | 
+| UNLOCK COST | 1000 ![Certification Points](http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png) or 699 ![Daybreak Cash](http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png) | 
+
+![](http://cmdrcyrious.com/wp-content/uploads/2017/12/VE-S-Canis.png)
+
+
+Auto
+
+Hip CoFs: 1 / 1.25 / 1 / 1.5 / 0.05
+
+ADS CoFs: 0.3 / 0.3 / 0.3 / 0.3 / 0.05
+
+Headshot Damage Multiplier: 2x
+
+Minimap Detect Range: 40m
+
+ADS Movespeed Multiplier: 0.75x
+
+Equip / Unequip Time: 0.65 sec / 0.25 sec
+
+ADS Time To / From: 0.15sec / 0.15 sec
+
+Projectile Lifespan / Gravity: 1.5 / 0
+
+Vertical Recoil: 0.2
+
+First Shot Recoil Multiplier: 2x
+
+Recoil Angle: 20 / 20
+
+Horizontal Recoil: 0.3 / 0.392
+
+Horizontal Recoil Tolerance: 0.9
+
+Recoil Recovery Delay: 75
+
+Recoil Recovery Rate: 18
+
+**Attachments:** Unstable Ammunition, Emission Condenser, Vented Power Core, Darklight Flashlight, Forward Grip, Advanced Laser Sight
+
+Canis is one of the more unusual weapons. It has a built-in SPA, and starts firing at reduced rate of fire, and gradually spools up to full RoF over 2.5 seconds. It has reduced CoF Bloom and absurdly large magazine, which allow it to sustain fire over time.
+
+It’s no [**MCG**](http://cmdrcyrious.com/planetside2/weapons/heavy-weapons/#T7_Mini-Chaingun), and you still should fire this weapon in bursts. The variable RoF is mostly for flavor, in this case.
+
+Canis has mild Vertical Recoil, but its Horizontal Recoil is below average, and without Forward Grip will hold back the effective range of this weapon.
+
+![Vented Power Core](http://cmdrcyrious.com/wp-content/uploads/2018/02/Vented-Power-Core-e1518150061328.png)
+
+
+**[Vented Power Core](http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/#Vented_Power_Core)** is available to Canis. It removes the Long Reload penalty when you empty a whole magazine, at the cost of increasing Recoil Angle by 5 degrees. It would be an interesting attachment, given how tempting it is to just magdump this weapon, but it holds no contest to other rail attachments.
+
+![](http://cmdrcyrious.com/wp-content/uploads/2017/12/Unstable-Ammunition.png)
+
+
+[**Unstable Ammunition**](http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/#Unstable_Ammunition) is available to Canis. It increases the projectiles’ hitbox, making it easier to hit, at the cost of reducing Headshot Damage Multiplier to 1.2x. Overall, Unstable Ammunition makes the weapon significantly easier to use. Similar to [**Tengu**](http://cmdrcyrious.com/planetside2/weapons/smgs/#NSX_Tengu), but with each hit dealing full damage instead of partial damage.
+
+# Nanite Systems SMGs
+
+## NS-7 PDW
+
+![NS-7 PDW](http://cmdrcyrious.com/wp-content/uploads/2016/04/NS-7-PDW.png)
+
+![NS-7 PDW stats](http://cmdrcyrious.com/wp-content/uploads/2016/04/NS-7-PDW-stats.png)
+
+
+**Cruczi’s guide to NS-7 PDW:**
+
+*The NS-7 PDW is an SMG-carbine hybrid with a couple of drawbacks, but also a couple of unique perks. It has easy handling, mobility and versatility, but gives up a bit of damage output in the process. Being a 125 damage, 750 RoF weapon, its theoretical maximum DPS is similar to the common 143/652 weapons, and markedly lower than other SMGs’ and CQC carbines’.*
+
+*With its high hipfire accuracy, low hipfire CoF bloom, and low vertical recoil, the NS-7 PDW is an SMG at heart, but that’s where the similarities with other SMG’s end. Like carbines, it degrades two damage tiers (instead of four for SMGs), reaching minimum damage of 100 at 65m.* 
+
+*NS-7 has similar to CQC carbines horizontal recoil and its bullet velocity trails close behind. With SPA, NS-7 can maintain maximum damage up to 20 meters, compared to 15 meters for CQC carbines and the Eridani, and only 11 meters for other SMGs. In addition, the NS-7 PDW has extremely low first shot recoil.*
+
+*As with all NS weapons, its firing sound doesn’t immediately identify the user as enemy, which is an important trait for Light Assaults and Infiltrators whose bread and butter is flanking and catching enemies unawares.*
+
+*Tips to make use of the weapon’s strengths:*
+
+- *Due to the maximum damage range, focusing engagements in the 15-20 meter range will reduce the difference in TTK versus other CQC oriented weapons.*
+- *If you are forced to dodge enemy shots and can’t risk aiming down sights, NS-7 can hit the torso reliably from the hip up to 20 meters, or up to 30 meters in bursts. This also means you can quickly return fire from the hip when caught off guard.* 
+- *Although other SMGs and CQC carbines typically outclass an average NS-7 PDW user at less than 10 meters, a skilled user will find the NS-7 PDW is extremely potent for headshots from the hip. This is due to the unique combination of low first shot recoil, controllable horizontal recoil & RoF, and best full-auto hip accuracy.*
+- Iridar’s note: with SPA, NS-7 does 125 damage up to 20m, and within that range it kills a generic infantry target in just 4 headshots, same as 143 damage weapons like TRAC 5. With NS-7’s exceptional accuracy, those headshots are easy to achieve, which makes NS-7 one of the deadliest weapons within that range.
+- *Beyond 20 meters, low damage per magazine is your enemy and can ruin 1 vs 1 if you miss too much. Therefore, burst fire to maintain accuracy. The low first shot multiplier and vertical recoil make the PDW relatively easy to keep in balance between bursts.*
+
+*Attachments:*
+
+- *SIGHTS: iron sights are serviceable, but most users will prefer 1X or 2X reflex. Scopes are not recommended as they can block your hipfire crosshair while strafing, can impair ADS performance in the critical 15-20 meter range, and reduce your situational awareness.*
+- *BARREL: The use of a flash suppressor is optional. A suppressor would seriously undermine its primary advantage over other SMGs, while a compensator is simply unneeded.*
+Iridar’s note: the combination of low damage degradation, relatively high bullet velocity and extremely long maximum damage range make NS-7 Suppressor-friendly, arguably even better than MKV Suppressed.
+- *RAIL: Advanced laser is highly recommended in order to further differentiate it from carbines and maximize its mobility advantage.*
+- *AMMO: SPA is mandatory to get an advantage in crucial 15-20m range.*
+
+## MKV Suppressed
+
+| DAMAGE | 125 @ 15m – 91 @ 42m | 
+| RATE OF FIRE | 779 RPM | 
+| VELOCITY | 360 m/s | 
+| AMMO | 30 / 240 | 
+| RELOAD TIME | 2.6 sec / 2.84 sec | 
+| UNLOCK COST | 1000 ![Certification Points](http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png) or 699 ![Daybreak Cash](http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png) | 
+
+![MKV Suppressed](http://cmdrcyrious.com/wp-content/uploads/2016/04/MKV-Suppressed-e1534700716512.png)
+
+
+Auto
+
+Hip CoFs: 1 / 1.25 / 1 / 1.5 / 0.05
+
+ADS CoFs: 0.3 / 0.3 / 0.3 / 0.3 / 0.05
+
+Headshot Damage Multiplier: 2x
+
+Minimap Detect Range: 0m
+
+ADS Movespeed Multiplier: 0.75x
+
+Equip / Unequip Time: 0.65 sec / 0.25 sec
+
+ADS Time To / From: 0.15sec / 0.15 sec
+
+Projectile Lifespan / Gravity: 1.5 / 11.25
+
+Vertical Recoil: 0.26
+
+First Shot Recoil Multiplier: 2x
+
+Recoil Angle: 8.25 / 14
+
+Horizontal Recoil: 0.248
+
+Horizontal Recoil Tolerance: 0.6
+
+Recoil Recovery Delay: 77
+
+Recoil Recovery Rate: 20
+
+**Attachments:** Soft Point Ammunition, Extended Magazine, Darklight Flashlight, Forward Grip, Advanced Laser Sight
+
+MKV is basically an NS-7 PDW with pre-installed suppressor and minor recoil differences. MKV tries to establish itself as an SMG with best bullet velocity among suppressed SMGs, but I wouldn’t call 360 m/s a high value.
+
+Stats comparison:
+
+| NS-7 PDW with Suppressor and SPA: | 125 @ 20m – 100 @ 55m, 750 RoF, 304 m/s velocity. | 
+| MKV Suppressed with SPA: | 125 @ 20m – 91 @ 42m, 779 RoF, 324 m/s velocity. | 
+
+Difference in RoF / damage ranges leads to fluctuations in time to kill at certain ranges, but, ultimately, the difference is within several percents.
+
+MKV’s accuracy is a bit worse than that of NS-7, but it’s still good. But due to lower minimum damage of the MKV, the amount of damage you can do before reloading deterriorates quickly over range. So if you intend to do a lot of ambushing while aiming down sights, and fight at a medium distance overall, consider using Extended Mags instead of Advanced Laser Sight.
+
+I don’t normally recommend using Extended Mags on SMGs, but in the case of MKV, it may be necessary to kill targets at medium range with higher reliability. Even with good accuracy, you risk running out of ammo before killing a shielded Heavy Assault.
+
+## NSX Tengu
+
+![NSX Tengu](http://cmdrcyrious.com/wp-content/uploads/2016/04/NSX-Tengu.png)
+
+![NSX Tengu stats](http://cmdrcyrious.com/wp-content/uploads/2016/04/NSX-Tengu3.png)
+
+
+**NSX Tengu** is a shotgun/SMG hybrid. With each shot, Tengu fires 4 pellets, each doing minor damage. Tengu is excellent at dealing consistent damage to enemies, even without perfect aim. Tengu is easiest to use among SMGs, and a perfect choice for those starting out.
+
+Tengu’s DPS is equal to that of 200 @ 500 RPM weapon, such as Gauss SAW, which is below average for SMGs, especially considering it’s harder to reach optimal DPS with Tengu.
+
+So on average, Tengu will take slightly longer to kill than other SMGs in ideal circumstances.
+
+Tengu also has unusually ineffective hip fire for an SMG due to large pellet spread. When firing from the hip, Tengu deals consistent, but low damage. You’re unlikely to kill an enemy in close quarters fast enough, or before running out of ammo, if you’re not using Extended Mags. So unless the enemy is extremely close, it is better to always ADS and aim for upper body.
+
+Tengu has surprisingly decent and consistent performance at range, and a blazingly fast short reload.
+
+NSX Tengu is featured in this **[Highly Technical Guide](http://cmdrcyrious.com/nsx-tengu-highly-technical-weapon-guide/)**.
+
+# Auraxium SMGs
+
+### Shuriken
+
+![Shuriken](http://cmdrcyrious.com/wp-content/uploads/2016/04/Shuriken.png)
+
+
+### Tempest
+
+![Tempest](http://cmdrcyrious.com/wp-content/uploads/2016/04/Tempest.png)
+
+
+### Skorpios
+
+![Skorpios](http://cmdrcyrious.com/wp-content/uploads/2016/04/Skorpios.png)
+
+
+These prestige copies of first generation SMGs can’t be purchased with certs or station cash. To get one of these, you have to complete the auraxium tier of SMG directives.
+
+Auraxium SMGs have a [unique “alive” camouflage](https://www.youtube.com/watch?v=LFHvik9jscw) shader for showing off, as well as a unique combination of attachments: **[Extended Mags](http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/#Extended_Magazine)**, **[Forward Grip](http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/#Forward_Grip_Advanced_Forward_Grip)** and **[HVA](http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/#High_Velocity_Ammunition_HVA)**. Apart from the scope, you can’t change these attachments, and don’t need to purchase them. As a penalty, Auraxium SMGs have a longer reload.
+
+While this clearly ranged setup might seem weird for an SMG, consider that base SMGs already have CQC well covered.
+
+And, if for some reason you *would* want to kit out an SMG to be more potent at range – and short range is the biggest weakness of all SMGs – this setup is a dream come true.
+
+And you don’t lose much in close quarters either. At most, you’re going to need an extra bullet to kill at certain ranges, but given super high SMG RoF – it’s not that big of a deal.
+
+## Reload Speed Penalty
+
+This is the big one. It’s not that big of a deal with Short Reload, but the Long Reload can be especially punishing, as it already was kinda long with base SMGs.
+
+|  | **Armistice** | **Shuriken** | **Eridani** | **Skorpios** | **Cyclone** | **Tempest** | 
+| **Short Reload, sec** | 2.25 | 2.7 | 1.74 | 2.08 | 1.855 | 2.23 | 
+| **Long Reload, sec** | 2.92 | 3.5 | 2.8 | 3.36 | 3 | 3.6 | 
+
+## Damage Comparison
+
+It wouldn’t be practical to list all the BTK Thresholds in this article, since SMGs degrade so many tiers, and I don’t want to drown you in numbers. The graphs below clearly show you ranges where base SMGs with SPA deal more damage, and where Auraxium SMGs start to overtake.
+
+*Click images to enlarge*
+
+If we take Tempest vs Cyclone as an example:
+
+- Best case scenario, Tempest deals 21% more damage at 46m.
+- Worst case scenario, Tempest deals 5% less damage at 11m.
+
+## Tips and Conclusion
+
+Do not treat Auraxium SMGs as some sort of ranged powerhouse, because even with all those attachments – they’re not. Most primary weapons will have easier time killing enemies at 20-30m. Instead, treat them like base SMGs that do not immediately suck at range.
+
+They still can dish out a lot of damage in close quarters, and they have better ADS accuracy. You don’t have to pray to Higby that much when you’re trying to headshot ding an enemy at 20m.
+
+And you don’t have to close the distance to 10-20m for every engagement just to stand a chance at killing the enemy.
+
+Naturally, Auraxium SMGs will never be as good at range as proper ranged weapons. At best, they can rival an NS-7 PDW with a CQC setup.
+
+But they will be noticeably better than base SMGs, which is all they’re trying to do.
+
+They’re not an amazing super weapons that you should feel obligated to work towards and power through 4 SMG auraxiums, nor should they be. They merely offer an interesting niche and a unique playstyle for fans of this weapon class.
+
+## Recent Comments

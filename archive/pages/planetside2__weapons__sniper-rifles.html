@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>Sniper Rifles — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>Sniper Rifles</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd>Iridar (Institoros)</dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/planetside2/weapons/sniper-rifles/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/planetside2/weapons/sniper-rifles/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2016-04-26</dd></div>
+      <div><dt data-i18n="arc.attrSnapshot">Snapshot date</dt><dd>20240417031904</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Wayback</dd></div>
+      <div><dt data-i18n="arc.attrNote">Note</dt><dd>Wayback snapshot; live copy empty</dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<p>In this guide you will find color-coded references to other guides and materials:</p>
+<ul><li><strong><a href="http://cmdrcyrious.com/planetside2/classes/infiltrator/" target="_blank" rel="noopener noreferrer">Dark orange links to other guides or anchors within this guide</a></strong></li><li><a href="https://www.youtube.com/watch?v=AGz9FTnIHcs" target="_blank" rel="noopener noreferrer"><strong>Purple links to videos in pop-up viewboxes</strong></a></li><li><a href="http://cmdrcyrious.com/wp-content/uploads/2016/06/20111118_4ec6f04249c20.jpg" target="_blank" rel="noopener noreferrer"><strong>Blue links to images in pop-up viewboxes</strong></a></li></ul>
+<h2>Intro</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/half-cloaked-sniper-shot-1024x572.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>This picture is photoshopped</p>
+<p>Sniper Rifles are long range primary weapons, exclusive to Infiltrators. Most Sniper Rifles fit into one of these two categories:</p>
+<p><strong>Semi Auto Sniper Rifles (SASR).</strong> These fast firing rifles can take rapid follow-up shots, but require two headshots to kill most enemies.</p>
+<p><strong>Bolt Action Sniper Rifles (BASR).</strong> These rifles are much more powerful, and can potentially kill in one headshot, but they need to be rechambered between shots, which significantly reduces overall rate of fire.</p>
+<p><em>Do not be confused by <a href="http://cmdrcyrious.com/planetside2/weapons/sniper-rifles/#SAS-R" target="_blank" rel="noopener noreferrer"><strong>SAS-R</strong></a>, which is an NC BASR.</em> </p>
+<p>While all Sniper Rifles are fully capable of killing enemies with bodyshots, it often takes too long, giving the enemy a lot of time to take cover, and for enemy snipers to countersnipe you. Firing several shots in a row also broadcasts your position to other nearby enemies.</p>
+<p>So both Sniper Rifle types focus on getting headshots, and killing enemies with as few shots as possible.</p>
+<p>By default, <strong>TR</strong> and <strong>VS</strong> infiltrators use <a href="http://cmdrcyrious.com/planetside2/weapons/sniper-rifles/#99SV" target="_blank" rel="noopener noreferrer"><strong>99SV</strong></a> and <a href="http://cmdrcyrious.com/planetside2/weapons/sniper-rifles/#VA39_Spectre" target="_blank" rel="noopener noreferrer"><strong>VA39 Spectre</strong></a> semi auto rifles respectively, <strong>NC</strong> infiltrators use <a href="http://cmdrcyrious.com/planetside2/weapons/sniper-rifles/#NC14_Bolt_Driver" target="_blank" rel="noopener noreferrer"><strong>NC-14 Bolt Driver</strong></a>.</p>
+<p>Similarly to <strong><a href="http://cmdrcyrious.com/planetside2/weapons/shotguns/" target="_blank" rel="noopener noreferrer">Shotguns</a></strong>, differences between Sniper Rifles of different factions are mostly cosmetic, with the exception of <strong><a href="http://cmdrcyrious.com/planetside2/weapons/sniper-rifles/#Empire_Specific_Sniper_Rifles" target="_blank" rel="noopener noreferrer">Empire Specific</a></strong> and <strong><a href="http://cmdrcyrious.com/planetside2/weapons/sniper-rifles/#Semi_Auto_Sniper_Rifles" target="_blank" rel="noopener noreferrer">Semi Auto</a></strong> sniper rifles.</p>
+<p>Compared to other precision weapons, like <strong><a href="http://cmdrcyrious.com/planetside2/weapons/scout-rifles/" target="_blank" rel="noopener noreferrer">Scout</a></strong> and <strong><a href="http://cmdrcyrious.com/battle-rifles/" target="_blank" rel="noopener noreferrer">Battle Rifles</a></strong>, Sniper Rifles deal more damage per shot, but have bad moving accuracy, and in most cases require the user to be stationary while shooting.</p>
+<h2>Sniper Rifle Mechanics</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Sniper-Rifle-Blueprint-1-1024x426.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Sniper Rifles follow the same <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/" target="_blank" rel="noopener noreferrer">Weapon Mechanics</a></strong> as other weapons.</p>
+<h2>Scope Sway</h2>
+<p>Rifles with 6x-12x magnification scopes have <strong>Scope Sway</strong>; whenever you Aim Down Sights, your crosshair will float around a certain area.</p>
+<p><strong>All Sniper Rifles with sway have the same amount of Scope Sway.</strong> As far as we know, it is constant, across all scopes and all situations. Naturally, higher magnification scopes will magnify Scope Sway, the same way they magnify recoil.</p>
+<h2>Holding Breath</h2>
+<p>Players can hold “Hold Breath” key (default “shift”) to almost completely suppress Scope Sway. <strong><a href="http://cmdrcyrious.com/planetside2/equipment/implants/#Target_Focus" target="_blank" rel="noopener noreferrer">Target Focus</a></strong> Implant can increase the amount of time you can Hold Breath.</p>
+<p>Additionally, “long range” Semi Auto Sniper Rifles have access to a free <strong>Ballistics Computer</strong> attachment, which completely removes Sway on all scopes.</p>
+<p>Capacity: 1</p>
+<p>Initial Cost: 0.1</p>
+<p>Drain Rate: 0.25 per second</p>
+<p>Recharge Delay: 1 second</p>
+<p>Recharge Rate: 0.25 per second</p>
+<p>Penalty: 3 seconds</p>
+<p>Penalty Sway Multiplier: 3x</p>
+<p><em>Huge thanks to <strong><a href="https://www.reddit.com/user/shaql" target="_blank" rel="noopener noreferrer">/u/shaql</a></strong> for providing these numbers, datamined from the client.</em></p>
+<p><strong>Mechanics:</strong> your character has a fixed “lung capacity”. When you start Holding Breath, you instantly pay an Initial Cost of 1/10th of your Capacity. Then your Capacity starts draining at the listed Drain Rate.</p>
+<p>Target Focus implant reduces this Drain Rate by 0.15/ 0.1538 / 0.1591 / 0.1667 / 0.1875 depending on rank.</p>
+<p>When you release the Hold Breath key, after a 1 second Recharge Delay, your Capacity will fully recharge over 4 seconds.</p>
+<p>If you Hold Breath for too long and fully deplete your Capacity, you will suffer 3x stronger Scope Sway for 3 seconds, and you will not be able to Hold Breath again during the Penalty.</p>
+<p>However, this Penalty has no effect on Recharging mechanics, so you will restore some of your Capacity during the Penalty, and you will be able to Hold Breath again as soon as Penalty is over.</p>
+<p>| Target Focus Rank | 0 | 1 | 2 | 3 | 4 | 5 |  | Hold Breath Duration, sec | 3.6 | 9 | 9.35 | 9.9 | 10.8 | 14.4 | </p>
+<p>As you can see, even the Rank 1 of Target Focus provides a huge benefit, and should be enough for most snipers. Upgrading the implant doesn’t really provide a noticeable boost until the final rank.</p>
+<p>\[/spoiler\]</p>
+<h2>Bullet Drop</h2>
+<p>Bullets in PlanetSide 2 are affected by Gravity:</p>
+<ul><li>Most primary weapons: 11.25</li><li>Sniper Rifles: 7.5 (33% less)</li><li>VS Semi Auto Sniper Rifles and Phaseshift: 0</li></ul>
+<h3>Ballistic Table</h3>
+<p>Ballistic Table helps to compensate for bullet drop while doing long range sniping, especially with a Suppressor.</p>
+<p>A ballistic table contains the distance to the target, and a number of mildots that you have to raise your aim by in order to compensate for drop.</p>
+<p>Here’s an (outdated) example table for <em>Suppressed</em><a href="http://cmdrcyrious.com/planetside2/weapons/sniper-rifles/#RAMS_50" target="_blank" rel="noopener noreferrer"><strong>RAMS .50</strong></a> using 10X scope.</p>
+<p>| <strong>Distance, m</strong> | <strong>Drop, mildots</strong> | <strong>Infantry Height, mildots</strong> |  | 100 | 1.25 | 5 |  | 150 | 2 | 3.5 |  | 200 | 2.5 | 3 |  | 250 | 3 | 2.5 | </p>
+<p><span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/ballistic-table-e1498665596314.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> This table also includes the number of mildots in a full-height infantry target. You can use it to measure the distance to the target, or you can use</p>
+<p><a href="http://cmdrcyrious.com/planetside2/equipment/implants/#Sweeper_HUD" target="_blank" rel="noopener noreferrer"><strong>Sweeper HUD</strong></a> implant for that purpose.</p>
+<p>You can go to <a href="http://cmdrcyrious.com/planetside2/starter-guide/#VR_Training" target="_blank" rel="noopener noreferrer"><strong>VR Training</strong></a>, write a ballistic table on a piece of paper and then pin it to the monitor with a sticker.</p>
+<h3>Ballistic Crosshair Overlay</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/550msSniperBallistic.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/sniper-rifle-ballistic-crosshair-overlay.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/ballistic-tip-1-1.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>This is an alternative to a Ballistic Table. <strong><a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/550msSniperBallistic.png" target="_blank" rel="noopener noreferrer">This example crosshair</a></strong> is configured for:</p>
+<ul><li>6x zoom and 550 m/s projectile velocity Sniper Rifles, such as <a href="http://cmdrcyrious.com/planetside2/weapons/sniper-rifles/#Long_Range" target="_blank" rel="noopener noreferrer"><strong>Long Range Semi-Auto Sniper Rifles</strong></a> and <a href="http://cmdrcyrious.com/planetside2/weapons/sniper-rifles/#Tier_2_8211_Medium_Range" target="_blank" rel="noopener noreferrer"><strong>Tier 2 Bolt Action Rifles</strong></a>.</li><li>1920 x 1080 resolution.</li><li><strong><a href="http://cmdrcyrious.com/planetside2/performance-guide/#Vertical_Field_of_View" target="_blank" rel="noopener noreferrer">Vertical FoV</a></strong> of 74 degrees.</li></ul>
+<p>Markings on the left show the height of standard infantry target at 200m and 250m. Use them to measure distance to the target, and then use the couples of dots below the crosshair to compensate for bullet drop. <a href="https://www.youtube.com/watch?v=WmUbSzW-h6I" target="_blank" rel="noopener noreferrer"><strong>Video demonstration</strong></a>. <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/550msSniperBallistic.png" target="_blank" rel="noopener noreferrer"><strong>Download link</strong></a>.</p>
+<p>There are no markings for closer range, because within 150m these rifles are mostly point and click. This makes Ballistic Crosshair Overlay mostly pointless, because most of the “useful” sniping is done within that distance.</p>
+<p>To use it you will have to install <a href="http://cmdrcyrious.com/planetside2/performance-guide/#Custom_crosshair_overlay" target="_blank" rel="noopener noreferrer"><strong>Recursion Stat Tracker</strong></a> with a Crosshair Overlay module. In case you’re wondering, this is completely legit and you will not get banned for using it.</p>
+<p>This particular example is mostly just proof of concept. It will not work for players with other Vertical FoV or resolution, or for a rifle with a different Zoom or Projectile Velocity.</p>
+<p>If you’d like to use a Ballistic Crosshair Overlay, you would probably have to create your own, using a bit of Photoshop and a few screenshots.</p>
+<h2><a href="http://cmdrcyrious.com/planetside2/performance-guide/#Vertical_Field_of_View" target="_blank" rel="noopener noreferrer">Field of View</a></h2>
+<p>Having the right FoV settings is especially important for snipers.</p>
+<ul><li>With lower FoV, enemies will occupy more space on your screen, making it easier to land headshots at long range.</li><li>WIth higher FoV, you will see more of the game world on your screen, which can allow for better situational awareness in CQC sniping.</li></ul>
+<h2>Increased Headshot Damage Multiplier</h2>
+<p>Weapons usually deal increased damage when hitting the head:</p>
+<ul><li>Most primary weapons: 2x</li><li>Bolt Action Sniper Rifles: 2.1x</li><li>Phaseshift in “bolt action” mode: 2.2x</li></ul>
+<h2>Increased Fire Detect Range</h2>
+<p>When you fire an unsuppressed weapon, your position is <strong><a href="http://cmdrcyrious.com/planetside2/beginner-guides/map-and-minimap/#Minimap" target="_blank" rel="noopener noreferrer">highlighted as a dot</a></strong> on the minimap of all enemies within this Fire Detect Range:</p>
+<ul><li>Most primary weapons: 40m.</li><li>Sniper Rifles: 100m.</li><li>Directive Sniper Rifles: 150m.</li><li>TRAP-M1: 40m</li></ul>
+<h2>Increased Tracer Visibility</h2>
+<p>Sniper Rifles have more visible tracers than other firearms. They are thicker, and linger for longer.</p>
+<h2>Increased Scope In Time</h2>
+<p>Scope In Time is the time it takes for a weapon to transition from Hip Firing to Aiming Down Sights.</p>
+<ul><li>Most primary weapons: 0.15 seconds</li><li>Rifles with 6x-12x magnification scopes: 0.3 seconds.</li><li>“Close range” sniper rifles that use 1x-4x scopes: 0.2 seconds.</li></ul>
+<p>Additionally, while scoping into high magnification overlay scopes, you will have a temporary blackout, and there will be a short animation with crosshair moving in. Overall, it takes about extra 30-50ms.</p>
+<p>These values refer only to weapon animation, <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Hip_Accuracy_and_Aim_Accuracy__Cone_of_Fire" target="_blank" rel="noopener noreferrer">Cone of Fire Mechanics</a></strong> are a separate issue.</p>
+<h2>Additional Forward Grip Benefit</h2>
+<p>In addition to its usual effects, <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/#Forward_Grip_Advanced_Forward_Grip" target="_blank" rel="noopener noreferrer">Forward Grip</a></strong> reduces Vertical Recoil by 15% for all Sniper Rifles, except <strong>TRAP-M1</strong>.  Forward Grip bears a 0.1 second Equip Time penalty for all Sniper Rifles.</p>
+<h2>Semi Auto Sniper Rifles</h2>
+<p><strong>VS</strong> Semi Auto Sniper Rifles do not have bullet drop.</p>
+<h2>Long Range</h2>
+<h3>99SV</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/99SV.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>Gauss SPR</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Gauss-SPR.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>VA39 Spectre</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/VA39-Spectre.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>These are classic “long range” semi auto sniper rifles with access to 6x through 12x overlay sniper scopes. They can take rapid follow-up shots, and are more effective at killing enemies with body shots than most other sniper rifles.</p>
+<p>They have exclusive access to <strong>Ballistics Computer</strong> – a rail attachment that completely removes Scope Sway on all scopes. Unlocked and equipped by default. <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Ballistics Computer</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Ballistics-Computer.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span></p>
+<p><strong>VS</strong> Semi Auto Sniper Rifles have no bullet drop and slightly higher velocity, and they do slightly more damage within 100m, but less damage at 100m+.</p>
+<p>All Semi Auto Sniper Rifles kill standard targets in 2 headshots at all ranges, so the damage difference mostly applies to sniping Heavy Assaults, or hitting bodyshots.</p>
+<p><strong>99SV</strong> and <strong>Spectre</strong> are the starting weapons for <strong>TR</strong> and <strong>VS</strong> Infiltrators, respectively.</p>
+<p><strong>Unlock cost:</strong> 325  <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 250</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h4>99SV and Gauss SPR</h4>
+<p>Damage: 400 @ 50m – 334 @ 150m</p>
+<p>Rate of Fire: 231 RPM</p>
+<p>Velocity: 550 m/s</p>
+<p>Reload Time: 2.125 / 2.975 sec</p>
+<p>Ammo: 10 / 70</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 100m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 0.85 / 0.25 sec</p>
+<p>ADS Time To / From: 0.3 / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.5 / 7.5</p>
+<p>Hip CoFs: 5.5 / 6 / 6 / 6.5 / 0.8</p>
+<p>ADS CoFs: 0 / 0.2 / 0 / 0.55 / 0.15</p>
+<p><strong>Max ADS CoF while standing still or crouching still:</strong> 0.15</p>
+<p><strong>CoF Recovery Rate while standing still or crouching still:</strong> 100</p>
+<p>Vertical Recoil: 1.2</p>
+<p>First Shot Recoil Multiplier: 1x</p>
+<p>Recoil Angle: 6 / 15</p>
+<p>Horizontal Recoil: 0.1 / 0.2</p>
+<p>Horizontal Recoil Tolerance: 0.2</p>
+<p>Recoil Recovery Delay: -130</p>
+<p>Recoil Recovery Rate: 10</p>
+<p><strong>Attachments:</strong> Suppressor, Darklight Flashlight, Forward Grip, Ballistics Computer</p>
+<h3>VA39 Spectre</h3>
+<p>Damage: 400 @ 50m – 260 @ 200m</p>
+<p>Velocity: 570 m/s</p>
+<p>Projectile Lifespan / Gravity: 1.25 / 0</p>
+<h3>Bullets to Kill</h3>
+<ul><li>BS = Bodyshot</li><li>HS = Headshot</li><li>X + 1 = X Headshots + 1 Bodyshot</li></ul>
+<p>|  | <strong>Infantry</strong> | <strong>Full Nano</strong> | <strong>NMG HA + Nano</strong> | <strong>Resist HA</strong> |  | <strong>TR and NC Rfiles</strong> | 3 BS: all 2 HS: all 1 + 1: all | 4 BS: all 2 HS: all 1 + 1: \&lt;115m | 5 BS: \&lt;112m 2 HS: \&lt;112m 2 + 1: 112m+ | 4 BS: \&lt;73m 2 HS: \&lt;73m 2 + 1: 74m+ |  | <strong>VS Rifle</strong> | 3 BS: \&lt;121m 2 HS: all 1 + 1: \&lt;122m | 4 BS: \&lt;143m 2HS: all 1 + 1: \&lt;95m | 5 BS: \&lt;93m 6 BS: 94 – 157m 2 HS: \&lt;93m 2 + 1: 94 – 157m | 4 BS: \&lt;66m 4 BS: 67 – 149m 2 HS: \&lt;66m 2 + 1: 67 – 149m | </p>
+<p>To boil this information down to a memorable form:</p>
+<p>Semi Auto Rifles kill infantry in 2 headshots at all ranges, and in 1 headshot and 1 bodyshot within \~100m. Heavy Assaults require an extra headshot.</p>
+<h2>Close Range</h2>
+<h3>KSR-35</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/KSR-35.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>Impetus</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Impetus.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>Phantom</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Phantom-VA23.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>These “close range” variants are mostly similar to their “long range” brethren. The main difference is that “close range” variants sacrifice damage at range and the ability to take rapid follow up shots to gain access to low-zoom scopes without any scope sway: iron sights, 1x, 2x, 3.4x and 4x reflex scopes, but not HS/NV scope.</p>
+<p>They also have shorter Scope In Time (0.2 seconds versus 0.3), but slightly worse recoil properties and lower velocity.</p>
+<p><strong>Unlock cost:</strong> 650 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 499</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>\[spoiler title=”Detailed Stats”\]</p>
+<h4>KSR-35 and Impetus</h4>
+<p>Damage: 400 @ 10 – 334 @ 85</p>
+<p>Rate of Fire: 231 (effective 200)</p>
+<p>Velocity: <strong>500 m/s</strong></p>
+<p>Reload Time: 2.125 / 2.975 sec</p>
+<p>Ammo: 10 / 70</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 100m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 0.85 / 0.25 sec</p>
+<p>ADS Time To / From: <strong>0.2</strong> / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.5 / 7.5</p>
+<p>Hip CoFs: 5.5 / 6 / 6 / 6.5 / 0.8</p>
+<p>ADS CoFs: 0 / 0.2 / 0 / 0.55 / 0.8</p>
+<p>Vertical Recoil: <strong>1.3</strong></p>
+<p>First Shot Recoil Multiplier: 1x</p>
+<p>Recoil Angle: <strong>-15</strong> / 15</p>
+<p>Horizontal Recoil: 0.1 / 0.2</p>
+<p>Horizontal Recoil Tolerance: 0.2</p>
+<p>Recoil Recovery Delay: -130</p>
+<p>Recoil Recovery Rate: 10</p>
+<p><strong>Attachments:</strong> Suppressor, Darklight Flashlight, Forward Grip</p>
+<h4>Phantom</h4>
+<p>Damage: 400 @ 8 – 260 @ 200</p>
+<p>Velocity: <strong>525 m/s</strong></p>
+<p>Projectile Lifespan / Gravity: 1,25 / 0</p>
+<h3>Bullets to Kill</h3>
+<ul><li>BS = Bodyshot</li><li>HS = Headshot</li><li>X + 1 = X Headshots + 1 Bodyshot</li></ul>
+<p>|  | <strong>Infantry</strong> | <strong>Full Nano</strong> | <strong>NMG HA + Nano</strong> | <strong>Resist HA</strong> |  | <strong>TR and NC Rfiles</strong> | 3 BS: all 2 HS: all 1 + 1: all | 4 BS: all 2 HS: all 1 + 1: \&lt;59m | 5 BS: \&lt;56m 2 HS: \&lt;56m 2 + 1: 57m+ | 5 BS: all 3 HS: all 2 + 1: \&lt;53m |  | <strong>VS Rifle</strong> | 3 BS: \&lt;98m 2 HS: all 1 + 1: \&lt;98m | 4 BS: \&lt;127m 2HS: all 1 + 1: \&lt;66m | 5 BS: \&lt;63m 6 BS: 64 – 145m 2 HS: \&lt;63m 2 + 1: 64 – 145m | 5 BS: \&lt;99m 6 BS: 100 – 175m 3 HS: \&lt;175m 2 + 1: \&lt;59m | </p>
+<p>To boil this information down to a memorable form:</p>
+<p>Semi Auto Rifles kill infantry in 2 headshots at all ranges, and in 1 headshot and 1 bodyshot within \~50m. Heavy Assaults require an extra headshot.</p>
+<h2>SASR Mechanics</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/SASR-mechanics-1024x576.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>Tap Firing Issues</h3>
+<p><strong>Tap Firing</strong> refers to the technique of firing single shots while letting the crosshair fully recenter before each shot.</p>
+<p>Given proper timing, Tap Firing provides good accuracy and optimal damage output. Weapon’s affinity for Tap Firing is determined by its <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Recentering_Time_for_Tap_Firing" target="_blank" rel="noopener noreferrer">Recentering Speed</a></strong>.</p>
+<p>Good Tap Firing skills are generally important for using any semi-auto weapon, but Semi Auto Sniper Rifles also <em><strong>have a big and unique issue</strong></em> related to overzealous Tap Firing.</p>
+<p>SARS are among the few weapons with <strong>negative <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Recoil_Recovery_Delay" target="_blank" rel="noopener noreferrer">Recoil Recovery Delay</a></strong>, and they fully Recenter <em><strong>before</strong></em> the Refire Time is over – before you can take another shot. Especially if you use them with a Forward Grip, which reduces Vertical Recoil for sniper rifles, and thus reduces the time the weapon needs to recover recoil.</p>
+<p>However, unlike Recoil, <strong>Cone of Fire</strong> does not start recovering until Refire Time is over.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2018/06/99SV-timeline.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>So if you fire as soon as you can, you will fire before Cone of Fire recovers, and you will be more likely to miss.</p>
+<p>|  | <strong>Can fire again by</strong> | <strong>CoF Recovers by</strong> | <strong>Recoil Recovers by</strong> | <strong>/w Forward Grip</strong> |  | <strong>Long Range SASR</strong> | 0.26 sec | 0.2615 | 0.251 | 0.233 |  | <strong>Close Range SASR</strong> | 0.26 sec | 0.3 | 0.261 | 0.241 | </p>
+<p>For both SASR, recoil recovery <em>finishes</em> before CoF recovery <em>starts</em>, even without Forward Grip. One could argue that Forward Grip provides an extra moment to correct the crosshair placement between shots, but the difference of \~0.02 seconds is imperceptible to the eye.</p>
+<p><strong>Effectively, Forward Grips is useless for SASR.</strong></p>
+<p>These issues are less apparent for “long range” SASR, as they reset CoF very quickly.</p>
+<h2>Bolt Action Sniper Rifles</h2>
+<p><strong>VS</strong> Bolt Action Rifles <strong>have</strong> bullet drop.</p>
+<p>Each faction has a large selection of Bolt Action Rifles. They all have slightly different stats, with main differences in reload time, velocity, bolt chamber time, and the distance at which they can kill an enemy in one headshot.</p>
+<p><strong>Bolt Action Rifles are identical between factions.</strong></p>
+<p>These stats are identical for all BASR across all factions, with the exception of Directive Sniper Rifles.</p>
+<p>Refire Time: 170ms</p>
+<p>Headshot Damage Multiplier: 2.1x</p>
+<p>Minimap Detect Range: 100m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 0.85 / 0.25 sec</p>
+<p>Projectile Lifespan / Gravity: 1.5 / 7.5</p>
+<p>Vertical Recoil: 0.4</p>
+<p>First Shot Recoil Multiplier: 1x</p>
+<p>Recoil Angle: 0 / 0</p>
+<p>Horizontal Recoil: 0.1 / 0.1</p>
+<p>Horizontal Recoil Tolerance: 0.2</p>
+<p>Recoil Recovery Delay: 0</p>
+<p>Recoil Recovery Rate: 5</p>
+<p><strong>Attachments:</strong> Suppressor, Darklight Flashlight, Forward Grip, Straight-Pull Bolt</p>
+<p><strong>Close Range, Medium Range, Long Range</strong></p>
+<p>Hip CoFs: 4,5 / 5 / 5 / 6 / 1</p>
+<p>ADS CoFs: 0 / 0,2 / 0 / 0,55 / 1</p>
+<p><strong>Extreme Range</strong></p>
+<p>Hip CoFs: 5 / 5,5 / 5,5 / 6,5 / 1</p>
+<p>ADS CoFs: 0 / 0,2 / 0 / 0,55 / 1</p>
+<h4>BASR Damage Comparison</h4>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">BASR damage comparison</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/BASR-damage-comparison-1024x440.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Click to enlarge</p>
+<h2>Tier 1 – Close Range</h2>
+<h3>TSAR-42</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/TSAR-42.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>SAS-R</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/SAS-R.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>Ghost</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Ghost.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Time Between Shots:</strong> 1100 + 170 = 1.27 seconds</p>
+<p>OHK Range: 200m</p>
+<p>Damage: 700 @ 10 – 400 @ 265</p>
+<p>Velocity: 500 m/s</p>
+<p>Reload Time: 2.8 / 4 sec</p>
+<p>Ammo: 5 / 40</p>
+<p>Scope In Time: 0.2 seconds</p>
+<p>Scope Selection: 1x through 4x</p>
+<p>The weapon of choice for <a href="http://cmdrcyrious.com/close-range-sniping-guide-by-davregis/" target="_blank" rel="noopener noreferrer"><strong>Close Quarters Sniping</strong></a>.</p>
+<p><strong>Unlock cost:</strong> 650 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 499</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h2>Tier 2 – Medium Range</h2>
+<h3>M-77B</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/M77-B.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>NC14 Bolt Driver</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/NC14-Bolt-Driver.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>XM98</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/XM98.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Time Between Shots:</strong> 1225 + 170 = 1.395 seconds</p>
+<p>OHK Range: 250m</p>
+<p>Damage: 650 @ 10 – 400 @ 350</p>
+<p>Velocity: 550 m/s</p>
+<p>Reload Time: 2.8 / 4 sec</p>
+<p>Ammo: 5 / 40</p>
+<p>Scope In Time: 0.3 seconds</p>
+<p>Scope Selection: 6x through 12x</p>
+<p>These are the most versatile Bolt Action rifles. They have a great balance of stats – almost as fast as Close Range rifles, almost as effective at range as Long Range rifles. They’re also dirt cheap.</p>
+<p>Most of the “useful” sniping is usually done within 150m or so, and these rifles are arguably the best choice for that range segment.</p>
+<p>Comparatively low projectile velocity will require you to deliberately compensate for projectile drop when going for targets outside 150m.</p>
+<p><strong>Bolt Driver</strong> is the starting Infiltrator weapon for <strong>NC</strong>.</p>
+<p><strong>Unlock Cost:</strong> 325  <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 250</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h2>Tier 2 – Long Range</h2>
+<h3>SR-7</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/SR-7.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>LA80</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/LA80.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>V10</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/V10.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Time Between Shots:</strong> 1395 + 170 = 1.565 seconds</p>
+<p>OHK Range: 250m</p>
+<p>Damage: 650 @ 10 – 400 @ 350</p>
+<p>Velocity: 600 m/s</p>
+<p>Reload Time: 3.1 / 4.7 sec</p>
+<p>Ammo: 8 / 48</p>
+<p>Scope In Time: 0.3 seconds</p>
+<p>Scope Selection: 6x through 12x</p>
+<p>These rifles take longer to rechamber and reload, but they gain increased velocity and magazine size.</p>
+<p><strong>Unlock cost:</strong> 1000  <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 699</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h2>Tier 3 – Extreme Range</h2>
+<h3>RAMS .50</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/RAMS-.50M.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>EM4 Longshot</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/EM4-Longshot.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>Parallax VX3</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Parallax-VX3.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Time Between Shots:</strong> 1500 + 170 = 1.670 seconds</p>
+<p>OHK Range: 300m</p>
+<p>Damage: 700 @ 10 – 400 @ 400</p>
+<p>Velocity: 650 m/s</p>
+<p>Reload Time: 4.2 / 5.575 sec</p>
+<p>Ammo: 5 / 40</p>
+<p>Scope In Time: 0.3 seconds</p>
+<p>Scope Selection: 6x through 12x</p>
+<p>These rifles have the highest projectile velocity among conventional Bolt Action rifles, as well as the highest OHK Range, but they take the longest to rechamber and reload.</p>
+<p>Superior velocity means you don’t have to compensate for Projectile Drop within 200m or so, basically making these rifles “point and click”.</p>
+<p>When sniping targets at 250m+, take an extra second to properly Hold Breath and compensate for Scope Sway, because at those ranges even suppressed Scope Sway can mess with your crosshair placement.</p>
+<p><strong>Unlock cost:</strong> 1000  <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 699</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h2>BASR Mechanics</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/BASR-mechanics2.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>Bodyshots</h3>
+<p>BASR can kill full Nanoweave infantry with 2x Bodyshots within:</p>
+<ul><li>Tier 1: 73m</li><li>Tier 2: 44m</li><li>Tier 3: 107m</li></ul>
+<p>So if the target is being particularly evasive, and you can’t land a headshot, it may be better to go for easier bodyshots.</p>
+<h3><a href="http://cmdrcyrious.com/planetside2/weapons/melee-weapons/#Melee_Combo" target="_blank" rel="noopener noreferrer">Melee Combo</a></h3>
+<p>All BASR can reliably kill a standard infantry unit with a <strong><a href="http://cmdrcyrious.com/planetside2/weapons/melee-weapons/#Melee_Combo" target="_blank" rel="noopener noreferrer">melee combo</a></strong>, and it can be an effective way of disposing enemies that managed to close the distance with you.</p>
+<p>An enemy with full Nanoweave + Aux. Shield will be able to survive a melee combo from a Tier 2 BASR, but it should be a rare combination.</p>
+<p>Try to develop a habit of equipping a sidearm right after a melee combo. Recovering and rechambering a BASR after a melee combo is going to take more than two seconds, and it’s better to do that <em><strong>after</strong></em> you make sure there are no enemies around.</p>
+<p>Alternatively, you can use <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Melee_Interactions_with_Pump_Action_and_Bolt_Action_Weapons" target="_blank" rel="noopener noreferrer">this trick</a></strong> to quick melee after a shot during the chamber animation.</p>
+<h3>Sidearm Combo</h3>
+<p>When faced with an enemy at close range, it’s a common technique to land an “easy” bodyshot, and then finish off the enemy with a sidearm.</p>
+<h3>Bolt Action Chamber Time</h3>
+<p>The Bolt Chamber Time shown on <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/chamber-time-stat-sheet.png" target="_blank" rel="noopener noreferrer"><strong>in-game weapon stat sheet</strong></a> doesn’t tell the whole story. You can learn more about it <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Bolt_Action_and_Pump_Action_Weapons" target="_blank" rel="noopener noreferrer">here</a></strong>, or just use the values provided in this guide.</p>
+<h3>Straight Pull Bolt</h3>
+<p>Normally, you can’t rechamber your rifle while Aiming Down Sights, and you have to always leave ADS to let rechamber animation begin. You will not be able to ADS during rechambering.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Straight Pull Bolt</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/icon_weaponAttachment_common_Boltaction001_128.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong><span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Supercooled Coil</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Supercooled-Coil.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span>Straight Pull Bolt</strong> attachment allows you to start rechambering the rifle as soon as Refire Time is over, and enables you to enter and leave ADS at any time during rechambering.</p>
+<p><strong>VS</strong> version of this attachment is called <strong>Supercooled Coil</strong>.</p>
+<p>This significantly increases your effective Rate of Fire, as you don’t have to sit through Scope In Time after each shot. However, this can potentially lead to developing bad habits, such as tunnel visioning, so remember to often break ADS during rechambering to take a look around.</p>
+<h3>Quick-scoping</h3>
+<p>Normally, a Bolt Action Rifle with a 6x+ scope is a liability at a distance between 3m and 6m. Hip fire is still too bad, and high magnification makes it very inconvenient to ADS, not to mention that ADSing itself takes more than 0.3 seconds.</p>
+<p>The standard procedure is to close the distance and go for a <strong><a href="http://cmdrcyrious.com/planetside2/weapons/melee-weapons/#Melee_Combo" target="_blank" rel="noopener noreferrer">melee combo</a></strong>, or a hip fire headshot at nearly melee range, but it’s not always possible. Equipping a sidearm also takes half a second, and you might be dead by then.</p>
+<p><strong>Quick-scoping</strong> gives you another combat option in that situation. It relies on the fact that Cone of Fire Reduction starts as soon as you begin ADSing, and takes roughly as long. So by the time you would fully complete ADS animation, you would have 100% accuracy. However, you don’t need 100% accuracy to hit a shot on a target within 3-5m.</p>
+<p>A skilled player with impeccable timing can fire an “accurate enough” shots <em><strong>during</strong></em> ADS animation, before the crosshair becomes visible.</p>
+<p>To perform this trick you have to fire about \~0.2 seconds after you start Aiming Down Sights. You can release ADS key right after you click fire.</p>
+<ul><li>This trick benefits a lot from having <strong><a href="http://cmdrcyrious.com/planetside2/performance-guide/#Custom_crosshair_overlay" target="_blank" rel="noopener noreferrer">Crosshair Overlay</a></strong>.</li></ul>
+<p>The optimal amount of time to be holding ADS before firing depends on whether you’re going for a headshot or a bodyshot. Headshots require tighter CoF, so you have to give it more time to shrink.</p>
+<p>Another factor is whether you were moving or stationary when you started ADSing. If you were standing still, your hip fire CoF was a bit smaller, so it would take a bit less time to reduce to the size you need.</p>
+<p>\[spoiler title=”Super advanced quick scoping mechanics”\]</p>
+<p>Let’s use <strong>M-77B</strong> as an example.</p>
+<p><code>Scope In Time: 0.3 seconds</code></p>
+<p><code>Sprinting CoF: 6 degrees</code></p>
+<p><code>Standing Moving Hip CoF: 6 degrees</code></p>
+<p><code>Sprint Recovery: 0.3 seconds</code></p>
+<p><code>Standing Still CoF: 4.5</code></p>
+<p><code>ADS Standing Moving CoF: 0.55</code></p>
+<p><code>ADS Standing Sill CoF: 0</code></p>
+<p><code>When switching stances, Cone of Fire reduces by 20 degrees per second.</code> </p>
+<p>A hypothetical scenario. You’re sprinting about your business, but suddenly an enemy pops up right in front of you.</p>
+<p>You stop sprinting and stand still, using your hip fire crosshair to aim at enemy’s head. After 0.3 seconds of Sprint Recovery Time, you will be able to fire, and your Cone of Fire will start transitioning from 6 degrees to 4.5 degree of Standing Still Hip.</p>
+<p>This process will take additional (6 – 4.5) / 20 = 1.5 / 20 = 0.075 seconds.</p>
+<p>Then you start Aiming Down Sights, and your Cone of Fire will begin reducing from 4.5 to 0 over 0.225 seconds.</p>
+<p>But the enemy is at very close range, and you can fire before Cone of Fire fully resets. Within 5m, infantry head hitbox has <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Calculated_Angular_Size" target="_blank" rel="noopener noreferrer">angular size</a></strong> of \~1.7 degrees. Let’s round this to 1.5 degrees.</p>
+<p>So you need to reduce your CoF from 4.5 to 1.5 degrees. This will take (4.5 – 1.5) / 20 = 3 / 20 = 0.15 seconds.</p>
+<p>So you can fire 0.15 seconds after you started Aiming Down Sights, essentially halfway through your ADS animation. As long as the enemy is close enough, and you properly aim at the center of his head, you should hit the headshot.</p>
+<p>However, keep in mind that you also have to stand still 0.3 + 0.075 seconds after you stopped sprinting.</p>
+<p>If you ADS while moving, right as you come out of sprint, you will have to hold your ADS animation for extra 0.075 seconds, or 0.225 seconds total.</p>
+<p>\[/spoiler\]</p>
+<p>Quick-scoping is not advised when going for a headshot on a full health enemy player. This has a lot of potential to fail, and even when done in 100% optimal way, you’re shaving off roughly a tenth of a second.</p>
+<p>Quick-scoping is much more viable when going for a bodyshot to finish off an already wounded enemy. Then you don’t have to hold ADS for nearly as long to get an accurate enough shot, and you have much more margin for error.</p>
+<p>You can see Mustarde doing a bit of quick scoping in <a href="https://www.youtube.com/watch?v=eZWtFMSj-c0" target="_blank" rel="noopener noreferrer"><strong>this video</strong></a>.</p>
+<h2>Empire Specific Sniper Rifles</h2>
+<h2>TRAP-M1</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/13755.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>\[spoiler title=”Weapon Stats”\]</p>
+<p>Damage: 184 @ 15 – 167 @ 85</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Projectile Velocity: 600 m/s</p>
+<p>Reload Time: 2.315 / 3.25</p>
+<p>Ammo: 21 / 189</p>
+<p>Hip CoFs: 3 / 3.5 / 3.5 / 4</p>
+<p>ADS CoFs: 0 / 0.17 / 0 / 0.25</p>
+<p>Minimap Detect Range: 40</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 0.85 / 0.25</p>
+<p>ADS Time To / From: 0.15 / 0.15</p>
+<p>Projectile Lifespan / Gravity: 1.5 / 7.5</p>
+<p>Recoil Recovery Delay: 0</p>
+<p>Recoil Recovery Rate: 6</p>
+<p><strong>2x Burst Mode</strong></p>
+<p>Burst Rate of Fire: 750</p>
+<p>Time between bursts: 0.25 sec</p>
+<p>Overall Rate of Fire: 480</p>
+<p>Vertical Recoil: 0.4</p>
+<p>First Shot Recoil Multiplier: 0.75x</p>
+<p>Recoil Angle: 0 / 0</p>
+<p>Horizontal Recoil: 0.1 / 0.1</p>
+<p>Horizontal Recoil Tolerance: 0.15</p>
+<p>Hip CoF Bloom: 0.12</p>
+<p>ADS CoF Bloom: 0.06</p>
+<p><strong>3x Burst Mode</strong></p>
+<p>Burst Rate of Fire: 652 </p>
+<p>Time between bursts: 0.276 sec</p>
+<p>Overall Rate of Fire: 652</p>
+<p>Vertical Recoil: 0.5</p>
+<p>First Shot Recoil Multiplier: 0.8x</p>
+<p>Recoil Angle: 0 / 0</p>
+<p>Horizontal Recoil: 0.175 / 0.175</p>
+<p>Horizontal Recoil Tolerance: 0.4375</p>
+<p>Hip CoF Bloom: 0.14</p>
+<p>ADS CoF Bloom: 0.07</p>
+<p><strong>Attachments:</strong> Suppressor, Laser Sight, Darklight Flashlight, Forward Grip</p>
+<p><strong>Optics:</strong> Iron Sights Default, HS/NV, 1x Reflex through 4x, 6x Overlay.</p>
+<p>TRAP-M1 is classified as a Sniper Rifle, but functionally it is a burst fire Scout Rifle. TRAP has two fire modes: 3 round and 2 round bursts.</p>
+<p>2x burst has less recoil and CoF Bloom, and is intended for longer ranges than 3x burst. As other sniper rifles, TRAP has poor hip fire.</p>
+<p>TRAP-M1 spent a lot of time in underpowered state, so it accumulated a lot bad faith with the community, often being called a “trap purchase”. However, the weapon has received a trickle of buffs over the years, and now is in a pretty good shape.</p>
+<p>Taking advantage of full rate of fire takes a bit of getting used to, but allows for a surprisingly high damage output even with bodyshots. The unusual damage model of 184 – 167 makes this weapon very consistent over range, and you can always switch to 2x burst mode when you need accuracy over firepower.</p>
+<h2>AF-8 RailJack</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">AF-8 Railjack</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/13752.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>\[spoiler title=”Weapon Stats”\]</p>
+<p>Damage: 750 @ 10 – 450 @ 400</p>
+<p>Headshot Damage Multiplier: 2.1x</p>
+<p>Kills in one headshot within \~364m.</p>
+<p>Fire Delay: 0.2 sec</p>
+<p>Time Between Shots: 1.7 + 0.1 = 1.8 sec</p>
+<p>Velocity: 850 m/s</p>
+<p>Reload Time: 4.1 / 5.1</p>
+<p>Ammo: 4 / 40</p>
+<p>Minimap Detect Range: 100</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 0.85 / 0.25</p>
+<p>ADS Time To / From: 0.3 / 0.15</p>
+<p>Projectile Lifespan / Gravity: 1.5 / 7.5</p>
+<p>Hip CoFs: 5 / 5.5 / 5.5 / 6.5 / 1</p>
+<p>ADS CoFs: 0 / 0.2 / 0 / 0.55 / 1</p>
+<p>Vertical Recoil: 0.4</p>
+<p>Recoil Angle: 0 / 0</p>
+<p>Horizontal Recoil: 0 / 0</p>
+<p>Horizontal Recoil Tolerance: 0.2</p>
+<p>Recoil Recovery Delay: 0</p>
+<p>Recoil Recovery Rate: 5</p>
+<p><strong>Attachments:</strong> Suppressor, Darklight Flashlight, Straight-Pull Bolt</p>
+<p><strong>Optics:</strong> 6x Default, M7 Optics (7x). A-Eight (8x). IO-10 (10x). IO-12 (12x)</p>
+<p>One of the few true railguns in NC arsenal, Railjack is <em><strong>the</strong></em> hardest hitting bolt action rifle, and has the highest projectile velocity of any infantry weapon in the game.</p>
+<p>As always, there’s a catch: Railjack has a 0.2 second firing delay between trigger pull and the actual shot, which makes it somewhat tricky to use, because you still need to adjust aim for target movement during those 0.2 seconds.</p>
+<p>If we include firing delay into bullet travel time, a bullet from <a href="http://cmdrcyrious.com/planetside2/weapons/sniper-rifles/#EM4_Longshot" target="_blank" rel="noopener noreferrer"><strong>EM4 Longshot</strong></a> will reach the target within 552m faster than a bullet from Railjack. So in order to benefit from its higher velocity, you <em><strong>have</strong></em> to be compensating for target movement during the fire delay. Otherwise, Longshot is objectively a better weapon.</p>
+<p><strong>Tip:</strong> you can bind “Fire” to your keyboard, so you can fire the Railjack without having to click the mouse. This should make it easier to keep tracking the target with the mouse during those 0.2 seconds.</p>
+<p>Due to firing delay, RailJack is the easiest rifle to <strong><a href="http://cmdrcyrious.com/planetside2/weapons/sniper-rifles/#Quick-scoping" target="_blank" rel="noopener noreferrer">quick-scope</a></strong> with. With other rifles, you need to have very precise timing. RailJack’s firing delay does it for you. Simply click ADS, then immediately click fire, and your shot will have a nearly perfect accuracy, without having to ADS all the way.</p>
+<p>This is excellenty demonstrated in <a href="https://youtu.be/Ag-pYBW3pLY" target="_blank" rel="noopener noreferrer"><strong>this video</strong></a>.</p>
+<h2>Phaseshift VX-S</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Phaseshift VX-S</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/13758.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>\[spoiler title=”Weapon Stats”\]</p>
+<p><strong>Heat Capacity</strong>: 1000</p>
+<p><strong>Heat Recovery Delay after firing</strong>: 0.7 sec or 1 sec</p>
+<p><strong>Heat Recovery Rate</strong>: 500 per second</p>
+<p><strong>Overheat Penalty</strong>: 1 sec</p>
+<p><strong>Refire Time:</strong> 0.326 sec (184 RPM)</p>
+<p>Projectile Velocity: 550 m/s</p>
+<p>Hip CoFs: 5.5 / 6 / 6 / 6.5 / 1</p>
+<p>ADS CoFs: 0 / 0.2 / 0 / 0.55 / 1</p>
+<p>Minimap Detect Range: 100</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 0.85 / 0.25</p>
+<p>ADS Time To / From: 0.3 / 0.15</p>
+<p>Projectile Lifespan / Gravity: 1.25 / 0</p>
+<p>Recoil Angle: 6 / 15</p>
+<p>Horizontal Recoil: 0.1 / 0.2</p>
+<p>Horizontal Recoil Tolerance: 0.2</p>
+<p>Recoil Recovery Rate: 15</p>
+<p>Recoil Recovery Acceleration: 0.3</p>
+<p><strong>Semi Auto Fire Mode</strong></p>
+<p>Damage: 400 @ 10m – 334 @ 85m</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Kills in 2 headshots at all ranges.</p>
+<p><strong>Heat Per Shot</strong>: 190</p>
+<p>Vertical Recoil: 1.2</p>
+<p>Recoil Recovery Delay: -150 ms</p>
+<p><strong>Bolt Action Fire Mode</strong></p>
+<p>Damage: 550 @ 10m – 400 @ 400m</p>
+<p>Headshot Damage Multiplier: 2.2x</p>
+<p>Kills in one headshot within \~257m.</p>
+<p><strong>Heat Per Shot</strong>: 800</p>
+<p>Vertical Recoil: 4.5</p>
+<p>Recoil Recovery Delay: 0</p>
+<p><strong>Attachments:</strong> Suppressor, Darklight Flashlight, Forward Grip</p>
+<p><strong>Optics:</strong> 6x Default, TSO (7x). TriGon-8 (8x). Mach-10 (10x). Mach-12 (12x)</p>
+<p>Embracing adaptability and versatility, Phaseshift can switch between “semi auto” and “bolt action” fire modes, though in reality the “bolt action” mode is just a more powerful semi auto mode.</p>
+<p>In semi-auto fire mode, Phaseshift has similar performance to a <strong><a href="http://cmdrcyrious.com/planetside2/weapons/sniper-rifles/#Long_Range" target="_blank" rel="noopener noreferrer">TR / NC “long range” SASR</a></strong>, though it can fire only 6 shots before overheating.</p>
+<p>In “bolt action” fire mode, Phaseshift has much more recoil, but kills standard infantry in one headshot within \~257m, and you can make two back to back shots, potentially killing two targets under a second (<strong><a href="https://gfycat.com/ConstantGraveAmericanlobster" target="_blank" rel="noopener noreferrer">example</a></strong>).</p>
+<p>It is highly recommended to use Phaseshift with a <strong><a href="http://cmdrcyrious.com/planetside2/weapons/sniper-rifles/#AdditionalForward_Grip_Benefit" target="_blank" rel="noopener noreferrer">Forward Grip</a></strong>, as it reduces the high Vertical Recoil of “bolt action” mode.</p>
+<p>Both fire modes don’t have any bullet drop, which effectively makes Phaseshift the only OHK-capable weapon without bullet drop. This makes it an interesting choice for a Suppressor, which reduces velocity to 467 m/s and OHK Range to \~240m.</p>
+<p>Phaseshift also uses <strong>heat mechanic</strong> instead of ammunition. It doesn’t require reloading, and effectively has infinite ammo, but it needs to cool down between shots. Mechanics:</p>
+<p>Firing accumulates heat. The amount of accumulated <strong>Heat Per Shot</strong> depends on the fire mode. When you stop firing, after a <strong>Heat Recovery Delay,</strong> the weapon starts bleeding off the heat at a <strong>Heat Recovery Rate</strong>.</p>
+<p>There is only so much heat the weapon can accumulate at once, equal to <strong>Heat Capacity.</strong> If you overheat your weapon, the weapon will suffer an <strong>Overheat Penalty</strong> before it can start cooling down, and you will not be able to fire again until the weapon fully cools down.</p>
+<h2>Directive Sniper Rifles</h2>
+<h3>Bighorn .50M</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Bighorn-.50M.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>The Moonshoot</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/The-Moonshot.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>Parsec VX3-A</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Parsec-VX3-A.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Time Between Shots:</strong> 1.5 + 0.17 = 1.67 seconds</p>
+<p>OHK Range: 250m</p>
+<p>Damage: 750 @ 10 – 400 @ 325</p>
+<p>Velocity: 680 m/s</p>
+<p>Reload Time: 3.86 / 5 sec</p>
+<p>Ammo: 5 / 40</p>
+<p>Vertical Recoil: 0.3</p>
+<p>Hip CoFs: 5.5 / 6.25 / 6 / 6.75 / 1</p>
+<p>Minimap Detect Range: 150m</p>
+<p>The only way to obtain one of these sniper rifles is to complete the auraxium level of Sniper Rifle Directives.</p>
+<p>The Directive Sniper Rifles have a unique combination of attachments: special HVA, Compensator and Straight Pull Bolt.</p>
+<p>They can be treated as a variant of Extreme Range BASR. Directive Rifles have higher velocity than any conventional BASR, and they deal the most damage within 150m. However, they have increased Fire Detection Range, as well as shorter OHK Range.</p>
+<h2>Cross-faction Rifles</h2>
+<h2>NSX Daimyo</h2>
+<p>| DIRECT DAMAGE | 225 @ 10m – 175 @ 350m |  | RATE OF FIRE | 180 RPM |  | VELOCITY | 600 m/s |  | AMMO | 3 / 30 |  | RELOAD TIME | 2.2 sec / 3 sec |  | UNLOCK COST | 1000 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 799 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/NSX-Daimyo-1-e1507411948451.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Semi-Auto</p>
+<p>Hip CoFs: 4.5 / 5 / 5 / 6 / 1</p>
+<p>ADS CoFs: 0 / 0.2 / 0 / 0.55 / 1</p>
+<p><strong>Headshot Damage Multiplier: 5x</strong></p>
+<p>Minimap Detect Range: 100m</p>
+<p>ADS Movespeed Multiplier: 0.5x</p>
+<p>Equip / Unequip Time: 0.85 sec / 0.25 sec</p>
+<p>ADS Time To / From: 0.2sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.5 / 7.5</p>
+<p>Vertical Recoil: 0.8</p>
+<p>First Shot Recoil Multiplier: 1x</p>
+<p>Recoil Angle: 0 / 0</p>
+<p>Horizontal Recoil: 0.1 / 0.1</p>
+<p>Horizontal Recoil Tolerance: 0.2</p>
+<p>Recoil Recovery Delay: 90</p>
+<p>Recoil Recovery Rate: 8</p>
+<p><strong>Attachments:</strong> Darklight Flashlight, Extended Magazine, Suppressor, Weighted Receiver</p>
+<p><strong>Optics:</strong> DV6 (6x), Seer-6 (6x), Quadra (4x), Octal (8x), Deca (10x), DoDec (12x), Hepta (7X)</p>
+<p><strong>NSX Daimyo</strong> is a rather unique semi auto sniper rifle. It deals low damage to body, but thanks to Headshot Damage Multiplier of 5x, it is capable of killing infantry in one headshot within 180m.</p>
+<p>Landing a headshot is pretty much the only way to kill with this weapon; it simply doesn’t have enough damage per mag to kill even one infantryman with bodyshots.</p>
+<p>On the other hand, if you <em><strong>can</strong></em> land headshots, Daimyo lets you take 3-4 potentially lethal shots in a period of time where a BASR would be able to make 2 shots at most. Daimyo has the most immediate killing potential of any sniper rifle.</p>
+<p>However, even if you are capable of consistently landing headshots on multiple enemies back to back, there are other considerations:</p>
+<ul><li>Daimyo cannot kill deployables in one shot.</li><li>Leveraging Daimyo’s advantage over a bolt action rifle means firing several shots without recloaking inbetween, which is potentially dangerous.</li><li>Daimyo has more projectile drop than other sniper rifles with the same velocity. <strong><a href="https://www.reddit.com/r/Planetside/comments/8q0797/dayimos_muzzle_velocity_is_incorrect/e0fs3ox/" target="_blank" rel="noopener noreferrer">This is intentional</a></strong>.</li></ul>
+<p>Daimyo is most effective in the range bracket between 20m and 100m, and it directly competes with <strong><a href="http://cmdrcyrious.com/planetside2/weapons/sniper-rifles/#Tier_1_8211_Close_Range" target="_blank" rel="noopener noreferrer">Tier 1 “Close Range” BASR</a></strong>. Compared to them, Daimyo has a set of other disadvantages.</p>
+<ul><li>Tier 1 BASR can kill NMG / Adrenaline HAs within 22m. Daimyo cannot kill any shielded Heavy Assault in one shot.</li><li>An accidental bodyshot with a BASR can be often converted to a kill with a second bodyshot. Daimyo is limited to headshots as the only option.</li><li>When suddenly confronted by an enemy at extremely close range, a Tier 1 BASR can go for a bodyshot, and then finish off the enemy with a quick melee strike or a few sidearm shots. <em>With the Daimyo it’s either headshot or I should have already had my pistol out. (c) <a href="https://www.reddit.com/r/Planetside/comments/74xtz7/can_we_talk_about_daimyo/do1ydzz/" target="_blank" rel="noopener noreferrer"><strong>AnuErebus</strong></a></em></li></ul>
+<p>The weird combination of relatively high velocity and strong bullet drop is often brought up as Daimyo’s greatest downside, but at the moment it’s not clear whether this amount of drop is intentional, because based on its stats, it should have exactly the same drop and velocity as Tier 3 BASR.</p>
+<p>While Daimyo <a href="https://youtu.be/m134Naz5Ex4?t=26" target="_blank" rel="noopener noreferrer"><strong>can be spammed more or less effectively</strong></a>, perhaps you should treat it simply as a rifle that lets you take another shot if you miss. You still should recloak often for the sake of survivability.</p>
+<p>Due to inconvenient drop, Daimyo is most effective when you are fighting against enemies on flat ground, so you don’t have to adjust for drop against every new target. Like other NSX weapons, Daimyo seems to be especially effective in one specific scenario, and mediocre in all other scenarios. It’s an interesting and unusual, polarizing weapon, but if you’re looking for tried and true, consider using a Tier 1 BASR instead.</p>
+<p>In addition to the standard Darklight Flashlight, Daimyo has access to a couple of other rail attachments:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Weighted Receiver</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Weighted-Receiver-e1507414531233.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Weighted Receiver</strong>– makes you pinpoint accurate while ADSing and moving, but reduces ADS Movement Speed Multiplier to 0.33x, so you basically slow down to a crawl while aiming.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Extended Mags Faven</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/icon_Weapons_Common_FavenWeapons_Attachments_RifleClip001_256x128-e1507414510935.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Extended Mags</strong>– increases magazine size by 1 round. This is the recommended choice.</p>
+<h2>Anti Materiel Rifles</h2>
+<h2>NS-AM7 Archer</h2>
+<p>| DIRECT DAMAGE | 400 @ 25m – 200 @ 200m |  | INDIRECT DAMAGE | 100 @ 1m – 25 @ 3m |  | TIME BETWEEN SHOTS | 1.5 + 0.25 = 1.75 sec |  | VELOCITY | 525 m/s |  | AMMO | 5 / 30 |  | RELOAD TIME | 3.0 sec / 4.25 sec |  | UNLOCK COST | 1000 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Certification Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2u70d9j.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> or 799 <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Daybreak Cash</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/14250ep.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/NS-AM7-Archer.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Bolt-Action</p>
+<p>Direct Damage Type: 40 – Anti-Material Rifle</p>
+<p>Indirect Damage Type: 6 – Common Explosion.</p>
+<p>Indirect Damage Arming Distance: 25m</p>
+<p>Refire Time: 0.25 sec</p>
+<p>Chamber Time: 1.5 sec</p>
+<p>Rate of Fire: \~34 RPM</p>
+<p>Velocity: 525 m/s</p>
+<p>Ammo: 5 / 30</p>
+<p>Reload Time: 3 sec / 4.25 sec</p>
+<p>Hip CoFs: 1.5 / 2.75 / 2 / 3.25</p>
+<p>ADS CoFs: 0.05 / 0.15 / 0.05 / 0.25</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 150m</p>
+<p>ADS Movespeed Multiplier: 0.75x</p>
+<p>Equip / Unequip Time: 1 sec / 0.5 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.5 / 7.5</p>
+<p><strong>Attachments:</strong> Darklight Flashlight, Straight-Pull Bolt, Laser Sight</p>
+<p><strong>Optics:</strong> Quadra (4x), Hepta (7X), Octal (8x), Deca (10x), DoDec (12x)</p>
+<p>Archer is a special rifle, available only to <strong><a href="http://cmdrcyrious.com/planetside2/classes/engineer/" target="_blank" rel="noopener noreferrer">Engineers</a></strong>. It is weak against infantry, but capable of dealing high damage to MAXes and minor damage to armored vehicles. If Archer’s bullet travels more than 25m, it will deal splash damage in a small area.</p>
+<p>Archer has surprisingly good Hip Fire accuracy, which can be useful against targets at close range. Archer also has 0.75x ADS Movement Speed Multiplier.</p>
+<p>Since archer takes up the primary weapon slot, and it’s not effective against infantry, Archer Engineers have to rely on <strong><a href="http://cmdrcyrious.com/planetside2/weapons/sidearms/" target="_blank" rel="noopener noreferrer">sidearms</a></strong> for infantry combat.</p>
+<p>You can use the <strong><a href="http://cmdrcyrious.com/toolbox/" target="_blank" rel="noopener noreferrer">Toolbox</a></strong> to calculate Archer’s damage to different vehicles.</p>
+<h2>NS-AM8 Shortbow</h2>
+<p>| DIRECT DAMAGE | 400 @ 25m – 200 @ 150m |  | INDIRECT DAMAGE | 100 @ 1m – 25 @ 3m |  | TIME BETWEEN SHOTS | 1.5 + 0.25 = 1.75 sec |  | VELOCITY | 525 m/s |  | AMMO | 3 / 36 |  | RELOAD TIME | 2.8 sec / 3.65 sec | </p>
+<p>Bolt-Action <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">NS-AM8 Shortbow</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2018/10/Shortbow-300x101.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span></p>
+<p>Direct Damage Type: 40 – Anti-Material Rifle</p>
+<p>Indirect Damage Type: 6 – Common Explosion.</p>
+<p>Indirect Damage Arming Distance: 25m</p>
+<p>Refire Time: 0.25 sec</p>
+<p>Chamber Time: 1.5 sec</p>
+<p>Rate of Fire: \~34 RPM</p>
+<p>Hip CoFs: 1.5 / 2.75 / 2 / 3.25</p>
+<p>ADS CoFs: 0.05 / 0.15 / 0.05 / 0.25</p>
+<p>Headshot Damage Multiplier: 2x</p>
+<p>Minimap Detect Range: 150m</p>
+<p>ADS Movespeed Multiplier: 0.75x</p>
+<p>Equip / Unequip Time: 0.8 sec / 0.4 sec</p>
+<p>ADS Time To / From: 0.15sec / 0.15 sec</p>
+<p>Projectile Lifespan / Gravity: 1.5 / 7.5</p>
+<p><strong>Attachments:</strong> Laser Sight, Comfort Grip</p>
+<p><strong>Optics:</strong> CCLR (1x), NiCO XR (2x)</p>
+<p><strong>NS-AM8 Shorbow</strong> is one of the possible item rewards for winning a <strong><a href="http://cmdrcyrious.com/planetside2/critical-mass-alerts/" target="_blank" rel="noopener noreferrer">Critical Mass Alert</a></strong>, this is the only way to obtain it. You must already own NS-AM7 Archer in order to be eligible for this loot reward.</p>
+<p>Shortbow is a variant of the <strong>NS-AM7 Archer</strong> with the following differences:</p>
+<ul><li>Smaller magazine.</li><li>Faster reload.</li><li>Uses 1x or 2x optics.</li><li>Has shorter <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Equip_time" target="_blank" rel="noopener noreferrer">Equip and Unequip Times</a></strong>, as well as access to <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/#Comfort_Grip" target="_blank" rel="noopener noreferrer">Comfort Grip</a></strong>.</li></ul>
+<p>The latter would be the main reason to use Shortbow over Archer; it’s a weapon that you quickly pull out to deal with a MAX at close range, and then just as quickly put back.</p>
+<h2>Gameplay Tips</h2>
+<p><em>This video by Wrel does an excellent job of covering basics of Sniping.</em></p>
+<p><em>A bit more advanced video by Cyrious Gaming.</em></p>
+<p>Sniping seems very simple on the surface. And indeed, there is nothing particularly hard about using a Bolt Action Rifle to headshot a stationary enemy within 100m. Hold Breath, point and click, collect certs.</p>
+<p>However, this shallow approach won’t get you very far. Bad snipers constantly get counter sniped, and struggle to kill anyone important, and are generally useless to their faction.</p>
+<h2>Choosing a Position</h2>
+<p>This topic is well-covered in Wrel’s video above, but to re-iterate, you want to find a flanking position to a mass of enemy players.</p>
+<p>You need a piece of cover that you can hide behind while reloading and recharging cloak. This can be a rock, a tree, a hill, a pile of boxes, etc.</p>
+<p>Ideally, you want to be on the high ground, as it makes you less noticeable, harder to reach, and gives you a better view.</p>
+<p>Getting into a good position might require some <a href="http://cmdrcyrious.com/parkour-guide/" target="_blank" rel="noopener noreferrer"><strong>Parkour</strong></a> skills or a <strong><a href="http://cmdrcyrious.com/planetside2/vehicles/#Flash" target="_blank" rel="noopener noreferrer">Wraith Flash</a></strong>. A disposable  <strong><a href="http://cmdrcyrious.com/planetside2/vehicles/#Valkyrie" target="_blank" rel="noopener noreferrer">Valkyrie</a></strong> or <strong>Ejection Seat <a href="http://cmdrcyrious.com/planetside2/vehicles/#Empire-specific_Fighters" target="_blank" rel="noopener noreferrer">ESF</a></strong> are also popular ways of getting into a position.</p>
+<h2>Looking for Targets</h2>
+<p>In real life snipers, always work in pairs, and have a partner to designate targets for them. In Planetside, you’re on your own. Here are some places where you can find targets to snipe:</p>
+<ul><li><strong>Near spawns</strong> – Sunderers, spawn tubes. Do not shoot. Freshly respawned players have invincibility, and even if you kill, they’re gonna respawn a few seconds later anyway.</li><li><strong>Choke points</strong> – enemies involved in a cover-based firefight with your allies near any door, corridor, bridge, narrow passing. Even between player made structures and parked vehicles.</li><li><strong>Cover</strong> – places where the enemy hides, repairs, heals, goes AFK, has tea parties. That includes vehicles running for cover. If they are running – that means repair. That means mostly stationary Engineer heads.</li><li><strong>Windows</strong> – easy targets since they have to stay still to shoot through a window.</li><li><strong>Landing pads</strong> – favorite spots for Engineers behind turrets and snipers.</li><li><strong>Phalanx Turrets</strong> – Engineers like to repair them and snipers like to hide around them. <strong>Fun fact:</strong> At certain distance turrets don’t render so you can shoot through them. It’s a bug exploit. Don’t make it your life goal.</li><li><strong>Trees, Rocks, Corners</strong> – Think of the best places you would hide if you were going to snipe.</li><li><strong>Terminals</strong> – Do not hesitate to shoot the heads before they disappear in the vehicle.</li><li><strong>Enemy Explosives</strong> – People like to leave mines in weird places.</li></ul>
+<h2>Being Useful</h2>
+<p>Obviously, you won’t be contesting any points while sniping from a hill. As a Sniper, your power lies in the ability to kill any infantry target within hundreds of meters. So that’s what you must be doing: thinning out enemy numbers by killing enemies that your allies can’t reach.</p>
+<p><strong>Especially:</strong></p>
+<ul><li>Counter-snipe enemy snipers. Pay attention to their tracers and try to catch them out of cloak.</li><li>Assassinate enemy Medics and Engineers behind turrets.</li><li>Interrupt Heavy Assaults who are lining up Rocket Launcher shots.</li><li>Harass enemy Light Assaults, who are trying to flank from high ground.</li><li>Snipe enemy deployables, such as Shield Recharging Fields and Spawn Beacons.</li></ul>
+<p>Even distracting enemies and forcing them to take cover against you is a form of oppression, and can be enough to turn the tides in your favor.</p>
+<p>Pay constant and conscious attention to what you are doing and how effective you are. If you’re sitting among allies, and just snipe whoever shows their face, then you’re not solving the chokepoint, <em><strong>you are</strong></em> the chokepoint.</p>
+<h2>Rhythm</h2>
+<p>Sniping is all about the <strong>rhythm:</strong></p>
+<ol><li>Cloak and move out of cover</li><li>Pre-aim at a target</li><li>Hold Breath</li><li>Correct Aim and Decloak</li><li>Stand still and shoot to kill</li><li>Cloak and Move, while taking a look at the Minimap and around your character.</li><li>Repeat.</li></ol>
+<p>Enemy snipers are by far the biggest threat to you. To avoid getting counter-sniped, you have to get in the <em><strong>rhythm</strong></em>. You only want to be decloaked and stationary for as long as it takes to fire off a shot.</p>
+<p><strong>You have to be stationary while shooting</strong>, because Sniper Rifles have poor moving accuracy, and will struggle to hit a headshot on an enemy outside 20m.</p>
+<p>Right after a shot, you want to cloak and move, even if just a little bit. If you don’t move, an enemy sniper might just send a shot to where he last seen your head, and snipe you out of cloak.</p>
+<p>Make sure to always move a few meters in a <strong>random</strong> direction. An experienced or a lucky sniper might adjust for your movement, and snipe you out of cloak <em><strong>even after</strong></em> you moved (!).</p>
+<h2>Protecting Flanks</h2>
+<p>Remember to take a look around once in a while, and pay attention to the minimap. After enemy snipers, your second biggest threat is enemy Light Assaults, who can and will hunt you down.</p>
+<p>Don’t let them catch you off guard. If you see an enemy approaching, and he’s too close to be sniped, you can still get an advantage: cloak and crouchmove into a better position, and open fire with your sidearm on enemy’s back.</p>
+<p>Always keep an ear out and <em><strong>listen</strong></em>.</p>
+<p>Most of snipers play like they are AFK, looking down the scope. They can be spotted/taunted, I can cloak and activate a power knife multiple times without them paying any attention.</p>
+<p>Be careful about spotting enemies. Your voice will <strong><a href="http://cmdrcyrious.com/planetside2/beginner-guides/how-to-survive/#Sound" target="_blank" rel="noopener noreferrer">give away your position</a></strong>, making you much easier to find if someone’s already looking for you.</p>
+<h2><a href="http://cmdrcyrious.com/planetside2/classes/infiltrator/#EMP_Grenades" target="_blank" rel="noopener noreferrer">EMP</a> Combo</h2>
+<p>You can throw an EMP to about 40 meters out, and affected standard infantry will die from one SASR headshot or one BASR bodyshot.</p>
+<h2><a href="http://cmdrcyrious.com/planetside2/weapons/sidearms/" target="_blank" rel="noopener noreferrer">Sidearm</a> Love</h2>
+<p>Being comfortable with your sidearm of choice really pays off for a sniper. It will be your go-to weapon in most close quarters situations, and you really should invest your skill and resources into it.</p>
+<p>You may want to steal a page or two from <strong><a href="http://cmdrcyrious.com/stalker-infiltrator-guide/" target="_blank" rel="noopener noreferrer">Stalkers’ book</a></strong>.</p>
+<h2>Hold Breath Management</h2>
+<p>It is highly recommended to use <strong><a href="http://cmdrcyrious.com/planetside2/equipment/implants/#Target_Focus" target="_blank" rel="noopener noreferrer">Target Focus</a></strong> implant while sniping, as it trivializes Hold Breath Management, and gives you much more <em>breathing room</em> while lining up shots.</p>
+<p>When using a Bolt Action Rifle, remember to release Hold Breath key while the weapon is rechambering. This way you can squeeze in several shots even without Target Focus implant.</p>
+<h2>Muscle Memory</h2>
+<p>“Muscle memory” refers to leading moving targets and compensating for bullet drop on the subconscious level, without having to think about it. This ability develops naturally, but it takes a while.</p>
+<p>The velocity difference between Sniper Rifles is enough to throw off your muscle memory, so if you are serious about sniping, it is highly recommended to <strong>stick with one rifle and one scope</strong>, unless you’re doing Directives.</p>
+<h2>Drag-shooting</h2>
+<p>**See: <em><a href="http://cmdrcyrious.com/planetside2/weapons/gunplay-guide/#Drag_Shots" target="_blank" rel="noopener noreferrer">Drag Shots</a>.</em>**</p>
+<h2>Close Quarters Sniping</h2>
+<p>Refer to <strong><a href="http://cmdrcyrious.com/close-range-sniping-guide-by-davregis/" target="_blank" rel="noopener noreferrer">this guide</a></strong> by Davregis.</p>
+<h2>Sniper’s Loadout</h2>
+<h2><a href="http://cmdrcyrious.com/planetside2/classes/infiltrator/#Hunter_Cloaking" target="_blank" rel="noopener noreferrer">Hunter Cloaking</a> vs <a href="http://cmdrcyrious.com/planetside2/classes/infiltrator/#Nano-Armor_Cloaking" target="_blank" rel="noopener noreferrer">NAC</a></h2>
+<p>Hunter Cloaking is the default choice, as it guarantees a lot of uptime, gives you freedom of movement when moving into a sniping nest, and has a quick recharge.</p>
+<p>Nano Armor Cloaking has been used in the past by some very successful infiltrators, as it significantly increases survival chances in a sniping duel, and almost removes any chance of being sniped out of cloak.</p>
+<p>However, short duration and long recharge would make NAC impractical for most players.</p>
+<h2><a href="http://cmdrcyrious.com/planetside2/classes/infiltrator/#Recon_Detection_Device" target="_blank" rel="noopener noreferrer">Recon Device</a> vs <a href="http://cmdrcyrious.com/planetside2/classes/infiltrator/#Motion_Spotter" target="_blank" rel="noopener noreferrer">Motion Spotter</a></h2>
+<p><strong>Recon Device</strong> if you want to support your allies with Recon from a safe distance. However, it runs out of darts quickly, and massively benefits from running <strong><a href="http://cmdrcyrious.com/planetside2/equipment/implants/#Ammo_Printer" target="_blank" rel="noopener noreferrer">Ammo Printer</a></strong> implant. It also requires quite a lot of upgrades to become truly useful.</p>
+<p><strong>Motion Spotter</strong> if you want to protect yourself from being flanked. Great longevity and effectiveness even at lower ranks.</p>
+<h2><a href="http://cmdrcyrious.com/planetside2/equipment/suit-slots/" target="_blank" rel="noopener noreferrer">Suit Slot</a></h2>
+<p><strong><a href="http://cmdrcyrious.com/planetside2/equipment/suit-slots/#Flak_Armor" target="_blank" rel="noopener noreferrer">Flak Armor</a></strong> can be surprisingly useful, as it is not uncommon for snipers to come under vehicle fire.</p>
+<p><a href="http://cmdrcyrious.com/planetside2/equipment/suit-slots/#Nanoweave_Armor" target="_blank" rel="noopener noreferrer"><strong>Nanoweave Armor.</strong></a> Gives you an edge in case you get flanked. Increases your survival chances in ranged duels against automatic weapons and non-infiltrator enemies.  Mostly useful for Close and Medium range sniping.</p>
+<p><strong><a href="http://cmdrcyrious.com/planetside2/equipment/suit-slots/#Advanced_Shield_Capacitor" target="_blank" rel="noopener noreferrer">Advanced Shield Capacitor.</a></strong> Reduces downtime if you get injured. Arguable usefulness, because a headshot from an enemy sniper will kill you even if you’re at full health, and if you take a bodyshot, you will take some health damage as well, and would have to eat a Med Kit just to benefit from ASC.</p>
+<p>And as a Sniper, you should always have free access to a piece of cover to let you regenerate shields in peace.</p>
+<p><a href="http://cmdrcyrious.com/planetside2/equipment/suit-slots/#Adrenaline_Pump" target="_blank" rel="noopener noreferrer"><strong>Adrenaline Pump.</strong></a> Makes you faster while getting into position, but does nothing for you once you arrive.</p>
+<p><a href="http://cmdrcyrious.com/planetside2/equipment/suit-slots/#Ammunition_Belt" target="_blank" rel="noopener noreferrer"><strong>Ammunition Belt.</strong></a> Can be useful for experienced snipers, who legitimately run out of ammo once they find a good position. <a href="http://cmdrcyrious.com/planetside2/equipment/implants/#Ammo_Printer" target="_blank" rel="noopener noreferrer"><strong>Ammo Printer</strong></a> Implant makes this obsolete, though.</p>
+<h2>Utility Slot</h2>
+<p>Normally you would run <strong><a href="http://cmdrcyrious.com/planetside2/equipment/utility-items/med-kits-and-restoration-kits/" target="_blank" rel="noopener noreferrer">Med Kits</a></strong>, but <strong><a href="http://cmdrcyrious.com/planetside2/equipment/utility-items/anti-personnel-mines/" target="_blank" rel="noopener noreferrer">AP Mines</a></strong> can also be useful in certain situations. If your sniping nest has limited approach paths, you can place mines to protect your flanks.</p>
+<p>While doing a bit more aggressive infiltrating, <strong>VS</strong> and <strong>NC</strong> mines can be combined with EMP Grenades for <a href="https://www.youtube.com/watch?v=4JjLhQFBEHE&amp;amp;feature=youtu.be&amp;amp;t=160" target="_blank" rel="noopener noreferrer"><strong>devastating multikills</strong></a>.</p>
+<h2><a href="http://cmdrcyrious.com/planetside2/equipment/implants/" target="_blank" rel="noopener noreferrer">Implants</a></h2>
+<h3>Recommended</h3>
+<ul><li><a href="http://cmdrcyrious.com/planetside2/equipment/implants/#Battle_Hardened" target="_blank" rel="noopener noreferrer"><strong>Battle Hardened</strong></a> is crucial when sniping from amidst allies, you cannot afford to miss critical shots due to screenshake.</li><li><a href="http://cmdrcyrious.com/planetside2/equipment/implants/#Target_Focus" target="_blank" rel="noopener noreferrer"><strong>Target Focus.</strong></a> Enough said about it.</li></ul>
+<h3>Honorable Mentions</h3>
+<ul><li><a href="http://cmdrcyrious.com/planetside2/equipment/implants/#Ammo_Printer" target="_blank" rel="noopener noreferrer"><strong>Ammo Printer.</strong></a> Solves ammo issues, and provides a steady supply of Recon Darts and Motion Spotters.</li><li><a href="http://cmdrcyrious.com/planetside2/equipment/implants/#Regeneration" target="_blank" rel="noopener noreferrer"><strong>Regeneration.</strong></a> A convenient way of restoring health if you’re not running Med Kits.</li><li><a href="http://cmdrcyrious.com/planetside2/equipment/implants/#Catlike" target="_blank" rel="noopener noreferrer"><strong>Catlike 5.</strong></a> Invaluable in getting to good positions, and makes it easier to escape or fight back if you get flanked.</li></ul>
+<h2>Recent Comments</h2>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

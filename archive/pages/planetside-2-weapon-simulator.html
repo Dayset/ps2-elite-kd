@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>PlanetSide 2 Weapon Simulator | CMDRCyrious.com — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>PlanetSide 2 Weapon Simulator | CMDRCyrious.com</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd>CMDRCyrious</dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/planetside-2-weapon-simulator/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/planetside-2-weapon-simulator/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2016-06-05</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Live</dd></div>
+      <div><dt data-i18n="arc.attrNote">Note</dt><dd>interactive tool — saved text only, functionality not preserved</dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<p><strong>This tool is outdated, use <a href="http://cmdrcyrious.com/toolbox/" target="_blank" rel="noopener noreferrer">Weapon Toolbox</a> for up to date weapon stats.</strong> </p>
+<p>This program is a standalone simulator of <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/" target="_blank" rel="noopener noreferrer">PlanetSide 2 Weapon Mechanics</a>.</p>
+<p>It can simulate Cone of Fire, bullet hits, recoil, analyze the effects of attachments on each weapon, and compare different weapons to each other.</p>
+<p>This is a work in progress, so please <a href="http://cmdrcyrious.com/contacts/" target="_blank" rel="noopener noreferrer">inform me</a> of any bugs or suggestions.</p>
+<h4><a href="http://cmdrcyrious.com/wp-content/uploads/2016/06/PS2-Weapon-Simulator-v1.7-PTS.zip" target="_blank" rel="noopener noreferrer"><strong>&gt;&gt; Download v1.7 PTS here \&lt;\&lt;</strong></a></h4>
+<p><strong>Known issue:</strong> since it’s program in an archive, this might get flagged as potentially harmful. Windows Smart Screen and Avast have particular issues with it.</p>
+<p>I assure you, no harm will come to your PC. Ignore the warnings. Use any <a href="http://www.virustotal.com" target="_blank" rel="noopener noreferrer">online virus scan</a> if you don’t believe me.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">v1.6 main window</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/06/v1.6-main-window-1024x950.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h4><strong>New in the latest version:</strong></h4>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">pts</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/06/PTS-1024x327.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Version 1.7 PTS includes changes from the 14/10/2016 <a href="https://www.reddit.com/r/Planetside/comments/57818g/pts_patch_notes_10122016/" target="_blank" rel="noopener noreferrer">PTS patch</a> to damage and range. Recoil and CoF changes are not included.</p>
+<h2>Instructions</h2>
+<p>Select Program Mode in the top right corner. Select a weapon from the list on the right. You can preview selected weapon’s stats in “Weapon Stats” module, and add attachments in “Attachments” module.</p>
+<p>“Add to comparison” button copies currently selected weapons with all attachments. You can then select a different weapon or attachment combination.</p>
+<p>“Weapon Stats” textbox only displays stats for currently selected weapon. To access stats of weapons copied for comparison, click “Get stats” button under weapon’s name and they will appear in a message box.</p>
+<h2>Attachment restrictions</h2>
+<p>I hate when programs try to be smarter than the user, so I let you decide which attachments can be put on which weapons. If you don’t know which weapons can accept which attachments, you can check that in-game (preferable) or on <a href="http://planetside.wikia.com/wiki/Weapons" target="_blank" rel="noopener noreferrer">PS2 Wiki</a> if you’re lazy.</p>
+<p>Each weapon should be <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/" target="_blank" rel="noopener noreferrer">properly affected</a> by attachments, but there are a few notable points:</p>
+<p>Extended Mags won’t do anything for weapons it’s not available for.</p>
+<p>Some weapons come with attachments already installed. For example, MKV Suppressed comes with a pre-installed suppressor, so there’s no need to put a second suppressor on it.</p>
+<p>Directive Shotguns in-game have Smart Choke equipped by default, but in the simulator, you will have to equip it yourself.</p>
+<p>Slug Ammunition speed is predetermined as 300 m/s for all shotguns, even though slugs supposed to inherit the velocity of the shotgun, with Baron being the only exception.</p>
+<h2>Simulation Mode</h2>
+<p>Simulation Mode allows you to test fire all selected weapons. Press Left Mouse Button or “Fire Fixed Burst” button to fire.</p>
+<p>The program will simulate recoil and bullet hits in accordance with PlanetSide 2 Weapon Mechanics. Bullet drop and travel time are not accounted for. The recoil magnitude should be more or less up to scale with first person shooting in game.</p>
+<p>Right Mouse Button toggles ADS. ADSing applies magnification from chosen optic, and lets the weapon use ADS CoFs.</p>
+<p>Holding Middle Mouse Button will let you move the window around, and Mouse Wheel to zoom in and out. You can drag around recoil patterns using the blue circle in the bottom part as an anchor.</p>
+<h3>Bullets to Kill Module</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Blackhand BTK</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/06/Blackhand-BTK-300x238.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>The simulator will automatically calculate the number of bullets required to kill a target at different ranges. Number in the brackets is time to kill (TTK).</p>
+<p>You can specify target’s health and damage resistance in text boxes above. The “Legend” button will display a table to remind you which targets have what amount of health and damage resistance.</p>
+<p>You can also specify the number of “Bonus Headshots” the target receives before BTK calculations. This is useful if you want to calculate the amount of bullets to kill a target after you open with a headshot.</p>
+<h3>Draw Target toggle</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">v1.5 drag target</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/06/v1.5-drag-target.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Makes an enemy dummy target visible. You can drag and drop the target using the blue anchor at the bottom.</p>
+<p>Target should be up to scale as if it’s 5m away from you in game. You can press W and S to move closer / away from the target.</p>
+<p>Target scaling is zeroed at 5m, the more you away from it, the less accurate the scaling will be. But I did use my <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Angular_Size" target="_blank" rel="noopener noreferrer">Angular Size</a> research to get the target scaling as close to in-game as possible.</p>
+<p>The “TTK Simulation” window will tell you the damage your weapon would do at that range.</p>
+<h3>TTK Simulation Module</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">v1.7 TTK simulation</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/06/v1.7-TTK-simulation-1024x531.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>This module is only visible when “Draw Target” is enabled.</p>
+<p>My program cannot detect bullet hits, but you can do it manually by pressing “Head”, “Leg” and “Body” buttons.</p>
+<p>The program will calculate damage you have dealt, and the remaining target health,</p>
+<p>as well as how long it took to fire that amount of shots.</p>
+<p>“Reset CoF” button will reset weapon’s CoF, and adjust “time elapsed” for the time</p>
+<p>it would take to reset CoF in game.</p>
+<p><strong>“Record Pattern”</strong> mode is there for demonstration purposes.</p>
+<p>Normally, the direction of Horizontal Recoil is chosen randomly. Record Pattern mode allows the user to choose the recoil direction with A and D keys.</p>
+<p>This mode is only useful if you want to draw a specific recoil pattern to take a screenshot.</p>
+<h3>Configuration Module</h3>
+<p>On the first launch, the program will create “settings.ini”. You can use “save” and “load” buttons to store your preferred configuration. To reset to factory defaults, just delete the “settings.ini”.</p>
+<h2>To-Do</h2>
+<p>Already on my to-do list:</p>
+<ul><li>Let user manually add weapons</li><li>Add Recoil Simulation mode that will let the user control recoil with mouse</li><li>Let the “Save configuration” button save selected weapons as well.</li><li>add recoil pattern width and recoil per second calculations into weapon stats window, and calculated stat values (DPM, FSRM).</li><li>add TTK graph mode</li><li>add sorting by weapon class and faction to the weapon list</li><li>add a way to automatically update weapon stats through census API or accept export from Toolbox</li><li>add BTK thresholds to the left side of the bullet damage graph</li><li>add BTK thresholds graph</li></ul>
+<h2>Changelog and archive</h2>
+<h3><a href="http://cmdrcyrious.com/wp-content/uploads/2016/06/PS2-Weapon-Simulator-v1.0.zip" target="_blank" rel="noopener noreferrer">v1.0 – Initial Release</a></h3>
+<h3><a href="http://cmdrcyrious.com/wp-content/uploads/2016/06/PS2-Weapon-Calculator-v1.1.zip" target="_blank" rel="noopener noreferrer">v1.1 – Bugfix</a></h3>
+<p>Fixed a bug with Decimal Symbol in different locales.</p>
+<h3><a href="http://cmdrcyrious.com/wp-content/uploads/2016/06/PS2-Weapon-Simulator-v1.2.zip" target="_blank" rel="noopener noreferrer">v1.2 – Function update</a></h3>
+<p>Users can now choose a firing stance. </p>
+<p>Added weapon comparison.</p>
+<p>Recoil patterns can be dragged around using the small blue circle at the bottom.</p>
+<p>Also updated the weapon database to include <a href="https://forums.daybreakgames.com/ps2/index.php?threads/game-update-6-1.241005/" target="_blank" rel="noopener noreferrer">velocity changes</a>.</p>
+<h3><a href="http://cmdrcyrious.com/wp-content/uploads/2016/06/PS2-Weapon-Simulator-v1.3.zip" target="_blank" rel="noopener noreferrer">v1.3 – Bugfix</a></h3>
+<p>Fixed a bug that prevented weapon stats from updating properly with HVA, SPA and Suppressor attachments.</p>
+<h3><a href="http://cmdrcyrious.com/wp-content/uploads/2016/06/PS2-Weapon-Simulator-v1.4.zip" target="_blank" rel="noopener noreferrer">v1.4 – Function update</a></h3>
+<p>Added an option to draw weapon damage graphs. </p>
+<p>Useful for comparing weapon damage at different ranges and with different attachments.</p>
+<h3><a href="http://cmdrcyrious.com/wp-content/uploads/2016/06/PS2-Weapon-Simulator-v1.5.zip" target="_blank" rel="noopener noreferrer">v1.5- Function update</a></h3>
+<p>Now the target from “Draw Target” option can be dragged and dropped using the blue anchor at the bottom of the target.</p>
+<h3><a href="http://cmdrcyrious.com/wp-content/uploads/2016/06/PS2-Weapon-Simulator-v1.5a.zip" target="_blank" rel="noopener noreferrer">v1.5a – Function fix</a></h3>
+<p>Now the drawn target scales relative to center mass.</p>
+<h3><a href="http://cmdrcyrious.com/wp-content/uploads/2016/06/PS2-Weapon-Simulator-v1.6.zip" target="_blank" rel="noopener noreferrer">v1.6 – Function update</a></h3>
+<p>Added “BTK Thresholds” window. It will calculate the amount of bullets needed for a</p>
+<p>weapon to kill a target with specified health and resistance at different ranges.</p>
+<h3><a href="http://cmdrcyrious.com/wp-content/uploads/2016/06/PS2-Weapon-Simulator-v1.6A.zip" target="_blank" rel="noopener noreferrer">v1.6A – Function update</a></h3>
+<p>“BTK Thresholds” window will also display TTK.</p>
+<h3><a href="http://cmdrcyrious.com/wp-content/uploads/2016/07/PS2-Weapon-Simulator-v1.7.zip" target="_blank" rel="noopener noreferrer">v1.7 – Function update</a></h3>
+<p>Updated for the latest patch, and added “TTK Simulation” module.</p>
+<h3><a href="http://cmdrcyrious.com/wp-content/uploads/2016/06/PS2-Weapon-Simulator-v1.7-PTS.zip" target="_blank" rel="noopener noreferrer">v1.7 PTS – Database update</a></h3>
+<p>Updated for the latest <a href="https://www.reddit.com/r/Planetside/comments/57818g/pts_patch_notes_10122016/" target="_blank" rel="noopener noreferrer">PTS patch</a> to highlight some weapon changes.</p>
+<p>As a closing word, huge thanks to <a href="http://www.reddit.com/user/L33-the-3rd" target="_blank" rel="noopener noreferrer">/u/L33-the-3rd</a> for formatting the <a href="http://planetstats.net/data/weapons/" target="_blank" rel="noopener noreferrer">PS2 Weapon Database</a> into CSV for me.</p>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>Hardware | CMDRCyrious.com — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>Hardware | CMDRCyrious.com</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd><span data-i18n="arc.attrUnknown">Not recorded in the source</span></dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/planetside2/performance-guide/hardware/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/planetside2/performance-guide/hardware/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2020-03-20</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Live</dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<h2>Hardware Optimization</h2>
+<p>This page will cover getting the most out of your hardware and measures to optimize performance.</p>
+<p>There is a plethora of knowledgeable online resources and advice on hardware setup and optimization – just to name a few:</p>
+<p>The above will bring you up to speed regarding PC building considerations and practical aspects, as well as frequently offer up to date build recommendations and guides for both budget and high-end systems. Below the page will cover some general topics and recommendations.</p>
+<h2>CPU</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/cpu-300x171.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>PlanetSide 2 is an MMO game released in 2012, with potentially hundreds of players in a battle. As a consequence, PlanetSide 2 puts more load on CPU than most games. Originally built on DirectX 9 in 2012, the engine was updated and in 2019 and currently uses DirectX 11. Although this optimization improved performance overall, the game is still CPU heavy and reliant on good frequency and per-core performance, potentially more so than number of cores and multi-threading.</p>
+<h3>Overclocking</h3>
+<p>It is possible to squeeze out some extra CPU performance by <strong>overclocking</strong>. Most motherboards offer this advanced feature in the UEFI/BIOS and many CPU manufacturers nowadays provide easy overclocking solutions with their own desktop software. It is important to emphasize that overclocking is an advanced process and constitutes risks inducing damage to the CPU and system if performed wrong or too aggressively. Note that overclocking typically also involves voiding guarantees. Therefore, inform yourself sufficiently on the options, the procedure, and ensure that you provide sufficient cooling to the PC and especially CPU.</p>
+<p><strong>Overclocking a CPU</strong> involves increasing its <strong>clock frequency</strong>:</p>
+<p>Clock Frequency = Base Clock Frequency (BCLK) \* Multiplier</p>
+<p>There are two ways of overclocking to reach a higher Clock Frequency: by increasing BCLK and Multiplier.</p>
+<p>Pretty much any CPU can be overclocked by raising BCLK. However, this also raises the operating frequency of other PC components, which can lead to irreparable damage. Instead, overclocking by <strong>multiplier</strong> is safer and yields better results, since it only changes the CPU frequency. However, not every CPU and Motherboard support it. Overclocking by multiplier requires:</p>
+<ul><li>A motherboard with a fitting chipset. Ryzen CPUs can be overclocked by multiplier on both cheap B-series chipsets, and premium X-series. Intel CPUs require a premium Z-series chipset, such as Z370.</li><li>The CPU itself must have an unlocked multiplier, which means any Ryzen CPU, or an Intel CPU with a “K” index at the end of its name.</li></ul>
+<p>Most CPUs have a dynamic multiplier. Windows will automatically change current multiplier within certain bounds depending on current load and <strong><a href="http://cmdrcyrious.com/planetside2/performance-guide/#Power_Settings" target="_blank" rel="noopener noreferrer">Power Settings</a></strong>. The gist of overclocking by multiplier is to increase the maximum multiplier. If you have fitting hardware, overclocking a CPU by multiplier is as easy as going into UEFI or BIOS and increasing maximum multiplier. For example, <strong>Intel Turbo Boost</strong> is just that – a temporary increase of maximum multiplier. An automatic overclock, basically.</p>
+<p>There is a catch: increasing the Clock Frequency beyond a certain point will make the system unstable, and the PC can potentially crash and reset. To increase the system stability, it is often necessary to increase CPU’s voltage. Doing so can potentially damage the PC, and it will reduce system’s longevity, and increase power consumption and heat emissions. This is why <strong>overclocking is typically performed incrementally</strong> and with a system stability or stress test.</p>
+<p>The general goal of overclocking is to achieve the highest clock frequency with lowest increase in voltage while keeping the system stable under load.</p>
+<h2>RAM</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/ram-1-w628-300x157.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>How much RAM PlanetSide 2 requires?</strong> </p>
+<p>Although the minimum requirements stat 6GB, 8 GB should be regarded as the bare minimum. RAM usage of the game tends to increase over longer sessions which entails that you will see it start to cause, and the game will become more choppy and performance issues may become progressively worse. A simple re-start of the game is enough to solve this. <strong>Re-starting the game in regular intervals of 1-2 hours is highly recommended</strong> for a smooth performance!</p>
+<p>16 GB RAM is not necessary at first, but will allow you to keep the game at its best performance for longer and is generally good to have for gaming or running multiple applications. Usually, gaming performance does not depend on RAM performance too much, but that is because most games put most of the load on the graphics card. PlanetSide 2 performance, more often than not, is limited by CPU, and in these cases RAM performance can be important.</p>
+<p>“RAM speed, including the CPU-to-RAM interconnect speed, makes a large difference in performance of deferred rendering graphics engines, such as Forgelight.” <a href="https://www.reddit.com/r/Planetside/comments/5zdnt9/performance_on_par/dexlmk5/" target="_blank" rel="noopener noreferrer">– SWG\_Tatwi</a></p>
+<p>RAM performance is determined by <strong>Frequency and Timings</strong>. Both of these parameters determine how fast can the PC get the data in and out of RAM. Higher Frequency is better, and lower Timings are better. However, the higher the Frequency, the harder it gets to get short Timings.</p>
+<p>The recommendation is to first settle on capacity and frequency, and then get the RAM with shortest timings your money can buy. Your RAM frequency depends on what kind of frequency your Motherboard supports, and obviously on the RAM itself.</p>
+<p><strong>Overclocking RAM.</strong> It is usually possible to manually change RAM’s frequency and timings, but it will not necessarily work.</p>
+<p>For reliable results, it is better to buy RAM that underwent factory testing and have been confirmed to perform in a stable manner with certain Frequency and Timings. These parameters are usually written into RAM as <strong>XMP (Intel Extreme Profiles)</strong>, and “overclocking” RAM is as simple as choosing/enabling a certain XMP Profile setting in BIOS/UEFI.</p>
+<p>Simple tips regarding RAM:</p>
+<ul><li>In case you are getting new RAM, pay attention to the <strong>Frequency (higher is better), and low Timings</strong></li><li>Check which RAM <strong>speeds your motherboard supports</strong>, getting RAM with speed above that would be a waste of money</li><li>When using multiple RAM sticks, using the <strong>same model and manufacturer</strong> is highly recommended</li><li>Pay attention to the <strong>slot order</strong> in which your RAM should be placed in (check your MOBO manual) in order to benefit from <strong>dual channel modes</strong></li><li>With 16GB or more getting <strong>multiple smaller sticks of RAM (e.g. 2x 8GB)</strong> is better than using single ones with larger capacity</li><li><strong>Enable XMP profile settings</strong> for you RAM in the UEFI/BIOS if your motherboard and RAM support it to ensure that they run at the maximum speed.</li></ul>
+<h3>For those of you with 8GB RAM: ‘Debloating’ Windows</h3>
+<p><em>If you are worried about their RAM usage this can come in handy. <strong>Skip down to the GPU section if you’re not interested in potentially sketchy stuff. Play it safe!</strong></em></p>
+<p><strong>BEFORE YOU TRY ANYTHING MENTIONED BELOW –</strong> create a restore point in Windows first. This will give you a safe state you can reset your PC to at any time in the case you mess something up or disable something you don’t want completely removed.</p>
+<p><strong>Seriously create a restore point before you try anything here! Play it safe!</strong></p>
+<p><em>There’s a few scripts <a href="https://github.com/W4RH4WK/Debloat-Windows-10" target="_blank" rel="noopener noreferrer">here</a> that can be used to reduce the amount of bloatware Windows carries with it. <strong>Using all of these is NOT recommended since some will leave your PC vulnerable.</strong></em> <em>Update to the latest version of Windows 10 to start off. These scripts are designed for Windows 10 and <strong>are unlikely to work on older OSes</strong>. Also, download the Scripts off of the linked Github repository.</em></p>
+<p><em>Unzip them and open the folder in File Explorer. In File Explorer, click on <strong>File &gt; Open Windows PowerShell &gt; Open Windows PowerShell as Administrator.</strong></em></p>
+<p><em>Then use the following command lines to let you actually run the scripts:</em></p>
+<p>Set-ExecutionPolicy Unrestricted ls -Recurse \<em>.ps1 | Unblock-File ls -Recurse \</em>.psm1 | Unblock-File</p>
+<p><em>And these will let you run the scripts with .\\\[FileName+extension\]. <strong>A word of warning: do not to run the disable-windows-defender one, and certainly do not touch any of the others you’re not certain of yourself. Better safe than sorry after all.</strong></em></p>
+<p><em>If all of the above goes well, you should see a lowered background RAM usage. I dropped about 500mb background utilisation of RAM personally, but your mileage will vary.</em> </p>
+<p>\~u/uzzi38</p>
+<h2>Graphics Card</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/GeForce-GTX-1050-1-300x248.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>For the time of its release, PlanetSide 2 featured stunningly beautiful graphics, but due to outstanding performance issues, a lot of the eye candy has been removed or reduced over time as a consequence of game optimizations.</p>
+<p>If your intention is to use “competitive” settings, it is often better to disable certain graphical features, as they may interfere with visibility. As a consequence, any entry-level gaming graphics card should suffice for PS2.</p>
+<p>In case you own a Graphics Card with superfluous power, you can consider to slightly improve visual quality by using <a href="http://cmdrcyrious.com/planetside2/performance-guide/settings/" target="_blank" rel="noopener noreferrer">Supersample Anti Aliasing</a>.</p>
+<h3><strong>Overclocking a GPU</strong></h3>
+<p>Most gaming GPUs can be overclocked by increasing its <strong>Clock Frequency and its Memory Frequency</strong>. Again, consult detailed guides online and ensure that you have sufficient cooling and power. As with CPUs, an increase in Voltage may be necessary to keep the system stable, and overclocking will increase power consumption and heat emissions. For best results, you should search for a guide on how to overclock your specific Graphics Card.</p>
+<p>In practice the most widely used application to perform GPU overclocking and fan control customization is <a href="https://www.msi.com/page/afterburner" target="_blank" rel="noopener noreferrer">MSI Afterburner</a>.</p>
+<p>MSI Afterburner provides relatively straightforward options for fan control customization and GPU overclocking for a wide range of GPUs, even if many of them are not MSI models (i.e. the program is more universally applicable). There are also plenty of guides on how to perform this and evaluate using various GPU benchmarks. An added benefit of MSI Afterburner is the <strong>RivaTuner Statistics HUD overlay</strong>, a component of MSI afterburner that allows to <strong>monitor various hardware component parameters</strong> in real time while playing, e.g. CPU or GPU loads, temperature, RAM usage etc.</p>
+<h3>nVidia SLI Configuration</h3>
+<p>Credit: <a href="https://www.reddit.com/user/octiceps" target="_blank" rel="noopener noreferrer">/u/octiceps</a>, <a href="https://www.reddit.com/r/Planetside/comments/5zdnt9/performance_on_par/df7dxry/?utm_content=permalink&amp;amp;utm_medium=user&amp;amp;utm_source=reddit&amp;amp;utm_name=frontpage" target="_blank" rel="noopener noreferrer">link to post</a></p>
+<p>With the <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Driver-Settings.png" target="_blank" rel="noopener noreferrer">right driver settings</a>, SLI works well with PlanetSide 2: <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/SLI-Off.png" target="_blank" rel="noopener noreferrer">Sli OFF</a> / <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/SLI-On.png" target="_blank" rel="noopener noreferrer">Sli ON</a>.</p>
+<p>To configure these settings, you will have to download and install this version of <a href="https://ci.appveyor.com/project/Orbmu2k/nvidiaprofileinspector/build/artifacts" target="_blank" rel="noopener noreferrer"><strong>nVidia Inspector</strong></a>. Launch the nVidia Inspector and click on the <strong><a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/nVidia-Inspector.jpg" target="_blank" rel="noopener noreferrer">wrench and screwdriver button</a></strong>.</p>
+<p>A large window with a lot of stuff will open. Find a <strong><a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/1.jpg" target="_blank" rel="noopener noreferrer">drop down list</a></strong> at the top and select PlanetSIde 2. Set the <strong><a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Driver-Settings.png" target="_blank" rel="noopener noreferrer">driver settings for SL</a>I</strong> and click “Apply Changes” at the top right to save.</p>
+<p>If you break something, simply click on the nVidia logo button to restore default settings.</p>
+<p>Just keep in mind that SLI provides good scaling only if you are GPU-bound, which is an uncommon scenario for PS2. You have to have a very good CPU, or two old and bad GPUs for SLI to be worth it.</p>
+<h2>Motherboard</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/CES-2015-Black-and-White-MSI-X99S-SLI-Krait-Edition-Motherboard-468958-3-300x204.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>The motherboard connects all your components together and distributes power. Quality of Motherboard’s power system determines stability and longevity of CPU and RAM overclock, and Motherboard’s chipset determines what and how can you overclock at all.</p>
+<p>To overclock an Intel CPU with unlocked multiplier, you normally need a Motherboard with Z index in its chipset name. Most modern “gaming” motherboards make it very easy to overclock components, and often even have a 1-button solution <em>“make overclock for me”</em>, like MSI’s OC Genie.</p>
+<p>Motherboard also usually contains a built-in Sound Card and Network Adapter. Quality of both of them is important for comfortable gaming in PS2. Always use a cable network connection to play online games, wireless network is not stable enough. The motherboard also determines how many graphics cards can you install at once, though in case of PS2 it doesn’t make sense to use more than one.</p>
+<h2>Storage</h2>
+<p>Installing PlanetSide 2 on an <strong><a href="http://www.tomshardware.com/reviews/ssd-recommendation-benchmark,3269.html" target="_blank" rel="noopener noreferrer">SSD</a></strong>, if you can afford it, should improve loading times and potentially solve framerate drops / hitching after you first load into battle. Generally SSDs are recommended for installing games on.</p>
+<p>Having Windows and Windows Pagefile installed on an SSD (or better M.2 NVMe slot using PCIe) should improve performance as well, especially loading times.</p>
+<h2>For Laptop Users</h2>
+<p>Originally posted on <a href="https://www.reddit.com/r/Planetside/comments/6lnxnf/quick_psa_for_laptop_players/" target="_blank" rel="noopener noreferrer">reddit</a> by /u/HerrMyth, added information by /u/4wry\_reddit from <a href="https://www.reddit.com/r/Planetside/comments/bi5z6u/some_insights_regarding_performance_on_laptops/" target="_blank" rel="noopener noreferrer">this post.</a></p>
+<p>As you may know, PS2 is one of the most (CPU+GPU) demanding games on the market, and laptops are not well equipped to face it, not because of hardware limitations, but because of heating issues.</p>
+<p>A lot of mid-range laptops only have one built-in fan, and their cooling system is basically made to handle either one of those two situations:</p>
+<ul><li>High GPU usage and low to mid CPU usage: Usual “gaming” scenario.</li><li>High CPU usage and low GPU usage/use of the chipset: Intensive CPU task, video editing, chrome with 50+ tabs open…etc</li></ul>
+<p>PS2 requires both high CPU and GPU usage, and your laptop cooling system may not be able to handle it, therefore the temp will rise to a point that your hardware will throttle (reduce operating frequency) for safety reasons. Furthermore, many laptops may be optimized or setup by default to run quietly, rather than efficiently.</p>
+<p>Basically, if the GPU temperature rises quickly to 80°C+, and the GPU Clock is being throttled as a result.</p>
+<p>In case you are experiencing performance declines due to rising temperatures (and/or are forced so play on potato settings) it may help to look into the following programs:</p>
+<p>A note: MSI Afterburner can be used on Laptps to perform modest overclocks on the GPUs (you may have to identify and pick the corresponding chipset), but often fan control customization on laptops is locked on laptop motherboards.</p>
+<p>Provoded your chipset is supported, <a href="https://github.com/hirschmann/nbfc/releases" target="_blank" rel="noopener noreferrer">NoteBookFanControl</a> allows you customize fan control even on laptops. This can e.g. be used to increase fan speed to reduce or prevent GPU overheating.</p>
+<p>Possible solutions:</p>
+<ul><li>Clean your laptop fans, dust goes in and blocks the airflow, making the cooling system less efficient (refer to the laptop manual)</li><li>Check that your cooling system is actually working at 100% while playing, i use this software <strong><a href="https://github.com/hirschmann/nbfc/releases" target="_blank" rel="noopener noreferrer">Notebook Fan Control</a></strong> to push it to 100%, since Acer limits fan usage to 60%. This software DOES NOT GIVE ANY GUARANTEE, USE AT YOUR OWN RISK</li><li>If the CPU Temp is the issue, you may consider reapplying some thermal paste, since the usual laptop manufacturers are stingy on it</li><li>You might consider buying a cooling pad, which potentially may provide some benefit</li><li>Many laptops come with a lot of pre-installed bloatware, often removing or preventing automatic startup of unnecessary programs will improve performance</li><li>Also optimize the power setting in windows, may laptops have a custom power plan applied that often is designed to make them run silently or use less battery, rather than unleashing their full potential</li><li>Never play on battery!</li></ul>
+<h2>Undervolting</h2>
+<p>For those on laptops or other systems where your CPU is prone to thermally throttling itself, undervolting should help mitigate that. All CPUs are shipped with a stock voltage significantly higher than what is necessary for it to function – this is because all chips are different, so both Intel and AMD will set a higher voltage to ensure a greater number of processors will function.</p>
+<p>Undervolting cannot, and will not damage your CPU, nor will it void your warranty, so if you have thermal issues it is definitely worth the time and effort you need to perform it.</p>
+<p>This guide will cover CPU undervolting, but it is possible to undervolt a GPU as well.</p>
+<p>Depending on your CPU, there are a few options on how to go about this:</p>
+<ul><li><strong>Intel-Based Systems:</strong><ul><li>ThrottleStop</li><li>Intel XTU</li></ul></li></ul>
+<p>Unfortunately at this time there is no equivalent for AMD laptops. If you’re undervolting on a desktop, then Ryzen Master is what you’re looking for.</p>
+<p>This is can be a bit of a confusing process so I’ll list a brief guide on how to go about this. In this guide I’ll be using ThrottleStop as I’ve found it to be more reliable than Intel XTU. First, take a moment to search on Google and see what other’s have achieved for their undervolts for the same processor as you. Take note of numbers that look like the following: -60mv. You can use this to gauge what kind of undervolt you might be able to achieve. Start up ThrottleStop and you’ll be greeted by the following:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2019/02/Home-300x256.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Ignore everything on there for the time being except the TS Bench button (keep a note of this – it’ll come in handy later) and click the FIVR button. This will open up a second window. We’re interested in this portion of the middle column:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2019/02/Voltage-Control-207x300.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>The biggest gains you’ll see are from undervolting the CPU Core and Cache – the rest will hardly affect anything. Start off with the core. Click the ‘Unlock Adjustable Voltage’ button, ensure it’s set to ‘Adaptive’ and then focus on the Offset Voltage.</p>
+<p>Now reduce the ‘Offset Voltage’ value in very small amounts – no more than -10mv in one go. Every time you do so, use a CPU benchmark of some kind to test and see if your undervolt is stable. The TS Bench mentioned earlier works – have a play around with that and ensure you don’t get any BSOD crashes.</p>
+<p>Don’t worry if you do – undervolting is completely harmless and should not cause any damage to the CPU itself. Just increase the offset voltage again (as in, bring the number closer to 0) to prevent crashing and you’re good to go. From here on its a bit of a cycle to see how low you can go whilst keeping your system stable.</p>
+<h2>HPET Bug</h2>
+<p>To properly function, any computer system must be able to accurately measure time. A typical Windows PC has several ways to do so, and using HPET – high precision event timer – is one of them.</p>
+<p>HPET is most precise timer available to the system, but whole generations of CPUs are affected by what’s been called “HPET bug”: for them, accessing HPET takes \~7 times longer than it should. Similar to Meltdown and Spectre, this is a hardware issue, and cannot be fixed entirely.</p>
+<p>Skylake X and Kaby Lake X have the worst of it, but it seems to also affect Threadripper, Coffee Lake, and Ryzen.</p>
+<p>You can read all the technical details in these articles:</p>
+<ul><li><strong><a href="https://www.anandtech.com/show/12678/a-timely-discovery-examining-amd-2nd-gen-ryzen-results" target="_blank" rel="noopener noreferrer">Anandtech</a> –</strong> explains where it all began and gives a thorough explanation of system timers</li><li><strong><a href="https://www.overclockers.at/articles/the-hpet-bug-what-it-is-and-what-it-isnt" target="_blank" rel="noopener noreferrer">Overclockers.at</a> –</strong> has a shorter summary and a specialized benchmark to highlight the issue</li></ul>
+<p>By default, HPET is simply on the list of the available timers in Windows 8 and 10. Different timers will be used for different purposes, which is the best case scenario.</p>
+<p>However, certain pieces of software, such as Ryzen Master and potentially anything related to overclocking, benchmarking or monitoring hardware, can force HPET to be the only timer used by the system. This may be necessary for the normal operation of that software, but on the systems that are affected by the HPET bug, it can lead to a decrease in performance, sometimes quite significant.</p>
+<h3>HPET Configuration</h3>
+<p>HPET can be configured in two places:</p>
+<p><strong>1)</strong> On some motherboards, HPET can be <strong>Enabled</strong> or <strong>Disabled</strong> in BIOS.</p>
+<p><strong>2)</strong> Windows Command Prompt can <strong>Force HPET</strong> to be always used as the only timer, or you can set <strong>Default Settings</strong>.</p>
+<p>So there are four total combinations of these settings:</p>
+<p>1\) Enabled in BIOS, OS uses Default Settings: HPET will be used as necessary. <strong>This is the desired configuration.</strong> 2) Enabled in BIOS, Forced in OS: HPET is always used. If your system suffers from the HPET bug,</p>
+<p><strong>this is where performance problems occur.</strong></p>
+<ol><li>Disabled in BIOS, OS uses Default Settings: HPET is not available at all.</li></ol>
+<p>4\) Disabled in BIOS, Forced in OS: HPET is not available at all and there could be a performance impact.</p>
+<p><strong>It is not recommended to keep HPET Disabled in BIOS</strong>, as it can cause stability issues. Additionally, if HPET is Forced in OS and Disabled in BIOS, it can result in skipped frames or otherwise impact your performance.</p>
+<p><strong>How to configure HPET through Windows Command Prompt:</strong></p>
+<ul><li><strong><a href="http://cmdrcyrious.com/wp-content/uploads/2018/07/MittyO0.png" target="_blank" rel="noopener noreferrer">Windows Search for “CMD”</a></strong></li><li><strong><a href="http://cmdrcyrious.com/wp-content/uploads/2018/07/nJmQ7eP.png" target="_blank" rel="noopener noreferrer">Right Click the Command Prompt and click “Run as administrator”</a></strong></li><li>To <strong>Force HPET</strong>, type: bcdedit /set useplatformclock true</li><li>To set <strong>Default Settings</strong>, type: bcdedit /deletevalue useplatformclock</li><li>Reboot</li></ul>
+<p>If the command you entered has successfully changed something, you will get “operation successful” message. If the command was already active, then you will get an “error occurred” message.</p>
+<h3>For Intel</h3>
+<p>Use the Command Prompt to set HPET to Default Settings. If you get “operation successful” message – congratulations, you are likely to get increased performance. If not – too bad, not today.</p>
+<h3>For Ryzen</h3>
+<p>During Ryzen launch, there was a pronounced issue with HPET, and AMD gave an official recommendation to disable HPET in BIOS. However, those issues were supposedly resolved.</p>
+<p>To find out whether your system benefits from completely disabling HPET:</p>
+<ol><li>Update your BIOS to the latest version.</li><li>Use the Command Prompt to set HPET to Default Setting. Restart your PC.</li><li>Run the <strong><a href="https://www.overclockers.at/articles/the-hpet-bug-what-it-is-and-what-it-isnt" target="_blank" rel="noopener noreferrer">TimerBench</a></strong> at low resolution with HPET Enabled in BIOS.<ul><li>Do <em><strong>not</strong></em> click “Enable HPET” button in TimerBench, as it will force the system to always use only HPET, which is not desirable.</li></ul></li><li>Run TimerBench with HPET Disabled in BIOS.</li><li>Compare results. If you see no difference, then keep HPET Enabled in BIOS and set to Default in OS.</li></ol>
+<p><strong>A note on TimerBench:</strong> you can see a “Enable HPET” button, but it doesn’t actually enable HPET, it forces the system to always use HPET in all situations, which will cause a performance drop if your system is suffering from the HPET bug. This is the same as Forcing HPET through Command Prompt.</p>
+<p>Similarly, the “Disable HPET” button in TimerBench does not actually disable the HPET. It does the same thing as setting Default Setting through Command Prompt. Only the BIOS setting can truly disable HPET.</p>
+<h3>HPET Benchmark Results</h3>
+<p>A contributer used a Core i5 7600k, overclocked to 4.4 GHz on MSI Z270 Gaming M3 motherboard. He ran two sets of benchmarks, one with TimerBench – a benchmark produced by Overclockers.at to specifically demonstrate the performance impact of the HPET Bug.</p>
+<ul><li>BIOS enabled, OS default 640×480</li></ul>
+<ul><li>BIOS enabled, OS forced</li></ul>
+<ul><li>BIOS disabled, OS default</li></ul>
+<ul><li>BIOS disabled, OS forced</li></ul>
+<p>He also ran a primitive benchmark in PlanetSide 2 – just drove a Prowler near a tower in VR Training and fired HESH shells and Gatekeeper bursts for a minute, <a href="http://cmdrcyrious.com/how-to-benchmark-planetside-2/" target="_blank" rel="noopener noreferrer">using FRAPS to record frametimes</a> and <a href="http://cmdrcyrious.com/wp-content/uploads/2018/07/HPET-benchmark-settings.png" target="_blank" rel="noopener noreferrer">these graphics settings</a>.</p>
+<ul><li>BIOS enabled, OS default</li></ul>
+<ul><li>BIOS enabled, OS forced</li></ul>
+<ul><li>BIOS disabled, OS default</li></ul>
+<ul><li>BIOS disabled, OS forced</li></ul>
+<p>As you can see, on my machine the performance impact of the HPET bug is quite significant.</p>
+<p>According to that article from Overclockers.at, how much your particular system is affected by HPET bug – if it all – will depend on your specific hardware and what kind of games you’re playing. The impact seems to be most noticeable when your game is CPU-bound – paired with an overly powerful Graphics Card, in other words. This is a fairly common situation for PS2.</p>
+<p><strong>References:</strong><a href="https://www.reddit.com/r/Planetside/comments/8usl92/revamped_beginner_guides_would_love_some_critique/e1iudb4/" target="_blank" rel="noopener noreferrer">/u/Oottzz</a> for input on HPET bug and /u/DastardlyCoxcomb for input in the same thread.</p>
+<h2>Disclaimer</h2>
+<p>Disclaimer: This page gathers suggestions and tips from multiple sources but is not liable for any potential damages that may result from applying any of the information in practice. </p>
+<p>You perform any procedures or modifications to hardware or software at your own personal risk. Thus if you are uncertain seek out advice from multiple sources and inform yourself in advance.</p>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

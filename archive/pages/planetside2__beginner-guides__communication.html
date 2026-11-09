@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>Communication and Interaction | CMDRCyrious.com — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>Communication and Interaction | CMDRCyrious.com</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd><span data-i18n="arc.attrUnknown">Not recorded in the source</span></dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/planetside2/beginner-guides/communication/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/planetside2/beginner-guides/communication/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2018-06-16</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Live</dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<h2>Code of Conduct</h2>
+<p>PlanetSide 2 is a team game at its core, and it’s customary to observe certain courtesies:</p>
+<p><strong>PlanetSide 2 has friendly fire</strong><em>,</em> so don’t shoot allies, and don’t put allies in a position where they will shoot you by accident (i.e. don’t cross their line of fire).</p>
+<p>Accidents <em>will</em> happen. If you accidentally shoot an ally, use V + 8 callout to apologize. And if an ally shoots you by accident, do not retaliate. Eye for an eye leaves whole world blind.</p>
+<p>You don’t have to say “Thanks” every time you get a revive. Combat comes first. Revive XP is thanks enough.</p>
+<p>There are lots of other small rules I could write, but they all can be summed up as: treat others like you would want to be treated yourself, and don’t act like allies owe you something.</p>
+<p>For example, some people often get frustrated when it takes allied medics too long to get to them. However, getting mad at strangers will not accomplish anything. If you want tactical coordination with medics that will revive you like they’ve got a purpose, join an organized <strong><a href="http://cmdrcyrious.com/planetside2/beginner-guides/join-an-outfit/" target="_blank" rel="noopener noreferrer">outfit</a></strong> and play in squad with them.</p>
+<h2>Text Chat</h2>
+<p><em>Thanks to <strong><a href="https://www.reddit.com/r/Planetside/comments/8xn430/yell_chat_warriors_rejoice_range_test/" target="_blank" rel="noopener noreferrer">/u/Velsva</a></strong> for running tests on chat range.</em></p>
+<p>Press Enter or “/” to start typing in chat. Press Enter again to send the message. Start your message with:</p>
+<p><strong>/s</strong> or <strong>/squadsay</strong> – send a text message to your squad.</p>
+<p><strong>/ft</strong> – send a text message to your fireteam.</p>
+<p><strong>/p</strong> or <strong>/platoonsay</strong> – send a text message to your platoon.</p>
+<p><strong>/o</strong> or <strong>/outfitsay</strong> – send a text message to your outfit.</p>
+<p><strong>/sa</strong> or <strong>/say</strong> – send a text message to a small local area around you</p>
+<p><strong>/re</strong> or <strong>/regionsay</strong> – send a text message to all allies in your current <strong><a href="http://cmdrcyrious.com/planetside2/beginner-guides/continents/#Regions" target="_blank" rel="noopener noreferrer">region</a></strong>. ***This is the main way of coordinating with allied forces in any specific fight<em>.</em>* Note that players outside your current region will not see your messages, even if they are close to you.</p>
+<p> <strong>/sitrep</strong> – send a continent-wide situation report on your current base, its time to capture or defend, and whether or not you need reinforcements, based on current population balance. This command is available only to squad and platoon leaders with at least 2 players in their squad or platoon, and only in <strong><a href="http://cmdrcyrious.com/planetside2/beginner-guides/bases/#Capture_Points" target="_blank" rel="noopener noreferrer">contested</a></strong> territory.</p>
+<p><strong>/y</strong> or <strong>/yell</strong> – send a text message to all players within 400m, <em><strong>including enemies</strong></em>. This chat is used by default.</p>
+<p><strong>/t PlayerName</strong> or <strong>/tell PlayerName</strong> or <strong>/w PlayerName</strong> or <strong>/whisper PlayerName</strong> – send a private message to a specific player. You can also click their name in chat.</p>
+<p><strong>/r</strong> or <strong>/reply</strong> – reply to a player who last sent you a private message. You can also press <strong>Backspace</strong>.</p>
+<h2>Voice Chat</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/08/begin-voice-chat-1024x576.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Controls:</strong></p>
+<ul><li><strong>Numpad Plus</strong> and <strong>Numpad Minus</strong> to regulate the volume of whoever is currently speaking.</li><li><strong>Numpad Enter</strong> to mute current speaker, if he is being abusive or annoying.<ul><li>You can also manage this in “Voice and Chat” part of the “Social” menu.</li></ul></li><li><strong>Numpad 4</strong> to speak in proximity chat. <em><strong>Only nearby allied players will hear you.</strong></em></li><li><strong>Z</strong> to speak to your squad.</li><li><strong>Numpad 1</strong> to speak to your platoon.</li><li><strong>Numpad 7</strong> is used by Squad and Platoon Leaders to communicate between themselves.</li><li><strong>Numpad 9</strong> to speak to your outfit. Useful for outfit-wide announcements.</li></ul>
+<p>These keybinds can be hard to remember, and use in a pinch, so feel free to rebind them elsewhere. My personal go-to for Proximity Chat is tilde (\~).</p>
+<p>\[spoiler title=”Custom Voice Channels”\] Note: most players would prefer using a 3rd party application for voice communication, such as <strong>TeamSpeak</strong> or <strong>Discord</strong>.</p>
+<p><em>Originally posted on <a href="https://www.reddit.com/r/Planetside/comments/6hh94d/psa_custom_voice_channels_exist/" target="_blank" rel="noopener noreferrer">reddit</a>. Thanks to <a href="https://www.reddit.com/user/KoolbIade" target="_blank" rel="noopener noreferrer">/u/KoolbIade</a>,  <a href="https://www.reddit.com/u/FM4k" target="_blank" rel="noopener noreferrer">/u/FM4k</a> and <a href="https://www.reddit.com/u/Morfildur" target="_blank" rel="noopener noreferrer">/u/Morfildur</a> for keeping the memory alive.</em></p>
+<p>It’s a little known fact that players can create their own custom voice channels. This is useful for communicating with people in different squads, or when you need direct or private communication.</p>
+<p><strong>To create a custom voice channel, use <a href="http://cmdrcyrious.com/wp-content/uploads/2017/06/custom-voice-chat-command.png" target="_blank" rel="noopener noreferrer">the chat command</a>:</strong></p>
+<p><code>/voice join channelname</code></p>
+<p><strong>Other players can use the same command to join your custom voice channel.</strong></p>
+<p><strong>To speak in a custom voice channel, use the <a href="http://cmdrcyrious.com/wp-content/uploads/2017/06/custom-voice-chat-keybind.png" target="_blank" rel="noopener noreferrer">User Channel Voice Chat</a> keybind</strong>, located in PlanetSide 2 keybind settings.</p>
+<p>The end result will look something like <a href="http://cmdrcyrious.com/wp-content/uploads/2017/06/custom-voice-chat-talking.jpg" target="_blank" rel="noopener noreferrer"><strong>this</strong></a>.</p>
+<h4>Tactical information:</h4>
+<ul><li>Only players of the same faction and server can join a custom channel.</li><li>Volume must be adjusted with numpad plus and minus, as there is no GUI for it</li><li>You may encounter <a href="http://cmdrcyrious.com/wp-content/uploads/2017/06/custom-voice-chat-error.png" target="_blank" rel="noopener noreferrer"><strong>this error message</strong></a> when creating a custom channel, but it will still work properly.</li><li>You will <strong>automatically leave</strong> voice channels when logging out.</li><li>There is a <em>/voice leave</em> command, however it has not been proven to work yet</li><li>Multiple voice channels cannot be joined at once (this may need more testing)</li><li>Voice channels <strong>cannot be joined or created again once all users leave the channel</strong>, so it is a good idea to add a random number to the channel name and make one for each session (ex. today I might make /voice join testchannel20 to talk to my gunner, but tomorrow, when I come back, I might make /voice join testchannel21)</li></ul>
+<p>\[/spoiler\]</p>
+<h2>Leaving and Joining Voice Chat Channels</h2>
+<p>Players can leave or rejoin voice channels using <strong>/leavechannel</strong> or <strong>/joinchannel</strong> commands. You are automatically connected to all voice chat channels by default, and if you choose to leave a channel, the client will automatically rejoin you upon client restart.</p>
+<p>Examples:</p>
+<ul><li>/leavechannel squad</li><li>/leavechannel platoon</li><li>/leavechannel fireteam</li><li>/leavechannel leader</li><li>/leavechannel proximity</li></ul>
+<h2>Voice Callouts</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/08/begin-voice-callout-menu-e1502205829300.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Press “V” to bring up the voice callout menu. Then press a number from 1 to 0 to make a specific callout. <strong>Enemies can hear these callouts too.</strong> </p>
+<h2>The Q-menu</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/08/begin-Q-menu-1024x576.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Put your crosshair on an ally and hold “spot” (default “Q”) to bring up a menu with various interaction options. It is also known as “Commo Rose”. This menu will provide different options, depending on your class and who you’re trying to interact with.</p>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

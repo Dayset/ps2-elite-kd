@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>Weapon Mechanics — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>Weapon Mechanics</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd>Iridar (Institoros)</dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2016-04-25</dd></div>
+      <div><dt data-i18n="arc.attrSnapshot">Snapshot date</dt><dd>2023-05-19</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Wayback</dd></div>
+      <div><dt data-i18n="arc.attrStatus">Status</dt><dd><span class="arc-badge arc-st-timeless">🕰️ Method timeless, data dated</span><p class="arc-attr-note">The CoF, recoil, bloom, and recovery mechanics are game constants. Weapon-stat examples are from 2016. The effective-range material built on angular size is dead.</p></dd></div>
+      <div><dt data-i18n="arc.attrNote">Note</dt><dd>Wayback snapshot; live copy empty</dd></div>
+      <div><dt data-i18n="arc.attrRaw">Original source file</dt><dd><a href="../raw/wayback__planetside2__weapons__weapon-mechanics.html" target="_blank" rel="noopener noreferrer">wayback__planetside2__weapons__weapon-mechanics.html</a>, <a href="../raw/planetside2__weapons__weapon-mechanics.html" target="_blank" rel="noopener noreferrer">planetside2__weapons__weapon-mechanics.html</a></dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<h2>Introduction</h2>
+<p>PlanetSide 2 is a First Person Shooter, so naturally using your weapons is a big part of gameplay. However, in-game descriptions of weapons and attachments are far from being comprehensive, and <a href="https://web.archive.org/web/20230519111303/http://planetstats.net/data/weapons/" target="_blank" rel="noopener noreferrer">online spreadsheets</a> can be confusing to grasp.</p>
+<p>Purpose of this guide is to help you learn everything there is to know about PlanetSide 2 weapons.</p>
+<h2>Where to get weapon stats</h2>
+<p>Explained in <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/weapon-stats/" target="_blank" rel="noopener noreferrer">this article</a></strong>.</p>
+<h2>Weapon Mechanics</h2>
+<p>Let’s start by examining the in-game weapon stat picture, and use TRAC-5 Terran Republic Carbine as an example:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">TRAC-5 Stats</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/14lioi1.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>The main description is mostly for flavor, but it will tell you which factions can use the weapon.</p>
+<h2>Weapon Type</h2>
+<p><strong>TRAC-5 Weapon Type</strong>: carbine.</p>
+<p>Weapon’s type provides you with a general idea about the weapon, as well as determines which classes can use it, for example:</p>
+<ul><li>Compared to Assault Rifles, Carbines generally have a bit higher vertical recoil, lower projectile speed, and shorter minimum damage range, which makes them less effective at range. But better “hip accuracy” makes them better when hip firing.</li><li>Carbines can be used by Engineer and Light Assault classes.</li></ul>
+<h2>Damage</h2>
+<p><strong>TRAC-5 Damage</strong>: 143 / 10m / 112 / 60m.</p>
+<p>The four values are: maximum damage, maximum damage range, minimum damage, minimum damage range.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">linear damage degradation</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/69kjsl.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Usually players use a more convenient damage formula: 143 @ 10m – 112 @ 60m.</p>
+<p>This reads as: TRAC-5 does maximum damage of 143 up to 10 meters, and then the damage linearly falls down to its minimum value of 112 at 60m. After 60m bullets will always do minimum damage.</p>
+<p>The difference between Max and Min damage values is called <strong>damage degradation</strong>. The bigger it is, the more noticeable will be the decrease in weapon’s performance as the distance to the target grows.</p>
+<p>When damage is reduced by <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Health_Armor_and_Resistances" target="_blank" rel="noopener noreferrer">Resistances or Armor</a></strong>, such as Nanoweave, it is <strong><a href="https://web.archive.org/web/20230519111303/https://www.reddit.com/r/Planetside/comments/7qf1o3/questions_regarding_chameleon_module_and_implants/dstghyn/" target="_blank" rel="noopener noreferrer">rounded up</a></strong>. However, when affected by degradation over range, it is rounded down.</p>
+<h3><strong>Locational damage</strong></h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Aiming Points</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/PNXPLxe-1.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p> <strong>Head</strong>  shot damage is multiplied by <strong>Headshot Damage Multiplier</strong>. Most weapons have Headshot Damage Multiplier of 2x, but here are the most notable exceptions:</p>
+<ul><li><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/sniper-rifles/#Bolt_ActionSniper_Rifles" target="_blank" rel="noopener noreferrer">Bolt Action Sniper Rifles</a>: 2.1x</li><li><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/shotguns/" target="_blank" rel="noopener noreferrer">Shotguns</a>, <a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/heavy-weapons/#T7_Mini-Chaingun" target="_blank" rel="noopener noreferrer">T7 Mini-Chaingun</a>, <a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/sidearms/#Hunter_QCX_Crossbow" target="_blank" rel="noopener noreferrer">Hunter Crossbow</a>: 1.5x</li><li><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/sidearms/#NS-61_Emissary" target="_blank" rel="noopener noreferrer">NS-61 Emissary</a> autopistol: 1.8x</li><li><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/nsx-tomoe-highly-technical-weapon-guide/" target="_blank" rel="noopener noreferrer">NSX Tomoe</a>: 2.5x</li><li><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/sniper-rifles/#NSX_Daimyo" target="_blank" rel="noopener noreferrer">NSX Daimyo</a>: 5x</li></ul>
+<p>Interesting facts:</p>
+<ul><li>Both 143 and 125 damage bullets require 4 headshots to kill a generic infantry target.</li><li>Both 200 and 167 damage bullets require 3 headshots.</li><li>Headshots ignore Nanoweave Armor.</li></ul>
+<p> <strong>Arms and Body</strong>  take normal damage from bullets, but it can be reduced by Nanoweave Armor.</p>
+<p> <strong>Weapon Model</strong>  is ignored by bullets; they go right through it. <a href="https://web.archive.org/web/20230519111303/https://www.youtube.com/watch?v=-fr3w-HXg8o" target="_blank" rel="noopener noreferrer">Video test.</a></p>
+<p> <strong>Leg</strong>  shot damage is multiplied by <strong>Legshot Damage Multiplier</strong>. All known small arms and machineguns have 0.9x Legshot Damage Multiplier.</p>
+<p>Damage to legs can be further reduced by Nanoweave Armor, down to 1x \<em> 0.9 \</em> 0.8 = 0.72x damage.</p>
+<p>This can be critical in some edge cases. For example, a Hunter Crossbow bolt to the chest and one knife swing will kill an infantryman through full nanoweave, but will fail to do so if the bolt hits a leg.</p>
+<h3>Hit Markers</h3>
+<p><em>Thanks to /<a href="https://web.archive.org/web/20230519111303/https://www.reddit.com/r/Planetside/comments/7w7np1/new_headshot_indicators/" target="_blank" rel="noopener noreferrer"><strong>u/Yaluzar</strong></a> and <a href="https://web.archive.org/web/20230519111303/https://www.reddit.com/r/Planetside/comments/7w7np1/new_headshot_indicators/dty8li0/" target="_blank" rel="noopener noreferrer"><strong>/u/VORTXS</strong></a> for these pictures.</em></p>
+<p>PlanetSide 2 will provide different hit markers depending on which body part you hit and how much damage you deal.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2018/02/hit-headshot-high-damage-e1518140048528.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<ul><li>High Damage Headshot</li></ul>
+<ul><li>Headshot</li></ul>
+<ul><li>A simple hit is a cross.</li><li>A headshot is a double cross.</li><li>Any hit that deals over 250 damage will have a circle around it.</li></ul>
+<h3>BTK: Bullets to Kill</h3>
+<p><code>BTK = Round_UP(Target Health / Bullet Damage)</code></p>
+<p>Unless specified otherwise, we will talk about BTK against <strong>generic infantry target</strong>, which has 1000 health + shields, no Nanoweave and takes only body shots.</p>
+<p>All classes except infiltrator have this amount of health and shields. Infiltrators have 500 health and 400 shields.</p>
+<h3>Bullet Damage Tiers</h3>
+<p>Bullet Damage values are usually tiered. Most common bullet damage tiers:</p>
+<p>| <strong>Bullet Damage</strong> | <strong>BTK</strong> |  | 500 | 2 |  | 334 | 3 |  | 250 | 4 |  | 200 | 5 |  | 167 | 6 |  | 143 | 7 |  | 125 | 8 |  | 112 | 9 |  | 100 | 10 |  | 91 | 11 |  | 84 | 12 |  | 77 | 13 |  | 71 | 14 |  | 67 | 15 | </p>
+<p>The important thing to understand about damage tiers, is that If the bullet damage gets even one point lower, you’re going to need an additional bullet to kill a generic infantry target. For example:</p>
+<ul><li>At 10m TRAC-5 does 143 damage, and it takes 7 bullets with that damage to kill a generic target: 143 \* 7 = 1001 damage.</li><li>At 11m, TRAC-5 will deal 142 damage, and 7 bullets with 142 damage will deal only 994 damage, so you will need an additional bullet to kill the target.</li></ul>
+<p>For most weapons, going even one meter beyond maximum damage range will increase BTK by one. This doesn’t mean that you should always try to stay within maximum damage range, of course.</p>
+<h3>BTK Thresholds</h3>
+<p>Most weapons deal less and less damage as distance to the target increases. This means that at longer ranges you will need more bullets to kill.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">bullet damage thresholds</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/15zf6tu.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>TRAC-5 has damage degradation of two tiers, from 143 to 125 to 112. So there are three <strong>bullets-to-kill</strong> values for this weapon:</p>
+<ul><li>BTK of 7 within 10m, where TRAC-5 does 143 damage</li><li>BTK of 8 between 11m and 39m, where TRAC-5 does between 142 and 125 damage</li><li>BTK of 9 after 40m, where TRAC-5 does between 124 and 112 damage</li></ul>
+<p>These ranges: 0m – 10m, 11m – 39m, 40m+ are called <strong>BTK Thresholds</strong>.</p>
+<ul><li>Most automatic primary weapons drop two tiers.</li><li>Some automatic weapon, intended for ranged combat, drop only one tier.</li><li>Most SMGs drop four tiers.</li></ul>
+<h3>Advantages of high bullet damage</h3>
+<p>Weapons with higher bullet damage tend to be more effective at range, because their damage is harder to regulate on the receiving end, as they do damage in strong, sudden chunks as opposed to mild continuous drain.</p>
+<p>Higher bullet damage makes individual bullets more important, so even if you see a tiny part of the target, and can only hit it with single shots, you’ll still be doing considerable damage.</p>
+<p>If target was already wounded, higher bullet damage increases the chance that you’ll kill the target with your first shot.</p>
+<p>High bullet damage increases your <strong>Alpha Damage</strong>.</p>
+<h3>Alpha Damage</h3>
+<p>Alpha damage is a term used to describe the damage done to the enemy before he has a chance to react, or damage done by a first shot.</p>
+<p>In a theoretical situation where two players start shooting at each at the same time, Alpha Damage would describe the damage of their first shots. In this situation, the gun with higher alpha damage will have an advantage, because sometimes the damage of the first shot is enough to kill the opponent. Starting the fight with a headshot would further increase this advantage.</p>
+<h4>Alpha Damage vs DPS</h4>
+<p>Rate of Fire doesn’t come into play until the second shot and on.</p>
+<p>A slow firing 200 damage ACX-11 versus a rapid fire 125 damage SMG means that the ACX-11 will do 200 damage with the first shot and the SMG will do 125.</p>
+<p>It will only take a few tenths of a second for the SMG to compensate for this, but a few tenths of a second is all that separates the best from the worst Time to Kill as well.</p>
+<p>It’s a disadvantage that the lower bullet damage gun must climb out before it can gain a DPS advantage with higher RoF. It’s why the AC-X11 owns but the GD-7F is a constantly reloading blah sandwich.</p>
+<p>It also means, to the astute observer, that if the first shot is a headshot, the higher damage gun is almost assured to win, regardless of the opponent.</p>
+<p>Spray and pray guns don’t land headshots as easily or as often, so best case scenario is 400dmg vs 250dmg, but more realistically it’s 400 vs 125.</p>
+<p>This isn’t even including the psychological aspect of having your shields damn near gone the same instant the engagement starts.</p>
+<p>It’s also why the Gauss Rifle, Gauss Rifle S, and GD-22S among others are so insanely beastly despite not out-DPSing the more common 143 damage guns on paper.</p>
+<p>Sure, if the fight starts with the lower RoF gun spraying bullets all around the target and never hitting them, they’re TECHNICALLY at more of a disadvantage than had the higher ROF gun done the same, but beginning a fight like this means a certain death for either of them, so it’s entirely academic.</p>
+<p>– Epic High Five</p>
+<h3>Indirect Damage</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/splash-damage-mechanics.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Some weapons deal splash damage with their attacks, like <a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/heavy-weapons/#X2_Lasher" target="_blank" rel="noopener noreferrer"><strong>X2 Lasher</strong></a> and most <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/rocket-launchers/" target="_blank" rel="noopener noreferrer">Rocket Launchers</a></strong>. Indirect Damage is defined by 4 stats:</p>
+<ul><li><strong>Maximum Indirect Damage</strong></li><li><strong>Maximum Indirect Damage Radius</strong></li><li><strong>Minimum Indirect Damage</strong></li><li><strong>Minimum Indirect Damage Radius</strong></li></ul>
+<p>Indirect damage scales over distance: Maximum Indirect Damage is dealt within Maximum Indirect Damage Radius, then the damage linearly downscales to Minimum Indirect Damage at Minimum Indirect Damage Radius. Basically, the further you are away from the explosion, the less indirect damage you take.</p>
+<p>Indirect damage is applied on direct hits on as well.</p>
+<h2>Fire Rate</h2>
+<p><strong>TRAC-5 Fire Rate:</strong> 750 RPM (rounds per minute).</p>
+<p>Also known as Rate of Fire, or RoF for short. Determines how many rounds would a weapon fire in a minute if it didn’t have to reload.</p>
+<p>Most weapons have constant Rate of Fire, but there are exceptions: <a href="https://web.archive.org/web/20230519111303/http://planetside.wikia.com/wiki/G30_Vulcan" target="_blank" rel="noopener noreferrer">G30 Vulcan</a>, <a href="https://web.archive.org/web/20230519111303/http://planetside.wikia.com/wiki/T7_Mini-Chaingun" target="_blank" rel="noopener noreferrer">T7 MCG</a> and Hellion chainguns start firing at lower RoF, and build it up to the maximum over time. T7 MCG also has access to BRRT attachment, which reduces spool-up time and increases maximum RoF.</p>
+<p><strong>Known bug: <a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/rate-of-fire-vs-framerate/" target="_blank" rel="noopener noreferrer">depending on PC performance and settings, there could be a negative impact to Rate of Fire.</a></strong> </p>
+<h3>DPS: Damage Per Second</h3>
+<p>Knowing weapon’s RoF, you can calculate its <strong>Damage Per Second (DPS)</strong>:</p>
+<p><code>DPS = Bullet Damage * Rate of Fire / 60 seconds in a minute</code></p>
+<p><strong>TRAC-5 DPS:</strong> 143 \* 750 / 60 = 1787</p>
+<h3>TTK: Time To Kill</h3>
+<p><code>TTK = (BTK - 1) / ( RoF / 60)</code></p>
+<p><strong>TRAC-5 TTK:</strong> (7 – 1) / (750 / 60) = 6 / 12.5 = 0.48 seconds</p>
+<p>Average TTK is considered to be 0.5 seconds.</p>
+<h3>Advantages of high RoF</h3>
+<p><strong>High RoF makes damage more consistent in CQC</strong>, when target will be moving and actively dodging your fire. The higher your RoF, the easier it will be to hit your target with at least some bullets.</p>
+<p><strong>High RoF gives a TTK advantage when transitioning to the next BTK Threshold.</strong></p>
+<p>For example, let’s compare two SMGs:</p>
+<p><strong>AF-4 Cyclone</strong>: 167 @ 6m – 100 @ 46m / 652 RoF</p>
+<p><strong>SMG-46 Armistice</strong>: 125 @ 6m – 84 @ 42m / 896 RoF</p>
+<p>They both have similar DPS. At 6m, they have the same TTK of 0.47. However, when crossing the bullet damage threshold from 6m to 7m, Armistice’s TTK will increase to 0.54, and Cyclone’s TTK will increase to 0.56.</p>
+<p>They both will need one additional bullet to kill, but Armistice fires those bullets at a much faster rate, so it’s a less of a problem for that weapon.</p>
+<p>This determines how much of a penalty is inflicted by using Suppressor, and generally for engaging the target outside the maximum damage range.</p>
+<p><strong>Rate of Fire defines weapon’s Refire Time</strong>, which plays an important role in <a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Recoil_Recovery_Delay" target="_blank" rel="noopener noreferrer">Recoil Recovery Time</a>.</p>
+<p><strong>Wrel has a great video about using slow firing weapons</strong>, which also highlights some other advanced weapon mechanics:</p>
+<h3>Fixed Burst Weapons</h3>
+<p>Burst weapons have two parameters when it comes to Rate of Fire:</p>
+<p><strong>fire\_refire\_ms</strong> – for normal weapons, this is the Refire Time, that determines the time between shots during automatic fire. For burst weapons, Refire Time determines the minimum amount of time between the last shot in one burst, and the first shot in the next burst.</p>
+<p><strong>fire\_auto\_fire\_ms</strong> – this parameter is unique to burst weapons, and it determines the time between shots within a burst, i.e. what normally would be the Refire Time for a non-burst weapon.</p>
+<p><code>Burst RoF = (1000 / fire_auto_fire_ms) * 60</code></p>
+<p><code>RPM = (1000 / ((Burst Length - 1)<em> fire_auto_fire_ms + fire_refire_ms)) </em> 60 * Burst Length</code></p>
+<h3>Grenade and Melee Interactions with Burst Weapons</h3>
+<p><em>Credit for this discovery goes to <strong><a href="https://web.archive.org/web/20230519111303/https://www.reddit.com/r/Planetside/comments/6ptl41/guide_ns45_pilot_short_guide_and_video_of_gameplay/dksod8o/" target="_blank" rel="noopener noreferrer">/u/regulusmagnus</a></strong>.</em></p>
+<p>Fixed burst weapons have an unusual interaction: you can perform quick melee attacks and throw grenades <em><strong>during</strong></em> the fixed burst. Simply press “melee attack” or “throw grenade” right after you click “fire” to start the burst.</p>
+<p>In general, performing a <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/melee-weapons/#Quick-Knife" target="_blank" rel="noopener noreferrer">quick melee strike</a></strong> or throwing a <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/equipment/frag-grenades/" target="_blank" rel="noopener noreferrer">grenade</a></strong> is nearly instant, and it ignores weapon’s Refire Time, if you do it right after firing a weapon. However, it forces you to re-equip your weapon, and there will be some time before you can fire again.</p>
+<p>Using a burst weapon allows you to “break” the game’s weapon mechanics, and effectively keep firing the weapon even while not holding it. <a href="https://web.archive.org/web/20230519111303/https://www.youtube.com/watch?v=2HE07_5drZA" target="_blank" rel="noopener noreferrer"><strong>Video demonstration</strong></a>.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/burst-weapon-melee-combo.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<ul><li>Throwing <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/equipment/nsx-fujin/" target="_blank" rel="noopener noreferrer">NSX Fujin</a></strong> counts as a grenade throw, and this trick works with it as well.</li><li>This trick does not work while Aiming Down Sights.</li></ul>
+<p>It’s pretty clear that this is a bug, and not an intended feature, but might as well abuse it until it gets fixed, if ever.</p>
+<h4>How to benefit from this in-game</h4>
+<p>To be blunt – you’re not very likely to. To benefit from this trick, and to reliably kill the enemy with a melee or NSX Fujin combo, you need a burst fire weapon that deals high damage per burst:</p>
+<p>As you can see, the list is fairly short, and none of them are a perfect fit. The trick is nice to know, but you won’t be using it to farm droves of enemies with any of these weapons.</p>
+<p><strong>NSX Yumi</strong> benefits from this technique a lot, mostly due to charge up delay. However, this weapon is absolutely horrible for fighting within \~15m, and normally you want to stay out of close range, so there won’t be many opportunities.</p>
+<p><strong>Pilot</strong> is <em>almost</em> a good fit. To be absolutely perfect, it’s only missing the extra 25 damage per burst that it would take to reliably melee combo full health enemies with max rank Nanoweave.</p>
+<p><strong>Faction specific burst pistols</strong> get an honorable mention, because you can do one burst, and then melee combo together with a second burst, reliably killing through Nanoweave. The tricky part is to do the melee strike right after the second burst started. Do it too early – you won’t be getting out the second burst. Do it too late – you’re not getting the benefit from this trick.</p>
+<p><strong>Rocklet Rifle</strong> is normally worthless against infantry due to poor accuracy and not having enough damage to kill a full health enemy even assuming you hit all rocklets. Doing a melee combo during its burst solves both problems, and confuses the hell out of the enemy. However, it’s still nothing more than a last resort, after you’ve exhausted ammo from both your primary weapon and sidearm. Even then, wielding your knife should arguably be your go-to option.</p>
+<p><strong>Jackhammer</strong> deals such high damage per burst that doing a melee strike on top of it is redundant. If you’re in melee range, you’re already getting 100% burst accuracy, which is enough to kill almost all infantry targets.</p>
+<h3>Bolt Action and Pump Action Weapons</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">bolt chamber timeline</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/bolt-chamber-timeline-e1498560947750.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><code>Time Between Shots = Refire Time + Chamber Duration</code></p>
+<p><strong>Chamber Duration</strong> and <strong>Refire Time</strong> can be accessed in <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/how-to-use-daybreak-census-api/" target="_blank" rel="noopener noreferrer">DBG API</a>.</strong> Search for <strong>chamber\_duration\_ms</strong> and <strong>fire\_refire\_ms</strong> respectively.</p>
+<p>Time Between Shots is one of the biggest differences between different Bolt Action and Pump Action weapons.</p>
+<p>Almost all BASR have Refire Time of 170ms, and Bolt Chamber Time is shown on <a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/wp-content/uploads/2016/04/chamber-time-stat-sheet.png" target="_blank" rel="noopener noreferrer"><strong>in-game weapon stat sheet</strong></a>.</p>
+<p>For example, <a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/sniper-rifles/#M-77B" target="_blank" rel="noopener noreferrer"><strong>M-77B</strong></a> has 1225ms Chamber Duration and 170ms Refire Time, so it can fire a shot once every 1225 + 170 = 1395ms = 1.395 seconds.</p>
+<p>Pump Action Shotguns have Refire Time of 150ms, and Chamber Duration of 600ms or 700ms, so their Time Between Shots is 0.75 and 0.85 seconds respectively.</p>
+<h3>Melee Interactions with Pump Action and Bolt Action Weapons</h3>
+<p><em>Credit for this discovery goes to <a href="https://web.archive.org/web/20230519111303/https://www.reddit.com/r/Planetside/comments/6z9du0/bug_if_you_knife_after_firing_you_dont_have_to/dmti6xi/" target="_blank" rel="noopener noreferrer"><strong>/u/Diesl</strong></a></em></p>
+<p>Pump Action and Bolt Action weapons have an unusual interaction: you can perform quick melee attacks <a href="https://web.archive.org/web/20230519111303/https://gfycat.com/ReflectingShrillEchidna" target="_blank" rel="noopener noreferrer"><em><strong>during</strong></em></a> chamber animation. This works with the Hunter Crossbow as well.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">bolt chamber timeline</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/bolt-chamber-timeline-e1498560947750.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>To trigger this bug-feature, you have to hit “quick melee” during Chamber Time, but not during Refire Time. If you quick melee during Refire Time, the weapon will still perform the usual chamber animation after the weapon is re-equipped, so there will be a significant delay before you can fire again.</p>
+<p>The Time Between Shots will still increase by \~half a second, but it’s still much faster than if you performed a melee attack and rechambering separately.</p>
+<p>To benefit from this bug-feature in game, you have to perform a melee combo on the enemy. Remember to quick melee \~0.2 seconds <em>after</em> the shot. You will be able to fire or perform another melee combo faster than usual.</p>
+<p>Note that this doesn’t work with grenades, only quick melee attacks.</p>
+<h2>Muzzle Velocity</h2>
+<p><strong>TRAC-5 Muzzle Velocity</strong>: 490 m/s.</p>
+<p>Also known as bullet speed or projectile velocity. Determines the speed at which bullet travels, in in-game meters per second.</p>
+<p>High projectile velocity is important for ranged combat, as it makes it easier to hit targets, especially if they are moving, both due to less pronounced bullet drop, and due to reduced bullet travel time. When firing at moving target at range, remember to lead – aim a bit ahead of the target.</p>
+<p>In PlanetSide 2, bullets are affected by gravity, and the slower the bullet flies, the more time gravity has to affect it. When firing at distant targets you have to aim a bit higher to hit the target.</p>
+<p>All infantry weapons have the same Gravity of 11.25, except for bolt action sniper rifles, which have 7.5, and shotguns’ slug ammo, which has 8.</p>
+<p>So when comparing two weapons with different Projectile Speeds, it’s easy to predict which weapon will have more drop.</p>
+<p>Most <strong>Vanu Sovereignty</strong> primary and secondary infantry weapons do not have bullet drop, but they have lower projectile velocity on average. VS Bolt Action Sniper Rifles, Rocket Launchers and Shotguns Slugs do have drop.</p>
+<p>It is assumed that bullets always fly at constant speed, with no acceleration or deceleration mechanics. However, most of the rocket-type projectiles do have acceleration mechanics, with starting velocity, acceleration, and maximum velocity.</p>
+<p>When coupled with <a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Projectile_Lifespan" target="_blank" rel="noopener noreferrer">Projectile Lifespan</a>, Projectile Velocity determines the projectile’s maximum travel distance.</p>
+<h2>Reload Speed</h2>
+<p><strong>TRAC-5 Reload Speed</strong>: 3.8 sec / 2.595 sec.</p>
+<p>Listed as long reload / short reload.</p>
+<p><strong>Short reload</strong> time is used when a gun has its magazine swapped, but the chamber isn’t cycled. The <strong>long reload</strong> time is when the magazine is swapped and the chamber gets cycled, which happens only if you empty the entire magazine.</p>
+<h2>Ammunition</h2>
+<p><strong>TRAC-5 Ammunition</strong>: 40 / 240.</p>
+<p>Listed as Magazine / Total Ammo. How many rounds the gun holds / how many rounds do you carry with yourself, including rounds loaded into weapon.</p>
+<p>Some Vanu Sovereignty weapons use infinite ammo with heat mechanic: weapon generates heat when you fire, and loses heat when you stop firing.</p>
+<h2>Sprint Recovery</h2>
+<p>Weapons cannot be used while sprinting. The only exception from this is <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/melee-weapons/" target="_blank" rel="noopener noreferrer">wielded melee</a></strong>.</p>
+<p>When you stop sprinting, there is a <strong>Sprint Recovery Delay</strong> before you can start firing.</p>
+<p><strong>Sprint Recovery</strong> is equal to 0.3 seconds for infantry weapons and 0.5 seconds for MAX weapons.</p>
+<h2>Bullet origin</h2>
+<p>Not a statistic, but important part of weapon mechanics. In PlanetSide 2, bullets don’t actually fly from the weapon’s barrel, they fly from your <a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/gunplay-guide/#Player_camera_and_Field_of_View" target="_blank" rel="noopener noreferrer">first person camera</a>, which is located somewhere in the upper chest of your 3rd person model.</p>
+<h2>Hip Accuracy and Aim Accuracy</h2>
+<h4>(Cone of Fire)</h4>
+<p>Overall weapon accuracy is determined by two separate mechanics: recoil and cone of fire. Recoil is discussed in detail in the section below, for now let’s talk about Cone of Fire, which is an important mechanic, with lots of quirks and subtleties around it.</p>
+<p><span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">TRAC-5 CoF stats</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/nqo235.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> ^ this is what you can see on the weapon stats sheet in game. But we will use the picture below, which is easier to comprehend.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">TRAC-5 CoF statistics</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/5anrc0.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>Basics</h3>
+<p><em>PS2 CoF mechanics demonstrated by developers</em></p>
+<p>Fired bullets are randomly distributed within the cone called <strong>Cone of Fire</strong> (CoF), measured in degrees.</p>
+<p>At all times there are 3 CoF values: <strong>Minimum</strong>, <strong>Current</strong> and <strong>Maximum</strong>.</p>
+<p>As long as you don’t fire, your <strong>Current CoF</strong> will almost instantly reduce to <strong>Minimum CoF</strong>.</p>
+<p><strong>Minimum CoF</strong> and <strong>Maximum CoF</strong> depend on your stance – what your legs are doing at the moment, and whether you’re aiming down sights or not.</p>
+<p><strong>Sprint CoF</strong> value is meaningless, because no weapon can fire while sprinting, and Sprint Recovery for all weapons is long enough for Sprint CoF to fully shrink to normal moving CoF before you have a chance to fire.</p>
+<h3>Cone of Fire Bloom</h3>
+<p>When you fire, your <strong>Current CoF</strong> will increasingly grow (bloom) with each shot, at a rate listed in <strong>Bloom per Shot</strong> field. It will continue to grow until you stop firing or your <strong>Current CoF</strong> reaches <strong>Maximum CoF</strong>.</p>
+<p>Weapons that do more damage per bullet usually have higher Bloom per Shot values.</p>
+<p>Notice that there are separate <strong>Bloom per Shot</strong> values for aiming down sights and hip firing.</p>
+<p>Usually, hip Bloom per Shot is double of the ADS Bloom per Shot, but there are a lot of exceptions: T7 MCG, SMGs and most of the sniper rifles have same Bloom per Shot for both hip and ADS.</p>
+<p>Size of the crosshair roughly indicates the size of your <strong>Current CoF</strong> when hip firing, but there is no way to ascertain your <strong>Current CoF</strong> when aiming down sights.</p>
+<p>When you stop firing, <strong>Current CoF</strong> will shrink back to the <strong>Minimum CoF</strong> for your current stance, after a small <em><strong>delay</strong></em>, equal to weapon’s Refire Time for all known weapons.</p>
+<p>CoF size increase speed is 50 degrees per second.</p>
+<p>In essence, first few fired shots are the most accurate. The longer you fire the weapon without pause, the less accurate will it become.</p>
+<h3>Cone of Fire Recovery Rate</h3>
+<p>For vast majority of weapons, Cone of Fire recovers at a rate of 20 degrees per second, but there are exceptions:</p>
+<p>CoF Recovery Rate can be potentially set separately for each stance.</p>
+<h3>CoF Example</h3>
+<p>If you aim down sights with TRAC-5 while moving while standing, your CoF will be 0.3.</p>
+<p>If you fire ten rounds, your CoF will bloom by</p>
+<p>0.05 x 10 = 0.5,</p>
+<p>and will be equal to</p>
+<p>0.3 + 0.5 = 0.8 degrees.</p>
+<p>When you stop firing, your Current CoF will reduce back to 0.3, after a delay, equal to the refire time:</p>
+<p>60 / 750 = 0.08 seconds.</p>
+<p>And the reduction itself will take will take</p>
+<p>(0.8 – 0.3) / 20 = 0.025 seconds.</p>
+<p>So it will take:</p>
+<p>0.08 + 0.025 = 0.105 seconds</p>
+<p>to fully restore Cone of Fire after your last shot.</p>
+<h3>Advanced Information</h3>
+<h4>Rule #1</h4>
+<p>If you change stances while firing, and your <strong>Current CoF</strong> is bigger than <strong>Minimum CoF</strong> for your new stance, your <strong>Current CoF</strong> will stay big until you stop firing.</p>
+<p><strong>Example:</strong> You see an enemy while sprinting. You stop sprinting, and start firing from the hip while moving. Then you decide you could use additional accuracy and aim down sights. But your cone of fire cannot reduce while you fire, so it will stay as big as it was when you were hip firing. The only benefit is that you will now use ADS CoF Bloom parameter.</p>
+<p>Lack of understanding of this aspect of CoF mechanics is the reason behind 99% complains about <em>“bad hit detection”</em>, and <em>“I dumped full mag in enemy’s back, then he turned around in killed me”</em>. It’s likely out of that full mag only several bullets hit because the shooter’s CoF was huge.</p>
+<p>Tip: In situations like this, either don’t waste time and speed on aiming down sights, or stop firing for a moment to let your cone of fire reset.</p>
+<p><strong>Exception</strong>: if you change stances and your <strong>Current CoF</strong> is larger than <strong>Maximum CoF</strong> for your current stance, your <strong>Current CoF</strong> will instantly reduce to match.</p>
+<p>Most weapons cannot take advantage of this, since their ADS Maximum CoF is too large to reliably hit anything, but there are exceptions:</p>
+<p><strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/heavy-weapons/#T7_Mini-Chaingun" target="_blank" rel="noopener noreferrer">T7 MCG</a></strong> has fixed ADS CoF. ADSing even for a tiniest amount of time will “reset” the current CoF for this weapon, which got big while hip firing during a fall or a jump.</p>
+<p><strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/nsx-naginata-highly-technical-weapon-guide/" target="_blank" rel="noopener noreferrer">NSX Naginata</a></strong> has very small Maximum ADS CoF while being still, so even if your Current CoF is huge, staying still for a moment will instantly reduce your Current CoF back to the small Maximum CoF.</p>
+<h4>Rule #2</h4>
+<p>If you change stances while firing, and your <strong>Current CoF</strong> is smaller than the <strong>Minimum CoF</strong> for your new stance, your <strong>Current CoF</strong> will increase to match. However, if your <strong>Current CoF</strong> is larger than <strong>Minimum CoF</strong> for your new stance, your <strong>Current CoF</strong> will remain the same.</p>
+<p><strong>Implication</strong>: standing still can provide additional accuracy to first few fired shots, but then you can start moving without any cost in accuracy.</p>
+<p>This is best explained by examples:</p>
+<p><em>As you go about your business, you see an enemy and decide to kill him.</em> </p>
+<p><strong>Example 1</strong>: You decide that you need maximum accuracy. You stand still and aim down sights and fire a ten round burst from your TRAC-5. Your initial CoF is 0.1, after firing ten rounds it increases to 0.1 + 0.05 \* 10 = 0.6.</p>
+<p><strong>Dramatization</strong>: you successfully kill your target, but enemy sniper sees that you just stand still and kills you.</p>
+<p><strong>Example 2</strong>: You realize that standing still is a bad idea. You fire a ten round burst from TRAC-5 while aiming down sights and standing moving. Your initial CoF is 0.3. You fire off 10 rounds, and your CoF becomes 0.3 + 0.05 \* 10 = 0.8.</p>
+<p><strong>Dramatization</strong>: you avoid being sniped, but due to increased CoF and because it’s harder to shoot while moving, too many of your shots have missed and target got away.</p>
+<p><strong>Example 3</strong>: You become the guru of gunplay. You fire four rounds with TRAC-5 while standing still and aiming down sights, then you start moving and fire six more rounds.</p>
+<p>Your initial CoF is 0.1. You fire 4 rounds and it blooms to 0.1 + 0.05 \<em> 4 = 0.3. Then you start moving, and due to changing stance your CoF “increases” from 0.3 to 0.3. Then you fire off 6 more rounds and your CoF blooms to 0.3 + 0.05 \</em> 6 = 0.6.</p>
+<p>Notice, that even though you were moving 60% of the time, your final CoF was the same 0.6 as in Example 1, when you were standing still the whole time.</p>
+<p>Standing still during first few shots will provide an accuracy boost. But after those few shots, standing still will not provide any additional accuracy other than that standing still in itself makes hitting easier.</p>
+<h3>Jumping and Falling</h3>
+<p>Jumping will instantly kick you out of Aiming Down Sights.</p>
+<p>Most weapons have a huge <strong>Minimum CoF</strong> for jumping and falling, so they will be extremely inaccurate mid air. The only exceptions from this are <a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/carbines/" target="_blank" rel="noopener noreferrer"><strong>Carbines</strong></a> and <a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/classes/light-assault/#Rocklet_Rifle" target="_blank" rel="noopener noreferrer"><strong>Rocklet Rifle</strong></a>.</p>
+<p>Jumping also slows you down, and this effect stacks. After a few consecutive jumps, your movement will slow down to a crawl for a few seconds.</p>
+<p>While falling a short distance of \~5m, you can still Aim Down Sights, and you will be considered Standing Moving, even if you hold the Crouch key.</p>
+<p><strong>Example</strong>: While holding an Assault Rifle or an LMG, you jumped from the roof and your CoF got huge. While falling, you saw an enemy and opened fire. When you land, your cone of fire will stay huge until you stop shooting and let your cone of fire reset.</p>
+<h3>Angular Size</h3>
+<p><strong>This research has been <a href="https://web.archive.org/web/20230519111303/https://www.reddit.com/r/Planetside/comments/6z5uax/results_of_the_testing_related_to_my_angular_size/" target="_blank" rel="noopener noreferrer">proven</a> to be wrong. Do not use it.</strong> </p>
+<p>Knowing Angular Size of the target is useful when you want to compare target’s size to your Cone of Fire, which is the principle behind <a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/ideal-burst-length-calculator/" target="_blank" rel="noopener noreferrer">Burst Length Calculator.</a></p>
+<p>Angular Size is measured in degrees. Check out the <a href="https://web.archive.org/web/20230519111303/https://en.wikipedia.org/wiki/Angular_diameter" target="_blank" rel="noopener noreferrer">wikipedia page</a> if you forgot what it is.</p>
+<h3>Example of CoF analysis</h3>
+<p>Let’s find out the maximum amount of rounds that we can land on an enemy 30m away within one burst from TRAC-5.</p>
+<p><code>Burst Length = ((Angular Size - Initial CoF) / CoF Bloom) + 1</code></p>
+<p>Normally, calculating Angular Size requires trigonometry, but we’re gonna use a simpler way:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Angular Size calculations</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/Angular-Size-calculations-1024x714.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Let’s calculate Angular Size for an enemy 30m away:</p>
+<p><span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Enemy far away</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/E2yEmd0-1-1024x576.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span> The screenshot has resolution of 1920 x 1080 pixles, with 74 degrees vertical Field of View.</p>
+<p>This means 1 vertical degree is:</p>
+<p><code>1080 / 74 = 14.59 vertical pixels</code></p>
+<p>Using PhotoShop or MS Paint, let’s measure the enemy player. The whole enemy figure appears to be 42 pixels tall and 13 pixels wide:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">rTbo904</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/rTbo904.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Enemy center mass goes in a 13 by 13 pixels circle.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">mlyOeV1</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/mlyOeV1.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Now let’s convert pixels into degrees:</p>
+<p><code>Angular Size = 13 / 14.59 =</code> <strong>0.89 degrees</strong></p>
+<p>We’ll be shooting TRAC-5 while standing moving and aiming down sights:</p>
+<p><code>Initial CoF: 0.3</code></p>
+<p><code>CoF bloom: 0.05</code></p>
+<p>Now let’s use all these values to calculate the Burst Length:</p>
+<p><code>Burst Length = ((Angular Size - Initial CoF) / CoF Bloom) + 1</code></p>
+<p><code>Burst Length = ((0.89 - 0.3) / 0.05) + 1 =</code> <strong>12.8 shots</strong></p>
+<p>We should round this up to 13 shots.</p>
+<p>Continuing to fire will increase CoF further, and start reducing chances of hitting the target, but the probability of hitting will still be very high, with an added chance of hitting head or leg hitboxes, so it’s not a terrible terrible risk to continue firing.</p>
+<p>At 30m, TRAC-5 will take 10 hits to kill a full nanoweave target with body shots.</p>
+<p>So provided you can control recoil well and miss only a few shots, it’s possible to kill an enemy at 30m with TRAC-5 within one long burst.</p>
+<p>This example assumed we fired while moving. If we start firing while standing, Initial CoF will reduce from 0.3 to 0.1, increasing the Burst Length by 4 shots.</p>
+<p>Standing still is less safe, but bringing in some advanced weapon mechanics (see Advanced Information, Rule 2 above), it’s possible to get the best of both worlds.</p>
+<p>These are very approximate calculations, but they do show that CoF-wise PS2 weapons are surprisingly accurate, and the big portion of player skill comes in the form of holding aim on target, rather than on burst control.</p>
+<h3>Calculated Angular Size</h3>
+<p>For future reference, I’ve gone through the trouble of calculating Angular Sizes of target’s center mass at different ranges from 3m to 70m. Click on pictures to enlarge.</p>
+<ul><li>3m</li></ul>
+<ul><li>4m</li></ul>
+<ul><li>5m</li></ul>
+<ul><li>7m</li></ul>
+<ul><li>10m</li></ul>
+<ul><li>20m</li></ul>
+<ul><li>30m</li></ul>
+<ul><li>40m</li></ul>
+<ul><li>50m</li></ul>
+<ul><li>60m</li></ul>
+<ul><li>70m</li></ul>
+<p>Same screenshots in <a href="https://web.archive.org/web/20230519111303/http://imgur.com/a/nrm7f" target="_blank" rel="noopener noreferrer">imgur album</a> – just in case.</p>
+<h2>Iron Sight Zoom</h2>
+<p>TRAC-5 Iron Sight Zoom: 1.35x.</p>
+<p>“Default ADS Magnification” would be a more proper way to call it.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">planetside 2 iron sights</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/2emlwg6.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>The strength of magnification when you aim down sights. For all weapons that actually use Iron Sights, 1.35x is the standard value. 1x Reflex Sights and HS/NV scope also provide 1.35x magnification. For sniper rifles that can’t use Iron Sights, “iron sight zoom” shows the magnification of the default sniper scope.</p>
+<h2>Fire Modes</h2>
+<p>Some weapons can switch between fire modes by pressing \[B\] key. There are Semi Auto, X-Round Burst and Full Auto fire modes.</p>
+<p>Using single shot and burst modes should be avoided when possible, because the first shot of each burst (or each shot in semi auto) is subjected to First Shot Recoil Multiplier. This increases your recoil per time, and makes it harder to land several consecutive shots/bursts on target.</p>
+<p><a href="https://web.archive.org/web/20230519111303/https://www.youtube.com/watch?v=OP979guPeNI" target="_blank" rel="noopener noreferrer">Burst weapons</a> that always fire in 2-3 round bursts are an exception to that rule, since they usually have very low first shot recoil modifier.</p>
+<p>For purposes of weapon mechanics, the same weapon in different fire modes is considered two different weapons. This makes it possible to create performance-altering fire modes, such as for <a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/sidearms/#Spiker" target="_blank" rel="noopener noreferrer"><strong>Spiker</strong></a> pistol, which has a burst fire mode and a charge up splash attack mode.</p>
+<h2>Hidden Statistics</h2>
+<p>These statistics are not shown on the in-game stats sheet, but they still affect the performance of your weapon in a meaningful way. You have rely on <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/weapon-stats/" target="_blank" rel="noopener noreferrer">external sources</a></strong> to access these stats.</p>
+<h2>Equip time</h2>
+<p>Equip Time refers to the time it takes for you to switch to an item and prepare it for use.</p>
+<p>However, first you have wait through the <strong>Unequip Time</strong> of the item you had in hands previously. <strong>Unequip Time</strong> is equal to 0.25 sec for all weapons, except <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/sniper-rifles/#Anti_Materiel_Rifles" target="_blank" rel="noopener noreferrer">Anti-Materiel Rifles</a></strong>.</p>
+<h3>Example</h3>
+<p>Your primary weapon is TRAC-5 with 0.55 sec Equip Time. Your sidearm is Emperor with 0.25 sec Equip Time.</p>
+<p>Switching from your primary weapon to the sidearm will take 0.25 second Unequip Time + 0.25 second Equip Time = 0.5 seconds before you can fire.</p>
+<p>Switching from your sidearm to the primary weapon will take 0.25 second Unequip Time + 0.55 second Equip Time = 0.8 seconds before you can fire.</p>
+<h3>General notes</h3>
+<ul><li>Bigger and heavier weapon types have longer Equip Time.</li><li>Equip Time is equal to 0.25 seconds for all pistols and wielding the knife</li><li>Ranges from 0.55 to 1.2 seconds for most primary weapons.</li><li>Equip time is increased by <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/#Forward_Grip_Advanced_Forward_Grip" target="_blank" rel="noopener noreferrer">Forward Grip</a></strong> and <strong>Underbarrel Grenade Launcher</strong>.</li><li>Using a quick melee attack or throwing a grenade forces you to re-equip your weapon.</li></ul>
+<h3>Switching Items</h3>
+<p>A lot of weapon mechanics are tied to <strong>Refire Time</strong>, such as <strong>CoF Recovery</strong> and <strong>Recoil Recovery</strong>. However, Refire Time is completely ignored when you switch to a different piece of equipment.</p>
+<p>For example, <a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/rocket-launchers/#NS_Decimator" target="_blank" rel="noopener noreferrer"><strong>NS Decimator</strong></a> rocket launcher has Refire Time of 0.3 seconds. But you can fire a rocket, and instantly start switching to a sidearm. Or you can fire a Sniper Rifle and instantly perform a quick-melee attack. This is known as <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/melee-weapons/#Melee_Combo" target="_blank" rel="noopener noreferrer">melee combo</a></strong>.</p>
+<p>Reloading can also be instantly interrupted by switching items.</p>
+<p>Using a quick-melee attack forces you to re-equip your weapon, but you can interrupt that process by equipping something else instead.</p>
+<p>For example, let’s say you’re playing a Heavy Assault with a big LMG with a Forward Grip that takes \~1.25 seconds to equip. You perform a melee combo on one enemy, but suddenly another enemy appears. It will take you a long time to re-equip the LMG after a quick-melee attack. But you can interrupt the equipping of the LMG by equipping a Sidearm instead, which will take just half a second.</p>
+<p>Throwing grenades also forces you to re-equip your weapon, but for some reason that process cannot be interrupted as quickly.</p>
+<h2>Projectile Lifespan</h2>
+<p>Determines the amount of time that bullet exists for. If the bullet doesn’t hit anything during it’s lifespan, it will disappear harmlessly.</p>
+<p>Usually it’s not important, but can be crucial in certain edge cases, like super long range sniping:</p>
+<p>Spectre’s bullets have lifespan of 1.25 seconds. Normal velocity is 570, suppressed velocity is 570 \* 0.6 = 342. That would put theoretical maximum range at 712m normal and 427m suppressed.</p>
+<h2>ADS Movespeed Multiplier</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">planetside 2 infantry movement speed</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/Movement-SPeed.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Normally, you can move only at 50% speed while aiming down sights. However, some of the weapons allow you to move at 75% speed while aiming down sights. Naturally, being faster is good, as it means you’ll have easier time dodging incoming fire while aiming.</p>
+<p>It’s important to realize that going from 50% ADS speed to 75% ADS speed actually makes you 50% faster in comparison: 0.5 \* 1.<strong>5</strong> = 0.75</p>
+<p>Here’s a list of weapons that have 0.75x ADS Movespeed multiplier:</p>
+<ul><li>Assault Rifles: TAR, GR-22, Carnage BR, H-V45, NS-11A</li><li>Carbines: LC3 Jaguar, AF-4A Bandit, Zenith VX-5, NS-11C, NSX Tanto</li><li>Shotguns: ALL, including NC05 Jackhammer</li><li>SMGs: ALL</li><li>Sidearms: ALL</li><li>LMGs: NS-15M</li><li>Scout Rifles: NS-30 Vandal</li><li>Sniper Rifles: NS-AM7 Archer</li></ul>
+<p><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/rocket-launchers/#NSX_Masamune" target="_blank" rel="noopener noreferrer"><strong>NSX Masamune</strong></a> has 0.33x ADS Movespeed Multiplier.</p>
+<h2>Scope-In and Scope-Out Times</h2>
+<p>Scope In is the time it takes you aim down sights:</p>
+<ul><li>250-300ms for sniper rifles</li><li>350ms for Rocket Launchers</li><li>150ms for other weapons.</li><li><strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/#HSNV_IRNV_scope" target="_blank" rel="noopener noreferrer">HS/NV Scope</a></strong> increases Scope In Time by 100ms.</li></ul>
+<p>Scope Out is the time it takes you to return to hip firing:</p>
+<ul><li>150 ms for most weapons</li></ul>
+<p>Please note, these are weapon and interface animation times. The Cone of Fire that affects actual weapon accuracy changes independently, the process is described in detail in Cone of Fire section above.</p>
+<h2>Fire Detect Range</h2>
+<p>When firing an unsuppressed weapon, your position will be momentarily <a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/wp-content/uploads/2016/04/Minimap_Enemy_Infantry.jpg" target="_blank" rel="noopener noreferrer"><strong>highlighted as a dot on minimap</strong></a> of enemy players within <strong>Fire Detect Range</strong>, which is equal:</p>
+<ul><li>40-50m for most unsuppressed infantry weapons.</li><li>60m for <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/battle-rifles/#Second_Generation_Battle_Rifles" target="_blank" rel="noopener noreferrer">Second Gen Battle Rifles</a></strong>.</li><li>10m for <a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/sidearms/#Hunter_QCX" target="_blank" rel="noopener noreferrer"><strong>Hunter Crossbow</strong></a>.</li><li>5m for wielded attacks with <a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/melee-weapons/#Power_Knives" target="_blank" rel="noopener noreferrer"><strong>Power Knives</strong></a> (even when not activated).</li><li>100m for <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/sniper-rifles/" target="_blank" rel="noopener noreferrer">Sniper Rifles</a></strong>, except 40m for <strong>TRAP-M1</strong>, and 150m for Directive Sniper Rifles and <strong>NS-AM7 Archer</strong>.</li><li>100m for <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/rocket-launchers/" target="_blank" rel="noopener noreferrer">Rocket Launchers</a></strong>.</li><li><strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/#Barrel_Attachments" target="_blank" rel="noopener noreferrer">Barrel Attachments</a></strong> affect Firing Detection Range: <strong>Compensator</strong> increases by 35m, <strong>Flash Suppressor</strong> by 15m, and <strong>Suppressor</strong> removes it completely.</li></ul>
+<h2>Recoil Mechanics</h2>
+<p>Here are full recoil stats for the TRAC-5:</p>
+<p>| Stat Name | Value |  | Vertical Recoil Min | 0.3 |  | Vertical Recoil Max | 0.3 |  | Vertical Recoil Increase | 0 |  | Vertical Recoil Increase Crouched | 0 |  | First Shot Recoil Multiplier | 2.35x |  | Recoil Angle Min | 23 |  | Recoil Angle Max | 25 |  | Horizontal Recoil Min | 0.225 |  | Horizontal Recoil Max | 0.225 |  | Horizontal Recoil Increase | 0 |  | Horizontal Recoil Tolerance | 0.55 |  | Horizontal Recoil Tolerance Increase | 0 |  | Recoil Recovery Delay | 80ms |  | Recoil Recovery Rate | 18 |  | Refire Time | 80ms | </p>
+<p>Each weapon has a recoil pattern resembling a letter T. Let’s construct such a pattern for TRAC-5:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">TRAC-5 recoil pattern</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/33ua8tj.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<ul><li>Blue dot is the center of your Cone of Fire, located in the center of the screen.</li></ul>
+<ul><li>Red line is “vertical” recoil. “Vertical” is in quotes, because as you can see on the picture, red line isn’t exactly vertical. Same goes for “horizontal” recoil, which isn’t truly horizontal either. This is because of the Recoil Angle, applied to the whole recoil pattern.</li></ul>
+<ul><li>Green line is “horizontal” recoil.</li></ul>
+<ul><li>A and B orange zones are the multitude of points to which the recoil can kick your aim after the shot. Which zone gets chosen is completely random for each shot, as long as your current shot sequence is within Horizontal Tolerance (not displayed on this picture).</li></ul>
+<p>Now that we’ve created a recoil pattern, we can predict how a recoil path would look:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">TRAC-5 recoil path</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/24fy5o7-268x300.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Without recoil patterns:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">TRAC-5 recoil path without patterns</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/ckrj9-189x300.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Let’s talk through what all those different recoil stats actually mean.</p>
+<h2>Vertical Recoil</h2>
+<p>| Vertical Recoil Min | 0.3 |  | Vertical Recoil Max | 0.3 | </p>
+<p>For each shot, Vertical Recoil is a random value between Vertical Recoil Min and Vertical Recoil Max. TRAC-5 and many other weapons have the same Vertical Recoil Min and Vertical Recoil Max, so they have a constant Vertical Recoil per Shot.</p>
+<h2>First Shot Recoil Multiplier</h2>
+<p>| First Shot Recoil Multiplier | 2.35x | </p>
+<p>FSRM multiplies the Vertical Recoil of:</p>
+<ul><li>First shot of each fixed burst</li><li>Each shot done in semi-auto</li><li>First shot in a full auto series of shots</li></ul>
+<p>High FSRM values make it harder to maintain accuracy during short bursts, which can get rather annoying, since first few shots often decide the outcome of the engagement. First few shots are also the most accurate due to Cone of Fire mechanics.</p>
+<p>The usual tactic for dealing with FSRM is to aim lower in advance, and let the FSRM kick the crosshair to where you want it to be.</p>
+<h2>Horizontal Recoil</h2>
+<p>| Horizontal Recoil Min | 0.225 |  | Horizontal Recoil Max | 0.225 | </p>
+<p>For each shot, Horizontal Recoil is a random value between Horizontal Recoil Min and Horizontal Recoil Max. The <em>direction</em> of the Horizontal Recoil – “left” or “right” – is also completely random, as long as the Accumulated Horizontal Recoil stays within <strong>Horizontal Recoil Tolerance</strong>.</p>
+<p>TRAC-5 and many other weapons have the same Horizontal Recoil Min and Horizontal Recoil Max, so they have a constant Horizontal Recoil per Shot.</p>
+<h2>Horizontal Recoil Tolerance</h2>
+<p>| Horizontal Recoil Tolerance | 0.55 | </p>
+<p><strong>Horizontal Recoil Tolerance</strong> determines how far can Horizontal Recoil kick your crosshair from the initial aiming position.</p>
+<p>You can find a full explanation of Horizontal Recoil Tolerance in <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/horizontal-recoil-tolerance/" target="_blank" rel="noopener noreferrer">this article</a></strong>, here in this guide I will offer only basic information.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Horizontal Recoil Tolerance</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/Horizontal-Recoil-Tolerance-1024x552.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Horizontal Recoil Tolerance is an angle. Center of that angle is located in the position of your crosshair during the first shot.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">HRT explanation</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/05/HRT-explanation-1.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>A simple rule:</strong> Accumulated Horizontal Recoil can exceed Half of Tolerance once before being forced into opposite direction.</p>
+<p>For TRAC-5, Half of Tolerance is equal to 0.275, and here is a simulated recoil pattern:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2018/02/TRAC5-recoil-pattern.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<ol><li>First shot randomly recoils to the right. Accumulated Horizontal Recoil (AHR) is equal to 0.225.</li><li>Second shot also randomly recoils to the right. AHR = 0.45.</li><li>Third shot is forced to recoil to the left, since 0.45 &gt; 0.275. AHR = 0.225.</li></ol>
+<p>Let’s use <a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/lmgs/#NC6_Gauss_SAW" target="_blank" rel="noopener noreferrer"><strong>Gauss SAW</strong></a> for another example:</p>
+<p>| Horizontal Recoil Min | 0.175 |  | Horizontal Recoil Max | 0.175 |  | Horizontal Recoil Tolerance | 0.525 | </p>
+<p>This is a recorded path of the crosshair during a long burst with Gauss SAW, similar to <a href="https://web.archive.org/web/20230519111303/https://www.youtube.com/watch?v=6kNKIdBNucg" target="_blank" rel="noopener noreferrer">this video</a>.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Gauss Saw Horizontal Recoil Tolerance</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/h8CgbDf-1.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">full path - HRT</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/05/full-path-HRT.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Accumulated Horizontal Recoil from 2 shots of Gauss SAW is equal to 0.35, which is greater than Half of Tolerance: 0.2625. That is why Gauss SAW can only recoil twice in the same direction.</p>
+<p>The interesting part is that HRT could take different values without affecting anything. Gauss SAW could have Tolerance anywhere between 0.36 and 0.69, and the result would be exactly the same – still kick only up to 2 times in the same direction.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">HRT deviation</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/05/HRT-deviation.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>This leads to funny and unexpected things. For example:</p>
+<p><code>T32 Bull: 0.18 / 0.18 Recoil, 0.5 Tolerance</code></p>
+<p><code>T16 Rhino: 0.2 / 0.2 Recoil, 0.7 Tolerance</code></p>
+<p><code>TMG-50: 0.175 / 0.175, 0.7 Tolerance</code></p>
+<p>T32 Bull has much lower Tolerance than T16 Rhino, yet they both kick up to 2 times in one direction.</p>
+<p>TMG-50 has same tolerance as T16 Rhino, but lower Horizontal Recoil, so it kicks up to 3 times in one direction, making it potentially less stable.</p>
+<h3>Horizontal Recoil Stability</h3>
+<p>Knowing how HRT works, you can predict the stability of weapon’s horizontal recoil pattern.</p>
+<p>The <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/toolbox/#Recoil_Page" target="_blank" rel="noopener noreferrer">Weapon Toolbox</a></strong> can calculate:</p>
+<p><strong>Average Horizontal Deviation</strong> – the average distance between the crosshair and its original position during fire. The lower, the better.</p>
+<p><strong>Maximum Horizontal Deviation</strong> – maximum distance. The lower, the better.</p>
+<p>If there is a big difference between Max. and Average deviations, it means the weapon can be unpredictable; it has stable recoil most of the time, but there is a chance it will kick an extra time. The known example of this is Cyclone.</p>
+<p>The Toolbox will also draw a probability distribution graph, a visual representation of the horizontal recoil pattern.</p>
+<p><strong>Solstice VE3</strong></p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/Solstice-VE3-Horizontal-Recoil-Pattern-1.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>AF-4 Cyclone</strong> <span class="arc-img-inline"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/AF-4-Cyclone-Horizontal-Recoil-Pattern.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></span></p>
+<h3>Recoil Pattern Width</h3>
+<p>This point is mostly academic. In practical terms, Recoil Pattern Width is equal to 2x Maximum Recoil Deviation.</p>
+<p>\[spoiler=”Click to open spoiler”\] Knowing how HRT works, you can calculate the width of the recoil pattern: the distance between the extremities of Horizontal Recoil:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">recoil pattern width</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/05/recoil-pattern-width-1.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Notice that Width is always larger than HRT, because Horizontal Recoil <em>can exceed</em> Half of HRT once.</p>
+<h4>Calculations</h4>
+<p>First you will have to calculate the maximum amount of horizontal recoil kicks in the same direction:</p>
+<p><code>N_Kicks = Round_Down ((HRT / 2) / Horizontal Recoil Minimum) + 1</code></p>
+<p>In other words, to calculate the number of kicks, you have to divide HRT by 2, then divide the result by Minimum Horizontal Recoil, then round the result down, and then increase it by one.</p>
+<p>No, you can’t just round the result up instead, because accumulated horizontal recoil can be equal to HRT / 2 and still kick further. In other words, a weapon with 0.2/0.2 Recoil and 0.4 Tolerance will kick up to 2 times.</p>
+<p>For example:</p>
+<p><code>TRAC-5</code></p>
+<p><code>Horizontal Recoil: 0.225 / 0.225</code></p>
+<p><code>Horizontal Recoil Tolerance: 0.55</code></p>
+<p><code>HRT / 2 = 0.275</code></p>
+<p><code>0.275 / 0.225 = 1.22222</code></p>
+<p><code>Round it down to 1, then increase by 1</code></p>
+<p><code>N_Kicks = 2</code></p>
+<p>When you know the maximum amount of kicks, you can calculate the total width of the recoil pattern:</p>
+<p><code>Width = N_Kicks <em> Horizontal Recoil Maximum </em> 2</code></p>
+<p>For TRAC-5:</p>
+<p><code>Recoil Pattern Width = 0.225 <em> 2 </em> 2 = 0.9 degrees</code></p>
+<p>This means that as long as target’s <a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Angular_Size" target="_blank" rel="noopener noreferrer">Angular Size</a> is less or equal to 0.9 degrees, you are guaranteed to hit it, from the standpoint of Horizontal Recoil.</p>
+<h2>Horizontal Recoil Bias</h2>
+<p>Horizontal Recoil Bias is a completely misleading term, used by people that don’t know how recoil works. Whether the gun has overall a left or right pull has no connection with horizontal recoil, and is actually determined by <strong>Recoil Angle.</strong></p>
+<h2>Recoil Angle</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Recoil Angle</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/kedh1c.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>For each shot, Recoil Angle is a random value between Recoil Angle Min and Recoil Angle Max. Recoil Angle affects both Horizontal and Vertical Recoil. Recoil Angle is the cause of some weapons having a left or right pull.</p>
+<ul><li>If Recoil Angle is greater than zero, the gun will have a right pull.</li><li>If Recoil Angle is less than zero, the gun will have a left pull.</li><li>If Recoil Angle is equal to zero, the gun will have no bias.</li><li>“Horizontal recoil bias” does not exist as a thing.</li></ul>
+<p>Let’s take a look on how recoil angle works, using <a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/smgs/#Eridani_SX5" target="_blank" rel="noopener noreferrer"><strong>Eridani SX5</strong></a> as an example:</p>
+<p>| Vertical Recoil Min | 0.2 |  | Vertical Recoil Max | 0.2 |  | Horizontal Recoil Min | 0.3 |  | Horizontal Recoil Max | 0.392 |  | Recoil Angle Min | 20 |  | Recoil Angle Max | 20 | </p>
+<p>As you see on the video, the recoil either:</p>
+<ul><li>kicks slightly left and hard up</li><li>kicks hard right almost without upwards movement</li></ul>
+<p>This is because Eridani’s recoil pattern looks like this:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Eridani Recoil Pattern</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/2vsrwgm-1.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>The video above proves:</strong></p>
+<p>For all weapons, Horizontal Recoil functions the same – it produces random shaking, uncontrollable and unpredictable jitter along the axis which is perpendicular to axis of the Vertical Recoil.</p>
+<p>Each shot with a weapon without Recoil Angle (aka “no horizontal bias”) will kick the crosshair randomly to the left or right.</p>
+<p>If a weapon has positive Recoil Angle (has a “horizontal recoil biased to the right”), the horizontal recoil will still randomly kick the crosshair to the left or right, but it will a bit less apparent, especially on weapons with strong Recoil Angle and weak Horizontal Recoil. A left kick of the Horizontal Recoil will seem like an upwards movement with barely any angle at all, while horizontal kick to the right will seem like a hard dive to the right.</p>
+<p>This disproves a <strong>popular myth</strong> that weapons with biased recoil are more effective at range because “their recoil pattern is more predictable”.</p>
+<p>The difference between Recoil Angle minimum and maximum values is called <strong>Recoil Angle Variance</strong>. High Recoil Angle Variance reduces stability of the recoil pattern, as <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Unvaried_horizontal_recoil_varied_recoil_angle" target="_blank" rel="noopener noreferrer">shown here</a></strong>.</p>
+<h2>Recoil Scaling</h2>
+<p>| Vertical Recoil Increase | 0 |  | Vertical Recoil Increase Crouched | 0 |  | Horizontal Recoil Increase | 0 |  | Horizontal Recoil Tolerance Increase | 0 | </p>
+<p>Some weapons in PlanetSide 2 have recoil scaling over time. Each consecutive shot may have more or less recoil than previous shot. Both Horizontal and Vertical Recoil can be scaled. How it works (<strong><a href="https://web.archive.org/web/20230519111303/https://imgur.com/a/IPPLGPY" target="_blank" rel="noopener noreferrer">source</a></strong>):</p>
+<ul><li>If Recoil Increase is positive, with each shot it will be added to Minimum Recoil, until Minimum Recoil becomes the same as Maximum Recoil.</li><li>If Recoil Increase is negative, with each shot it will be subtracted from Maximum Recoil, until Maximum Recoil becomes the same as Minimum Recoil.</li><li>Vertical Recoil has separate scaling for Standing and Crouching.</li><li>Horizontal Recoil Tolerance can be scaled as well.</li></ul>
+<p>The most notable example of Recoil Scaling mechanics is <a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/lmgs/#MGR-L1_Promise" target="_blank" rel="noopener noreferrer"><strong>MGR-L1 Promise</strong></a>:</p>
+<p>| Vertical Recoil Min | 0.15 |  | Vertical Recoil Max | 0.3 |  | Vertical Recoil Increase | -0.05 |  | Vertical Recoil Increase Crouched | -0.1 |  | Horizontal Recoil Min | 0.1 |  | Horizontal Recoil Max | 0.3 |  | Horizontal Recoil Increase | -0.05 |  | Horizontal Recoil Tolerance | 5 |  | Horizontal Recoil Tolerance Increase | 0 | </p>
+<h4>Recoil Scaling while Standing</h4>
+<p>| <strong>Shot #</strong> | <strong>Vertical Recoil</strong> | <strong>Horizontal Recoil</strong> |  | 1 | 0.15 / 0.30 | 0.10 / 0.30 |  | 2 | 0.15 / 0.25 | 0.10 / 0.25 |  | 3 | 0.15 / 0.20 | 0.10 / 0.20 |  | 4 | 0.15 / 0.15 | 0.10 / 0.15 |  | 5 | 0.15 / 0.15 | 0.10 / 0.10 | </p>
+<h4>Recoil Scaling and Attachments</h4>
+<p>It’s interesting to note that attachments that affect recoil, such as Forward Grip, do not have any effect on scaling values. Since the reduction is percentage-based, it will have a different effect on minimum and maximum values – the larger value will have a stronger reduction in absolute terms.</p>
+<p>So using a recoil-affecting attachment will often reduce the amount of shots required for the recoil to fully scale.</p>
+<p>For example, here are numbers for MGR-L1 Promise when it’s used with Forward Grip and Compensator. Note that Promise doesn’t actually have access to Compensator, this is just for the purposes of demonstration.</p>
+<p>| <strong>Shot #</strong> | <strong>Vertical Recoil (-15%)</strong> | <strong>Horizontal Recoil (-25%)</strong> |  | 1 | 0.1275 / 0.255 | 0.075/ 0.225 |  | 2 | 0.1275/ 0.205 | 0.075 / 0.175 |  | 3 | 0.1275 / 0.1505 | 0.075 / 0.125 |  | 4 | 0.1275 / 0.1275 | 0.075 / 0.075 |  | 5 | 0.1275 / 0.15 | 0.075 / 0.075 | </p>
+<p>Without attachments, it took Promise 4 shots to fully scale Vertical Recoil, and 5 shots for Horizontal Recoil. With Forward Grip and imaginary Compensator, it would take 4 shots for Horizontal Recoil. It would still take 4 shots for the Vertical Recoil, but this the gap between Minimum and Maximum values would be only half as big.</p>
+<h2>Recoil Recovery Delay</h2>
+<p>| Recoil Recovery Delay | 80ms |  | Refire Time | 80ms | </p>
+<p>After you stop firing, your crosshair will move back to its original position. This process will begin after a <strong>delay</strong>.</p>
+<p><code>True Delay = Refire Time + Recoil Recovery Delay</code></p>
+<p>Refire Time is the minimum amount of time between two shots. It can be calculated as:</p>
+<p><code>Refire Time = 60 / Rate of Fire</code></p>
+<p>Recoil Recovery Delay is a hidden statistic, and can be accessed through <a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/weapon-stats/" target="_blank" rel="noopener noreferrer">DBG API.</a></p>
+<p>Recoil Recovery Delay is often equal to weapon’s Refire Time, making the True Delay equal to 2x Refire Time.</p>
+<p>Notable exceptions: Shotguns, Battle Rifles, Semi Auto Sniper Rifles and Semi Auto Scout Rifles all start crosshair movement earlier, making it easier to take several shots in a quick succession.</p>
+<p>You can learn more about Recoil Recovery Delay in <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/the-discovery-of-recoil-recovery-delay/" target="_blank" rel="noopener noreferrer">this article</a></strong>.</p>
+<h3>Recoil Recovery Rate</h3>
+<h4>(Recoil Decrease)</h4>
+<p>| Recoil Recovery Rate | 18 |  | Refire Time | 80ms | </p>
+<p>Measured in degrees per second, Recoil Recovery Rate determines the speed at which your crosshair returns to original position after you stop firing.</p>
+<p>High Recoil Decrease value is handy for burst firing, as it allows you to quickly re-acquire the target after a burst and re-center your crosshair on it.</p>
+<h3>Recoil Recovery Acceleration</h3>
+<p>We don’t know much about this parameter beyond this:</p>
+<p><em>Recoil recovery acceleration is set to 1000 as a baseline. I don’t know what the time scale is on that, but it seems to modify the recoil settle speed. 1000 seems to keep the recoil recovery consistent. If you drop it lower, it seems to accelerate the recoil recovery up to its normal recoil recovery value.</em> (c) Wrel</p>
+<h3>Recoil Recovery and Recoil Compensation</h3>
+<p>It’s worth noting that Recoil Recovery mechanics properly kick in only if you don’t move your crosshair to counteract Vertical Recoil.</p>
+<p>For example, <strong><a href="https://web.archive.org/web/20230519111303/https://vimeo.com/260161064" target="_blank" rel="noopener noreferrer">as demonstrated in this video</a></strong>, if you fire a long burst, and the gun kicks up, and you move the crosshair downwards to keep the aim on target, then when you release the trigger, the crosshair will barely move.</p>
+<h3>Recentering Time (for Tap Firing)</h3>
+<p>Recentering time depends on five weapon stats: Vertical Recoil, Horizontal Recoil, Refire Time, Recoil Recovery Delay and Recoil Decrease.</p>
+<h4><strong>How it works</strong></h4>
+<p>You fire a shot and your crosshair gets kicked by Recoil. Then, after a delay equal to Refire Time + Recoil Recovery Delay, crosshair starts returning to original position. The speed of crosshair movement is equal to Recoil Decrease, measured in degrees per second.</p>
+<h4><strong>Full formula</strong></h4>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Recentering Time Formula</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/recentering-time-1024x107.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Click to enlarge</p>
+<p>So, for fast tap firing you want to have: high Rate of Fire, low Recoil and Recoil Recovery Delay values and high Recoil Decrease.</p>
+<p>Let’s analyze Recentering Time on the example of shotguns. We will compare their recentering time for the purposes of Tap Firing with slug ammo.</p>
+<p>All shotguns have Recoil Recovery Delay of 0.</p>
+<p>|  | Rate of Fire | Vertical Recoil | Horizontal Recoil | Recoil Decrease | Calculated Recentering Time | Measured Recentering Time |  | Quick Reload | 225 | 2.8 | 0.5 | 15 | 0.457 | N/A |  | High Capacity | 225 | 2.5 | 0.65 | 15 | 0.439 | N/A |  | Full Auto | 260 | 2.0 | 0.95 | 12 | 0.416 | N/A |  | Baron | 200 | 2.2 | 0.45 | 15 | 0.450 | N/A | </p>
+<p>It’s worth noting that recentering time only concerns the crosshair movement. Cone of Fire reset is a separate mechanic.</p>
+<p>Theoretically it’s possible to fire the next shot before crosshair fully returns from the previous shot, but it’s very hard to aim while crosshair is moving on its own.</p>
+<h2>Recoil and Scope Magnification</h2>
+<p>There is a myth that low magnification scopes have less recoil than higher magnification scope. This is false:</p>
+<p>\[spoiler title=”Proof”\]</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/4x-1024x576.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>White bar above the crosshair is at 496 pixels, crosshair is at 541 px, and white bar below crosshair is at 680 px.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/1x-1024x576.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>White bar above the crosshair is at 500 pixels, crosshair is at 541 px, and white bar below crosshair is at 679 px.</p>
+<p>\[/spoiler\]</p>
+<p>PlanetSide 2 recoil values are measured in degrees, they are absolute. Low magnification scopes <em>appear</em> to have less recoil, because each shot moves the crosshair only a few pixels, but with low magnification the target will also be only a few pixels in size.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">recoil with different magnification</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/recoil-with-different-magnification.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h2>Recoil Classification</h2>
+<ol><li>Horizontal Recoil can be with or without variance.<ol><li>For example, VX6-7 has unvaried horizontal recoil: 0.25 / 0.25</li><li>Serpent VE92 has varied: 0.25 / 0.275</li></ol></li><li>Recoil Angle can be: equal to zero, varied or unvaried.<ol><li>Example: GD-7F has varied recoil angle of -20/-18.</li><li>T5 AMC has unvaried recoil angle of 20/20.</li><li>Pulsar C has no recoil angle.</li></ol></li></ol>
+<p>Not taking Recoil Scaling into account, Horizontal Recoil and Recoil Angle give us 2 x 3 = 6 total recoil variants. Here they are, from best to worst:</p>
+<h2>Unvaried horizontal recoil, no recoil angle</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Mercenary Recoil Pattern</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/i6w5c5.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Variables: 1) Direction of the horizontal shift</p>
+<p>The best kind of recoil. The only variable in this type of recoil is whether horizontal recoil will kick left or right, and this is random for each shot.</p>
+<p>The distances between crosshair positions are always equal, so all you can/need to do to compensate for this type of recoil, is to pull your mouse down at a constant rate.</p>
+<h2>Unvaried horizontal recoil, unvaried recoil angle</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Razor Recoil Pattern</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/352rsqo.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Variables: 1) Direction of the horizontal shift</p>
+<p>Additionally: 1) Harder to track targets moving to the left or right</p>
+<p>Practically same as the previous type, but with angle applied to it.</p>
+<p>A bit less convenient to compensate for, because you need to pull your mouse at an angle. As long as target is stationary, compensating for this type of recoil is practically the same as for the non-angled recoil – just pull your mouse at a constant rate into the opposite direction.</p>
+<p>However, things become complicated when you try to track a moving target and compensate for angled recoil at the same time. Here’s an example to explain that (numbers are purely fictional):</p>
+<p>Let’s say that to compensate for angled recoil you need to pull your mouse down at speed of 50 pixels per second, and to the left at 15 px/s.</p>
+<ul><li>The target is moving to the left at a rate of 30 pixels per second. To track it and compensate the recoil, you need to pull your mouse down at 50 px/s, and to the left at 45px/s (15 px/s to compensate for recoil, and additional 30px so your crosshair moves with the target).</li><li>If the target is moving to the right, you need to move mouse down at 50 px/s, and to the right at 15px/s (30 px to the right, minus 15px/s to the right the angled recoil is already doing for you).</li><li>This kind of left-right imbalance can be hard to adjust on the fly.</li></ul>
+<p>There is a popular myth that angled recoil is more stable, predictable and easier to compensate. But for all intents and purposes, angled recoil with no horizontal variance is the same or worse than non-angled recoil with no horizontal variance.</p>
+<h2>Varied horizontal recoil, no recoil angle</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Jaguar Horizontal Recoil</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/ek58hf.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Variables:</p>
+<p>1\) Direction of the horizontal shift</p>
+<p>2\) Size of the horizontal shift</p>
+<p>Similar to the first type, but in this case horizontal shift for each shot is randomly taken from the range of \[Min; Max\]. For the Jaguar, horizontal recoil is 0.245/0.275, so each shot’s horizontal shift can be anywhere from 0.245 to 0.275. This reduces the consistency of the recoil pattern by introducing an additional variable.</p>
+<h2>Varied horizontal recoil, unvaried recoil angle</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Eridani Recoil Pattern</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/2vsrwgm-1.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Variables:</p>
+<p>1\) Direction of the horizontal shift</p>
+<p>2\) Size of the horizontal shift</p>
+<p>Additionally: 1) Harder to track targets moving to the left or right</p>
+<p>A combination of two previous types, has both of their weaknesses. A fairly rare type of recoil.</p>
+<h2>Unvaried horizontal recoil, varied recoil angle</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">VX6-7 Recoil Pattern</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/2m80b52.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Variables:</p>
+<p>1\) Direction of the horizontal shift</p>
+<p>2\) Size of the horizontal shift due to recoil angle</p>
+<p>3\) Direction of the vertical shift due to recoil angle</p>
+<p>4\) Size of the vertical shift due to recoil angle</p>
+<p>Additionally: 1) Harder to track targets moving to the left or right</p>
+<p>This recoil type introduces an additional variable: the recoil angle.</p>
+<p>This creates a three-fold problem:</p>
+<p>1\) The direction of the vertical recoil is random for each shot, so you can’t precisely compensate for it, because you don’t know precisely where it’s going to be directed.</p>
+<p>Let’s take a closer look at one of the “horns” of the picture above:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">VX6-7 Recoil horn</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/mkdbf9.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Varied recoil angle introduces A and B.</p>
+<p>“A” is the variance of the vertical shift. For VX6-7 it is equal 0.0275. So while the vertical recoil of VX6-7 is constant at 0.3, due to the random recoil angle it varies from 0.3 to 0.2725.</p>
+<p>In this case, the recoil angle variance of 10 degrees, introduced vertical recoil variance of \~10%.</p>
+<p>So not only the direction of the vertical shift is random, but also its magnitude.</p>
+<p>“B” is the variance of the horizontal shift. While the horizontal recoil of VX6-7 is constant at 0.25, due to random recoil angle it varies from 0.25 to 0.21.</p>
+<p>In this case, the recoil angle variance of 10 degrees introduced horizontal recoil variance of \~19%.</p>
+<h2>Varied horizontal recoil with varied angle</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Serpent Recoil Pattern</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="https://web.archive.org/web/20230519111303im_/http://cmdrcyrious.com/wp-content/uploads/2016/04/6jhgkh.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>note: Serpent’s stats on this picture are outdated!</p>
+<p>Variables:</p>
+<p>1\) Direction of the horizontal shift</p>
+<p>2\) Size of the horizontal shift due to recoil angle</p>
+<p>3\) Size of the horizontal shift due to random horizontal recoil</p>
+<p>4\) Direction of the vertical shift due to recoil angle</p>
+<p>5\) Size of the vertical shift due to recoil angle</p>
+<p>Additionally: 1) Harder to track targets moving to the left or right</p>
+<p>The worst type of recoil, usually found on CQC weapons. In addition to the example above, it also has innate horizontal recoil variance.</p>
+<p>In theory, Serpent has horizontal recoil of 0.25/0.275, but due to recoil angle these values are actually closer to 0.2/0.275.</p>
+<p>On average, this means that Serpent will have less horizontal recoil than it should. While less horizontal recoil should be good in theory, in practice, the big difference between maximum and minimum horizontal recoil values means that the gun will have a higher chance of “veering off” the target.</p>
+<h2>Health, Armor and Resistances</h2>
+<p>To properly calculate damage to any PlanetSide 2 unit, be it infantry or vehicle, you have to take into account these three mechanics:</p>
+<h2>Health</h2>
+<p><strong>Health</strong> is the amount of damage a unit can withstand before being destroyed. Health varies from unit to unit. When talking about infantry, we treat personal shields as health as well.</p>
+<p>Here’s a table of current health values for PlanetSide 2 units. Keep in mind that health values from vehicles are based on in-game testing. They should be accurate, but there’s no way to be 100% sure.</p>
+<p>| <strong>Profile ID</strong> | <strong>Unit Name</strong> | <strong>Health</strong> |  | 4 | Infantry | 500 |  | – | <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/equipment/implants/#Carapace" target="_blank" rel="noopener noreferrer">Carapace</a></strong> Infantry | 1000 |  | 8 | MAX | 2000 |  | 24 | Flash | 1500 |  | 27 | Harasser | 2500 |  | 33 | Sunderer | 5000 |  | 95 | ANT | 4000 |  | 26 | Lightning | 4000 |  | 30 | Prowler | 5000 |  | 29 | Magrider | 5000 |  | 31 | Vanguard | 6000 |  | 35 | Mosquito | 3000 |  | 36 | Reaver | 3000 |  | 34 | Scythe | 3000 |  | 28 | Valkyrie | 3000 |  | 37 | Liberator | 5000 |  | 38 | Galaxy | 7000 | </p>
+<h2>Armor</h2>
+<p><strong>Armor</strong> refers to directional damage modifiers. Armor can increase or decrease the damage a unit is taking from the front, left side, right side, rear, top and bottom.  For example, tanks use this system by having negative bottom and rear armor, so they take bonus damage from the bottom and rear.</p>
+<p><strong>It doesn’t matter which part of the unit is hit. Only the position of the attacker to relative to the vehicle is important.</strong> So if you’re standing to the side of the tank, you don’t need to try and fish for rear armor hits, you won’t do any bonus damage anyway. To deal bonus damage, you have to be specifically behind the tank, and it doesn’t matter which part of the tank you’re hitting, be it tower or even the cannon.</p>
+<p>All that said, currently most units do not have any armor. Units with armor:</p>
+<ul><li><strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/vehicles/#Liberator" target="_blank" rel="noopener noreferrer">Liberators</a></strong> and <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/vehicles/#Valkyrie" target="_blank" rel="noopener noreferrer">Valkyries</a></strong> have 50% bottom armor.</li><li><strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/vehicles/#Lightning" target="_blank" rel="noopener noreferrer">Tanks</a></strong> have negative 100% rear and bottom armor, so they take double damage from those projections, and normal damage from everywhere else.</li><li><strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/vehicles/#Defense_Slot" target="_blank" rel="noopener noreferrer">Mineguard</a></strong> certification for ground vehicles increases bottom armor, among other things.</li><li><strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/classes/max/#Abilities" target="_blank" rel="noopener noreferrer">Zealot Overdrive Engine</a></strong> MAX ability makes the MAX take more damage by providing negative 20% armor to all projections.</li><li>Some implants and abilities also affect units’ armor.</li></ul>
+<h2>Resistances</h2>
+<p>Every source of damage has a specific <strong>Damage Resist Type</strong> associated with it. For example, most primary and secondary infantry weapons have Damage Resist Type 2 – Small Arms.</p>
+<p>Every unit has a collection of <strong>Resistances</strong> that increase or decrease the damage they take from a specific Damage Resist Type. For example, MAXes have 80% against Small Arms.</p>
+<p>Many abilities and certifications modify the Resistances.</p>
+<h2>Example 1</h2>
+<p>Let’s take a <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/vehicles/#Liberator" target="_blank" rel="noopener noreferrer">Liberator</a></strong> with <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/vehicles/#Defense_Slot" target="_blank" rel="noopener noreferrer">Composite Armor</a></strong>. It is being shot by a <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/rocket-launchers/#Empire-speicifc_Ground-to-Air" target="_blank" rel="noopener noreferrer">Ground-to-Air lock-on launcher</a></strong>. Normally, Liberator has 5 000 Health. Composite Armor further increases that by 10%, to 5 500 Health. The rocket launcher fires a rocket. It has:</p>
+<ul><li>700 Direct Damage with Damage Resist Type 34 – Infantry Rockets.</li></ul>
+<p>Liberators take 70% more damage from that Damage Type, but in this case it doesn’t matter. All anti-air-capable lock-on launchers fire rockets that automatically detonate near enemy aircraft, damaging them with their Indirect Damage instead.</p>
+<ul><li>400 Indirect Damage with Damage Resist Type 12 – Flak Explosion.</li></ul>
+<p>Liberators take 130% more damage from that Damage Type.</p>
+<p>The rocket follows the Liberator, exploding under its belly, so the damage will be reduced by bottom armor.</p>
+<p>First, we take the 400 raw damage and apply Resistance to it.</p>
+<p><code>400 <em> (1 + 1.30) = 400 </em> 2.3 = 920</code></p>
+<p>Then we apply 50% of Bottom Armor to it.</p>
+<p><code>920 * 0.5 = 460</code></p>
+<p>That’s the amount of damage one lock-on rocket would deal to a Liberator in its bottom projection. Taking Composite armor into account, that would be</p>
+<p><code>460 / 5500 = 8.4% of its Health</code></p>
+<p>The Liberator in our example would require 12 such hits to destroy.</p>
+<h2>Example 2</h2>
+<p>An infantryman with <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/equipment/suit-slots/#Flak_Armor" target="_blank" rel="noopener noreferrer">Flak Armor</a></strong> 5 is being directly hit by a <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/rocket-launchers/" target="_blank" rel="noopener noreferrer">Decimator</a></strong> Rocket. It deals:</p>
+<ul><li>975 Direct Damage, Resist Type 34 – Infantry Rockets.</li><li>350 Indirect Damage, Resist Type 6 – Common Explosion.</li></ul>
+<p>By default, infantry has no armor and no resistances to these damage types. However, Flak Armor 5, among other things, adds 20% Resistance to Damage Type 34 and 50% Resistance to Damage Type 6.</p>
+<p>So a rocket that would deal:</p>
+<p><code>975 + 350 = 1325 damage</code></p>
+<p>Would kill the infantry. But with Flak Armor 5, that damage is reduced:</p>
+<p><code>975 <em> 0.8 + 350 </em> 0.5 = 955</code></p>
+<p>So the generic infantry man at full health + shields will survive the hit.</p>
+<h2>Toolbox</h2>
+<p>Some of the <strong><a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/toolbox/" target="_blank" rel="noopener noreferrer">Toolbox’s</a></strong> functionality is specifically dedicated to calculating weapon damage to different vehicles, taking their Health, Armor and Resistances into account.</p>
+<h2>Recent Comments</h2>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

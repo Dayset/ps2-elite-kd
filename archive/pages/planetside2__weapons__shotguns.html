@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>Shotguns — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>Shotguns</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd>Iridar (Institoros)</dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/planetside2/weapons/shotguns/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/planetside2/weapons/shotguns/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2016-04-26</dd></div>
+      <div><dt data-i18n="arc.attrSnapshot">Snapshot date</dt><dd>20231201034907</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Wayback</dd></div>
+      <div><dt data-i18n="arc.attrNote">Note</dt><dd>Wayback snapshot; live copy empty</dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<p><em>Shotguns can be used by all classes except Infiltrators.</em></p>
+<p><em>While NC05 Jackhammer is technically a shotgun, it’s covered in <a href="http://cmdrcyrious.com/planetside2/weapons/heavy-weapons/" target="_blank" rel="noopener noreferrer">Heavy Weapons Guide</a>.</em></p>
+<p>Shotguns are short range weapons that fire multiple pellets with each shot. They can sustain fire without losing accuracy and easy to deal <em><strong>some</strong></em> damage with.</p>
+<p>There is some variety among shotguns: full-auto shotguns rip infantry apart, pump-action shotguns can potentially kill in one shot and semi auto shotguns offer the longest effective range and versatility.</p>
+<p>A big part of using a shotgun is getting close to enemy in one piece, preferably without even being noticed. After you get close, you have to engage in a specific way: aim as closely to enemy center mass as possible, while firing at maximum rate of fire and pushing through recoil.</p>
+<p>You have to make sure that at the moment of the shot, your crosshair is actually on the enemy. In this regard, shotguns are noticeably different from typical automatic weapons.</p>
+<p>\[spoiler title=”Shotguns take no skill to use?”\]</p>
+<p>Shotguns are supposed to be weapons that don’t require good aim from the user. The whole point of firing multiple pellets is to make it easier to inflict damage on the target.</p>
+<p>However, since shotguns require multiple shots to actually kill the enemy, in order to have a competitive time-to-kill, you have to make sure that every shot lands as many pellets as possible while shooting at maximum rate of fire and pushing through recoil.</p>
+<p>It can be very challenging to consistently land all shots in this manner, especially on a moving target.</p>
+<p>It’s true that shotguns don’t require aiming skills to deal <em><strong>some</strong></em> damage. But in order to deal enough damage to actually <em><strong>kill</strong></em> the enemy in a <em><strong>reasonable amount of time</strong></em>, shotguns still require <em><strong>pinpoint aim at center mass</strong></em>. </p>
+<p>There is an additional hurdle that at close ranges of 3-5m, even half a sidestep by the enemy can mean missing your entire pellet spread, which is very punishing for shotguns’ low rate of fire.</p>
+<p>It’s also hard to consistently get close to enemies. It is possible to camp near a doorway and wait for enemies come to you, and in that regard shotguns <em><strong>are</strong></em> somewhat cheap. But camping is possible with every weapon, and mines can be used for the same purposes, nobody complains about them. It’s a question of cheesy tactics, not cheesy weapons.</p>
+<p>There’s also a stone wall of range beyond which shotguns become absolutely useless, while CQC automatic weapons are at least somewhat usable beyond their effective range.</p>
+<p>\[/spoiler\]</p>
+<h2>Shotgun Mechanics</h2>
+<p><em>Before you start using shotguns, you should learn how they work.</em></p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/FA1-Barrage-stats.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>(all shotguns) Headshot Damage Multiplier: 1.5x</p>
+<p>(all shotguns) ADS movespeed multiplier: 0.75x</p>
+<p>For the most part, shotguns obey the same <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/" target="_blank" rel="noopener noreferrer">weapon mechanics</a></strong> as other firearms, but <strong>Pellet Spread</strong> brings an additional layer of randomness.</p>
+<h2>Pellet Spread</h2>
+<p>\[spoiler title=”GIF Demonstration of Pellet Spread Mechanics”\]</p>
+<ul><li>Black circle is Cone of Fire</li><li>Green circle is Pellet Spread</li><li>Orange Square is crosshair</li><li>Red Dots are pellets</li></ul>
+<p>For each shot, Pellet Spread has a new random position within Cone of Fire.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Hip Firing</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/shotgun-gif-hip.gif" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Hip Firing</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Aiming Down Sights</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/shotgun-gif-ads2.gif" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Aiming Down Sights</p>
+<p>Shotguns fire multiple pellets with each shot. Each individual pellet behaves like a miniature bullet, doing damage listed in the <strong>DAMAGE</strong> field. The number of pellets is listed in the left part of <strong>PELLET COUNT</strong> field.</p>
+<p>These pellets are randomly distributed within the cone called <strong>Pellet Spread</strong>. Its center is a random point within <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Hip_Accuracy_and_Aim_Accuracy_Cone_of_Fire" target="_blank" rel="noopener noreferrer"><strong>Cone of Fire</strong></a>. </p>
+<p>Pellet Spread varies depending on shotgun. Same as CoF, It’s measured in degrees. There are different <strong>Pellet Spread</strong> values for hip firing and for ADSing.</p>
+<p><strong>Hip Fire Pellet Spread</strong> is visible in-game, to the right of the <strong>PELLET COUNT</strong> field.</p>
+<p><strong>ADS Pellet Spread</strong> is not visible in game, but it is listed in this guide. In general you can expect ADS Pellet Spread to be 0.25 – 0.5 degrees smaller than Hip Fire Pellet Spread, except for Pump Action Shotguns – they always have the same pellet spread.</p>
+<p><strong>Overall, Pellet Spread determines how closely the pellets land to each other, and Cone of Fire determines how closely the Pellet Spread lands to your crosshair.</strong> </p>
+<p><strong>Cone of Fire</strong> depends on your stance and whether you are hip firing or aiming down sights. Cones of Fire for different stances are listed in the HIP ACCURACY and AIM ACCURACY fields, but they take same values for most shotguns:</p>
+<ul><li>Hip Stand Move CoF = 2.0 degrees</li><li>ADS Stand Move CoF = 0.9 degrees.<ul><li>NS G5 Baron is an exception, and has ADS Stand Move CoF of 0.7 degrees.</li></ul></li><li>ADS Stand Still CoF = 0.1 degrees.</li></ul>
+<p><strong>Shotguns do not have Cone of Fire Bloom.</strong></p>
+<h2>Pellet Coverage</h2>
+<p><strong>Pellet Coverage</strong> is the total area where your pellets can land. It is equal to the sum of Pellet Spread and Cone of Fire.</p>
+<p><code>Pellet Coverage = Pellet Spread + Cone of Fire</code></p>
+<p>For maximum damage output, you want to <strong>hit with as many pellets as possible</strong> by keeping Pellet Coverage fully within the target. This is especially important for pump action shotguns, which can OHK if you land enough pellets.</p>
+<p><strong>Ways of achieving this:</strong></p>
+<ul><li>Get closer to increase the <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Angular_Size" target="_blank" rel="noopener noreferrer"><strong>angular size</strong></a> of the target.</li><li>Reduce Cone of Fire and Pellet Spread by aiming down sights</li><li>Reduce Cone of Fire by standing still and/or crouching.</li><li>For hip firing, reduce Cone of Fire with Laser Sight attachment</li></ul>
+<p>Of course, you don’t have to land <em><strong>all</strong></em> pellets <em><strong>all</strong></em> the time.</p>
+<p>Let’s use <strong><a href="http://cmdrcyrious.com/planetside2/weapons/shotguns/#Starting_Shotguns" target="_blank" rel="noopener noreferrer">FA1 Barrage</a></strong> for this example. The most common way to engage an enemy with a shotgun is to <strong>hip fire while moving:</strong></p>
+<p><code>Hip Stand Move CoF: 2.0</code></p>
+<p><code>Hip Fire Pellet Spread: 3.0</code></p>
+<p><code>Pellet Coverage = 2 + 3 = 5 degrees</code></p>
+<p>Judging by <strong><a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/4m_1.jpg" target="_blank" rel="noopener noreferrer">this picture</a></strong>, standard infantry target’s center mass will have size of \&lt;5 degrees within \~3.5m. Past that, you’re likely to start missing pellets.</p>
+<p>If you use <strong>Laser Sight:</strong></p>
+<p><code>Hip Stand Move CoF with Laser Sight: 1.34</code></p>
+<p><code>Pellet Coverage = 1.34 + 3 = 4.34 degrees</code></p>
+<p>This will give you about 1m of extra range.</p>
+<p>If you <strong>stand still and aim down sights</strong>:</p>
+<p><code>ADS Stand Still CoF: 0.1</code></p>
+<p><code>ADS Pellet Spread: 2.5</code></p>
+<p><code>Pellet Coverage = 0.1 + 2.5 = 2.6 degrees.</code> </p>
+<p>According to <strong><a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/7m_1.jpg" target="_blank" rel="noopener noreferrer">this picture</a></strong>, it will boost the range of full pellet coverage to \~6.5m.</p>
+<h2>Shotgun Crosshair</h2>
+<p>Shotgun hip fire crosshair size depends on both your current Cone of Fire and Pellet Spread. More accurate shotguns will have smaller crosshair. However, shotgun crosshair is not affected by Laser Sight.</p>
+<h2>Tube Magazine Reload Time</h2>
+<p>Some shotguns have <strong>Tube Magazines</strong>, that require each shell to be loaded individually, so the more shells you have to load, the longer the reload process will take. Loading the first shell takes longer than all shells after that. </p>
+<p>Reload times for tube magazines are hidden and can’t be seen in the game, but they have been pulled from <strong><a href="http://cmdrcyrious.com/weapon-stats/#Daybreak_Census_API" target="_blank" rel="noopener noreferrer">Census API</a></strong> and confirmed by in-game testing, and listed in this guide.</p>
+<p>Reload process of a tube magazine can be interrupted at any time, but it will come after a short delay.</p>
+<p>If you empty the whole tube magazine of a Pump Action shotgun, or start the reload without chambering a new round, you will also have to cycle the pump mechanism before you are ready to fire.</p>
+<h2>Pump Action Chamber Time</h2>
+<p>The chamber time listed on in-game weapon stat sheet doesn’t tell the whole story. You can learn more about it <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Bolt_Action_and_Pump_Action_Weapons" target="_blank" rel="noopener noreferrer">here</a></strong>, or just use values provided in this guide.</p>
+<h2>Overview of all Shotguns</h2>
+<p>While shotguns have different names and models between factions, they can be split in groups, and are nearly identical within a group.</p>
+<h2>Starting Shotguns – Quick Reload</h2>
+<h3>FA1 Barrage</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/FA1_Barrage.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>Mauler S6</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Mauler_S6-1.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>Thanatos VE70</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Thanatos_VE70.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>-25 m/s velocity, no bullet drop with buckshot</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/quick-reload.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Extended Mags Bonus: 2 shells</p>
+<p>ADS Pellet Spread: 2.5</p>
+<p>Vertical Recoil: 2.8</p>
+<p>Horizontal Recoil: 0.5 / 0.5</p>
+<p>Horizontal Recoil Tolerance: 1.5</p>
+<p>These semi-auto shotguns are available for free to all characters. Tight spread and quick reload makes them the middle ground of the shotgun world, and a good point to start from, to see if shotguns suit you at all.</p>
+<p>In ideal conditions: very close range, good accuracy and a surprise advantage, they can kill standard infantry in just a couple of shots.</p>
+<p>But against a hardened target and without perfect accuracy, they may take as many as 4-5 shots to kill.</p>
+<h2>High Capacity Shotguns</h2>
+<h3>TS4 Haymaker</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/TS4_Haymaker.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>NC12 Sweeper</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Mauler_S6-1.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>Nova</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Nova.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>-20 m/s velocity, no bullet drop with buckshot</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/high-capacity.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>ADS Pellet Spread: 2.75</p>
+<p>Vertical Recoil: 2.5</p>
+<p>Recoil Angle: 12 / 12</p>
+<p>Horizontal Recoil: 0.65 / 0.65</p>
+<p>Horizontal Recoil Tolerance: 1.5</p>
+<p>These semi auto shotguns have larger magazines than starting shotguns, and allow to carry more spare ammunition, at the cost of longer reload and shorter effective range.</p>
+<p>They make a good combination with Laser Sight, as good default capacity allows them to ignore Extended Mags attachment.</p>
+<h2>Full Auto Shotguns</h2>
+<h3>AS16 NightHawk</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/AS16_Nighthawk.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>AF-57 Piston</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/AF-57-Piston.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>Pandora VX25</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Pandora_VX25.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>-25 m/s velocity, no bullet drop with buckshot</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/full-auto.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>ADS Pellet Spread: 3.5</p>
+<p>Vertical Recoil: 2</p>
+<p>Horizontal Recoil: 0.95 / 0.95</p>
+<p>Horizontal Recoil Tolerance: 5</p>
+<p>Full-auto shotguns have the most limited range, but within that range are extremely deadly. They have the most damage degradation, but within maximum damage range, deal the highest damage per shot. This is the only type of shotgun that can reliably melee combo enemies even through full nanoweave.</p>
+<p>Automatic firemode makes them easier to use, and easier to transition to from other CQC weapons. Full auto shotguns tend to waste a lot of ammo per kill, and generally run out of ammo fast, but the unstoppable volume of fire makes them most reliable when it comes to killing 1-2 enemies at close range. You still should try to flank as much as you can, but mostly to make sure you get close enough before blazing away. You don’t really care if enemy knows you’re coming or not.</p>
+<p>Full auto shotguns have the largest pellet spread, but with the amount of lead they send down range it just doesn’t matter. Also, large pellet spread can actually help fighting enemies in extremely close quarters, ensuring that even if you don’t aim perfectly at the enemy, you still hit him with at least a few pellets.</p>
+<p>While they have a bit less Vertical Recoil per shot, Full Auto shotguns have incredibly strong Horizontal Recoil, which makes the weapon slide along horizontal plane a lot.</p>
+<h2>Pump Action Shotguns</h2>
+<h4>First Generation</h4>
+<h3>TRS-12 Uppercut</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/TRS-12_Uppercut.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>GD-66 Claw</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/GD-66_Claw.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>Phobos VX86</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Phobos_VX86.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>-25 m/s velocity, no bullet drop with buckshot</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/1st-gen-pump.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>ADS Pellet Spread: 3</p>
+<p>Time Between Shots: 0.75 sec</p>
+<p>Long Reload: 1.1 sec</p>
+<p>Short Reload: 0.7 sec</p>
+<h4>Second Generation</h4>
+<h3>TAS-16 Blackjack</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/TAS-16_Blackjack.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>LA39 Bruiser</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/LA39_Bruiser.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h3>Deimos VA29</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Deimos_VA29.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>-25 m/s velocity, no bullet drop with buckshot</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2nd-gen-pump.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>ADS Pellet Spread: 3.5</p>
+<p>Time Between Shots: 0.85 sec</p>
+<p>Long Reload: 1.2 sec</p>
+<p>Short Reload: 0.72 sec</p>
+<p>Pump action shotguns fire considerably more pellets per shot, which gives them huge damage per shot. A precise shot at close range will one-hit-kill (OHK). However, pump mechanism needs to be cycled after each shot, which dramatically reduces effective rate of fire.</p>
+<p>There are currently two pump shotguns for each faction, first and second generations. First generation has tighter spread and fires and reloads a little faster, and the second generation fires an additional pellet per shot, dealing more damage per shot, which results in increased chance of OHK at close range.</p>
+<p>Ultimately, the difference between them is tiny, and it’s nearly impossible for the user to tell them apart by their performance.</p>
+<p>High damage per magazine and potential to exploit a favorable situation makes pump action shotguns best suited for flanking.</p>
+<p>Potential OHK is a huge advantage – it gives you ability to remove an enemy before he gets to even <em>think</em> about responding, and due to internet delay – often before he can see you. Or you can OHK an enemy even after he started shooting at you. Normally, firing first gives a huge advantage, but OHK can negate that advantage, as presented in the comic below:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">importance of alpha damage</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/rtninn.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>The biggest problem with pump action shotguns is that <em><strong>most of the time target does not die from the first shot</strong></em>, and then you have to wait through painfully long pump mechanism cycle, which is longer than time to kill of most automatic weapons in close quarters.</p>
+<p>The long refire time must be mitigated by stepping in and out of cover between shots. You will also be gaming on internet delay that way, often shooting the opponent on your screen before appearing on his screen.</p>
+<p>Example video. Pay attention to movement.</p>
+<p>But if you engage an enemy in close quarters without available cover, and the enemy doesn’t die from the first shot and you are stuck cycling the pump mechanism, you’re at a huge disadvantage. <strong>That’s with a shotgun within effective range!</strong></p>
+<p>So stick to cover, and if there’s no cover – ADS, aim very-very well, and pray for an OHK. If you don’t get OHK – stop ADSing and strafe erratically and try to survive until you have another shot.</p>
+<p>Tip: Equipping most sidearms takes 0.5 seconds, while pump action shotguns take 0.75-0.85 seconds to cycle, so if the target survived the first shotgun shot, it may be worth finishing it off with a sidearm instead of waiting for pump mechanism to cycle.</p>
+<p>On another note, there’s a nice feature that each shot with a PA shotgun is as accurate as it can be, as the recoil has time to fully settle between shots, effectively nullifying one of the shotguns’ biggest disadvantages – strong recoil.</p>
+<p>Pump action fires slowly, and forces the user to time his shots and conserve ammunition, and since there’s a chance to OHK – there’s a bit more leeway in lining up shots.</p>
+<p>High count of pellets per shot also means that you’re very likely to do at least some damage to the target, so what PA shotgun didn’t kill in one shot, it’s likely to kill in two.</p>
+<h3>Melee Combo Interactions</h3>
+<p>Pump Action shotguns have an interesting interaction with quick melee attacks: you can quick melee during the chamber animation. <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Melee_Interactions_with_Pump_Action_and_Bolt_Action_Weapons" target="_blank" rel="noopener noreferrer">Learn more about it here.</a></p>
+<p>Normally, this trick would be redundant, because you can perform quick melee attacks only at point blank range, where any PA shotgun should reliably OHK any infantry target, unless it’s running full Nanoweave <em>and</em> Aux. Shield. However, PA shotguns are often hard countered by Heavy Assaults’ overshields, and this is where a melee strike comes in, able to reliably kill any shielded HA after a PA shotgun shot.</p>
+<h2>NS Shotguns</h2>
+<h3><strong>NS Baron G5</strong></h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">34tc210</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/34tc210.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/baron.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>ADS Pellet Spread: 2.25</p>
+<p>Vertical Recoil: 2.2</p>
+<p>Recoil Angle: -12 / -12</p>
+<p>Horizontal Recoil: 0.45 / 0.45</p>
+<p>Horizontal Recoil Tolerance: 1.5</p>
+<p>Long Reload: 0.58 secs</p>
+<p>Short Reload: 0.5 secs</p>
+<p>Baron has the longest effective range among shotguns due to tightest in class Pellet Spread, as well as marginally better Stand ADS Move CoF.</p>
+<p>There is a small price to pay: Baron fires slower, does less damage per shot, and can do less damage before having to reload, even with Extended Mags.</p>
+<p>Baron isn’t as deadly as full auto or pump action shotguns, but it doesn’t lose much when compared to other semi autos. In the end, the total amount of shots to kill is about the same and often Baron can even kill a target in fewer shots due to superior accuracy.</p>
+<p>Baron’s tube magazine takes longer to fully reload, especially with Extended Mags, but the advantage is that you can quickly load up a couple of shells between engagements, as well as interrupt the reload process if situation calls for it.</p>
+<p>Comparatively long effective range makes Baron by far the least frustrating shotgun to use. Sometimes it’s possible to reach out to enemies as far as 20m out, which is unheard of.</p>
+<h2>Auraxium Shotguns</h2>
+<h3>Havoc</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Havoc.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>+2 rounds per mag</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/havoc-stats.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>ADS Pellet Spread: 2</p>
+<p>Vertical Recoil: 2.8</p>
+<p>Horizontal Recoil: 0.5 / 0.5</p>
+<p>Horizontal Recoil Tolerance: 1.5</p>
+<h3>The Brawler</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/The_Brawler.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>+Underbarrel Shotgun</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/brawler-stats.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>ADS Pellet Spread: 2</p>
+<p>Vertical Recoil: 2.8</p>
+<p>Horizontal Recoil: 0.5 / 0.5</p>
+<p>Horizontal Recoil Tolerance: 1.5</p>
+<h3>Chaos</h3>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Chaos.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>+Super Quick Reload</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/chaos-stats.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>ADS Pellet Spread: 2</p>
+<p>Vertical Recoil: 2.8</p>
+<p>Horizontal Recoil: 0.5 / 0.5</p>
+<p>Horizontal Recoil Tolerance: 1.5</p>
+<p>These prestige shotguns with <a href="https://www.youtube.com/watch?v=LFHvik9jscw" target="_blank" rel="noopener noreferrer">unique “alive” camouflage shader</a> can’t be purchased with certs or station cash, and can only be acquired through Directives. To get one of these, you have to complete the auraxium tier of shotgun directives, by earning auraxium medals with 5 different shotguns (gold and black variants count, but not AE or P variants).</p>
+<p>Auraxium shotguns are very similar to <a href="http://cmdrcyrious.com/planetside2/weapons/shotguns/#Starting_Shotguns" target="_blank" rel="noopener noreferrer">starting shotguns</a>, but they have larger Hip Fire Pellet Spread and smaller ADS Pellet Spread. This makes the decision whether to ADS or not more impactful, and increases maximum effective range.</p>
+<p>In addition, each auraxium shotgun has a bit of faction flavor: Havoc gets larger magazine, Chaos gets faster short reload and Brawler gets an <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-attachments/#Underbarrel_Shotgun_UBS" target="_blank" rel="noopener noreferrer">Underbarrel Shotgun</a></strong> attachment. Yes, it’s a shotgun on a shotgun.</p>
+<h2>Attachments</h2>
+<p><strong>Extended Magazines</strong> is a no-brainer attachment for the rail slot in almost all cases </p>
+<p><strong>Laser Sight</strong> reduces hip fire CoF by 33%.</p>
+<p>If we take Standing Moving Hip CoF of 2.0, it will be reduced to \~1.33 degrees, reducing total pellet coverage by 0.67 degrees, and increasing effective range by about 1m.</p>
+<p>Not a huge difference. If you require more range, it’s better to aim down sights. This will both reduce CoF better than Laser Sight would, and will also reduce Pellet Spread with most shotguns.</p>
+<p><strong>Forward Grip</strong> reduces Horizontal Recoil and Horizontal Recoil Tolerance. This is worthless for most shotguns, with the exception of Full Auto Shotguns, which suffer from abnormally high Horizontal Recoil and Tolerance.</p>
+<p>\[spoiler title=”Forward Grip for Full Auto Shotguns”\]</p>
+<p>Here is a comparison of how your Pellet Coverage looks on Auto Shotgun if you ADS and fire at full auto at an enemy within 5m.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Autoshotgun with FG</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/autoshotgun-FG.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Autoshotgun with FG</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Autoshotgun no FG</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/autoshotgun.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Autoshotgun no FG</p>
+<p>\[/spoiler\]  <strong>1x Reflex sight</strong> is handy to be able to ADS conveniently, if situation calls for it, or a <strong>HS/NV scope</strong> to give yourself a better vision at night.</p>
+<p><a href="http://cmdrcyrious.com/planetside2/weapons/shotguns/#Slug_Ammunition" target="_blank" rel="noopener noreferrer"><strong>Slug Ammunition</strong></a> ammo attachment has such a strong effect on shotgun performance that it has a separate section dedicated to it.</p>
+<h2>Shotgun Loadout</h2>
+<p>Whatever shotgun you choose, you do not want to run with it all the time, but switch to shotgun loadout when you get in a fight with lots of close quarters fighting.</p>
+<p>There are a few equipment pieces that can make shotgunning easier, though they are not absolutely necessary.</p>
+<h3><a href="http://cmdrcyrious.com/planetside2/equipment/suit-slots/" target="_blank" rel="noopener noreferrer">Suit Slot</a></h3>
+<p>You’re gonna engage in CQC a lot. It’s a dangerous place, and you won’t always have the choice to engage the enemy on best terms, so <a href="http://cmdrcyrious.com/planetside2/equipment/suit-slots/#Nanoweave_Armor" target="_blank" rel="noopener noreferrer">Nanoweave Armor</a> is gonna come in handy.</p>
+<h3><a href="http://cmdrcyrious.com/planetside2/weapons/sidearms/" target="_blank" rel="noopener noreferrer">Sidearm</a></h3>
+<p>Since the optimal way of using a shotgun requires a lot of spamming shots, Shotguns tend to run out of ammo in hectic CQC situations.</p>
+<p>Also, sometimes you may be forced to engage an enemy completely outside your shotgun’s effective range.</p>
+<p>So you want to pick a sidearm that has relatively long effective range, can kill a full health enemy at range and can be used as finisher in close quarters, either through damage per shot or volume of fire.</p>
+<p>Feel free to browse through the <strong><a href="http://cmdrcyrious.com/planetside2/weapons/sidearms/" target="_blank" rel="noopener noreferrer">Sidearm Guide</a></strong>, but the short of it – any semi auto pistol or a revolver will do just fine.</p>
+<p><a href="http://cmdrcyrious.com/planetside2/weapons/sidearms/#NS-44L_Blackhand" target="_blank" rel="noopener noreferrer"><strong>NS-44L Blackhand</strong></a> specifically gets recommended a lot. However, from my personal experience of using it, the downside was that I kept using Blackhand more than my actual primary weapon.</p>
+<h3><a href="http://cmdrcyrious.com/planetside2/equipment/lethal-grenades/" target="_blank" rel="noopener noreferrer">Grenade</a></h3>
+<p><a href="http://cmdrcyrious.com/planetside2/classes/light-assault/#Flash_Grenade" target="_blank" rel="noopener noreferrer">Flash Grenade</a> for Light Assault and <a href="http://cmdrcyrious.com/planetside2/classes/heavy-assault/#Concussion_and_Anti-Vehicle_Grenades" target="_blank" rel="noopener noreferrer">Concussion Grenade</a> for Heavy Assault – both have good synergy with shotguns, but getting good hits with these grenades on multiple enemies is not easy.</p>
+<h3><a href="http://cmdrcyrious.com/planetside2/equipment/implants/" target="_blank" rel="noopener noreferrer">Implant</a></h3>
+<p>Shotgun users spend a lot of time running around, getting close to enemies. So they naturally benefit from implants related to combat awareness and minimap.</p>
+<p><strong><a href="http://cmdrcyrious.com/planetside2/equipment/implants/#Counter-Intelligence" target="_blank" rel="noopener noreferrer">Counter Intelligence</a></strong> will make flanking enemies much easier, and it’s also useful for making plays near cover. It is a human instinct to “address the threat”. When you get under fire, you naturally want to see who’s shooting at you. But often if you do, you will not have enough time to retreat to safety or fight back. If you are able to break this bad habit, this implant will be useful to you.</p>
+<p>Example situation: you run a shotgun loadout, and run on a rooftop. Somebody shoots you, you see hit markers and enemy pops up on the minimap.</p>
+<p>You jump down from the edge of the roof, so the building is behind you and the enemy. If he tries to pursue and run around the building, you will be ready for him, you will know when exactly to pop out from around the corner and blast him in face.</p>
+<p><strong><a href="http://cmdrcyrious.com/planetside2/equipment/implants/#Sensor_Shield" target="_blank" rel="noopener noreferrer">Sensor Shield 4+</a></strong> will passively make you less likely to be detected by Motion Detection Tools, giving you a higher chance of catching enemies unaware.</p>
+<p>Shotgun users do a lot of blind rushing, and <a href="http://cmdrcyrious.com/planetside2/equipment/implants/#Sweeper_HUD" target="_blank" rel="noopener noreferrer"><strong>Sweeper HUD implant</strong></a> can warn about enemy explosives behind the doorway.</p>
+<p><a href="http://cmdrcyrious.com/planetside2/equipment/implants/#Nightmare" target="_blank" rel="noopener noreferrer"><strong>Nightmare 5</strong></a> makes a funny and cheesy combination with Shotguns, especially with pump action ones, but it’s not as useful as you might think. You can’t always guarantee killing an enemy within 5m, and the cloak itself is not effective at close range.</p>
+<p><a href="http://cmdrcyrious.com/planetside2/equipment/implants/#Catlike" target="_blank" rel="noopener noreferrer"><strong>Catlike 5</strong></a> is excellent for moving around; it opens new ways of getting close to enemies.</p>
+<h3><a href="http://cmdrcyrious.com/planetside2/weapons/melee-weapons/" target="_blank" rel="noopener noreferrer">Melee</a></h3>
+<p>While shotguns already give you a lot of power in melee range, there is a couple of tricks you can pull off with your knife.</p>
+<p>One shot with a pump action shotgun and one knife swing will instantly kill a Heavy Assault through overshields. Same goes for 2 shots with other shotguns, followed by a knife swing.</p>
+<p>Unfortunately, non-pump action shotguns do not deal enough damage per shot to reliably kill infantry – they will survive the melee combo if they have Nanoweave Armor. If you’re going for a melee combo, do your best to aim in the head-neck area, so a few pellets hit the head, making sure the knife strike will be lethal even if the target has nanoweave.</p>
+<h2>Playstyle</h2>
+<p>Shotguns’ effective range is so short that you’ll probably have to move closer to every enemy before you can try killing them. So using a shotgun is a simple cycle of: move to enemy -&gt; engage -&gt; move -&gt; engage -&gt; etc.</p>
+<h2>Positioning</h2>
+<p>When you first arrive into a fight, take a look at the <a href="http://cmdrcyrious.com/planetside2/beginner-guides/map-and-minimap/" target="_blank" rel="noopener noreferrer">minimap</a>, figure out where enemies are and how you can get close to them. Stick to cover and try to be stealthy and pay constant attention to the minimap. Avoid large open spaces as much as you can. Learn base layouts and where people usually hide or camp.</p>
+<p>If you manage to get within 5-10m, you can engage. For this, skip to the next section “Aiming and Firing”.</p>
+<p>But it is impossible to consistently get within 10m of the enemy. A lot of the time, <em><strong>skill</strong></em> in using a shotgun is not in getting close to enemies, but <strong>in what to do when things go wrong.</strong></p>
+<p>If you get spotted or shot on approach and you can’t get close to the enemy before you get killed – abort mission and try to find cover. Then, depending on situation, either wait for enemy to come to you, or try to move away from the enemy and look for another route.</p>
+<p>If there’s no cover around, and you’re just stuck in the open, you probably made a positioning mistake and you’re gonna die. Learn from it and move on. As a last ditch effort, you can try engaging the enemy with your sidearm, but odds aren’t in your favor.</p>
+<h2>Aiming and firing</h2>
+<p>It’s almost always better to <a href="http://cmdrcyrious.com/planetside2/weapons/gunplay-guide/#Center_mass" target="_blank" rel="noopener noreferrer"><strong>aim for center mass</strong></a> to maximize the number of pellets that hit the target.</p>
+<p>Shotguns do only 150% damage on headshots instead of usual 200%, so I don’t recommend aiming at the head, unless the enemy is something like a shielded Heavy Assault at extremely close range.</p>
+<p><em>Some people have a reflex to start shooting first, and “zero in” (acquire aim) on the target while shooting. It’s a bad habit, but it somewhat works with automatic weapons. With shotguns, you absolutely can’t do that. <strong>Take a moment to make sure your crosshair is on your target, and only then shoot.</strong></em></p>
+<p>A couple examples of what happens if you do not take that extra moment to aim:</p>
+<p><em>Just having a shotgun and enemy within 3m of you is <strong>not</strong> an automatic victory. You still have to aim and fire properly!</em></p>
+<p>Shotguns have no Cone of Fire Bloom, and usually take 3-4 shots to kill the enemy, so to maintain competitive Time to Kill, you must shoot as fast as you can, pushing through the recoil and trying to hold the crosshair on enemy’s center mass.</p>
+<p><strong>Make sure to Aim Down Sights if the enemy is more than 3-5m away from you.</strong> </p>
+<p>Standing completely still will also provide a small boost in range/accuracy, but it’s rarely a good idea to stand around in CQC. One situation when this can be useful is if you’re flanking an unaware enemy, and don’t want to expose yourself by moving too close.</p>
+<p><strong>To recap:</strong></p>
+<ul><li>Aim at center mass</li><li>Try to sustain maximum rate of fire</li><li>Compensate for recoil</li><li>Fire only when crosshair is on the target</li><li>Aim down sights if the enemy is further than 3-5m away</li></ul>
+<h2>Slug Ammunition</h2>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">slug ammunition</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/i5p2iu.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><em>All shotgun primaries except for <a href="http://cmdrcyrious.com/planetside2/weapons/heavy-weapons/" target="_blank" rel="noopener noreferrer">NC05 Jackhammer heavy weapon</a> have access to slug ammunition.</em></p>
+<p>All shotguns fire buckshot by default, but have an option to use Slug Ammunition, which is, in essence, shotgun bullets. Slugs are used to make the shotgun viable in 20-30m range segment at the cost of reducing effectiveness at extremely close range.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Slug and buckshot</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/2md3ozt.gif" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h2>Statistics</h2>
+<p><strong>Damage</strong>:</p>
+<ul><li>Full Auto and Semi-Auto slug damage: 500 @ 10m – 360 @ 40m</li><li>Pump Action slug damage: 800 @ 10m – 400 @ 40m</li><li><em>Remember, that shotguns do 150% damage on headshots instead of usual 200%, and it affects slugs too.</em></li></ul>
+<p><strong>CoF Penalty</strong>: Slug Ammunition increases hip fire Cones of Fire by 75%.</p>
+<p><strong>Velocity</strong>: <strong>TR</strong> and <strong>NC</strong> slugs inherit the Projectile Velocity of the shotgun they’re used with. <strong>Baron G5</strong> and all <strong>VS</strong> shotguns have slug velocity of 300 m/s.</p>
+<p><strong>Projectile Drop</strong>: slugs have lower Gravity than most primary weapons (8 vs 11.25), so they are less affected by projectile drop. <strong>VS</strong> slugs do have projectile drop.</p>
+<p><em>With 300 m/s and lower gravity, slugs have the same amount of drop as a weapon with standard gravity and 422 m/s would.</em></p>
+<p><strong>Pellet Spread</strong>: Slug Ammunition completely ignores Pellet Spread stat.</p>
+<h2>How to use slugs</h2>
+<p>Due to slug ammo Hip Fire CoF penalty, slugs are unreliable when hip fired. With a slug shotgun, it’s best to <strong>always aim down sights</strong>, unless enemy is within knifing distance.</p>
+<p>If the enemy is relatively close, you can spam shots and push through recoil, same as with buckshot. If the enemy is a bit further away, it is recommended to wait for the crosshair to fully settle between shots. This technique is called “tap firing” and described further below.</p>
+<p>Slugs are often misunderstood: they make a shotgun shoot powerful bullets at low rate of fire, so people naturally conclude “it’s similar to a battle rifle!”. The truth is, slugs don’t magically make your shotgun a ranged weapon. It remains a CQC weapon, even if the effective range does increase by a large margin.</p>
+<p>With slugs you can easily reach targets within 15-20m, but you do have to ADS and make sure to actually aim on target, and taking a semi-automatic “hit or die” weapon into CQC environment is not a great idea. Any CQC automatic weapon user will just run circles around you.</p>
+<p>Overall, slugs are more of an interesting challenge rather than an effective combat option. They’re a good choice if you get frustrated by total lack of effective range of normal buckshot, but they’re not superior to conventional automatic weapons.</p>
+<p><em>Based on posts by Erendil of PS2 Forums</em></p>
+<p><em>As someone with \~3,500 slug kills (Pandora and Nova) and maintaining a \~3.7 KDR while doing so, IMO slugs are NOT useless – at least not on auto/semi-auto shotties (PA slugguns are a different story). Once you get a feel for their COF and recoil, they can be effective out to about 40m or so, and can still frequently kill out to maybe 75m.</em></p>
+<p><em>Here’s a few thoughts on how I use auto/semi-auto slugguns:</em></p>
+<p><em>Always use Ext mags – foregrip gives almost no benefit, and their hipfire is total crap even with a laser equipped. With slugs you’ll burn through that mag very quicky, and every miss really hurts your kills per mag, so you want as many shots in that mag as possible</em></p>
+<p><em>You’ll go through ammo quickly, so Engie is IMO the best class for this. Although LA’s mobility, ambush potential, and ability to quickly go back for more ammo makes it viable for them too</em></p>
+<p><em>Don’t use anything greater than 2x sights – anything higher is a waste due to the relatively short effective range (FWIW I use 2x)</em></p>
+<p><em>Always ADS unless you’re within knifing range.</em></p>
+<p><em>1 headshot + quicknife will kill even Nano5 targets. 1 body shot + quicknife will kill non-Nano targets</em></p>
+<p><em>They’re a great ambush weapon. If you get the element of surprise go for a headshot on the 1st shot if possible. You’ll be surprised how many injured opponents you can OHK with 750 Alpha damage.</em> </p>
+<p><em>After the first shot, don’t go for headshots past 10m or so. The 1.5x headshot multiplier plus high recoil and large CoF makes it not worth praying to the RNG gods.</em></p>
+<p><em>You should be able to strafe while firing and maintain accuracy out to 25-30m IF you keep your recoil under control.</em></p>
+<p><em>Anything past 25-30m, you have 3 options:</em></p>
+<p><em>1) Stop strafing, this can be a death sentence. It’s only wise to do this if you have the initiative or have decent cover to fire from.</em></p>
+<p><em>2) Crouch. It will cut your ADS moving COF more than in half, down to a much more manageable .35 – comparable to an LMG. Not great, but good enough for mid-range firefights.</em></p>
+<p><em>Crouch-firing will let you maintain accuracy at near full semi-auto ROF out to \~40m. And since your ADS Movement multiplier is .75x, crouching doesn’t make you quite so horrendously slow as many other weapons would.</em></p>
+<p><em>Don’t stay crouched for too long though, or you’ll be asking for a sniper bullet to the cranium. Fire off a couple of shots, then get up and move, re-crouch and fire of a few more shots, then get back up, etc. You can also pop in and out of cover like this too.</em></p>
+<p><em>3) Disengage – Don’t attack. Either find some way to close the distance, or retreat, set up an ambush and let your opponent come to you.</em></p>
+<h2>Sniping with slugs</h2>
+<p>Shotguns with slugs have a combination of traits that makes them bad at long range fighting:</p>
+<ul><li>Extreme recoil, which forces the user to take long pauses between shots.</li><li>Low velocity.</li><li>Very bad “moving” CoFs, forces the user to stand still for firing at any meaningful range.</li></ul>
+<p>Slugs are optimal up to 20m, viable up to 30m. Make sure you’re within that effective range before engaging. Don’t expect to have an easy time taking out a remote target.</p>
+<p>That said, on occasion, you will be able to reach out to distant targets.</p>
+<p>Shotguns are pretty inaccurate on the move, so if you want to hit anything with a slug at range, you have to make sure to be stationary and aim down sights while shooting. This puts you at huge risk from enemy snipers, unless you’re in a good position.</p>
+<p>Let the crosshair fully return to original position between shots. This is called <strong>Tap Firing.</strong> Example of this can be seen in my video “<a href="https://forums.daybreakgames.com/ps2/index.php?threads/video-night-patrol-feat-sa-slugs.210190/" target="_blank" rel="noopener noreferrer">Night Patrol</a>” at 2:03.</p>
+<p>Tap Firing is necessary for sufficient accuracy, but it creates long pauses between shots.</p>
+<p>As explained <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Recentering_Time_for_Tap_Firing" target="_blank" rel="noopener noreferrer">here</a></strong>, different shotguns take different time to fully settle between shots.</p>
+<p>Most enemies at long range will require 3-4 hits to die, and they won’t stand still for \~1.2 seconds while being repeatedly hit by slugs, unless they are caught completely by surprise by your attack.</p>
+<p>In this regard, slug sniping has the same issues the normal sniping does: usually it only can kill those who are unskilled enough to stand around for a sniper to line up a shot. There’s not much value in killing a BR5 newbie.</p>
+<p>In a normal long-range gunfight, where an enemy shoots at you, and you shoot at the enemy, “sniping with slugs” is nearly impossible. But, if you go around the flank, remain unnoticed, and get an opportunity to line up a shot on an enemy who thinks he is safe, you can try killing him.</p>
+<p>This is almost impossible to pull off with a Pump Action shotgun due to long time between shots.</p>
+<p>Good targets are stationary reviving medics, engineers behind turrets, snipers. 150m sound like a maximum range for slug sniping, past that you’re likely to miss shots just because even your starting cone of fire is too large to guarantee a hit.</p>
+<p>Consider slug shotgun a CQC weapon that can sometimes reach out to far away enemies when circumstances are fitting.</p>
+<h2>Slugs on Semi Auto Shotguns</h2>
+<p>Semi-auto slugs can 2 hit kill a target without nanoweave within 10m, but most of the time you will need 3 hits, which will kill a full nanoweave target within 27m.</p>
+<p>With semi-auto slugs, it’s recommended to always aim for center mass, unless you have the advantage of the first shot on an unaware target, in which case you might want to try to score a headshot with the first hit, but subsequent shots should be aimed at the center mass regardless.</p>
+<p><strong>Which shotgun to use:</strong></p>
+<p>High capacity shotguns have slightly less Vertical Recoil, and faster Recentering Time because of it.</p>
+<p>Quick reload shotguns have 25 m/s higher velocity and slightly less horizontal recoil.</p>
+<p>And then there are magazine size / reload speed differences.</p>
+<p>Baron has a bit lower rate of fire, but it does get marginally better ADS Stand Move cone of fire and same velocity as quick reload shotguns.</p>
+<p>Overall, the differences in slug performance between these shotguns are marginal at best, so feel free to use just whichever shotgun you have, or whichever you like the most.</p>
+<h2>Slugs on Full Auto Shotguns</h2>
+<p>Not recommended. Fun, feels like WH40k Space Marine’s bolter. But ineffective. Extreme ammunition expenditure, extreme recoil, low accuracy, short effective range.</p>
+<p>Extreme horizontal recoil makes automatic fire a gamble not in your favor, even with a forward grip. And if you can’t go full auto, you may as well use a semi auto shotgun with better recentering time.</p>
+<h2>Slugs on Pump Action Shotguns</h2>
+<p>Slugs on a pump action shotguns are extremely powerful and way more versatile than buckshot. With buckshot you can OHK an enemy within 5m, and if you’re lucky, 2 or 3-shot him within 10m. Past that range your weapon is completely useless. With slugs, you remain potent within \~20m, and at least somewhat viable at longer range.</p>
+<p>Pump slugs do 800 @ 10m – 400 @ 40m damage with a 1.5x headshot multiplier. This means that slug will OHK a target on a headshot within 20m, and be a <strong>consistent</strong> 2 body hit kill even against full nanoweave targets up to 22m, and up to 32m on targets without nanoweave. Infiltrators die on a headshot within 25m.</p>
+<p>If you decide to use a PA shotgun with slugs, go with first generation: Uppercut, Claw, Phobos.</p>
+<p>Second generation pump action shotguns have lower RoF and longer reload, without any benefits for slugs.</p>
+<p><strong>Advantages of using a pump action shotgun with slugs:</strong></p>
+<ul><li>If your target is at all wounded, you will likely instantly finish it off even with one body hit.</li><li>At melee range, 1 slug and 1 knife swing will reliably OHK even full nanoweave target (but not a shielded Heavy Assault).</li><li>A well-placed headshot can instantly kill normal infantry. Your skill as a shooter comes into play before your opponent’s. Basically, <a href="https://gfycat.com/GrimPoorChinesecrocodilelizard" target="_blank" rel="noopener noreferrer">if you hit the head – you win.</a> Each and every battle within 20m is yours to lose, and opponent’s skill doesn’t really matter.</li><li>Not countered by other shotguns, since you don’t need to close in to their effective range to be effective yourself.</li><li>Powerful in close quarters against automatic weapons with 0.5x ADS multiplier, because even if target is beyond your hip fire range, shotguns still have 0.75x multiplier, and you can afford to dance around and dodge enemy shots, they cannot.</li><li>Misleading sound. Enemy will never guess you have slugs on your pump shotgun, because nobody uses them. Judging by sound, enemy will mistakenly consider you harmless outside 5m.</li><li>You need only a few shots, so you will be harder to detect by muzzle flash and tracers.</li><li>Absolutely no recoil control is required of you.</li><li>Each shot is as accurate as it can possibly be, because the crosshair has time to fully settle between shots.</li></ul>
+<p>You look and sound incredibly cool because KA-POW, shick-shick, KA-POW, and because it’s not mainstream. Venture off the beaten path. You also get to use a shotgun without cheesing.</p>
+<p>Slugs fix the biggest issue with buckshot – inconsistency. Buckshot OHKs outside melee range are inconsistent, and heavily dependent on luck and if the target has nanoweave. Slug OHKs depend only on your accuracy and distance to the target. Within 20m, you can expect any infantry target without HA overshield to die in one headshot. And at melee range, you can still “OHK” by adding a melee swing.</p>
+<p><strong>Disadvantages:</strong></p>
+<ul><li>Short effective range.</li><li>Requires good aim.</li><li>Requires good FPS.</li><li>Requires good positioning skills.</li><li>Hard countered by HA overshields…. if they manage to get them up in time 😉</li><li>Outclassed by popular automatic CQC weapons with 0.75x ADS multiplier, or weapons with accurate hip fire.</li><li>You have to be stationary to have a chance at hitting a target past 30m distance, because shotguns have bad CoF on the move. And a stationary target is sniper bait.</li></ul>
+<h2>Attachments to go with Slugs</h2>
+<p><strong>Rail</strong>: Extended Mags vs Forward Grip vs Laser Sight</p>
+<p><strong>Extended Mags</strong> is viable.</p>
+<p><strong>Forward Grip</strong> can be useful if you intend to use slugs aggressively, spam shots and push through recoil.</p>
+<p><strong>Laser Sight</strong> is for hip firing, and hip firing a “hit or die” weapon is not a good idea, especially considering the slug ammo CoF penalty. Laser Sight isn’t nearly enough to overcome it.</p>
+<p><strong>Scope:</strong> 1x reflex vs. 2x/3.4x/4x sights vs HS/NV</p>
+<p><strong>1x reflex recommended</strong> for convenient aiming within the effective range of 20-30m.</p>
+<p>I don’t recommend using high-magnification scopes with slugs, unless you specifically plan to go to a flanking position and use slug shotgun as a makeshift sniper rifle. High magnification scopes just make this weapon too much “unversatile”, too incovenient to use at close range, and slugs are not good enough at long range to justify specializing the weapon for it.</p>
+<p>HS / NV scope is viable, but longer scope-in time can put you at a disadvantage when suddenly an enemy attacks you at close range.</p>
+<h2>Outdated Videos</h2>
+<p>These videos are outdated and do not represent current shotgun gameplay in PS2. However, they still posses some recreational and cultural value.</p>
+<p>\[spoiler title=”Click to open spoiler”\] \[/spoiler\]</p>
+<h2>Recent Comments</h2>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

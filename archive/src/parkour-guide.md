@@ -1,0 +1,118 @@
+# CuteBeaver's Parkour Guide
+
+- **Source:** https://cmdrcyrious.com/parkour-guide/
+- **Saved:** 2026-11-09
+- **Status:** live, HTTP 200
+- **Raw HTML:** `raw/parkour-guide.html`
+- **Extraction:** trafilatura
+
+---
+
+---
+title: CuteBeaver's Parkour Guide | CMDRCyrious.com
+url: https://cmdrcyrious.com/parkour-guide/
+hostname: cmdrcyrious.com
+description: "Table of Contents (In Progress):IntroductionClimbing Introduction: I would like to start off this guide by showing new prospects a video Wrel did. It provides an excellent overview to exactly what wall climbing in Planetside2 is. The video is very easy to understand. However there is a massive difference between climbing and Planetside2 \"parkour\". You will need"
+sitename: CMDRCyrious.com | Take your gaming Cyriously!
+date: "2016-09-22"
+categories: ['PlanetSide 2']
+tags: ["A Newbie's Experience", 'API', 'beginner', 'calculator', 'combat medic', 'comparison', 'construction system', 'guest post', 'guide', 'heavy assault', 'highly technical', 'implant', 'infantry', 'infiltrator', 'Light Assault', 'LMG', 'loadout', 'mechancis', 'mechanic', 'mechanics', 'New Conglomerate', 'NSX', 'PC Building', 'performance', 'repost', 'rocket launchers', 'SMG', 'stalker', 'suggestion', 'Terran Republic', 'tool', 'Vanu Sovreignty', 'Video', 'weapon', 'Weapon Calculator', 'XCOM 2']
+fingerprint: "767803522900da2d"
+---
+Table of Contents (In Progress):
+
+1. Introduction
+
+Climbing Introduction:
+
+I would like to start off this guide by showing new prospects a video Wrel did. It provides an excellent overview to exactly what wall climbing in Planetside2 is. The video is very easy to understand. However there is a massive difference between climbing and Planetside2 “parkour”. You will need to learn the basics before you can just run around creativly without getting shot to bits or falling down and making Planetside2 pancakes.
+
+Down the Rabbit Hole:
+
+Getting into deeper details sheds some insight on the forgelight engine itself. Firstly there are movement speed reductions which are applied when a player jumps consecutively. This is mainly to prevent players from bunny hopping around like crazy in close quarters combat. The more rapidly you chain your jumping the worse and worse those speed penalties become until eventually you cannot move at all. Speed loss is the major factor when determining how fluid you can move from object to object or climb. The better you are at managing your own speed the faster and more efficient you become at traversing the world around you. The second part of the equation is planning your route and knowing which slopes can be traversed. Then it comes down to your own creativity and seeing different pathways that you can use. There are times when I stop, explore a base and see a route I had missed prior.
+
+I would also like to dispel the myth that you need 60+ FPS to climb anything in Planetside2. You do need 60+ FPS if you want an easier time, or to not even think about movement mechanics. However…You will not be very “good” at climbing, because your speed will suffer incredibly by blundering up against the side of an object and spamming the jump key. I started out at 14 FPS on an extremely terrible PC. I credit having such low frames to opening my eyes as to how slopes and jumping penalties affected my movement. Anything that permits you to recharge your speed is a possible route.
+
+But why does having more frames make climbing things easier? Client response time seems to decrease the more frames you have. Honestly I have no idea “why” this is the case but its been a consistent trend. At 14 FPS the best I could manage was basically double and triple jumps. I could not spam the jump key more then 3 times in a row and reliably experience the result I wanted. The 4th or 5th jump attempt simply would not register, cause me to “stall” and loose all my speed. Sometimes the key presses would not even go through with my game client. Saying this I would never want someone with lower frames to give up or not even try either. They can still do many climbs without reaching the magic number of 60 FPS. Please see my 30 FPS parkour video linked further down.
+
+Directional Influence
+
+Looking where you want to go is a considerable part of what makes “Planetside2 parkour ” work. Especially at faster speeds directional influence becomes more powerful. As I have been improving it has only gotten sweeter. Even for those with lower FPS directional influence is helpful since no additional key-presses are required. Main Advice: Looking upwards and above an edge will actually help you to get on top of it. The direction you are looking while falling will provide control of your descent too. Crouch key can be used to “dive downwards” cutting your speed in the middle of the air by a hefty amount. You can also crouch midair to dive down for additional speed which comes in handy for jumping large gaps as you land on slanted surfaces. Wrel did an excellent video on directional influence. I think is necessary to see and understand this video from a movement perspective. While you watch, think about how controlling yourself while airborne could be important. Directional influence can matter without needing a gravity lift or a jump pad. The subtle differences can enable you to get up onto an edge, hug the trunk of a tree tightly enough to maintain contact with it for climbing. Even control yourself during a dive. Now add on the opportunities to use gravity lifts, jump pads, or the fall damage immunity they provide to access unexpected locations. Its easy to see why mid air movement mechanics would influence your outcome from time to time.
+
+
+Increasing Speed:
+
+Easiest way is to sprint for a while, but that is not always possible. Sometimes you will have to reset your Base Momentum by stopping and standing still for a moment. Depending on how much speed you have depleted it could be anywhere form a 4 second to 8 second wait. Sometimes you will not be able to stop and take a rest. You may be unable to get a solid grip and the only thing you can do is try and change direction. Its better to do so sooner rather then later to maintain control on the slope. Try not to leave it to the last second so you don’t fall off accidentally. Moving left or right alongside the slope is helpful. In some situations even going carefully down the same slope you just climbed will allow you to make enough progress over time to gain height. Imagine taking 3 steps higher, and 2 steps backward to regenerate enough speed to take another 3 steps higher and so on until reaching the top. This method is painstakingly slow but is sometimes the only way to gain height or climb an object. AMP Stations are a great example of this
+
+The Adrenalin Pump is another way to slightly increase your sprinting speed. However the pump is still affected by jumping speed reductions, and it only provides minor improvements. It can be helpful for players looking to jump slightly larger gaps, or those with terrible FPS looking to squeeze even the tiniest increase in stability.
+
+Directional Keys A + D (left and right) are much more useful. This is because strafe speed is not reduced by jumping until it begins to be used. So its possible for you shield them from reductions and instead use your mouse to steer yourself. Towards the end of your climb begin using the directional keys to push yourself up with extra momentum. By adjusting your camera / using the mouse to look sideways your can “dig” your shoulder into the surface and push down on the directional key. This should keep your character firmly against the surface but still apply the movement increase. Eventually this too will wear off but you can learn to “weave” using directional keys to get a nice little boost of momentum.
+
+The final way of getting more speed is using gravity. This gets ugly fast though if you can’t control yourself on slopes. Gravity can be interesting you can use slopes and curves to sling yourself around. Even play with your own directional influence while doing this. It doesn’t need to be a large drop to get benefits from it. Large drops are the most fun of course but are mostly impractical. Normally you would be using curves going down hills kinda like learning to ski. Curves are safer because you can stop yourself from getting into a full blown surf by clinging to the side. Imagine you let gravity take hold and run downish for a moment quicking gathering extra speed, and then jump and change direction back towards the sloped curve. Volla! You are now on top of the curve with very little effort. Deliberately surfing down a slope usually ends up in your death as tiny bumps on the ground will cause you to take excessive damage. If you do get into a full blown surf hit crouch key to slow yourself down. At the soonest possible moment jump into the air, and towards an incline to regain control. Jumping in the direction of the surf will kill you, or restart the surf if you land on a downward facing slope.
+
+What benefit does a simple “double jump” have?: When you leap towards an object and carefully jump again only once after making contact with it you can conserve speed. Remember spamming the jump key is really bad in most cases it heavily reduces your movement speed. These types of jumps are spaced out more and they won’t feed the harsh movement penalties associated with jumpkey spamming. Players with lower FPS suffer most from having low speed as its easier for their clients to hang, exhausting their precious momentum.
+
+![](http://4.bp.blogspot.com/-Qp_SHFOlU58/TnKUKeH4XKI/AAAAAAAAA3g/2aKuTDnGYrc/s320/spidercat.jpg)
+
+
+Most importantly “Doubles” also stabilize your position on a new surface. Sometimes a player will be moving quickly and jump against a surface that would normally deflect them away. Hitting the jump key on initial contact with the new slope avoids this nasty rebuke and allows you to carry on without incident. Think of it like wall running in mirrors edge. While landing your leaping into the new surface, and carrying on at full speed. Once your on the sloped surface your fine. The double is just ensuring you don’t go flying off in some other random direction when making initial contact with minimal speed loss. It may seem odd that i consider two different jumping actions as “double jumps” but its the easiest way to explain them. Sometimes they will occur very quickly, and other times a moment apart. The overall concept is not to spam your jumps and to control your direction better by keeping your speed up.
+
+“Triple Jumps” help when it comes to getting up and then over an edge. Leap towards the top of the edge (gaining height on approach) then… hit the jump key a second time as you make contact with the edge (stabilizing your position on it) and finally you push the jump key a third time which lifts your character upwards on top of the object. This is all done incredibly quickly with only a tiny pause between the initial leap towards the edge and then a quick double tap to get above it. I will refer to this as a triple going forward. You will use this technique frequently as a reliable way to get on top of objects. Its important to remember that after triple completes there is speed loss. Overcoming the slowness requires a minor amount of distance or time to get back to having full base momentum. If you are just starting out be careful about performing triple jump, after triple jump. (Hint: There are ways to help inject more speed temporarily to allow for consecutive triples.) When a players momentum reaches near zero its very easy for them to be deflected backwards away from objects. The lower your speed the less control you have to maintain your course or even stay on slanted objects.
+
+ART OF DEFLECTION
+
+Deflection is probably the most frustrating and also amusing element of movement in Planetside2. It basically rejects your contact with a new surface and flings you off in an different direction. Deflection can happen when you are moving very fast and jumping from one type of surface to another. For example there are at least three surfaces in Planetside2. These surfaces produce different footstep sounds and they are: Metal, Wood, and Dirt/Rock. If you jump from a metal staircase onto the branch of a tree there you will experience deflection. The amount of deflection is going to be based on your speed, the direction you are traveling, the slope you come in contact with, and finally your camera angle.
+
+Deflection doesn’t have to always be frustrating. If you know what to expect from the slope you can embrace it and accumulate extra speed. Imagine human pinball, where the slope is the paddle and you become the ball with magic curving powers. Essentially jump carries both your accumulated momentum (from the fall) as well as the base momentum. By quickly pushing off of that new surface with a jump you control your new trajectory… Sometimes deflection itself also jacks up your speed too. As long as your able to push off quickly enough when making initial contact with the surface you will be able to stay in control and use directional influence midair and redirect yourself where you wish to go. The other alternative would looking down at your toes, and instead of jumping hitting crouch the moment you contact the ground. Cutting all speed may be helpful to minimize deflection and by looking directly down your encouraging your character to stop or push all their momentum down onto that one spot. Similarly you can adjust your speed by not sprinting when making a jump where you expect deflection to better control the landing. The less speed you have the less powerful the deflection will be, allowing you better chance to control your landings. Beware of crouching before landing… There is a small moment in time where this actually INCREASES your momentum temporarily. As the camera swoops down be sure your not in the process of landing or you will make deflection worse… Alternatively if you wanted to jack up your speed for an intentional deflection you could lightly tap crouch just before landing to increase the distance / speed you will travel.
+
+Expect yourself to die or get into full blown surfs when playing with deflection. Its really fun to mess around with, but also very frustraiting if you don’t expect to deal with sudden loss of control. Hopefully this helps others avoid falling when transitioning from different surface types.
+
+\[make video clip of human pin ball\]
+
+Tips for Low FPS Players:
+
+I was able to get around the added delay of lower FPS by jumping slightly “sooner” then I normally would have without the FPS limitations. The difference between running at 30 vs 60 vs 90 is something you can actually feel as a player. With higher frames everything is smoother and you can react intuitively to a situation. Just like blinking if you hit the jump key while playing at 90 FPS your character is going to jump without any added delays. However at 30 FPS you are basically planning your route and your key-presses well ahead of time. So for example: If there is a ledge coming up… I need to press my jumpkey a roughly 1-2 feet prior to the edge of the building so that my game client will process the jumping action when I actually reach it.
+
+Optimizing your client is also worth considering.
+
+Turning down shadows to low, lowering particle effects and other graphical settings may help if you are GPU bound. Consider also dropping render quality down to 80% I cannot honestly tell a difference and this is what mine is set to, even for all the videos.
+
+If you are CPU bound reducing “Render distance” to 500 meters should give you a sizable jump in frame rate. It really helps not having your client drawing mountains rocks and trees 1000’s of meters away from the battle. The nice thing about this setting is you do NOT need to restart your game to adjust it. So if you do want to fly a vehicle later you can easily just slide it back to 1500+ or whatever you like using.
+
+During battle try if you are really struggling try facing away from the majority of other players or chaos going on around you. Your Planetside2 game client won’t draw objects or people out of line of sight. This makes hugging tree trunks or looking down towards the ground somewhat helpful to get extra frames. This can be helpful at times if you are struggling in a large fight.
+
+Parkour vs Climbing
+
+I consider Parkour to be fluid movement. When you go beyond just managing to climb something. You begin to chain “moves” together and work on your speed. You begin to overlap tactics to manage your momentum better. As you can see it is very possible to do remarkable movements without needing 60 FPS. However you need to understand all the factors at play. Consider how you can combine the following. In case I wasn’t clear about certain terms these should help explain.
+
+Accumulated Momentum:
+
+Have you ever fallen from a great distance and started to hear the wind gushing past you? However by some “miracle” your landing was on a slope that deflected your fall and resulted in a surf – which made you take no damage but for a short time you were running at ultra fast speed? This is what I call accumulated momentum. Jumping carries your speed. It can be a very large amount of speed, or a very tiny amount given by a full sprint and a simple jump into the air.
+
+Base momentum:
+
+Simply how much movement you posses from a dead-stop before you lose everything and fall off or bounce away from the object.Its important to note : Base momentum can be reset by clinging to a surface for a short period of time. You can recharge this depending on if your able to find and then stand on a safe slope for about 4-8 seconds. Infiltrators can really benefit from this method since we can conceal ourselves until its safe to move once again.
+
+Slopes and Angled Vertical Surfaces
+
+Slopes themselves are another element which can be used. Some slopes may have seams which present the opportunity fro you to stand on multiple grades at once. Bumps which allow for a reset of the base momentum, and even the diagonal shape of a near vertical wall might make it rough enough to interact with. My rule of thumb is anything I can stand on or interact with is probably climbable.
+
+Boosting AKA Weaving:
+
+Directional keys are another way to inject a small boost of momentum. Pushing left or right while sprinting can give you a little short term boost in speed. You can carry this speed more effectively using jump. Very helpful when your nearing the top of your climb. This works no matter what FPS you have. Also incredibly useful for jumping large gaps.
+
+Directional Influence:
+
+Throwing your momentum using the camera can also help you. Simply look where you want to go. If you having issues getting over and object look upwards above it. It can also be used to help you hook around tight corners as well. Light assaults should be very familiar with this concept.
+
+Left To Do:
+
+Everything’s a rock / trees are your friends.
+
+Straight vs Shaped walls.
+
+Overhanging edges.
+
+Micojumps vs Stair-casing
+
+Emergent game-play.

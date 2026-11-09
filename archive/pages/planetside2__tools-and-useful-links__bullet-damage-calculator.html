@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>Bullet Damage Calculator — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>Bullet Damage Calculator</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd>Iridar (Institoros)</dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/planetside2/tools-and-useful-links/bullet-damage-calculator/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/planetside2/tools-and-useful-links/bullet-damage-calculator/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2016-04-25</dd></div>
+      <div><dt data-i18n="arc.attrSnapshot">Snapshot date</dt><dd>20250326145112</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Wayback</dd></div>
+      <div><dt data-i18n="arc.attrNote">Note</dt><dd>Wayback snapshot; live copy empty; interactive tool — saved text only, functionality not preserved</dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<h2>Download here</h2>
+<p>This Excel sheet will calculate bullet damage and other basic properties, such as DPS and TTK, as well as Bullet Damage Thresholds.</p>
+<h5><a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Bullet_Damage_Thresholds_v2.xlsm" target="_blank" rel="noopener noreferrer">&gt;&gt; Main download link \&lt;\&lt;</a></h5>
+<p>This sheet calculates BTK, ideal DPS and TTK three times:</p>
+<p>1\) For bullet damage achieved at maximum damage range</p>
+<p>2\) For bullet damage achieved at minimum damage range</p>
+<p>3\) For damage achieved at range specified by you</p>
+<p>Calculations are done independently for two weapons, and then compared to each other.</p>
+<p>You can specify target’s health and damage modifier, which is useful if you want to calculate for headshots or nanoweave armor.</p>
+<p>Additionally, you can press “Calculate Thresholds” button, and the sheet will automatically calculate bullet damage thresholds for you – find ranges, where the weapon starts to require an additional bullet to kill the target.</p>
+<p>You can also press a “Draw Chart” button, and a comparative chart will be automatically created, showing the differences in weapons’ BTKs at different ranges.</p>
+<h2>Applications</h2>
+<p>The damage model of a weapon can be inaccurate in certain situations. For example,</p>
+<p>ACX-11: 200 @ 10m – 143 @ 80m.</p>
+<p>BTKs on both ends are obvious: 5 @ 10m and 7 @ 80m.</p>
+<p>But what about what happens in the middle? With this sheet, you can find out that BTK will change from 6 to 7 bullets at 52m already. So, in a sense, minimum damage range is actually 52m, not 80m.</p>
+<p>Obviously, there are a lot of conditions: full health, only chest and arm hits, no nanoweave (similar threshold exists for nanoweave too, but at different range).</p>
+<h2>How to use</h2>
+<p><strong>Important!</strong></p>
+<p>First, open your Microsoft Excel. Then go to File -&gt; Options -&gt; Trust Center -&gt; Trust Center Settings -&gt; Macro Settings and check the box “enable all macros”. If you’re using a different version of Excel, just google how to “allow the Excel to run programs included with spreadsheets” in your version. You have to do this, otherwise you won’t be able to open the sheet.</p>
+<p>Enter stats of one or two weapons in green boxes. You can take them from the game, your imagination or this <a href="http://planetstats.net/data/weapons/" target="_blank" rel="noopener noreferrer">spreadsheet.</a></p>
+<p>If you want to calculate weapon’s bullet damage at a specific range, enter this range into the blue box.</p>
+<p>Example:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">how to use calculate bullet damage</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/zlw2t5-1024x231.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>You can specify target’s base health. Common values are 900 for infiltrators, 1000 for other infantry and 2000 for MAX units.</p>
+<p>You can also specify a damage multiplier. This is useful if you want to calculate for headshots or nanoweave armor / kinetic armor.</p>
+<p>Headshot multipliers can be taken from the spreadsheet I linked above, but, as the rule of a thumb, headshot multiplier is 1.5x for shotguns, crossbow and T7 MCG, 2.1x for bolt action sniper rifles and 2x for other weapons.</p>
+<p>Nanoweave Armor 5 blocks 20% of small arms damage, so enter 0.8 if you want to calculate for it.</p>
+<p>Remember that headshots ignore nanoweave.</p>
+<p>MAX units have 80% resistance to small arms fire, 87.5% for Kinetic Armor 5.</p>
+<p>How to read “Calculate Thresholds” button output:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">how to use calculate bullet damage thresholds</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/ev0y1e.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>BTK stands for bullets-to-kill. This picture shows a weapon that has BTK of 7 at ranges from 0 to 15m, 8 for range of 16m to 33m, 9 for range of 34m to 48m and 10 for any range past 49m.</p>
+<p>Video with examples</p>
+<h2>Known issues</h2>
+<p>1\) If the value in the blue box is lower than Max Damage Range or higher than Min Damage Range, computations for Damage @ Range, BTK @ Range and TTK @ Range become screwed.</p>
+<p>For example, you want to compare ACX-11 to T5 AMC at 70 meters.</p>
+<p>ACX-11: 200 @ 10m – 143 @ 80m</p>
+<p>T5 AMC: 143 @ 10m – 112 @ 60m</p>
+<p>If you type \[70\] into the blue boxes for both ACX-11 and T5 AMC, computations for T5 AMC will be wrong.</p>
+<p>Solution: don’t. You can expect T5 AMC to behave at 70 meters same as it does at 60 meters (can’t go below minimum damage). So enter 70 into the ACX-11’s blue box, and enter 60 into T5 AMC’s blue box.</p>
+<p>2\) Sometimes “Draw Chart” function bugs out, and draws a mumbo-jumbo of colorful lines.</p>
+<p>I haven’t quite figured out the reason for this.</p>
+<p>Solution: Go to the “Temp” worksheet, press Ctrl+A, then Delete. This will wipe out its contents.</p>
+<p>Then go to the main worksheet, save and exit the excel. After reopening the sheet file, everything should function normally. If it doesn’t, repeat the process.</p>
+<p>I realize that this sheet is not as cool as <a href="http://ps2model-axiom.rhcloud.com/" target="_blank" rel="noopener noreferrer">Axiom80’s Weapon Damage Analyzer</a>, that has pretty graphs and all, but that thing is <em><strong>outdated</strong></em>.</p>
+<p>You input values into my sheet yourself, so it’ll never be outdated, as long as core weapon mechanics of PS2 stay the same.</p>
+<h2>Recent Comments</h2>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>Ideal Burst Length Calculator | CMDRCyrious.com — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>Ideal Burst Length Calculator | CMDRCyrious.com</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd>CMDRCyrious</dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/ideal-burst-length-calculator/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/ideal-burst-length-calculator/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2016-05-12</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Live</dd></div>
+      <div><dt data-i18n="arc.attrNote">Note</dt><dd>interactive tool — saved text only, functionality not preserved</dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<h4>Attention! This tool is based on the <a href="https://www.reddit.com/r/Planetside/comments/6z5uax/results_of_the_testing_related_to_my_angular_size/" target="_blank" rel="noopener noreferrer">wrong research</a> and should not be used.</h4>
+<p>\[spoiler title=”Useless wrong tool”\] <strong><a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/Burst-Length-Calculator.xlsx" target="_blank" rel="noopener noreferrer">This Excel sheet</a></strong> will calculate ideal burst length at different ranges from 5m to 70m for any PlanetSide 2 weapon.</p>
+<h2>Download links</h2>
+<h5><a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/Burst-Length-Calculator.xlsx" target="_blank" rel="noopener noreferrer"><strong>&gt;&gt; Main download link \&lt;\&lt;</strong></a></h5>
+<h2>How to use</h2>
+<p>1)Pick a weapon and find its stats in game or at <a href="http://planetstats.net/data/weapons/" target="_blank" rel="noopener noreferrer">PlanetStats</a>. You will need:</p>
+<ul><li>Maximum Damage</li><li>Maximum Damage Range</li><li>Minimum Damage</li><li>Minimum Damage Range</li><li>Standing Still Cone of Fire</li><li>Standing Moving Cone of Fire</li><li>Cone of Fire Bloom (also known as Cone of Fire Recoil)</li><li>Rate of Fire (optional)</li></ul>
+<p>2)Download and open the <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/Burst-Length-Calculator.xlsx" target="_blank" rel="noopener noreferrer"><strong>Burst Length Calculator</strong></a>.</p>
+<p>3)Input weapon’s stats into orange boxes in <strong>Stats</strong> block:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">calculator stats</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/calculator-stats.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>CoF Recovery Rate</strong> is “20” for all known weapons, you don’t have to touch it.</p>
+<p><strong>Rate of Fire</strong> is optional, you will only need it if you want Time-to-Kill calculations.</p>
+<p><strong>Target Health</strong> – 1000 is default, 900 for Infiltrators, up to 1450 for <a href="http://cmdrcyrious.com/planetside2/classes/heavy-assault/#Abilities" target="_blank" rel="noopener noreferrer">NMG / Adrenaline Shield</a> Heavy Assault.</p>
+<p>3)Additional configuration</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">calculator additional settings</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/calculator-additional-settings.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>By default, calculations are done for Center Mass. Enter “0” into orange box in <strong>Choose Aiming Point</strong> block to calculate for headshots instead.</p>
+<p><strong>Headshot Damage Multiplier</strong> field is there “just in case”, since only shotguns use semi-auto or auto fire modes with 1.5x headshot multiplier. There’s also T7 MCG, but it has static ADS CoF.</p>
+<p>Heavy Assault with active <a href="http://cmdrcyrious.com/planetside2/classes/heavy-assault/#Resist_Shield" target="_blank" rel="noopener noreferrer">Resist Shield</a> takes 1.2x headshot damage.</p>
+<p><strong>Body Damage Multiplier</strong> allows you to add Nanoweave into calculations. Naturally, this field is ignored if you calculate for headshots.</p>
+<p>Heavy Assault with active <a href="http://cmdrcyrious.com/planetside2/classes/heavy-assault/#Resist_Shield" target="_blank" rel="noopener noreferrer">Resist Shield</a> takes 0.6x body shot damage (does not stack with Nanoweave).</p>
+<p>5)Analyze results.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">calculator results</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/calculator-results-1.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Burst Length</strong> will tell you the maximum amount of rounds in one burst that are guaranteed<strong>\</strong>* to land on target at a certain <strong>Distance</strong>.</p>
+<p><strong>\</strong>* – In order to keep calculations pure and simple, this calculator ignores recoil completely and assumes the player keeps his aim exactly at target’s center.</p>
+<p>No Human Element whatsoever, only <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Hip_Accuracy_and_Aim_Accuracy_Cone_of_Fire" target="_blank" rel="noopener noreferrer">Cone of Fire mechanics</a> participate in calculations.</p>
+<p>If a <strong>Burst Length</strong> value of 1 turns yellow, it means that even 1 hit is not guaranteed, because target is smaller than starting Cone of Fire. This will be especially noticeable with headshots at longer ranges.</p>
+<p><strong>Bursts to Kill</strong> will tell you the amount of bursts necessary to kill an enemy with <strong>Target Health</strong> with a certain <strong>Burst Length</strong>.</p>
+<p><strong>Ideal TTK</strong> column will show you time-to-kill with full auto fire.</p>
+<p><strong>Burst Delay</strong> will tell you the amount of time necessary for CoF to reset between bursts.</p>
+<p><strong>Adjusted TTK</strong> will tell you the amount of time it will take to fire off <strong>Bursts to Kill</strong> with <strong>Burst Delay</strong> between them.</p>
+<h2>Considerations</h2>
+<p>While the resulting <strong>Burst Length</strong> is a very specific number, you should treat it for what it is – an idealized model. If a robot was playing PlanetSide 2, he would shoot this way. For a human it is impossible to disregard recoil, nor to keep aim exactly at the center of a target.</p>
+<p>Calculator itself is not perfect, as <strong><a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Angular_Size" target="_blank" rel="noopener noreferrer">Target Sizes</a></strong> are hard to measure precisely. My way of measuring gives an error of \~1 pixel, which can be a huge deal at longer ranges,  where that pixel constitutes \~25% of the target.</p>
+<p>If I had access to 4k video or screenshots, that would quadruple Calculator’s precision.</p>
+<h2>How to benefit</h2>
+<p>The Calculator will tell you what is the best theoretical performance <em><strong>your weapon</strong></em> can give you.</p>
+<p>It’s not about your personal performance, it’s about <em>what your gear is capable of.</em> </p>
+<p>Write down or print your calculated results and go to VR training. Equip <strong><a href="http://cmdrcyrious.com/planetside2/equipment/implants/#Sweeper_HUD" target="_blank" rel="noopener noreferrer">Sweeper HUD</a></strong> implant, and learn to judge distance to the enemy in ballpark of tenths of meters. You can use crosshair notches or Red Dot as reference.</p>
+<p>Or use <a href="http://imgur.com/a/nrm7f" target="_blank" rel="noopener noreferrer">these screenshots</a>.</p>
+<p>Now, with weapon’s capabilities in mind, you can establish rough engagement guidelines for yourself.</p>
+<h2>Example of Analysis</h2>
+<p>Let’s use <strong><a href="http://cmdrcyrious.com/planetside2/weapons/carbines/#ACX-11" target="_blank" rel="noopener noreferrer">AC-X11</a></strong> as an example:</p>
+<p>EDIT: I forgot to account for mandatory HVA in this example, but since it’s slated to receive some changes, I’m gonna hold off on updating this example.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">ACX11 bodyshots</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/ACX11-body-1024x471.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>AC-X11 bodyshots</p>
+<p>First, let’s find a cutoff point where an enemy can be realistically killed in one burst while standing moving.</p>
+<p>At 30m, AC-X11 takes 7 hits to kill a full nano target, while its CoF can support only a 9 shot burst. So margin of missing is only 2 shots, which is a bit too close for comfort. AC-X11 has rather harsh recoil and unimpressive bullet velocity, so misses are very probable.</p>
+<p>This is also the point where you consider your personal skill as a shooter. Accuracy grades from your <a href="http://ps2.fisu.pw/player/" target="_blank" rel="noopener noreferrer">character stats at FISU</a> should give you an idea of where you stand among other players. If your accuracy is below average, consider giving yourself a higher margin for error.</p>
+<p>At 20m AC-X11 can sustain a 15 shot burst, which is way more than enough.</p>
+<p>So I would call 25m the cutoff range for realistic 1-burst kill in the heat of combat.</p>
+<p>If there is an opportunity to stand still and aim carefully, it’s probably possible to 1-burst enemies 35m away.</p>
+<p>Naturally, these values will go up or down depending on enemy. An AFK infiltrator can be 1-bursted from greater ranges than shielded HA, actively dodging incoming fire.</p>
+<p>Between 25m and 60m we want to fire in bursts of 10 to 5 rounds depending on distance, expecting a 2-3-burst kill most of the time.</p>
+<p>We can also see that it’s nearly pointless to fire at enemies &gt;60m away while moving.</p>
+<p>Now let’s take a look at headshots.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">ACX11 headshots</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/ACX11-head-1024x468.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>AC-X11 headshots</p>
+<p>It’s immediately apparent that AC-X11 struggles at getting headshots at ranges greater than 25m while moving.</p>
+<p>So we can set 25m as the cutoff range for 1-bursting an enemy with headshots. And if we want to go for headshots at greater ranges, we need to remain stationary for the whole burst.</p>
+<p><strong>Let’s recap on our guidelines:</strong> </p>
+<p>While moving, enemies can be 1-bursted with either headshots or bodyshots within 25 meters.</p>
+<p>While moving, enemies can be 2 or 3 bursted with burst length of 10 to 5 rounds, depending on range.</p>
+<p>While standing, enemies can be 1-bursted with either headshots or bodyshots between 25m and 60m.</p>
+<p>Given a choice, enemies further than 60m should not be engaged while moving.</p>
+<p>After you formulate these guidelines for yourself, all that remains is to learn to put them into practice. Training and mental discipline!</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">chinese master</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/05/chinese-master.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Have fun theorycrafting your way to victory. Please inform me of any issues with the Calculator.</p>
+<p><em>Note</em>: for calculating bullet damage at different ranges and finding out Bullet Damage Thresholds, use <a href="http://cmdrcyrious.com/planetside2/tools-and-useful-links/bullet-damage-calculator/" target="_blank" rel="noopener noreferrer">Bullet Damage Calculator.</a></p>
+<p>\[/spoiler\]</p>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

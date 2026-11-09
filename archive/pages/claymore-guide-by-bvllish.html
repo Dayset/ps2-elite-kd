@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>Claymore Guide by Bvllish | CMDRCyrious.com — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>Claymore Guide by Bvllish | CMDRCyrious.com</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd>CMDRCyrious</dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/claymore-guide-by-bvllish/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/claymore-guide-by-bvllish/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2017-01-15</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Live</dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<p><em>Originally posted on <a href="https://www.reddit.com/r/Planetside/comments/5ntpmv/claymores_patch_20170112_psa/" target="_blank" rel="noopener noreferrer">Reddit</a> by <a href="https://www.reddit.com/user/Bvllish" target="_blank" rel="noopener noreferrer">/u/Bvllish</a></em></p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">PS2 Claymore</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/01/claymore1-1024x576.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><em>From my testing, the claymore appears to deal damage in the shape of an isosceles triangle. The damage is a constant 1300 throughout the triangle, so the in-game “1300 at 3m 350 at 6.5m” is bullshit; <strong>Claymore deals no damage</strong> outside 2-3m.</em></p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">PS2 Claymore positioning</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2017/01/claymoer2-1024x576.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><em>With the newly added 0.32 second detonation delay, the claymore can no longer cover the entirety of a doorway. From in game experience, it appears to cover less than half of a doorway now. This is because if an enemy is close enough to the claymore, he can just run straight through it taking no damage.</em> </p>
+<p><em>Depending on the exact amount of time it takes for a character to run through the detonation zone, it may be beneficial to <strong>place the claymore at an angle</strong> to enlarge the kill zone.</em></p>
+<p>Knowing the detonation delay of 0.32 seconds and that <strong><a href="http://cmdrcyrious.com/wp-content/uploads/2016/04/Movement-SPeed.png" target="_blank" rel="noopener noreferrer">sprinting player</a></strong> moves at 6.32m per second, we can calculate the distance a player can cover during the delay: 0.32 \* 6.32 = \~2.02m, which means that a player can potentially spring right through the claymore without getting damaged, which is <strong><a href="https://youtu.be/lJf4tP2KwOI" target="_blank" rel="noopener noreferrer">confirmed by in-game testing</a></strong>.</p>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>

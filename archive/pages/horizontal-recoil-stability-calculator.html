@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>Horizontal Recoil Stability Calculator | CMDRCyrious.com — Archive — PS2 Elite</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../styles.css?v=20261108-g2f1" />
+  <link rel="stylesheet" href="../archive.css?v=20261109-archive1" />
+</head>
+<body class="site-page">
+  <main class="arc-wrap">
+    <header class="arc-page-head">
+      <a class="arc-back" href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a>
+      <h1>Horizontal Recoil Stability Calculator | CMDRCyrious.com</h1>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+    <section class="arc-attr" aria-label="About this page">
+      <dl>
+      <div><dt data-i18n="arc.attrAuthor">Author</dt><dd>CMDRCyrious</dd></div>
+      <div><dt data-i18n="arc.attrOriginal">Original</dt><dd><a href="https://cmdrcyrious.com/horizontal-recoil-stability-calculator/" target="_blank" rel="noopener noreferrer">https://cmdrcyrious.com/horizontal-recoil-stability-calculator/</a> (CMDRCyrious.com)</dd></div>
+      <div><dt data-i18n="arc.attrDate">Original date</dt><dd>2016-12-03</dd></div>
+      <div><dt data-i18n="arc.attrSaved">Archived</dt><dd>2026-11-09</dd></div>
+      <div><dt data-i18n="arc.attrSource">Source</dt><dd>Live</dd></div>
+      <div><dt data-i18n="arc.attrNote">Note</dt><dd>interactive tool — saved text only, functionality not preserved</dd></div>
+      </dl>
+    </section>
+    <article class="arc-body">
+<p>The recent fiasco with AF-4 Cyclone guide has reminded me that a mere <em><strong>possibility</strong></em> of a weapon’s recoil being less stable doesn’t necessarily mean it will be less stable <em><strong>on average</strong></em>.</p>
+<p>Let me remind you the raw numbers:</p>
+<p>| <strong>Statistic</strong> | <strong>Cyclone</strong>  | <strong>Armistice</strong> | <strong>Eridani</strong> |  | <strong>Horizontal Recoil</strong> | 0.212 / 0.4 | 0.347 / 0.376 | 0.3 / 0.392 |  | <strong>Horizontal Recoil Tolerance</strong> | 0.9 (2-3 kicks) | 0.9 (2 kicks) | 0.9 (2 kicks) | </p>
+<p>Compared to other 1st generation SMGs, the Cyclone has bigger difference between minimum and maximum recoils. It can also potentially have an extra recoil kick, increasing the total width of the recoil pattern.</p>
+<p>That led me to conclude that Cyclone has less stable horizontal recoil.</p>
+<p>It is true that potentially Cyclone can kick further from the start than other 1st gen SMGs.</p>
+<p>However, statistically, it is very unlikely. The probability of several hits in the same direction and with the recoil magnitude being in specific bounds is simply too low to be worth considering.</p>
+<p>Discouraged by my error, I have created a tool that will allow to judge the stability of horizontal recoil pattern in an objective manner.</p>
+<h2>Horizontal Recoil Stability Calculator</h2>
+<p>This excel spreadsheet will calculate stability of a weapon’s recoil pattern as average distance from the starting crosshair position.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Horizontal Recoil Stability Calculator</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/calcu.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p><strong>Important!</strong> To be able to open this file, you will need a Microsoft Office with <strong><a href="http://cmdrcyrious.com/planetside2/tools-and-useful-links/bullet-damage-calculator/#How_to_use" target="_blank" rel="noopener noreferrer">enabled Excel Macros</a></strong>. Supposedly there are security risks for doing this. Responsibility is yours, though I promise there’s nothing malicious in specifically my excel files.</p>
+<h2>How to use</h2>
+<p><strong>Enter the weapon’s <a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Horizontal_Recoil" target="_blank" rel="noopener noreferrer">Horizontal Recoil stats</a></strong> into the three orange boxes at the top (<a href="http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/#Where_to_get_weapon_stats" target="_blank" rel="noopener noreferrer">where to get stats?</a>). It’s fine to leave Burst Length and number of Simulations to their default values.</p>
+<p>Click <strong>“Calculate Stability”</strong> button, and the sheet will automatically update all results and the recoil distribution graph.</p>
+<p>The <strong>Probability Distribution</strong> graph is your main instrument for assessing weapon’s horizontal recoil stability.</p>
+<p>The horizontal axis of the graph represents the distance from the center of the recoil pattern, and the vertical axis represents the probability of that position being chosen.</p>
+<p><strong>“Graph Scale H”</strong> defines the horizontal scale of the graph. It is set to “1 degree” by default, and generally it should be high enough for all PS2 infantry weapons. For weapons with low horizontal recoil and low tolerance values, you can reduce Graph Scale H to 0.5 to make the graph more accurate.</p>
+<p>Ideally, you want a weapon whose graph looks like this:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">ideal</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/ideal.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>Basically, a weapon without horizontal recoil whatsoever.</p>
+<p>The closer the spikes of the graph to the left side, the higher the probability of the crosshair staying near the center of the recoil pattern – near crosshair’s original position at the beginning of a burst.</p>
+<p><strong>“Stability”</strong> is simply the average distance of the crosshair from the burst’s starting point. The closer it is to zero, the more accurate the weapon is on average.</p>
+<p><strong>“Maximum Deviation”</strong> is the highest value taken by Horizontal Recoil during simulation.</p>
+<p>You can copy paste the graph as image in order to compare different weapons:</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">copy as image</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/as-image-1024x456.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>This is a graph for Gauss SAW.</p>
+<p>On the next picture, I’m manually holding it with my mouse over the graph for Cyclone, allowing us to easily compare them.</p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">overlay</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/overlay.png" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<h2>Returning to Cyclone</h2>
+<p>| <strong>Statistic</strong> | <strong>Cyclone</strong>  | <strong>Armistice</strong> | <strong>Eridani</strong> |  | <strong>Stability</strong> | 0.264 | 0.305 | 0.294 |  | <strong>Maximum Deviation</strong> | 0.848 | 0.810 | 0.840 | </p>
+<figure class="arc-img"><span class="arc-img-mark" aria-hidden="true">🖼️</span> <span class="arc-img-alt">Cyclone vs Armistice vs Eridani</span> — <span data-i18n="arc.imgNotSaved">Image not preserved in the archive.</span> <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/overlay2.jpg" target="_blank" rel="noopener noreferrer" data-i18n="arc.imgOriginal">Original</a></figure>
+<p>As you can see, both Armistice and Eridani have lower stability, and a higher chance for the crosshair to be kicked further from the start. While Cyclone will generally shake in wider bounds, half of these bounds is still closer to the center due to lower minimum recoil. Cyclone may be less predictable on small scale, but it will be more stable on average.</p>
+<h2>Why Excel Sheet?</h2>
+<p>I’d love to eventually add this functionality into <a href="http://cmdrcyrious.com/planetside-2-weapon-simulator/" target="_blank" rel="noopener noreferrer">Weapon Simulator</a>, along with other few minor updates, but for the time being I’ve lost the ability to make any additions to it. My Visual Studio died, basically 🙁</p>
+    </article>
+    <footer class="arc-page-foot">
+      <a href="../archive.html" data-i18n="arc.backToArchive">← Back to the Archive</a> · <a href="../index.html" data-i18n="arc.backToStats">PS2 Elite stats</a>
+      <p data-i18n="arc.footNote">Preserved from the original — see the attribution above. PlanetSide 2 is © Daybreak Game Company. This archive preserves community writing for reference; it is not affiliated with Daybreak.</p>
+    </footer>
+  </main>
+  <script type="module" src="../i18n.mjs"></script>
+</body>
+</html>
