@@ -4,7 +4,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import {
-  PINNED, SHOTS, RECOVERY_RATE, TARGET_D, COST_DISTANCES, nStill, simulate, simulatePlain, resetInfo,
+  SHOTS, RECOVERY_RATE, TARGET_D, COST_DISTANCES, nStill, simulate, simulatePlain, resetInfo,
   paramsFor, deriveCurrent, finalsHtml, spreadD, hitChance, burstHitAvg, costSummary, pctNum, costHtml, fmt, fmtT,
   SORT_KEYS, sortValue, compareValues, sortEntries, orderEntries, imageSrcFor, compareHrefFor, slugName, detailHtml, rowHtml, lossPair, lossCell,
   ATT_KEYS, ATT_EFFECTS, attTogglesFor, applyAttachments,
@@ -209,7 +209,6 @@ test("2018 dataset: 194 rows, faithful shape, key values, nulls only where the s
   assert.equal(byName("NSX Fujin").ba, null);
   const nullRows = d2018.weapons.filter((w) => [w.hc, w.hs, w.ac, w.as].some((p) => p.includes(null)) || w.ba === null);
   assert.deepEqual(nullRows.map((w) => w.n), ["MANA Anti-Personnel Turret", "NSX Fujin"]);
-  assert.deepEqual(PINNED, ["NSX Naginata", "TRAC-5"], "the worked examples");
 });
 
 test("2018 dataset: per-category sums match the artifact's WEAPONS array (fingerprint)", () => {
@@ -411,19 +410,19 @@ test("sortValue / sortEntries: the loss columns sort, nulls last both ways, and 
   }
 });
 
-test("orderEntries: the pins stay on top when sorting by a loss column", () => {
+test("orderEntries: no pins — a pure sort, the highest loss first", () => {
   const entry = (n) => ({ row: byName(n), rec: byName(n) });
   const names = (es) => es.map((e) => e.row.n);
-  assert.deepEqual(names(orderEntries([entry("T2 Striker"), entry("TRAC-5"), entry("NSX Naginata")], "loss60", -1)), ["NSX Naginata", "TRAC-5", "T2 Striker"], "the 82.1% Striker sorts under the pins");
-  assert.deepEqual(names(orderEntries([entry("T2 Striker"), entry("NSX Naginata")], "loss35", -1)), ["NSX Naginata", "T2 Striker"]);
+  assert.deepEqual(names(orderEntries([entry("T2 Striker"), entry("TRAC-5"), entry("NSX Naginata")], "loss60", -1)), ["T2 Striker", "NSX Naginata", "TRAC-5"], "the 82.1% Striker now sorts first, ahead of the Naginata's 31.8% and the TRAC-5's 20.2%");
+  assert.deepEqual(names(orderEntries([entry("T2 Striker"), entry("NSX Naginata")], "loss35", -1)), names(sortEntries([entry("T2 Striker"), entry("NSX Naginata")], "loss35", -1)), "orderEntries is exactly the sort, no pin-first step");
 });
 
-test("orderEntries: the pinned examples stay on top in order, the rest sort under them", () => {
+test("orderEntries: the worked examples sort like every other gun", () => {
   const entry = (n) => ({ row: byName(n), rec: byName(n) });
   const names = (es) => es.map((e) => e.row.n);
-  assert.deepEqual(names(orderEntries([entry("GD-22S"), entry("TRAC-5"), entry("NSX Naginata")], "name", -1)), ["NSX Naginata", "TRAC-5", "GD-22S"]);
-  assert.deepEqual(names(orderEntries([entry("TRAC-5"), entry("GD-22S"), entry("NSX Naginata")], "rpm", 1)), ["NSX Naginata", "TRAC-5", "GD-22S"], "pins ignore the RPM sort");
-  assert.deepEqual(names(orderEntries([entry("GD-22S"), entry("TRAC-5")], "name", 1)), ["TRAC-5", "GD-22S"], "a pin still comes first even when it sorts after");
+  assert.deepEqual(names(orderEntries([entry("TRAC-5"), entry("GD-22S"), entry("NSX Naginata")], "name", 1)), ["GD-22S", "NSX Naginata", "TRAC-5"], "by name ascending the TRAC-5 sorts after the GD-22S");
+  assert.deepEqual(names(orderEntries([entry("GD-22S"), entry("TRAC-5"), entry("NSX Naginata")], "rpm", 1)), ["GD-22S", "NSX Naginata", "TRAC-5"], "by RPM ascending the TRAC-5 (750) sorts after the GD-22S (577) and the Naginata (659)");
+  assert.deepEqual(names(orderEntries([entry("GD-22S"), entry("TRAC-5")], "name", -1)), ["TRAC-5", "GD-22S"], "by name descending the TRAC-5 sorts first");
 });
 
 test("detailHtml: all four stances and the worked burst for the Naginata", () => {
@@ -540,10 +539,10 @@ test("applyAttachments: the acceptance numbers — Blitz hip 10 → 6 → 11, GD
   assert.equal(applyAttachments(null, "ads", new Set()), null);
 });
 
-test("the page is wired: pins, ids, back link, and the link from weapon-compare", () => {
+test("the page is wired: ids, back link, and the link from weapon-compare", () => {
   const html = read("../weapon-adad.html");
-  assert.match(html, /weapon-adad\.css\?v=20261109-adadloss1/);
-  assert.match(html, /weapon-adad\.mjs\?v=20261109-adadloss1/);
+  assert.match(html, /weapon-adad\.css\?v=20261109-adadunpin1/);
+  assert.match(html, /weapon-adad\.mjs\?v=20261109-adadunpin1/);
   assert.match(html, /data-sort="loss35"/, "the 35 m loss header sorts");
   assert.match(html, /data-sort="loss60"/, "the 60 m loss header sorts");
   assert.match(html, /data-i18n="adad\.col\.loss35"/, "the 35 m loss header is translated");

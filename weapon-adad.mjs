@@ -17,7 +17,6 @@
  */
 import { t as tr, currentLang, ready } from "./i18n.mjs";
 
-export const PINNED = ["NSX Naginata", "TRAC-5"];
 export const RECOVERY_RATE = 20; // deg/s: CoF recovery after one refire of delay
 export const SHOTS = 10;
 
@@ -362,8 +361,7 @@ export function compareValues(a, b) {
   return String(a).localeCompare(String(b));
 }
 
-/** A sorted copy of the entries. Pins are NOT sorted here — the caller keeps
- *  them on top via orderEntries. Nulls stay last in both directions; only
+/** A sorted copy of the entries. Nulls stay last in both directions; only
  *  real values flip with the direction. */
 export function sortEntries(entries, key, dir) {
   return [...entries].sort((x, y) => {
@@ -373,12 +371,11 @@ export function sortEntries(entries, key, dir) {
   });
 }
 
-/** Pinned rows first (in PINNED order, unsorted), then the rest sorted. Pure,
+/** The table's order: a pure sort of every entry by the active column.
+ *  No gun is pinned — the worked examples sort like everything else. Pure,
  *  so the table's order is testable without a DOM. */
 export function orderEntries(entries, key, dir) {
-  const pinned = entries.filter((e) => PINNED.includes(e.row.n)).sort((a, b) => PINNED.indexOf(a.row.n) - PINNED.indexOf(b.row.n));
-  const rest = entries.filter((e) => !PINNED.includes(e.row.n));
-  return [...pinned, ...sortEntries(rest, key, dir)];
+  return sortEntries(entries, key, dir);
 }
 
 /** The expanded detail for one weapon: all four stance pairs (still and moving
@@ -643,7 +640,6 @@ export function rowHtml(entry, opts) {
   const { row, rec } = entry;
   const { imgMap, idMap, open } = opts;
   const ads = paramsFor(rec, "ads", "stand"), hip = paramsFor(rec, "hip", "stand");
-  const pin = PINNED.includes(row.n);
   const img = imageSrcFor(row.n, imgMap);
   const href = compareHrefFor(row.n, idMap);
   const isOpen = open.has(row.n);
@@ -652,10 +648,10 @@ export function rowHtml(entry, opts) {
   const toggleLabel = isOpen
     ? tr("adad.row.collapse", "Hide details for {name}", { name: row.n })
     : tr("adad.row.expand", "Show details for {name}", { name: row.n });
-  let html = `<tr data-name="${esc(row.n)}"${pin ? ' class="pin"' : ""}>`
+  let html = `<tr data-name="${esc(row.n)}">`
     + `<td class="rowtoggle" data-l="${esc(tr("adad.col.details", "Details"))}"><button type="button" class="row-toggle" data-toggle="${esc(row.n)}" aria-expanded="${isOpen}" aria-controls="${detailId}" aria-label="${esc(toggleLabel)}">${isOpen ? "▾" : "▸"}</button></td>`
     + `<td class="imgcell" data-l="${esc(tr("adad.col.image", "Image"))}">${img ? `<img src="${img}" alt="" width="56" height="28" loading="lazy" onerror="this.style.visibility='hidden'" />` : "—"}</td>`
-    + `<td class="namecell" data-l="${esc(tr("adad.col.weapon", "Weapon"))}">${esc(row.n)}${pin ? ` <span class="tag">${esc(tr("adad.pin", "worked example"))}</span>` : ""}</td>`
+    + `<td class="namecell" data-l="${esc(tr("adad.col.weapon", "Weapon"))}">${esc(row.n)}</td>`
     + `<td data-l="${esc(tr("adad.col.faction", "Faction"))}">${esc(row.f)}</td>`
     + `<td data-l="${esc(tr("adad.col.category", "Category"))}">${esc(row.c)}</td>`
     + `<td data-l="${esc(tr("adad.col.rpm", "RPM"))}">${rec?.rpm ?? "—"}</td>`
