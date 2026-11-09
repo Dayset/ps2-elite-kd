@@ -67,7 +67,7 @@ test("the FPS limit survives the link, off by default", () => {
   const back = parseState(stateToSearch(on));
   assert.equal(back.fpsOn, true);
   assert.equal(back.fps, 60);
-  assert.equal(parseState("?fps=999").fps, 500);
+  assert.equal(parseState("?fps=5000").fps, 1000);
   assert.equal(parseState("?fps=5").fps, 30);
 });
 

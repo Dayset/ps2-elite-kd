@@ -67,9 +67,9 @@ export function effectiveRpm(p) {
  * fitted to the chart's mean curve at 600 rpm (least squares: loss % = 790 / fps).
  * At 600 rpm: 30 FPS -> 26.4 %, 60 FPS -> 13.2 %, 120 FPS -> 6.6 %, 210 FPS -> 3.8 %,
  * 500 FPS -> 1.6 % — the loss vanishes as the frame rate rises, as it should. The fps clamp
- * below is only the slider's range (30-500); the law itself has no floor.
+ * below is only the slider's range (30-1000); the law itself has no floor.
  */
-export const FPS_LIMIT = Object.freeze({ k: 0.0132, min: 30, max: 500, def: 60 });
+export const FPS_LIMIT = Object.freeze({ k: 0.0132, min: 30, max: 1000, def: 60 });
 
 /** Share of the fire rate lost at `fps` for a weapon firing `rpm` rounds per minute (0..0.9). */
 export function fpsFireRateDrop(fps, rpm) {
