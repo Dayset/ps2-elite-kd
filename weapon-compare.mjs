@@ -130,6 +130,9 @@ export function burstRowsShown(rows, floor = 0.01, min = 6) {
   return Math.min(rows.length, Math.max(min, last + 3));
 }
 
+/** Which screen-height preset a resY value matches, or "custom" for a hand-typed height (pure, tested). */
+export const resPresetFor = (resY) => [1080, 1440, 2160].includes(resY) ? String(resY) : "custom";
+
 /** Fresh random seed for the spray pictures (each draw shows new sprays, owner 2026-11-06). */
 export const newSeed = () => 1 + Math.floor(Math.random() * 2 ** 30);
 
@@ -573,7 +576,7 @@ async function boot() {
   // ------------------------------------------------------ recoil simulator --
   // One aim rule (owner 2026-11-08): each shot is aimed at the head with the headshot rate, else at the chest; it
   // lands on that point with the accuracy, else it misses clearly; cone, bloom and recoil come on top.
-  const simState = { aim: "ads", stance: "crouchStill", comp: 0, compX: 0, seed: newSeed() };
+  const simState = { aim: "ads", stance: "crouchStill", comp: 100, compX: 100, seed: newSeed() };
   const settingsKey = () => [simState.aim, simState.stance, simState.comp, simState.compX, st.acc, st.hsr, st.range, st.hp, st.fpsOn ? st.fps : 0].join("|");
   const simOpts = () => ({ stance: simState.stance, aim: simState.aim, comp: simState.comp / 100, compX: simState.compX / 100, acc: st.acc / 100, hsr: st.hsr / 100 });
   const paramsOf = (w, att) => {
@@ -698,10 +701,16 @@ async function boot() {
   // own cone, recoil and falloff are what shows: at the chest by default, at the page headshot rate
   // when the "follow" box is ticked (the reference bands are chest-aimed, so they hide in that case).
   // Folded by default; nothing is computed while it is closed.
-  let deepId = null;
+  let deepId = null, deepTimingsOpen = false;   // the timings block is folded; its open state survives redraws
   let deepFollow = false;
   try { deepFollow = localStorage.getItem(FOLLOW_KEY) === "1"; } catch {}
+  const DEEP_KEY = "ps2-elite-kd-wc-deep";   // deep dive timings inputs, kept between visits like the other settings
   const deepInputs = { fps: 150, resY: 2160, fov: 74, zoom: 1.35 };   // timings inputs, Dorf's saved values
+  try {
+    const j = JSON.parse(localStorage.getItem(DEEP_KEY) || "null");
+    if (j && typeof j === "object") for (const k of ["fps", "resY", "fov", "zoom"]) if (Number.isFinite(+j[k]) && +j[k] > 0) deepInputs[k] = +j[k];
+  } catch {}
+  const saveDeep = () => { try { localStorage.setItem(DEEP_KEY, JSON.stringify(deepInputs)); } catch {} };
   const DEEP_GRID = [1, 2, 5, 10, 15, 20, 30, 40, 50, 75, 100, 150, 200];
   const deepGrid = (maxR) => { const g = DEEP_GRID.filter((r) => r <= maxR); if (g[g.length - 1] !== maxR) g.push(maxR); return g; };
   const DEEP_RUNS = 150;   // the best-burst-vs-distance chart: fewer trials, it is a trend, not a verdict
@@ -804,22 +813,30 @@ async function boot() {
     const rec = T.recoil.filter((r) => styles.has(r.n)), cof = new Map(T.cof.map((r) => [r.n, r]));
     const numIn = (id, label, v, min, max, step) => `<label class="wc-field"><span>${esc(label)}</span><input id="${id}" type="number" value="${v}" min="${min}" max="${max}" step="${step}"></label>`;
     const th = (t) => `<th>${esc(t)}</th>`;
-    h += `<h3>${esc(tr("wc.deep.timings", "Advanced timings and recoil control"))}</h3><p class="wc-note">${esc(tr("wc.deep.timingsNote", "Perfect bursting: how long to hold the trigger, how long to let go, and how far to pull down. His formulas, our numbers."))}</p>`
-      + `<div class="wc-deepin">${numIn("wcDeepFps", tr("wc.deep.fps", "Frame rate (1% lows)"), deepInputs.fps, 30, 500, 1)}${numIn("wcDeepResY", tr("wc.deep.resY", "Screen height (px)"), deepInputs.resY, 720, 4320, 1)}${numIn("wcDeepFov", tr("wc.deep.fov", "Field of view"), deepInputs.fov, 40, 120, 1)}${numIn("wcDeepZoom", tr("wc.deep.zoom", "Optical zoom"), deepInputs.zoom, 1, 4, 0.05)}</div>`
+    const resPreset = resPresetFor(deepInputs.resY);
+    const resField = `<label class="wc-field"><span>${esc(tr("wc.deep.resY", "Screen height (px)"))}</span><span class="wc-resrow"><input id="wcDeepResY" type="number" value="${deepInputs.resY}" min="720" max="4320" step="1"><select id="wcDeepResYPreset" aria-label="${esc(tr("wc.deep.resPreset", "Screen height preset"))}"><option value="1080"${resPreset === "1080" ? " selected" : ""}>1080p</option><option value="1440"${resPreset === "1440" ? " selected" : ""}>1440p</option><option value="2160"${resPreset === "2160" ? " selected" : ""}>2160p (4K)</option><option value="custom"${resPreset === "custom" ? " selected" : ""}>${esc(tr("wc.deep.resCustom", "Custom"))}</option></select></span></label>`;
+    h += `<details class="wc-fold wc-deep-timings" id="wcDeepTimings"${deepTimingsOpen ? " open" : ""}><summary>${esc(tr("wc.deep.timings", "Advanced timings and recoil control"))}</summary><p class="wc-note">${esc(tr("wc.deep.timingsNote", "Perfect bursting: how long to hold the trigger, how long to let go, and how far to pull down. His formulas, our numbers."))}</p>`
+      + `<div class="wc-deepin">${numIn("wcDeepFps", tr("wc.deep.fps", "Frame rate (1% lows)"), deepInputs.fps, 30, 500, 1)}${resField}${numIn("wcDeepFov", tr("wc.deep.fov", "Field of view"), deepInputs.fov, 40, 120, 1)}${numIn("wcDeepZoom", tr("wc.deep.zoom", "Optical zoom"), deepInputs.zoom, 1, 4, 0.05)}</div>`
       + `<div class="wc-deepgrid wc-deepgrid2"><figure><figcaption>${esc(tr("wc.deep.msCap", "Times in ms"))}</figcaption><div class="ranks-table-wrap wc-table-wrap"><table class="ranks-table wc-deep-t"><thead><tr>${th(tr("wc.sim.style", "Firing style"))}${th(tr("wc.deep.down", "Hold"))}${th(tr("wc.deep.relRecoil", "Let go: recoil"))}${th(tr("wc.deep.relCof", "Let go: cone"))}</tr></thead><tbody>`
       + rec.map((r) => `<tr><td>${esc(styleLabel(r.n, P.burstN))}</td><td>${nf(r.down)}</td><td>${nf(r.release)}</td><td>${nf(cof.get(r.n).release)}</td></tr>`).join("") + `</tbody></table></div></figure>`
       + `<figure><figcaption>${esc(tr("wc.deep.pull", "Vertical recoil counteraction"))} · ${esc(tr("wc.deep.angle", "Pull angle {deg}°", { deg: nf(T.pull[0].angle, 1) }))}</figcaption><div class="ranks-table-wrap wc-table-wrap"><table class="ranks-table wc-deep-t"><thead><tr>${th(tr("wc.deep.shot", "Shot"))}${th(tr("wc.deep.deg", "Degrees"))}${th(tr("wc.deep.px", "Pixels"))}${th(tr("wc.deep.speed", "Speed"))}</tr></thead><tbody>`
-      + [[tr("wc.deep.first", "First shot"), T.pull[0]], [tr("wc.deep.next", "Each next shot"), T.pull[1]]].filter(([, p]) => p).map(([t, p]) => `<tr><td>${esc(t)}</td><td>${nf(p.deg, 2)}</td><td>${nf(p.px, 1)}</td><td>${nf(p.speed)}</td></tr>`).join("") + `</tbody></table></div></figure></div>`;
+      + [[tr("wc.deep.first", "First shot"), T.pull[0]], [tr("wc.deep.next", "Each next shot"), T.pull[1]]].filter(([, p]) => p).map(([t, p]) => `<tr><td>${esc(t)}</td><td>${nf(p.deg, 2)}</td><td>${nf(p.px, 1)}</td><td>${nf(p.speed)}</td></tr>`).join("") + `</tbody></table></div></figure></div></details>`;
     el.innerHTML = `<div class="wc-deep">${h}</div>`;
+    const dt = el.querySelector("#wcDeepTimings");
+    if (dt) dt.addEventListener("toggle", () => { deepTimingsOpen = dt.open; });
     return jobs;
   }
   $("wcDeepBox").addEventListener("toggle", () => invalidate("sim"));
   $("wcDeep").addEventListener("change", (e) => {
     if (e.target.id === "wcDeepW") { deepId = Number(e.target.value); invalidate("sim"); return; }
     if (e.target.id === "wcDeepFollow") { deepFollow = e.target.checked; try { localStorage.setItem(FOLLOW_KEY, deepFollow ? "1" : "0"); } catch {} invalidate("sim"); return; }
+    if (e.target.id === "wcDeepResYPreset") {
+      if (e.target.value === "custom") { $("wcDeepResY").focus(); return; }
+      deepInputs.resY = Number(e.target.value); saveDeep(); invalidate("sim"); return;
+    }
     const map = { wcDeepFps: "fps", wcDeepResY: "resY", wcDeepFov: "fov", wcDeepZoom: "zoom" };
     const k = map[e.target.id];
-    if (k) { const v = Number(e.target.value); if (Number.isFinite(v) && v > 0) { deepInputs[k] = v; invalidate("sim"); } }
+    if (k) { const v = Number(e.target.value); if (Number.isFinite(v) && v > 0) { deepInputs[k] = v; saveDeep(); invalidate("sim"); } }
   });
   let lastSprays = null;
 
