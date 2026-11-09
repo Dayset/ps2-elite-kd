@@ -1,9 +1,11 @@
 // Most average planetman (owner 2026-11-08): the player closest to the 50th
 // percentile on every core stat at once. Eight columns, all required, never
 // imputed — a missing value disqualifies the player. Weekly pinned on-device.
-// Footer display (owner 2026-11-09): name on its own line, then all twelve
-// stats — the eight core stats plus 🎲 Luck, 🤝 Assists, 🪳 Zerg and
-// 🧘‍♂️ Pure iVi (display-only, never part of the pick; unknown shows "—").
+// Footer display (owner 2026-11-09): line one is the name plus ⚔️ iVi; the
+// other eleven stats sit on the next line inside a <details> that starts
+// collapsed ("Show stats") — the seven remaining core stats plus 🎲 Luck,
+// 🤝 Assists, 🪳 Zerg and 🧘‍♂️ Pure iVi (display-only, never part of the
+// pick; unknown shows "—").
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -116,7 +118,8 @@ test("renderAvgPlanetman: cached winner fills two lines, no data needed; empty h
   const el = { innerHTML: "", title: "", hidden: true };
   assert.equal(renderAvgPlanetman(el, [], {}, s).name, "Bommbel");
   assert.equal(el.hidden, false);
-  assert.equal(el.innerHTML, "Most average planetman: <a href=\"index.html?names=Bommbel\">Bommbel</a><br>⚔️ iVi 295, 🏃 Activity 0.25, 🦁 Brave 0.59, ☠️ K/D 0.59, 🛡️ Resist 0.46, ⚡ Const 0.55, 🎲 Luck +1%, 🤝 Assists 0.57, 🪳 Zerg 57, 🧘‍♂️ Pure iVi 224, 🌈 G 18.83%, 🪖 Infantry 84.9%");
+  assert.equal(el.innerHTML, "Most average planetman: <a href=\"index.html?names=Bommbel\">Bommbel</a> ⚔️ iVi 295<br><details><summary>Show stats</summary>🏃 Activity 0.25, 🦁 Brave 0.59, ☠️ K/D 0.59, 🛡️ Resist 0.46, ⚡ Const 0.55, 🎲 Luck +1%, 🤝 Assists 0.57, 🪳 Zerg 57, 🧘‍♂️ Pure iVi 224, 🌈 G 18.83%, 🪖 Infantry 84.9%</details>");
+  assert.doesNotMatch(el.innerHTML, /<details open/, "stats start collapsed");
   assert.match(el.title, /All eight core stats within 2 percentiles of the median of 18,665 players\. Recomputed weekly\./);
   const el2 = { innerHTML: "", title: "", hidden: true };
   assert.equal(renderAvgPlanetman(el2, [], {}, fakeStorage()), null);
@@ -138,7 +141,7 @@ test("renderAvgPlanetman: PS mirror omits 🧘‍♂️ Pure iVi entirely, never
   assert.equal(renderAvgPlanetman(el, [], {}, s, "ps").name, "CaneloNC");
   assert.equal(el.hidden, false);
   assert.doesNotMatch(el.innerHTML, /Pure iVi/);
-  assert.match(el.innerHTML, /Most average planetman: <a href="index\.html\?names=CaneloNC">CaneloNC<\/a><br>⚔️ iVi 295, 🏃 Activity 0\.25, 🦁 Brave 0\.59, ☠️ K\/D 0\.59, 🛡️ Resist 0\.46, ⚡ Const 0\.55, 🎲 Luck −3%, 🤝 Assists 0\.38, 🪳 Zerg 41, 🌈 G 18\.83%, 🪖 Infantry 84\.9%/);
+  assert.match(el.innerHTML, /Most average planetman: <a href="index\.html\?names=CaneloNC">CaneloNC<\/a> ⚔️ iVi 295<br><details><summary>Show stats<\/summary>🏃 Activity 0\.25, 🦁 Brave 0\.59, ☠️ K\/D 0\.59, 🛡️ Resist 0\.46, ⚡ Const 0\.55, 🎲 Luck −3%, 🤝 Assists 0\.38, 🪳 Zerg 41, 🌈 G 18\.83%, 🪖 Infantry 84\.9%<\/details>/);
   // And PC still shows it from the same entry shape.
   const s2 = fakeStorage();
   saveCachedAvg(s2, fullEntry());

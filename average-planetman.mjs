@@ -7,10 +7,13 @@
 // on-device for 7 days, then recomputed from the current ranks, so the
 // footer name stays put for the week instead of flipping between near-ties
 // on every bot refresh.
-// Footer display (owner 2026-11-09): the name on its own line, then all
-// twelve stats on the next line — the eight core stats plus 🎲 Luck,
+// Footer display (owner 2026-11-09): line one is the name plus ⚔️ iVi; the
+// other eleven stats sit on the next line inside a <details> that starts
+// collapsed ("Show stats") — the seven remaining core stats plus 🎲 Luck,
 // 🤝 Assists, 🪳 Zerg and 🧘‍♂️ Pure iVi. The extras are display-only: they
 // never affect who wins. An extra that is unknown shows "—", never a guess.
+// The footer element must be a <div>, not a <p>: a <p> cannot contain a
+// <details>, the parser would hoist it out and `hidden` would stop hiding it.
 // PlayStation (owner 2026-11-09): 🧘‍♂️ Pure iVi is PC-only, so the PS mirror
 // omits that segment entirely instead of showing "—". The weekly cache is
 // room-scoped (roomLsKey: PS reads "…:ps"), so the PS page never shows the
@@ -152,17 +155,19 @@ export function renderAvgPlanetman(el, rows, pools, storage, room = "pc") {
   const name = `<a href="index.html?names=${encodeURIComponent(entry.name)}">${esc(entry.name)}</a>`;
   const v = entry.values, x = entry.extra || {};
   const stats = room === "ps"
-    ? tr("foot.avgPlanetmanStatsPs", "⚔️ iVi {ivi}, 🏃 Activity {act}, 🦁 Brave {pvs}, ☠️ K/D {rkd}, 🛡️ Resist {rf}, ⚡ Const {cons}, 🎲 Luck {luck}, 🤝 Assists {apk}, 🪳 Zerg {zerg}, 🌈 G {g}, 🪖 Infantry {inf}", {
-      ivi: fmtInt(v.adjs), act: fmt2(v.act), pvs: fmt2(v.pvs), rkd: fmt2(v.rkd), rf: fmt2(v.rf), cons: fmt2(v.cons),
+    ? tr("foot.avgPlanetmanStatsPs", "🏃 Activity {act}, 🦁 Brave {pvs}, ☠️ K/D {rkd}, 🛡️ Resist {rf}, ⚡ Const {cons}, 🎲 Luck {luck}, 🤝 Assists {apk}, 🪳 Zerg {zerg}, 🌈 G {g}, 🪖 Infantry {inf}", {
+      act: fmt2(v.act), pvs: fmt2(v.pvs), rkd: fmt2(v.rkd), rf: fmt2(v.rf), cons: fmt2(v.cons),
       luck: fmtLuck(x.luck), apk: fmt2(x.apk), zerg: fmtInt(x.zerg),
       g: fin(v.g) ? `${(+v.g).toFixed(2)}%` : "—", inf: fin(v.inf) ? `${(+v.inf).toFixed(1)}%` : "—",
     })
-    : tr("foot.avgPlanetmanStats", "⚔️ iVi {ivi}, 🏃 Activity {act}, 🦁 Brave {pvs}, ☠️ K/D {rkd}, 🛡️ Resist {rf}, ⚡ Const {cons}, 🎲 Luck {luck}, 🤝 Assists {apk}, 🪳 Zerg {zerg}, 🧘‍♂️ Pure iVi {pureivi}, 🌈 G {g}, 🪖 Infantry {inf}", {
-      ivi: fmtInt(v.adjs), act: fmt2(v.act), pvs: fmt2(v.pvs), rkd: fmt2(v.rkd), rf: fmt2(v.rf), cons: fmt2(v.cons),
+    : tr("foot.avgPlanetmanStats", "🏃 Activity {act}, 🦁 Brave {pvs}, ☠️ K/D {rkd}, 🛡️ Resist {rf}, ⚡ Const {cons}, 🎲 Luck {luck}, 🤝 Assists {apk}, 🪳 Zerg {zerg}, 🧘‍♂️ Pure iVi {pureivi}, 🌈 G {g}, 🪖 Infantry {inf}", {
+      act: fmt2(v.act), pvs: fmt2(v.pvs), rkd: fmt2(v.rkd), rf: fmt2(v.rf), cons: fmt2(v.cons),
       luck: fmtLuck(x.luck), apk: fmt2(x.apk), zerg: fmtInt(x.zerg), pureivi: fmtInt(x.pureivi),
       g: fin(v.g) ? `${(+v.g).toFixed(2)}%` : "—", inf: fin(v.inf) ? `${(+v.inf).toFixed(1)}%` : "—",
     });
-  el.innerHTML = tr("foot.avgPlanetman", "Most average planetman: {name}", { name }) + "<br>" + stats;
+  const line1 = tr("foot.avgPlanetman", "Most average planetman: {name} ⚔️ iVi {ivi}", { name, ivi: fmtInt(v.adjs) });
+  const more = tr("foot.avgPlanetmanMore", "Show stats");
+  el.innerHTML = line1 + "<br><details><summary>" + more + "</summary>" + stats + "</details>";
   el.title = tr("foot.avgPlanetmanTip", "All eight core stats within {n} percentiles of the median of {count} players. Recomputed weekly.", {
     n: Math.round(entry.maxDev), count: (entry.count || 0).toLocaleString(),
   });
