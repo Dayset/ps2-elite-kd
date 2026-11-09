@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>VE-C Horizon Sage Guide &middot; PS2 Elite</title>
+  <meta name="description" content="A beginner's guide to the VE-C Horizon — A 1,000-cert carbine for the Vanu Sovereignty Light Assault and Engineer — it fires a fan of three plasma pellets per trigger pull instead of one bullet. This page teaches you to win fights with it today." />
+  <meta name="color-scheme" content="light dark" />
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="weapon-sage.css?v=20261109-sageguide3" />
+  <style>
+    /* Faction colours for this guide — overrides the shared NC palette. */
+    :root {
+      --hero-bg: #241040;
+      --hero-soft: #c9b3ef;
+      --nc-blue: #a06cd5;
+      --nc-blue-deep: #b58ae0;
+    }
+    html[data-theme="light"] {
+      --first: #3d1a63;
+      --hero-bg: #3d1a63;
+      --hero-soft: #c9a8e8;
+      --nc-blue: #7b2fbe;
+      --nc-blue-deep: #3d1a63;
+    }
+    ol.habits { counter-reset: hab; list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+    ol.habits li { counter-increment: hab; background: var(--surface); border: 1px solid var(--line); padding: 14px 16px 14px 58px; position: relative; }
+    ol.habits li::before {
+            content: counter(hab, decimal-leading-zero);
+            position: absolute; left: 14px; top: 12px;
+            font-family: "Rajdhani", sans-serif; font-weight: 700; font-size: 24px; color: var(--nc-blue);
+          }
+    ol.habits h3 { margin: 0 0 3px; font-size: 19px; }
+    ol.habits p { margin: 0; font-size: 15.5px; }
+    ul.drills { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+    ul.drills li { background: var(--surface); border: 1px solid var(--line); padding: 13px 16px; display: grid; gap: 2px; }
+    ul.drills .d-name { font-family: "Rajdhani", sans-serif; font-weight: 700; font-size: 18px; }
+    ul.drills .d-name span { display: block; font-family: "Barlow", sans-serif; font-weight: 400; font-size: 13.5px; color: var(--ink-soft); }
+    .strip { background: var(--surface); border: 1px solid var(--line); padding: 16px 18px; margin-bottom: 14px; }
+    .strip h3 { margin: 0 0 2px; font-size: 21px; }
+    .strip .cap { font-size: 15px; margin: 8px 0 0; }
+    .strip-panels { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: stretch; }
+    .strip-panel { flex: 1 1 150px; border: 1px solid var(--line); background: var(--surface-2); padding: 10px; }
+    .strip-panel svg { width: 100%; height: auto; display: block; }
+    .strip-panel .p-cap { font-size: 14px; margin: 8px 0 0; line-height: 1.4; }
+    .strip-panel .p-cap b { display: block; font-family: "Rajdhani", sans-serif; text-transform: uppercase; letter-spacing: 0.05em; font-size: 13.5px; }
+    .strip-panel.bad .p-cap b { color: var(--skip); }
+    .strip-panel.good .p-cap b { color: var(--good); }
+    .strip-arrow { align-self: center; font-size: 24px; color: var(--ink-soft); flex: none; }
+    .strip-exception { border: 2px solid var(--nc-gold); background: var(--situ-bg); padding: 12px 14px; margin-top: 12px; display: flex; gap: 14px; align-items: center; }
+    .strip-exception svg { flex: none; }
+    .strip-exception p { margin: 0; font-size: 15.5px; }
+    .strip-exception b { font-family: "Rajdhani", sans-serif; text-transform: uppercase; letter-spacing: 0.05em; font-size: 14px; color: var(--accent-ink); display: block; }
+  </style>
+</head>
+<body class="site-page">
+    <div class="wrap">
+
+    <p class="sage-back"><a href="weapon-compare.html?w=6005110">← Back to the VE-C Horizon comparison</a></p>
+
+
+      <!-- ================= HERO ================= -->
+      <header class="hero">
+        <p class="brandline">Sage Guide · Vanu Sovereignty · Light Assault / Engineer</p>
+        <h1>VE-C Horizon <span class="thin">— the three-pellet carbine, mastered</span></h1>
+        <p class="sub">A 1,000-cert carbine for the Vanu Sovereignty Light Assault and Engineer — it fires a fan of three plasma pellets per trigger pull instead of one bullet. This page teaches you to win fights with it today.</p>
+        <p class="verdict"><strong>The one-line verdict:</strong> the most accurate-feeling gun in the game and the strangest: its cone of fire is 0° in every stance, and all of its spread lives in the pellet fan — 3.36° wide from the hip, 0.99° tall when aimed. Keep the whole fan on target inside 25 m and it kills in 6 pulls (0.50 s); let pellets leak and it takes twice as long.</p>
+        <img class="hero-gun" src="assets/weapons/88378.png" alt="The VE-C Horizon carbine, side profile — Vanu Sovereignty's sleek purple plasma carbine with its 30-round magazine" width="256" height="128" />
+        <p class="hero-gun-cap">The VE-C Horizon · Vanu Sovereignty · 30-round magazine · 3 pellets per shot</p>
+      </header>
+
+      <div class="stats" role="list" aria-label="VE-C Horizon key statistics">
+        <div class="stat" role="listitem"><div class="stat-big">56<small>×3 → 42×3</small></div><div class="stat-label">Damage per pellet</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">600</div><div class="stat-label">Rounds per minute</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">30</div><div class="stat-label">Rounds per magazine</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">1.6<small> s</small></div><div class="stat-label">Reload (rounds left)</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">500<small> m/s</small></div><div class="stat-label">Bullet velocity</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">×2</div><div class="stat-label">Headshot damage</div></div>
+      </div>
+
+      <!-- ================= 01 FIRST LESSON: ADS AFTER THE RUN ================= -->
+      <section aria-labelledby="s-first">
+        <div class="sec-head">
+          <span class="num">01</span>
+          <h2 id="s-first">First lesson: stop, aim, <em>then</em> fire</h2>
+          <span class="tag">The mistake almost<br />every new player makes</span></div>
+                <p class="lede">Picture the scene, because you've probably lived it: you're <strong>sprinting</strong> across a courtyard, an enemy appears, and you do everything at once — hold the trigger down <em>while you're still running</em>, then press aim-down-sights (ADS) a split-second later, finger still down. The sight picture snaps in, it <em>looks</em> precise… and your bullets spray everywhere except the man in your crosshair. He kills you. It feels like the game cheated. It didn't — here's what actually happened.</p>
+        <p class="small">A note on the drawings below: they show the classic version of this mistake, shared across the whole guide series — including the 7.0° sprint cone most guns carry. The Horizon is the exception: its cone caps at 0.99° from the hip and sits at 0° aimed. The lesson is identical, because on this gun the spray comes from the pellet fan, not the cone — section 05 draws the fan.</p>
+
+        <div class="grid2">
+          <div class="card">
+            <h3>✗ What you did — the spray</h3>
+            <p><strong>You started firing from a sprint, from the hip.</strong> Sprinting is the least accurate state in the game: your cone jumps straight to its 0.99° cap — and worse, your pellet fan is at its full 3.36° width before a single shot. Every hip shot widens the cone further still (+0.11° per shot, to that 0.99° cap in 9 shots).</p>
+            <p><strong>Then you pressed ADS mid-hold — and nothing reset.</strong> Aiming down sights does <em>not</em> shrink a cone of fire that is already bloomed, and it does <em>not</em> gather a fan that has already spread. The scope only gives you a precise <em>picture</em>; the pellets keep flying out of the wide pattern you built while running and hipfiring. That's the whole mystery: <strong>accurate-looking aim, wildly inaccurate gun.</strong></p>
+            <p>Two timers stack the deck further: your gun needs about <strong>0.3 s to settle after a sprint</strong>, and raising the sight itself takes ~0.15 s. Trigger held through all of it means your first half-second of fire is pure confetti.</p>
+          </div>
+          <div class="card">
+            <h3>✓ The fix — three beats, in order</h3>
+            <p><strong>1 · Feet.</strong> Let go of sprint (and the trigger, if you're already holding it). Stop, or drop into a strafe — anything but a full sprint.</p>
+            <p><strong>2 · Sight.</strong> Press ADS and let the sight come up. This takes a heartbeat — that's fine, nobody wins a duel in 0.15 s if you picked your moment. As a Light Assault your jump jets buy the space; as an Engineer your cover does.</p>
+            <p><strong>3 · Trigger.</strong> <em>Now</em> fire. Starting from the aimed cone of <strong>0°</strong>, your first pellets land where the dot points, and you control the fan from zero instead of inheriting a maxed-out cone.</p>
+            <p><strong>Stop → aim → fire.</strong> If you take one habit from this entire page, take this one. You'll practise exactly this rhythm in the simulator in section 04.</p>
+          </div>
+        </div>
+
+
+        <div class="strip">
+          <h3>What you did — the spray</h3>
+          <p class="cap" style="margin:0">Four beats, left to right — the same mistake the cards above describe, drawn out.</p>
+          <div class="strip-panels">
+            <div class="strip-panel bad">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A soldier sprinting, with a wide dashed cone fanning out from the gun muzzle, labelled 7.0 degrees.">
+                <line x1="8" y1="122" x2="192" y2="122" stroke="var(--line)" stroke-width="2" />
+                <g stroke="var(--ink-soft)" stroke-width="3" stroke-linecap="round" fill="none">
+                  <line x1="18" y1="70" x2="38" y2="70" /><line x1="14" y1="86" x2="34" y2="86" /><line x1="20" y1="102" x2="40" y2="102" />
+                </g>
+                <g stroke="var(--ink)" stroke-width="3" stroke-linecap="round" fill="none">
+                  <line x1="72" y1="58" x2="86" y2="86" /><line x1="86" y1="86" x2="66" y2="118" /><line x1="86" y1="86" x2="106" y2="112" />
+                  <line x1="74" y1="64" x2="56" y2="80" /><line x1="74" y1="64" x2="94" y2="72" />
+                </g>
+                <circle cx="70" cy="46" r="10" fill="var(--ink)" />
+                <rect x="94" y="66" width="28" height="6" rx="2" fill="var(--ink)" transform="rotate(-8 94 66)" />
+                <g stroke="var(--skip)" stroke-width="2" stroke-dasharray="6 5" fill="none">
+                  <line x1="122" y1="62" x2="192" y2="26" /><line x1="122" y1="62" x2="192" y2="98" />
+                </g>
+                <text x="150" y="58" font-size="13" font-weight="700" fill="var(--skip)">7.0°</text>
+              </svg>
+              <p class="p-cap"><b>1 · Sprinting</b>Your cone starts maxed at 7.0° — the widest it can ever be.</p>
+            </div>
+            <div class="strip-arrow" aria-hidden="true">→</div>
+            <div class="strip-panel bad">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A soldier firing from the hip while running, with bullet holes scattering ever wider from the muzzle.">
+                <line x1="8" y1="122" x2="192" y2="122" stroke="var(--line)" stroke-width="2" />
+                <g fill="var(--ink)">
+                  <circle cx="52" cy="46" r="10" />
+                  <rect x="44" y="56" width="18" height="42" rx="6" />
+                  <rect x="46" y="96" width="8" height="26" /><rect x="56" y="96" width="8" height="26" />
+                </g>
+                <rect x="62" y="72" width="30" height="6" rx="2" fill="var(--ink)" />
+                <g fill="var(--skip)">
+                  <circle cx="118" cy="66" r="4" /><circle cx="142" cy="84" r="4" /><circle cx="162" cy="58" r="4" /><circle cx="182" cy="90" r="4" /><circle cx="196" cy="66" r="4" />
+                </g>
+                <text x="118" y="122" font-size="13" font-weight="700" fill="var(--skip)">spreading…</text>
+              </svg>
+              <p class="p-cap"><b>2 · Trigger held</b>Firing from the hip while running — every shot adds bloom.</p>
+            </div>
+            <div class="strip-arrow" aria-hidden="true">→</div>
+            <div class="strip-panel bad">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A round scope view with the crosshair centred on a small soldier, while red crosses mark bullet holes scattered wide around him.">
+                <circle cx="100" cy="70" r="56" fill="none" stroke="var(--ink)" stroke-width="4" />
+                <line x1="100" y1="20" x2="100" y2="120" stroke="var(--ink)" stroke-width="1.5" />
+                <line x1="50" y1="70" x2="150" y2="70" stroke="var(--ink)" stroke-width="1.5" />
+                <g fill="var(--ink)">
+                  <circle cx="100" cy="58" r="5" /><rect x="94" y="63" width="12" height="18" rx="3" />
+                </g>
+                <g stroke="var(--skip)" stroke-width="3" stroke-linecap="round">
+                  <line x1="52" y1="32" x2="62" y2="42" /><line x1="62" y1="32" x2="52" y2="42" />
+                  <line x1="140" y1="30" x2="150" y2="40" /><line x1="150" y1="30" x2="140" y2="40" />
+                  <line x1="48" y1="100" x2="58" y2="110" /><line x1="58" y1="100" x2="48" y2="110" />
+                  <line x1="142" y1="102" x2="152" y2="112" /><line x1="152" y1="102" x2="142" y2="112" />
+                </g>
+              </svg>
+              <p class="p-cap"><b>3 · ADS, mid-hold</b>The sight looks precise — but aiming down sights does <em>not</em> reset bloom.</p>
+            </div>
+            <div class="strip-arrow" aria-hidden="true">→</div>
+            <div class="strip-panel bad">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A soldier target standing untouched while red crosses mark bullet holes all around him.">
+                <line x1="8" y1="122" x2="192" y2="122" stroke="var(--line)" stroke-width="2" />
+                <g fill="var(--ink)">
+                  <circle cx="100" cy="42" r="11" />
+                  <rect x="88" y="54" width="24" height="44" rx="7" />
+                  <rect x="90" y="96" width="9" height="26" /><rect x="101" y="96" width="9" height="26" />
+                </g>
+                <g stroke="var(--skip)" stroke-width="3.5" stroke-linecap="round">
+                  <line x1="52" y1="28" x2="64" y2="40" /><line x1="64" y1="28" x2="52" y2="40" />
+                  <line x1="140" y1="24" x2="152" y2="36" /><line x1="152" y1="24" x2="140" y2="36" />
+                  <line x1="44" y1="92" x2="56" y2="104" /><line x1="56" y1="92" x2="44" y2="104" />
+                  <line x1="146" y1="94" x2="158" y2="106" /><line x1="158" y1="94" x2="146" y2="106" />
+                  <line x1="96" y1="12" x2="106" y2="22" /><line x1="106" y1="12" x2="96" y2="22" />
+                </g>
+                <text x="100" y="138" font-size="13" font-weight="700" fill="var(--skip)" text-anchor="middle">he walks away</text>
+              </svg>
+              <p class="p-cap"><b>4 · The spray</b>Bullets fly out of the wide cone you built. The enemy walks away.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="strip">
+          <h3>The fix — three beats, in order</h3>
+          <p class="cap" style="margin:0">Same fight, done right. Each beat has a job, and the order is the whole lesson.</p>
+          <div class="strip-panels">
+            <div class="strip-panel good">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A soldier standing still with feet planted, next to a small clock showing about 0.3 seconds.">
+                <line x1="8" y1="122" x2="192" y2="122" stroke="var(--line)" stroke-width="2" />
+                <g fill="var(--ink)">
+                  <circle cx="62" cy="46" r="10" />
+                  <rect x="54" y="56" width="18" height="42" rx="6" />
+                  <rect x="56" y="96" width="8" height="26" /><rect x="66" y="96" width="8" height="26" />
+                </g>
+                <rect x="72" y="70" width="26" height="6" rx="2" fill="var(--ink)" />
+                <g fill="none" stroke="var(--good)" stroke-width="3">
+                  <circle cx="152" cy="52" r="20" />
+                  <line x1="152" y1="52" x2="152" y2="38" stroke-linecap="round" />
+                  <line x1="152" y1="52" x2="162" y2="58" stroke-linecap="round" />
+                </g>
+                <text x="152" y="92" font-size="14" font-weight="700" fill="var(--good)" text-anchor="middle">≈ 0.3 s</text>
+                <text x="62" y="138" font-size="12" fill="var(--ink-soft)" text-anchor="middle">feet planted</text>
+              </svg>
+              <p class="p-cap"><b>1 · Stop</b>Let go of sprint (and the trigger). About 0.3 s for the gun to settle.</p>
+            </div>
+            <div class="strip-arrow" aria-hidden="true">→</div>
+            <div class="strip-panel good">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A round scope view rising onto a soldier target, with an upward arrow and about 0.15 seconds labelled.">
+                <circle cx="100" cy="72" r="52" fill="none" stroke="var(--ink)" stroke-width="4" />
+                <line x1="100" y1="26" x2="100" y2="118" stroke="var(--ink)" stroke-width="1.5" />
+                <line x1="54" y1="72" x2="146" y2="72" stroke="var(--ink)" stroke-width="1.5" />
+                <g fill="var(--ink)">
+                  <circle cx="100" cy="58" r="6" /><rect x="93" y="64" width="14" height="22" rx="4" />
+                  <rect x="95" y="84" width="4" height="14" /><rect x="101" y="84" width="4" height="14" />
+                </g>
+                <g stroke="var(--good)" stroke-width="3" fill="none" stroke-linecap="round">
+                  <line x1="28" y1="118" x2="28" y2="84" /><line x1="22" y1="90" x2="28" y2="82" /><line x1="34" y1="90" x2="28" y2="82" />
+                </g>
+                <text x="100" y="138" font-size="14" font-weight="700" fill="var(--good)" text-anchor="middle">≈ 0.15 s</text>
+              </svg>
+              <p class="p-cap"><b>2 · Aim</b>Press ADS and let the sight come up (~0.15 s).</p>
+            </div>
+            <div class="strip-arrow" aria-hidden="true">→</div>
+            <div class="strip-panel good">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A gun firing through a narrow dashed cone at a soldier target, with three green hits grouped on his chest.">
+                <line x1="8" y1="122" x2="192" y2="122" stroke="var(--line)" stroke-width="2" />
+                <rect x="18" y="66" width="30" height="6" rx="2" fill="var(--ink)" />
+                <g stroke="var(--good)" stroke-width="2" stroke-dasharray="6 5" fill="none">
+                  <line x1="48" y1="68" x2="150" y2="58" /><line x1="48" y1="70" x2="150" y2="80" />
+                </g>
+                <g fill="var(--ink)">
+                  <circle cx="162" cy="44" r="10" />
+                  <rect x="152" y="54" width="20" height="40" rx="6" />
+                  <rect x="154" y="92" width="8" height="30" /><rect x="164" y="92" width="8" height="30" />
+                </g>
+                <g fill="var(--good)">
+                  <circle cx="158" cy="66" r="4" /><circle cx="166" cy="72" r="4" /><circle cx="160" cy="78" r="4" />
+                </g>
+              </svg>
+              <p class="p-cap"><b>3 · Fire</b>Now fire — from the aimed cone. First shots land where the dot points.</p>
+            </div>
+          </div>
+          <div class="strip-exception">
+            <svg viewBox="0 0 90 70" width="90" height="70" role="img" aria-label="A soldier hipfiring at a close target inside a small spread ring.">
+              <g fill="var(--ink)">
+                <circle cx="22" cy="18" r="7" /><rect x="17" y="25" width="11" height="24" rx="4" />
+                <rect x="18" y="47" width="5" height="16" /><rect x="25" y="47" width="5" height="16" />
+              </g>
+              <rect x="28" y="30" width="16" height="4" rx="2" fill="var(--ink)" />
+              <circle cx="70" cy="32" r="15" fill="none" stroke="var(--nc-gold)" stroke-width="2" stroke-dasharray="4 3" />
+              <g fill="var(--ink)">
+                <circle cx="70" cy="22" r="5" /><rect x="65" y="27" width="10" height="16" rx="3" />
+              </g>
+              <g fill="var(--good)"><circle cx="68" cy="32" r="2.5" /><circle cx="73" cy="35" r="2.5" /></g>
+            </svg>
+            <p><b>The exception — under ~8 m, skip the whole dance</b>Hipfire works, no ADS needed, and stopping is optional. Keep moving, strafe, and let the hipfire ring do the work.</p>
+          </div>
+        </div>
+
+        <div class="rule"><strong>The one exception</strong>Inside ~8 metres, don't ADS at all — hipfire and keep moving (section 03). The disaster above is a mid-range problem: close enough that you reached for the sight, far enough that the spray missed. When in doubt: release everything, aim, then shoot.</div>
+        </section>
+
+      <!-- ================= 02 DAMAGE ================= -->
+      <section aria-labelledby="s-damage" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">02</span>
+          <h2 id="s-damage">Know your damage</h2>
+          <span class="tag">How many pulls<br />to kill, by range</span></div>
+                <p class="lede">Every enemy infantry has 1,000 health (500 shield + 500 health). Each trigger pull fires <strong>3 pellets of 56 damage up close — 168 if all three land</strong> — fading to <strong>42 per pellet (126 per pull) at long range</strong>. Headshots count double, leg shots count less (×0.9). Shots to kill here means <strong>trigger pulls</strong>, not pellets: one pull is three chances to hit.</p>
+
+        <table class="tbl" aria-label="Trigger pulls to kill by range">
+          <thead>
+            <tr><th>Range</th><th class="n">Damage / pull</th><th class="n">Head</th><th class="n">Chest</th><th class="n">Legs</th><th class="n">Chest vs shielded Heavy</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Close</strong> · 0–10 m</td><td class="n big">168</td><td class="n big">3</td><td class="n big">6</td><td class="n">7</td><td class="n">9</td></tr>
+            <tr><td><strong>Mid</strong> · 10–60 m</td><td class="n big">168→126</td><td class="n big">3 → 4</td><td class="n big">6 → 8</td><td class="n">7 → 9</td><td class="n">9 → 12</td></tr>
+            <tr><td><strong>Far</strong> · 60 m+</td><td class="n big">126</td><td class="n big">4</td><td class="n big">8</td><td class="n">9</td><td class="n">12</td></tr>
+          </tbody>
+        </table>
+        <p class="small">Perfect-accuracy times to kill: 3 head pulls ≈ 0.20 s, 6 chest pulls ≈ 0.50 s up close. At 600 RPM, full-damage output is 1,680 damage per second — if every pellet lands. At 38 m you're at 144 per pull (48 per pellet): 4 head pulls, 7 chest pulls, 11 against a shielded Heavy. In real fights you'll land maybe two of three pellets — still, this is why the head matters so much on this gun.</p>
+        <p class="small"><strong>The catch, in one line:</strong> every number above assumes all three pellets land. If only 2 of 3 pellets land, a close-range chest kill takes 9 pulls (0.80 s) instead of 6 — 60% slower — and at long range it takes 12 pulls (1.10 s) instead of 8. That gap is the whole gun, and section 05 shows you why it happens.</p>
+
+        <div class="chart-box">
+          <h3>Damage falloff — where your pellets get weaker</h3>
+          <p class="small" style="margin:0 0 6px">Full power to 10 m, then a steady slide to minimum at 60 m. The line shows damage per trigger pull, all three pellets landing. No ammunition attachment changes this falloff — Capsulate and Unstable change the pellets, not the ranges.</p>
+          <svg viewBox="0 0 640 240" width="100%" role="img" aria-label="Line chart of VE-C Horizon damage per trigger pull from 0 to 100 metres: 168 damage flat to 10 metres, falling to 144 at 38 metres and 126 at 60 metres, then flat.">
+            <g stroke="var(--line)" stroke-width="1">
+              <line x1="56" y1="99.5" x2="616" y2="99.5" />
+              <line x1="56" y1="142" x2="616" y2="142" />
+              <line x1="56" y1="184.5" x2="616" y2="184.5" />
+            </g>
+            <g fill="var(--ink-soft)" font-size="12">
+              <text x="48" y="103.5" text-anchor="end">175</text>
+              <text x="48" y="146" text-anchor="end">150</text>
+              <text x="48" y="188" text-anchor="end">125</text>
+              <text x="56" y="222">0 m</text>
+              <text x="168" y="222" text-anchor="middle">25 m</text>
+              <text x="336" y="222" text-anchor="middle">50 m</text>
+              <text x="504" y="222" text-anchor="middle">75 m</text>
+              <text x="616" y="222" text-anchor="end">100 m</text>
+            </g>
+            <polyline points="56,111.4 112,111.4 392,182.8 616,182.8" fill="none" stroke="var(--nc-blue)" stroke-width="3" />
+            <g fill="var(--nc-blue)">
+              <circle cx="112" cy="111.4" r="4" /><circle cx="269" cy="151.4" r="4" /><circle cx="392" cy="182.8" r="4" />
+            </g>
+            <g font-size="13" font-weight="600" fill="var(--ink)">
+              <text x="118" y="104">168</text>
+              <text x="275" y="143">144 @ 38 m</text>
+              <text x="398" y="204">126 @ 60 m</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="rule"><strong>Rule of thumb</strong>Inside 10 m you are at maximum power — 168 per pull if the whole fan lands. Past 40 m every kill takes an extra pull or two, and past 60 m you need 8 chest pulls — close the distance or burst carefully instead of spraying. One mercy: Vanu plasma has no bullet drop, so at any range you hold dead-on — only the fan and the falloff cost you hits.</div>
+
+        </section>
+
+      <!-- ================= 03 RANGE LAB + AIM ================= -->
+      <section aria-labelledby="s-aim" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">03</span>
+          <h2 id="s-aim">Aim by distance</h2>
+          <span class="tag">Drag the range,<br />learn the style</span></div>
+                <p class="lede">One gun, four fighting styles. The right technique changes with distance — use the range finder below to see what your pellets do at any range, then learn the four bands underneath it. The finder assumes all three pellets land; the bands tell you when they won't.</p>
+
+        <div class="lab" aria-label="Interactive range finder">
+          <div class="lab-top">
+            <span class="reading"><span id="labDist">18</span> <small>metres to target</small></span>
+            <span class="chip good" id="labBand">Sweet spot</span>
+          </div>
+          <input type="range" id="labRange" min="0" max="100" step="1" value="18" aria-label="Distance to target in metres" />
+          <div class="lab-scale"><span>0 m</span><span>10 m</span><span>25 m</span><span>38 m</span><span>60 m</span><span>100 m</span></div>
+          <div class="lab-out">
+            <div class="lab-cell"><div class="v" id="labDmg">161</div><div class="k">Damage / pull (3 pellets)</div></div>
+            <div class="lab-cell"><div class="v" id="labHead">4</div><div class="k">Head pulls to kill</div></div>
+            <div class="lab-cell"><div class="v" id="labChest">7</div><div class="k">Chest pulls to kill</div></div>
+            <div class="lab-cell"><div class="v" id="labTtk">0.60 s</div><div class="k">Best-case chest TTK</div></div>
+          </div>
+          <p class="lab-advice"><b>How to fight here</b><span id="labAdvice">Aim down sights at the upper chest and neck. Fire in bursts of 5 pulls — the vertical fan stays torso-sized out to 25 m, so all three pellets still land.</span></p>
+        </div>
+
+        <div style="margin-top:18px">
+          <div class="band">
+            <div class="dist"><span class="d1">0–8 m</span><span class="d2">Point blank</span></div>
+            <div class="body">
+              <h3>Hipfire — don't aim down sights</h3>
+              <p class="aim">Aim: centre of the chest, from the hip. Keep moving.</p>
+              <p>Scoping in costs you time and halves your move speed — at arm's length that gets you killed. From the hip the fan is a horizontal row 0.47 m wide at 8 m, which still fits across a chest, so all three pellets land. Strafe side to side (A/D) while firing so you're hard to track. As a Light Assault, a jump-jet hop over a doorway buys you the same half-second a Heavy buys with a shield.</p>
+            </div>
+          </div>
+          <div class="band">
+            <div class="dist"><span class="d1">8–25 m</span><span class="d2">Sweet spot</span></div>
+            <div class="body">
+              <h3>ADS, upper chest, confident bursts</h3>
+              <p class="aim">Aim: neck / upper chest. Bursts of 5 pulls.</p>
+              <p>This is where the gun earns its keep: near-full 168 damage, a 0° cone, and a vertical fan that is only 0.43 m tall at 25 m — all three pellets land on the torso. Start your crosshair at the neck — the natural upward climb walks your pellets into the head, and 3 head pulls end the fight in a fifth of a second. Strafe while scoped; you're slower, but a moving target still beats a still one.</p>
+            </div>
+          </div>
+          <div class="band">
+            <div class="dist"><span class="d1">25–50 m</span><span class="d2">Controlled</span></div>
+            <div class="body">
+              <h3>ADS, short bursts, pull down-left</h3>
+              <p class="aim">Aim: chest. Bursts of 5 pulls, pause between them.</p>
+              <p>Damage is sliding toward 126 and the aimed fan is growing — 0.86 m tall at 50 m, so the top and bottom pellets start leaking past the shoulders and hips. Fire a burst, release for a split second to let your aim reset, fire again. The recoil drifts <em>up and to the right</em> (8–10°), so pull your mouse gently down and to the left. Crouch or stand still when you can — it steadies the fan, even though the cone is 0° either way.</p>
+            </div>
+          </div>
+          <div class="band">
+            <div class="dist"><span class="d1">50 m +</span><span class="d2">Plinking</span></div>
+            <div class="body">
+              <h3>Tap-fire only — or don't engage</h3>
+              <p class="aim">Aim: chest. Taps of 3–5 pulls at exposed targets only.</p>
+              <p>At 126 damage you need 8 chest pulls with every pellet landing — and at 60 m the aimed fan is 1.04 m tall, taller than the torso, so some pulls only land two pellets and the kill stretches to 12 pulls. Take these shots at stationary or fleeing targets, medics reviving, and engineers on turrets. Otherwise, your better play is to close the distance behind cover — or, as a Light Assault, over a roof. Knowing when <em>not</em> to shoot is a skill too.</p>
+            </div>
+          </div>
+        </div>
+
+        </section>
+
+      <!-- ================= 04 STANCES & FIRING MODES ================= -->
+      <section aria-labelledby="s-stances" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">04</span>
+          <h2 id="s-stances">Stances and firing modes</h2>
+          <span class="tag">How you stand and<br />how you hold the trigger</span></div>
+                <p class="lede">Your accuracy is decided by two things before skill even enters it: <strong>what your body is doing</strong> (your stance sets the starting cone of fire) and <strong>what your finger is doing</strong> (holding the trigger grows that cone with every shot). The Horizon has no fire-mode switch — full-auto only — so "firing modes" are something you do with your finger, not a setting on the gun. And this gun breaks the usual rules: read the table twice, because it really does say what it says.</p>
+
+        <h3 class="slot-title">Stances <span>— the cone you start with, before the first shot</span></h3>
+        <table class="tbl" aria-label="VE-C Horizon cone of fire by stance">
+          <thead>
+            <tr><th>Stance</th><th class="n">Starting cone</th><th>What it means for you</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Sprinting</strong></td><td class="n big">0.99°</td><td>Capped — the widest the cone can ever be on this gun, and it is still tiny. Sprinting hurts you differently here: you start firing with the hip fan at full width and bloom already building. This is the section 01 disaster, Horizon edition.</td></tr>
+            <tr><td><strong>Hipfire, moving</strong></td><td class="n big">0°</td><td>Walking or strafing from the hip. The cone is 0° — but the pellet fan is 3.36° wide, so the fan, not the cone, decides whether your pellets hit.</td></tr>
+            <tr><td><strong>Hipfire, standing</strong></td><td class="n big">0°</td><td>Your point-blank default. The 0.47 m fan at 8 m in section 05 is this stance drawn out.</td></tr>
+            <tr><td><strong>Hipfire, crouched</strong></td><td class="n big">0°</td><td>Same 0° cone (0° if you crouch-walk, too). Crouching steadies your aim and shrinks your silhouette — it just doesn't tighten a cone that is already zero.</td></tr>
+            <tr><td><strong>Aimed (ADS), feet planted</strong></td><td class="n big">0°</td><td>Standing or crouched makes no difference here — the cone is zero either way. This is why section 01's order still matters: it is the fan and the recoil you are managing, not the cone.</td></tr>
+            <tr><td><strong>Aimed (ADS), strafing</strong></td><td class="n big">0°</td><td>Same 0° start, and it never blooms while aimed — but you move at half speed (0.5×). Strafe <em>between</em> bursts to stay hard to hit; plant your feet during each burst.</td></tr>
+          </tbody>
+        </table>
+        <p class="small">Yes, the table really does read 0° almost everywhere. There is no strafing penalty on this gun — no "ADAD window" to manage, because the moving and standing cones are both 0° and the bloom that would separate them is 0° aimed. The thing that grows when you hold the trigger from the hip is bloom: +0.11° per pull, up to the 0.99° cap in 9 pulls. Aimed, bloom is 0° per pull — the cone never grows at all. What grows instead is recoil, and that is the next table's job.</p>
+
+        <h3 class="slot-title">Firing modes <span>— the aim you grow, pull by pull</span></h3>
+        <table class="tbl" aria-label="Firing modes and when to use them">
+          <thead>
+            <tr><th>Mode</th><th>How your finger does it</th><th>Use it at</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>The mag dump</strong></td><td>Hold the trigger and don't let go</td><td>Point blank only, or suppressing a doorway. Recoil climbs 0.4–0.45° per pull (first pull 2.22×) and walks your fan off the target — past ~8 pulls you're spraying, not aiming.</td></tr>
+            <tr><td><strong>Bursts — the default</strong></td><td>Hold for <strong>5 pulls</strong>, release ~0.15 s, hold again. 6–8 pulls is fine while you're learning</td><td>Almost everything, 8–50 m. Each release resets your aim — the cone never blooms aimed, so the release is about recoil, not the cone.</td></tr>
+            <tr><td><strong>Tap-fire</strong></td><td>Short taps of 3–5 pulls, or single clicks, with a real pause between</td><td>50 m and out, at exposed or stationary targets. Slow, but every pellet goes where the dot is.</td></tr>
+          </tbody>
+        </table>
+
+        <div class="viz" id="burstSim" data-rpm="600" data-base-cof="0" data-bloom="0" data-distance="30">
+          <h3>Try it: the hold-and-release window</h3>
+          <p class="small" style="margin:0">A target 30 m away, aiming down sights. <strong>Press and hold FIRE</strong> (mouse, touch, or hold Space with the button focused) and watch the holes climb the longer you hold — that's recoil, not bloom: on this gun the aimed cone is 0° and never grows, so the drift you see is the muzzle kicking up and right with every pull. Release, let your aim reset, fire again. <strong>Aim for bursts of 5; 6–8 is tolerable while you're new.</strong> This practice window is shared by the whole Sage series: it's driven by a weapon profile plugged into the window — here the Horizon's (600 RPM, 0° starting cone, 0° bloom per shot, target at 30 m) — and the only spread is the recoil climb, exactly as the numbers say.</p>
+          <div class="sim-stage" id="simStage" aria-hidden="true">
+            <svg viewBox="0 0 200 300" width="150" height="300" role="presentation">
+              <g fill="var(--ink-soft)">
+                <circle cx="100" cy="42" r="23" />
+                <rect x="84" y="68" width="11" height="74" rx="5" />
+                <rect x="105" y="68" width="11" height="74" rx="5" />
+                <rect x="60" y="66" width="80" height="112" rx="14" />
+                <rect x="66" y="178" width="28" height="18" />
+                <rect x="68" y="194" width="22" height="102" />
+                <rect x="110" y="194" width="22" height="102" />
+              </g>
+              <circle cx="100" cy="126" r="5" fill="var(--nc-gold)" />
+            </svg>
+          </div>
+          <div class="sim-controls">
+            <button type="button" class="sim-fire" id="simFire">Hold to fire</button>
+            <button type="button" class="sim-reset" id="simReset">Reset target</button>
+          </div>
+          <div class="bloom-track" aria-hidden="true"><div class="bloom-fill" id="simBloom"></div></div>
+          <p class="small" style="margin:4px 0 0">Aimed cone of fire — on this gun it never fills: 0° cone, 0 bloom. The bar stays empty on purpose.</p>
+          <div class="sim-read">
+            <div class="lab-cell"><div class="v" id="simShots">0</div><div class="k">Pulls fired</div></div>
+            <div class="lab-cell"><div class="v" id="simHits">0</div><div class="k">Hits on target</div></div>
+            <div class="lab-cell"><div class="v" id="simAcc">—</div><div class="k">Accuracy</div></div>
+          </div>
+          <p class="sim-verdict" id="simVerdict">Your bursts will be graded here — green at 5 pulls, tolerable up to 8.</p>
+          <div class="burst-log" id="simLog" aria-label="Your bursts so far"></div>
+        </div>
+
+        </section>
+
+      <!-- ================= 05 SEE IT ================= -->
+      <section aria-labelledby="s-see" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">05</span>
+          <h2 id="s-see">See it: the pictures</h2>
+          <span class="tag">Fan, bursts<br />and sights, drawn</span></div>
+                <p class="lede">Some things are easier to show than to say. Here's what your pellets actually do: how wide the fan is at 8 metres, what a good burst rhythm looks like when bloom is zero, and what the 2x sight really changes. The hands-on version — holding the trigger yourself — is the practice window in section 04.</p>
+
+        <div class="viz">
+          <h3>The pellet fan at 8 metres — where the three pellets land</h3>
+          <p class="small" style="margin:0">A full-size target 8 m away — an arm's-length room fight. The dots show where one trigger pull's three pellets land around your aim point (the chest). Sizes are drawn to scale from the gun's real pellet-spread numbers: 3.36° from the hip, 0.99° aimed.</p>
+          <svg viewBox="0 0 640 320" width="100%" role="img" aria-label="Diagram of a soldier target at 8 metres with the pellet fan drawn at true scale: hipfire lands three pellets in a horizontal row 0.47 metres wide across the chest; aiming down sights lands three pellets in a vertical row 0.14 metres tall. At 30 metres the hip fan is 1.76 metres wide, wider than the man, while the aimed fan is 0.52 metres tall and still on the torso.">
+            <line x1="20" y1="292" x2="620" y2="292" stroke="var(--line)" stroke-width="2" />
+            <g fill="var(--ink-soft)">
+              <circle cx="320" cy="58" r="17" />
+              <rect x="281" y="86" width="13" height="66" rx="6" />
+              <rect x="346" y="86" width="13" height="66" rx="6" />
+              <rect x="297" y="82" width="46" height="78" rx="10" />
+              <rect x="301" y="158" width="38" height="16" />
+              <rect x="303" y="172" width="15" height="118" />
+              <rect x="322" y="172" width="15" height="118" />
+            </g>
+            <!-- hip fan: horizontal row, 0.47 m wide at 8 m (~65 px) -->
+            <line x1="288" y1="128" x2="352" y2="128" stroke="var(--skip)" stroke-width="2" stroke-dasharray="7 5" />
+            <g fill="var(--skip)">
+              <circle cx="288" cy="128" r="6" /><circle cx="320" cy="128" r="6" /><circle cx="352" cy="128" r="6" />
+            </g>
+            <!-- ADS fan: vertical row, 0.14 m tall at 8 m (~19 px) -->
+            <line x1="320" y1="119" x2="320" y2="137" stroke="var(--good)" stroke-width="2" stroke-dasharray="4 3" />
+            <g fill="var(--good)">
+              <circle cx="320" cy="119" r="5" /><circle cx="320" cy="128" r="5" /><circle cx="320" cy="137" r="5" />
+            </g>
+            <g font-size="14" font-weight="600" fill="var(--ink)">
+              <text x="24" y="46">Target at 8 m</text>
+              <text x="24" y="66" fill="var(--ink-soft)" font-weight="400">≈ 1.8 m tall, drawn to scale</text>
+              <text x="470" y="66" fill="var(--skip)">hipfire fan: 0.47 m wide</text>
+              <text x="470" y="118" fill="var(--good)">aimed fan: 0.14 m tall</text>
+              <text x="470" y="170" fill="var(--skip)">hipfire fan at 30 m: 1.76 m</text>
+              <text x="470" y="222" fill="var(--good)">aimed fan at 30 m: 0.52 m</text>
+            </g>
+            <g stroke="var(--ink-soft)" stroke-width="1">
+              <line x1="462" y1="62" x2="354" y2="124" />
+              <line x1="462" y1="114" x2="330" y2="122" />
+              <line x1="462" y1="166" x2="356" y2="130" />
+              <line x1="462" y1="218" x2="330" y2="134" />
+            </g>
+          </svg>
+          <div class="legend">
+            <span><i style="background:var(--skip)"></i>Hipfire fan — horizontal, 3.36°</span>
+            <span><i style="background:var(--good)"></i>Aimed fan — vertical, 0.99°</span>
+          </div>
+          <p class="cap">Read it this way: at 8 m the hip fan is a <b>0.47 m row across the chest</b> — all three pellets land, which is why hipfire works point-blank. But the fan only grows with distance while the man doesn't: at 30 m it is <b>1.76 m wide — wider than the man himself</b> — so the outer pellets fly past him on both sides and you are paying for three pellets and landing one or two. Aim down sights and the fan turns vertical and tightens to 0.99°: <b>0.52 m tall at 30 m, still on the torso</b>. That flip — horizontal and wide from the hip, vertical and narrow aimed — is the whole gun. (Fan sizes use the real geometry: spread = 2 × distance × tan(fan ÷ 2).)</p>
+        </div>
+
+        <div class="viz">
+          <h3>Hold – release – hold – release: the burst rhythm</h3>
+          <p class="small" style="margin:0">Aimed, your cone never blooms — so what punishes a long hold on this gun is recoil: the first pull kicks 2.22×, and every pull climbs 0.4–0.45° up and to the right. From the hip, bloom joins in (+0.11° per pull, to the 0.99° cap in 9 pulls). Same 18 pulls, two very different outcomes:</p>
+          <svg viewBox="0 0 640 216" width="100%" role="img" aria-label="Diagram comparing fire patterns. Bad: holding the trigger for 18 straight pulls, recoil climbs the whole time and the last pulls land in a large group high and right. Good: three bursts of 6 pulls with a short release between each, the aim resets every burst and all three groups stay small.">
+            <g font-family="Rajdhani, sans-serif" font-weight="700">
+              <text x="8" y="52" font-size="17" fill="var(--skip)">✗ SPRAY</text>
+              <text x="8" y="152" font-size="17" fill="var(--good)">✓ BURSTS</text>
+            </g>
+            <!-- bad: one long hold -->
+            <rect x="120" y="34" width="380" height="16" fill="var(--skip)" opacity="0.75" />
+            <polygon points="120,42 520,16 520,68" fill="var(--skip)" opacity="0.14" />
+            <ellipse cx="540" cy="42" rx="34" ry="30" fill="none" stroke="var(--skip)" stroke-width="2" />
+            <g fill="var(--ink)" font-size="13.5">
+              <text x="120" y="24">Trigger held — 18 pulls, never released</text>
+              <text x="452" y="96">last pulls: climbed off target</text>
+            </g>
+            <!-- good: 6 - release - 6 - release - 6 -->
+            <g fill="var(--nc-blue)">
+              <rect x="120" y="134" width="118" height="16" />
+              <rect x="278" y="134" width="118" height="16" />
+              <rect x="436" y="134" width="118" height="16" />
+            </g>
+            <g fill="none" stroke="var(--nc-blue)" stroke-width="2">
+              <ellipse cx="252" cy="142" rx="11" ry="10" />
+              <ellipse cx="410" cy="142" rx="11" ry="10" />
+              <ellipse cx="568" cy="142" rx="11" ry="10" />
+            </g>
+            <g fill="var(--ink)" font-size="13.5">
+              <text x="152" y="124">6 pulls</text>
+              <text x="310" y="124">6 pulls</text>
+              <text x="468" y="124">6 pulls</text>
+              <text x="238" y="172" text-anchor="middle" fill="var(--good)" font-weight="600">release ≈0.15 s</text>
+              <text x="396" y="172" text-anchor="middle" fill="var(--good)" font-weight="600">release ≈0.15 s</text>
+              <text x="120" y="196">Every burst starts accurate — all three groups stay fist-sized.</text>
+            </g>
+          </svg>
+          <p class="cap"><b>The target pattern is bursts of about 5 pulls — that's the ideal. Bursts of 6–8 are fine while you're new</b> (call it newbie tolerance). Past that, recoil (0.4–0.45° per pull aimed, and 0.11° of hip bloom per pull on top from the hip) keeps moving your fan with every pull, so the extra pellets mostly decorate the wall behind your enemy instead of hitting him. Short bursts also leave you pulls for the second enemy — remember, the magazine is only 30 pulls, five close-range kills at most.</p>
+        </div>
+
+        <div class="viz2">
+          <div class="viz">
+            <h3>Lyra R1 — 1x</h3>
+            <svg viewBox="0 0 300 210" width="100%" role="img" aria-label="View through the 1x reflex sight at a target 35 metres away: the soldier appears small in an open frame, with buildings and a crate visible around him.">
+              <rect x="0" y="0" width="300" height="152" fill="var(--surface-2)" />
+              <rect x="0" y="152" width="300" height="58" fill="var(--line)" opacity="0.55" />
+              <rect x="238" y="58" width="28" height="94" fill="var(--ink-soft)" opacity="0.55" />
+              <rect x="22" y="118" width="52" height="34" fill="var(--ink-soft)" opacity="0.7" />
+              <g fill="var(--ink)" transform="translate(150,152)">
+                <circle cx="0" cy="-57" r="6.5" />
+                <rect x="-8" y="-51" width="16" height="27" rx="4" />
+                <rect x="-7" y="-24" width="6" height="24" />
+                <rect x="1" y="-24" width="6" height="24" />
+              </g>
+              <circle cx="150" cy="110" r="4" fill="var(--skip)" />
+              <circle cx="150" cy="110" r="10" fill="none" stroke="var(--skip)" stroke-width="1.5" />
+              <rect x="8" y="8" width="284" height="194" rx="14" fill="none" stroke="var(--ink)" stroke-width="5" />
+            </svg>
+            <p class="cap">No zoom. The target at 35 m is <b>small but the view is wide open</b> — you see the crate, the tower, and the next enemy coming. Fast to aim, nothing blocks your edges. Best inside ~40 m.</p>
+          </div>
+          <div class="viz">
+            <h3>Lyra R2 — 2x</h3>
+            <svg viewBox="0 0 300 210" width="100%" role="img" aria-label="View through the 2x Lyra sight at the same target 35 metres away: the soldier appears twice as tall and fills the round scope, while the crate and tower are cropped out of view.">
+              <rect x="0" y="0" width="300" height="168" fill="var(--surface-2)" />
+              <rect x="0" y="168" width="300" height="42" fill="var(--line)" opacity="0.55" />
+              <rect x="-52" y="100" width="104" height="68" fill="var(--ink-soft)" opacity="0.7" />
+              <g fill="var(--ink)" transform="translate(150,168) scale(2)">
+                <circle cx="0" cy="-57" r="6.5" />
+                <rect x="-8" y="-51" width="16" height="27" rx="4" />
+                <rect x="-7" y="-24" width="6" height="24" />
+                <rect x="1" y="-24" width="6" height="24" />
+              </g>
+              <circle cx="150" cy="88" r="4.5" fill="var(--skip)" />
+              <circle cx="150" cy="88" r="12" fill="none" stroke="var(--skip)" stroke-width="1.5" />
+              <circle cx="150" cy="105" r="97" fill="none" stroke="var(--ink)" stroke-width="7" />
+            </svg>
+            <p class="cap">Same target, same 35 m — but he looks <b>twice as tall</b>, so placing the vertical fan on his chest and head gets much easier. The price: your view narrows to the round window, the crate and tower are gone, and close targets feel fast and huge. Best at 25–50 m.</p>
+          </div>
+        </div>
+        <p class="cap" style="margin-top:12px">That's the whole 30-cert decision from section 06 in one picture: <b>1x for awareness, 2x for precision.</b> Most veterans carry both and swap per base — indoors 1x, open ground 2x.</p>
+
+        </section>
+
+      <!-- ================= 06 ATTACHMENTS ================= -->
+      <section aria-labelledby="s-att" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">06</span>
+          <h2 id="s-att">Attachments: what to buy, what to skip</h2>
+          <span class="tag">Every slot, judged<br />for a new player</span></div>
+                <p class="lede">Honest news first: the Horizon arrives bare — iron sights, no rail, no barrel, standard ammo. Nothing here is free except the iron sights, so buy in the order shown and stop whenever the gun feels right. Everything below is an optional sidegrade, not an upgrade. Note the thin bench: this gun has no Laser Sight, no suppressor, no compensator, and no Soft Point or High Velocity ammo — the slots it does have are the ones that matter.</p>
+
+        <h3 class="slot-title">Optic <span>— your window on the fight</span></h3>
+
+        <div class="att">
+          <div class="att-head"><h4>Iron Sights</h4><span class="chip free">Already yours</span><span class="cost">0 certs</span></div>
+          <p class="effect">The default post-and-notch sights. Usable, but a reflex dot is a real upgrade on a gun you'll aim as much as this one.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> nothing costs nothing — they work at every range until you buy a sight.</p>
+            <p><b class="bad-t">Bad:</b> precision past 25 m — the thick front post covers a head-sized target at range. That's what the reflex sights fix.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>Lyra R1 (1x)</h4><span class="chip first">First buy</span><span class="cost">30 certs</span></div>
+          <p class="effect">A clean open-diamond reflex sight with no zoom. Your best all-round option once you own it.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> everywhere indoors and out to ~40 m — which is most PlanetSide fights.</p>
+            <p><b class="bad-t">Bad:</b> picking out targets past 50 m; that's what the 2x is for.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>Lyra R2 (2x)</h4><span class="chip good">Good</span><span class="cost">30 certs</span></div>
+          <p class="effect">Doubles your view magnification. Costs almost nothing — the price of a few kills.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> open-field bases, tower fights, and your 25–50 m burst game — the vertical fan is easier to place on a chest at 2x. Swap between 1x and 2x per fight.</p>
+            <p><b class="bad-t">Bad:</b> tight indoor rooms — the zoom makes close targets feel fast and huge.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>Corona IR (1x)</h4><span class="chip situ">Situational</span><span class="cost">30 certs</span></div>
+          <p class="effect">Infrared optic with no magnification: nearby targets glow against a dark view, and it sees through smoke.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> night fights, smoky doorways, spotting infiltrators by their outline.</p>
+            <p><b class="bad-t">Bad:</b> daytime and long range — its view is short-ranged and washes out in bright light.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>Corona O3.4 (3.4x)</h4><span class="chip skip">Skip for now</span><span class="cost">30 certs</span></div>
+          <p class="effect">A magnified 3.4x target-acquisition scope for open-field combat.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> almost nothing a beginner does — recoil magnifies too, and it tunnels your vision.</p>
+            <p><b class="bad-t">Bad:</b> any fight inside 30 m, which is where you'll spend your first hundred hours — and where this gun actually works.</p>
+          </div>
+        </div>
+
+        <h3 class="slot-title">Barrel <span>— one option, and "none" is a real choice</span></h3>
+
+        <div class="att">
+          <div class="att-head"><h4>No barrel attachment</h4><span class="chip free">Already yours</span><span class="cost">0 certs</span></div>
+          <p class="effect">The Horizon has no compensator, suppressor, or heavy barrel on offer at all — the only barrel in the shop is the flash hider below. Plenty of veterans run this slot empty forever.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> your first weeks, and honestly most weeks after that. Spend certs on your suit and jump jets first.</p>
+            <p><b class="bad-t">Bad:</b> nothing — there's no downside to an empty slot.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>Enhanced Plasma Containment</h4><span class="chip skip">Low priority</span><span class="cost">100 certs</span></div>
+          <p class="effect">The Vanu name for a flash suppressor: it replaces your bright muzzle flash with a tame puff of smoke — but you appear on enemy minimaps from 15 m farther away when you fire. It changes no damage number.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> night fights where your own flash blinds you. A comfort pick, nothing more.</p>
+            <p><b class="bad-t">Bad:</b> as an early purchase — it changes no fight outcome, and the minimap cost is real. Buy it last, if ever.</p>
+          </div>
+        </div>
+
+        <h3 class="slot-title">Rail <span>— pick ONE playstyle: aimed, fast reloads, or a torch</span></h3>
+
+        <div class="att">
+          <div class="att-head"><h4>No rail attachment</h4><span class="chip free">Already yours</span><span class="cost">0 certs</span></div>
+          <p class="effect">The Horizon ships with an empty rail. Plenty of veterans run it empty until they pick a playstyle.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> your first weeks. Spend certs on your suit and jump jets first.</p>
+            <p><b class="bad-t">Bad:</b> nothing — there's no downside to an empty slot.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>Forward Grip</h4><span class="chip first">First buy</span><span class="cost">100 certs</span></div>
+          <p class="effect">Cuts side-to-side recoil by 25% (0.15° → 0.11°), keeping your bursts on a single target. Tiny cost: weapon swap is 0.15 s slower (0.55 s → 0.70 s).</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> the default for aimed, mid-range play — leave it on until you deliberately build around the empty reload instead.</p>
+            <p><b class="bad-t">Bad:</b> nothing meaningful. It only stops helping if you never aim down sights.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>Vented Power Core</h4><span class="chip situ">Situational</span><span class="cost">100 certs</span></div>
+          <p class="effect">Removes the speed penalty for reloading an empty magazine — an empty reload takes the short 1.6 s instead of the long 2.45 s. But the weapon recoils more harshly in one direction while firing.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> if you keep getting caught on an empty 30-round magazine mid-fight — it forgives exactly that mistake.</p>
+            <p><b class="bad-t">Bad:</b> as a first rail buy — the Forward Grip helps every burst, this one only helps the reloads you should be avoiding anyway (habit 4).</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>Darklight Flashlight</h4><span class="chip situ">Tool, not a buff</span><span class="cost">100 certs</span></div>
+          <p class="effect">A torch whose beam reveals cloaked infiltrators. Toggle it with the attachment key (X by default).</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> hunting a stalker infiltrator camping your capture point — sweep corners with it.</p>
+            <p><b class="bad-t">Bad:</b> as your everyday rail — it gives zero accuracy help, and the beam advertises your position.</p>
+          </div>
+        </div>
+
+        <h3 class="slot-title">Ammo <span>— the two attachments that change the gun itself</span></h3>
+
+        <div class="att">
+          <div class="att-head"><h4>Standard Ammunition</h4><span class="chip free">Already yours</span><span class="cost">0 certs</span></div>
+          <p class="effect">Three pellets per pull, 56 damage each up close. The baseline everything else is judged against.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> everything, until you know which of the two special ammos fits how you fight.</p>
+            <p><b class="bad-t">Bad:</b> nothing — it is the honest default, and the headshot multiplier stays at the full ×2.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>Capsulate Ammunition</h4><span class="chip first">First buy</span><span class="cost">100 certs</span></div>
+          <p class="effect">Consolidates the damage into two pellets of 84 instead of three of 56 — same 168 per pull up close, same 126 at long range — tightens the pellet spread by 75% from the hip (3.36° → 0.84°) and 50% aimed (0.99° → 0.50°), and costs 4 rounds of magazine (30 → 26).</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> nearly always — a tighter fan means more pulls land all their pellets, which is the entire damage model. The hip fan at 8 m shrinks from 0.47 m to 0.12 m.</p>
+            <p><b class="bad-t">Bad:</b> nothing much — 26 rounds is four fewer pulls per magazine, and each pull still kills in the same number of hits. The cost is real but small.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>Unstable Ammunition</h4><span class="chip situ">Situational</span><span class="cost">100 certs</span></div>
+          <p class="effect">Makes each projectile significantly bigger, so near-misses still connect — but the headshot bonus drops 80%, from ×2 to ×1.2. Chest damage is unchanged; head pulls up close go from 3 (0.20 s) to 5 (0.40 s), barely faster than the 6 chest pulls (0.50 s).</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> if your aim is still developing and you want forgiveness on body shots — bigger pellets paper over small misses.</p>
+            <p><b class="bad-t">Bad:</b> the moment you can aim at a neck: it throws away the headshot game that makes this gun kill in 0.20 s. Never pair it with a headshot habit.</p>
+          </div>
+        </div>
+
+        <div class="rule"><strong>Spend order for your first certs</strong>Lyra R1 (30) → Forward Grip (100) → Capsulate Ammunition (100) → then stop. Add the Lyra R2 (30) whenever you fight open ground, and the Vented Power Core (100) if you keep dying mid-reload on empty. Put the next several hundred certs into your jump jets and suit slots — the gun itself costs 1,000 certs, and the attachments are the cheap part.</div>
+
+        </section>
+
+      <!-- ================= 07 LOADOUTS ================= -->
+      <section aria-labelledby="s-loadouts" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">07</span>
+          <h2 id="s-loadouts">Four ready-made setups</h2>
+          <span class="tag">Copy one,<br />go fight</span></div>
+                <p class="lede">Sidegrade note: the free Solstice VE3 kills in 7 chest shots (0.52 s); the Horizon costs 1,000 certs and kills in 6 pulls (0.50 s) when the whole fan lands — you are buying the fan and the perfect cone, not a faster kill.</p>
+        <div class="grid2">
+          <div class="loadout">
+            <p class="cost">1,000 certs · The gun itself</p>
+            <h3>Standard Issue</h3>
+            <ul>
+              <li><b>Optic:</b> Iron sights</li>
+              <li><b>Barrel:</b> none</li>
+              <li><b>Rail:</b> none</li>
+              <li><b>Ammo:</b> standard</li>
+            </ul>
+            <p>What 1,000 certs buys you before a single attachment. Genuinely usable — learn the fan on this before spending anything.</p>
+          </div>
+          <div class="loadout pick">
+            <p class="cost">230 certs in attachments · Recommended</p>
+            <h3>All-Rounder</h3>
+            <ul>
+              <li><b>Optic:</b> Lyra R1 1x (keep the R2, +30, for open ground)</li>
+              <li><b>Barrel:</b> none</li>
+              <li><b>Rail:</b> Forward Grip</li>
+              <li><b>Ammo:</b> Capsulate</li>
+            </ul>
+            <p>The best value in this whole guide. Covers every fight from a doorway to a tower courtyard — and the tightened fan forgives the most misses.</p>
+          </div>
+          <div class="loadout">
+            <p class="cost">130 certs in attachments · Rooftop play</p>
+            <h3>Rooftop (Light Assault)</h3>
+            <ul>
+              <li><b>Optic:</b> Lyra R2 2x</li>
+              <li><b>Barrel:</b> none</li>
+              <li><b>Rail:</b> Forward Grip</li>
+              <li><b>Ammo:</b> standard</li>
+            </ul>
+            <p>For Light Assaults who fight from rooftops and balconies at 25–50 m: the 2x places the vertical fan, the standard ammo keeps the full ×2 headshot, and the jump jets get you to the next roof before the return fire arrives.</p>
+          </div>
+          <div class="loadout">
+            <p class="cost">330 certs in attachments · Indoor hold</p>
+            <h3>Point Hold (Engineer)</h3>
+            <ul>
+              <li><b>Optic:</b> Lyra R1 1x</li>
+              <li><b>Barrel:</b> Enhanced Plasma Containment</li>
+              <li><b>Rail:</b> Vented Power Core</li>
+              <li><b>Ammo:</b> Capsulate</li>
+            </ul>
+            <p>Built to hold a capture-point room: a tightened fan, no empty-reload penalty, and a hidden muzzle flash in the dark. Weak in a fair open fight, so don't take fair open fights: fight from cover, at range, behind your turret.</p>
+          </div>
+        </div>
+
+        </section>
+
+      <!-- ================= 08 KILL EFFICIENTLY ================= -->
+      <section aria-labelledby="s-kill" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">08</span>
+          <h2 id="s-kill">Kill efficiently: six habits</h2>
+          <span class="tag">Technique beats<br />attachments</span></div>
+                <ol class="habits">
+          <li>
+            <h3>Keep the whole fan on the target</h3>
+            <p>Every pull is three pellets, and one pellet missing is a third of your damage gone. Centre the fan on the chest, not on an edge — a fan centred on a shoulder loses a pellet off the side, and your 6-pull kill becomes a 9-pull kill (0.80 s instead of 0.50 s). Capsulate Ammunition tightens the fan and forgives this, but the habit is free and it stacks.</p>
+          </li>
+          <li>
+            <h3>Aim at the neck, harvest the head</h3>
+            <p>Headshots deal double damage: 3 head pulls (0.20 s) versus 6 to the chest (0.50 s) up close — 60% faster, and 57% faster at long range (0.30 s versus 0.70 s). Don't aim at the head directly — aim at the neck and let the gun's upward climb carry pellets two and three into the skull. It's the single biggest damage upgrade you own, and it's free. Just remember the fan: aimed, it runs vertically, so at 30 m part of it will always be chest — the head pulls are a bonus on top of chest damage, not a replacement for it.</p>
+          </li>
+          <li>
+            <h3>Burst, release, burst</h3>
+            <p>Five pulls is the ideal burst; release the trigger for a heartbeat between bursts. Aimed, your cone never blooms — but recoil climbs 0.4–0.45° per pull with a 2.22× first-pull kick, and from the hip, bloom adds 0.11° per pull on top. Holding the trigger past ~8 pulls at range means later pellets fly around your target, not into it. Your accuracy resets on every release, and your hits per magazine roughly double.</p>
+          </li>
+          <li>
+            <h3>Count your kills per magazine</h3>
+            <p>Thirty pulls is five close-range chest kills at most (6 pulls each) — and fewer the moment pellets leak. Reloading with even 1 pull left takes <strong>1.6 s</strong>; an empty gun takes <strong>2.45 s</strong> — an eternity mid-fight. After two or three kills, duck behind cover and reload early. Treat the last 10 pulls as your emergency reserve, not your working magazine.</p>
+          </li>
+          <li>
+            <h3>Pre-aim the doorway, then strafe</h3>
+            <p>Walk with your crosshair at head height, pointed where an enemy's head will appear — a doorway edge, a corner, stairs. Most beginners lose fights in the half-second spent dragging the crosshair onto target. While firing, tap A/D to strafe: on this gun strafing costs you nothing in cone terms (0° moving, 0° standing), so there is no reason to stand still. As a Light Assault, a jump-jet hop sideways breaks their aim entirely — land shooting, not landing and then shooting.</p>
+          </li>
+          <li>
+            <h3>Pick fights inside 25 metres</h3>
+            <p>Your damage, your fan, and your 0° cone all shine at close-mid range. Sprint between cover, use buildings and rocks as stepping stones — or rooftops, if you're a Light Assault — and arrive at <em>your</em> range before opening fire. The player who chooses the range usually wins the duel — make it you.</p>
+          </li>
+        </ol>
+
+        </section>
+
+      <!-- ================= 09 WEAK SPOTS ================= -->
+      <section aria-labelledby="s-weak" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">09</span>
+          <h2 id="s-weak">The honest weak spots</h2>
+          <span class="tag">Know them,<br />play around them</span></div>
+                <p class="lede">Every gun has a price. Here's where the Horizon pays — and the habit that covers each hole.</p>
+
+        <div class="weak">
+          <h3>1 · The fan leaks at range</h3>
+          <p>The hip fan is wider than a torso past ~8 m, and the aimed fan is taller than one past ~50 m. Every leaked pellet is damage you paid for and didn't deal: with only 2 of 3 pellets landing, a close chest kill stretches from 6 pulls (0.50 s) to 9 (0.80 s), and a long-range one from 8 (0.70 s) to 12 (1.10 s).</p>
+          <p class="fix"><b>Play around it:</b> hipfire under 8 m, aim past it, and fit Capsulate Ammunition — it tightens the hip fan by 75% and the aimed fan by 50%.</p>
+        </div>
+        <div class="weak">
+          <h3>2 · The first pull kicks hardest</h3>
+          <p>The first pull of every burst jumps with a 2.22× multiplier — 0.89–1.00° of climb before the burst even starts, drifting up and to the right (8–10°). Yank the trigger and your opening pellets climb off the head.</p>
+          <p class="fix"><b>Play around it:</b> start each burst a touch low and left and let the climb walk into the target — and fit the Forward Grip, which trims the sideways half of the climb by 25%.</p>
+        </div>
+        <div class="weak">
+          <h3>3 · Small magazine, slow empty reload</h3>
+          <p>Thirty pulls is five close-range kills at most, and the reload is 1.6 s with pulls left but 2.45 s on empty — an age when a second enemy rounds the corner.</p>
+          <p class="fix"><b>Play around it:</b> burst discipline (habit 3) and early reloads (habit 4) — and the Vented Power Core forgives the empty reload entirely, if you'd rather buy the fix than learn the habit.</p>
+        </div>
+        <div class="weak">
+          <h3>4 · Headshots depend on the whole fan</h3>
+          <p>A headshot needs pellets on the head, and the aimed fan is a vertical row — at 30 m it is 0.52 m tall, so part of it is always chest. Your 3-pull head kill assumes all three pellets find the skull, which is aim plus a little luck. Unstable Ammunition makes it worse, cutting the headshot bonus from ×2 to ×1.2.</p>
+          <p class="fix"><b>Play around it:</b> aim at the neck and take head pellets as a bonus on top of chest damage — and never run Unstable Ammunition once you can aim at a neck.</p>
+        </div>
+        <div class="weak">
+          <h3>5 · A 1,000-cert buy-in with a thin bench</h3>
+          <p>The gun costs 1,000 certs, and there is no Laser Sight, no suppressor, no compensator, and no Soft Point or High Velocity ammo to buy your way out of its weaknesses. The only barrel hides your muzzle flash and costs you 15 m of minimap stealth.</p>
+          <p class="fix"><b>Play around it:</b> buy the gun for the fan and the 0° cone, not for the attachments — the three purchases that matter are the Lyra R1, the Forward Grip, and Capsulate, and together they cost 230 certs.</p>
+        </div>
+
+        </section>
+
+      <!-- ================= 10 DRILLS ================= -->
+      <section aria-labelledby="s-drills" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">10</span>
+          <h2 id="s-drills">Training: five VR drills</h2>
+          <span class="tag">VR Training area<br />~15 minutes a session</span></div>
+                <p class="lede">Open the world map, travel to <strong>VR Training</strong>, and run these on the target dummies. Five minutes before a play session beats an hour of dying confused.</p>
+        <ul class="drills">
+          <li>
+            <div class="d-name">The Wall Test <span>2 minutes · recoil</span></div>
+            <p>Aim at a wall 20 m away and empty a full magazine without touching the mouse. Watch the pellet pattern climb up and to the right — that's your gun's fingerprint, and the first pull jumps hardest (2.22×). Repeat, this time pulling down-left, until the group stays fist-sized.</p>
+          </li>
+          <li>
+            <div class="d-name">Fan Check <span>3 minutes · the fan</span></div>
+            <p>Shoot a wall at 8 m from the hip (a horizontal row 0.47 m wide), then at 8 m aimed (a vertical row 0.14 m tall), then at 30 m aimed (0.52 m tall). Learn the fan's shape at each range until you can picture it before you pull the trigger — that picture is your real crosshair on this gun.</p>
+          </li>
+          <li>
+            <div class="d-name">Burst Ladder <span>4 minutes · burst control</span></div>
+            <p>At 30–40 m, kill dummies with bursts of 5 pulls, releasing the trigger fully between bursts. If a burst goes wide, shorten it. Goal: whole kills without a single wild pull — even though your aimed cone is 0° and never blooms, recoil still moves the later pulls.</p>
+          </li>
+          <li>
+            <div class="d-name">Circle Strafe <span>3 minutes · hipfire</span></div>
+            <p>Pick a dummy, stand 5 m away, and circle it with A/D while hipfiring it down without stopping. The fan is only 0.29 m wide at 5 m, so all three pellets land while you move — this is your point-blank survival skill, and on this gun strafing costs you nothing in cone terms.</p>
+          </li>
+          <li>
+            <div class="d-name">Reload Discipline <span>3 minutes · habit</span></div>
+            <p>Fire exactly 18 pulls, step behind a pillar, reload, repeat. Train your hands to reload early and only in cover until it's automatic — with a 1.6 s short reload and a 2.45 s empty one, in real fights you'll do it without thinking, which is the point.</p>
+          </li>
+        </ul>
+
+        <div class="rule"><strong>Pocket summary — screenshot this</strong>
+          VE-C Horizon · 1,000 certs · fight at 5–25 m · keep the whole 3-pellet fan on the chest · hip fan horizontal 3.36°, ADS fan vertical 0.99° · burst 5, release, repeat · head 3 pulls (0.20 s), chest 6 (0.50 s) — all pellets landing · reload early behind cover (1.6 s short, 2.45 s empty) · buy the Lyra R1 (30) + Forward Grip (100) + Capsulate (100) · hipfire under 8 m · past 30 m the fan leaks — close in.
+        </div>
+
+        </section>
+
+            <footer>
+        <p><strong>About this guide.</strong> An entry in the Sage tutorial series — one weapon, one page, written for a brand-new player. Stats are the VE-C Horizon's live game values (56×3 → 42×3 damage per pellet, 600 RPM, 30-round magazine) as listed by the community wiki and the Census API data feed (snapshot 2026-11-06).</p>
+        <p>Sources: <a href="https://planetside.fandom.com/wiki/VE-C_Horizon">VE-C Horizon — PlanetSide 2 Wiki</a> · <a href="https://liquidwarp.honu.pw/stats/weapons/infantry/ve-c-horizon-6005110.html">VE-C Horizon weapon data — PS2 LiquidWarp (Honu)</a>. Weapon render via the Census API; fan diagrams and sight views are scale diagrams drawn from the gun's published pellet-spread and magnification values. PlanetSide 2 is a Daybreak Game Company title; this is a fan-made tutorial, not affiliated with Daybreak.</p>
+      </footer>
+    </div>
+
+  <script type="module" src="weapon-sage-guide.mjs?v=20261109-sageguide3"></script>
+  <script>
+
+      (function () {
+        var slider = document.getElementById('labRange');
+        var distEl = document.getElementById('labDist');
+        var bandEl = document.getElementById('labBand');
+        var dmgEl = document.getElementById('labDmg');
+        var headEl = document.getElementById('labHead');
+        var chestEl = document.getElementById('labChest');
+        var ttkEl = document.getElementById('labTtk');
+        var advEl = document.getElementById('labAdvice');
+        var REFIRE = 60 / 600; // seconds between pulls
+
+        function damageAt(d) {
+          if (d <= 10) return 168;
+          if (d >= 60) return 126;
+          return (56 - (d - 10) * 0.28) * 3; // per-pull damage, all three pellets landing
+        }
+        function adviceFor(d) {
+          if (d < 8) return ['Point blank', 'Hipfire at the chest and keep strafing. Scoping in here costs time and halves your speed — trust the hip fan, which is only 0.47 m wide at 8 m.'];
+          if (d < 25) return ['Sweet spot', 'Aim down sights at the upper chest and neck. Fire in bursts of 5 pulls — the vertical fan stays torso-sized out to 25 m, so all three pellets still land.'];
+          if (d < 50) return ['Controlled range', 'Aim down sights at the chest and fire 5-pull bursts, releasing the trigger between them. Pull gently down-left against the recoil drift — the aimed fan is 0.86 m tall at 50 m, so the outer pellets are starting to leak.'];
+          return ['Plinking range', 'Tap 3–5 pulls at a time, and only at exposed targets. Your damage has faded and the aimed fan is taller than the torso — closing the distance is usually the better shot.'];
+        }
+        function update() {
+          var d = parseInt(slider.value, 10);
+          var dmg = damageAt(d);
+          var head = Math.ceil(1000 / (dmg * 2));
+          var chest = Math.ceil(1000 / dmg);
+          var ttk = (chest - 1) * REFIRE;
+          var a = adviceFor(d);
+          distEl.textContent = d;
+          dmgEl.textContent = Math.round(dmg);
+          headEl.textContent = head;
+          chestEl.textContent = chest;
+          ttkEl.textContent = ttk.toFixed(2) + ' s';
+          bandEl.textContent = a[0];
+          advEl.textContent = a[1];
+          bandEl.className = 'chip ' + (d < 8 ? 'situ' : d < 25 ? 'good' : d < 50 ? 'good' : 'skip');
+        }
+        slider.addEventListener('input', update);
+        update();
+      })();
+
+      /* ---------- hold-and-release simulator (reusable across the Sage series) ----------
+         The window is driven by a weapon profile on its container element:
+         data-rpm, data-base-cof (degrees), data-bloom (degrees per shot),
+         data-distance (metres to target). Each gun page plugs in its own. */
+      (function () {
+        var box = document.getElementById('burstSim');
+        var stage = document.getElementById('simStage');
+        var fireBtn = document.getElementById('simFire');
+        var resetBtn = document.getElementById('simReset');
+        var bloomEl = document.getElementById('simBloom');
+        var shotsEl = document.getElementById('simShots');
+        var hitsEl = document.getElementById('simHits');
+        var accEl = document.getElementById('simAcc');
+        var verdictEl = document.getElementById('simVerdict');
+        var logEl = document.getElementById('simLog');
+        if (!box || !stage || !fireBtn) return;
+
+        function profile(name, fallback) {
+          var v = parseFloat(box.getAttribute('data-' + name));
+          return isNaN(v) ? fallback : v;
+        }
+        var REFIRE_MS = 60000 / profile('rpm', 600);
+        var BASE_COF = profile('base-cof', 0);   // degrees, ADS standing still
+        var BLOOM = profile('bloom', 0);          // degrees added per shot, ADS
+        var COF_CAP = 0.99;                       // degrees, Horizon hip max cone
+        var DIST = profile('distance', 30);          // metres to target
+        var timer = null, resetTimer = null;
+        var burst = 0, shots = 0, hits = 0;
+
+        function aimPoint() {
+          var r = stage.getBoundingClientRect();
+          return { x: r.width / 2, y: r.height * 0.42, ppm: r.width / 3 }; // view ≈ 3 m wide at the target
+        }
+        function setBloom(cof) {
+          var pct = Math.min(100, (cof / COF_CAP) * 100);
+          bloomEl.style.width = pct + '%';
+          bloomEl.className = 'bloom-fill' + (cof > 0.95 ? ' hot' : cof > 0.5 ? ' warm' : '');
+        }
+        function fireShot() {
+          var p = aimPoint();
+          var cof = BASE_COF + BLOOM * burst;      // bloom state BEFORE this shot settles
+          var radiusM = Math.tan(cof * Math.PI / 180) * DIST;
+          var ang = Math.random() * Math.PI * 2;
+          var dist = radiusM * Math.sqrt(Math.random()) * p.ppm; // true scale: view is ~3 m wide at the target
+          var dx = Math.cos(ang) * dist;
+          var dy = Math.sin(ang) * dist - burst * 0.9; // recoil climbs a touch as the burst goes on
+          var dot = document.createElement('span');
+          dot.className = 'sim-shot';
+          var hit = (dx * dx) / (56 * 56) + (dy * dy) / (98 * 98) <= 1; // torso/head ellipse
+          if (hit) { dot.classList.add('hit'); hits++; }
+          dot.style.left = (p.x + dx) + 'px';
+          dot.style.top = (p.y + dy) + 'px';
+          stage.appendChild(dot);
+          burst++; shots++;
+          setBloom(BASE_COF + BLOOM * burst);
+          shotsEl.textContent = shots;
+          hitsEl.textContent = hits;
+          accEl.textContent = Math.round((hits / shots) * 100) + '%';
+        }
+        function grade(n) {
+          if (n < 5) return ['good', '<b>Short &amp; safe</b> — ' + n + ' pulls. Tight group; stretch to 5 for the ideal burst and a faster kill.'];
+          if (n === 5) return ['good', '<b>Ideal burst</b> — 5 pulls exactly. That is the rhythm to make automatic.'];
+          if (n <= 8) return ['warn', '<b>Tolerable</b> — ' + n + ' pulls. Inside the 6–8 newbie window, but the last pulls were already climbing. Aim for 5.'];
+          return ['bad', '<b>Too long</b> — ' + n + ' pulls held. Past 8 the recoil has walked your fan off the target. Release, reset, re-fire.'];
+        }
+        function startFire(e) {
+          if (timer) return;
+          if (e && e.preventDefault) e.preventDefault();
+          if (resetTimer) { clearTimeout(resetTimer); resetTimer = null; }
+          fireBtn.classList.add('firing');
+          fireBtn.textContent = 'Firing…';
+          fireShot();
+          timer = setInterval(fireShot, REFIRE_MS);
+        }
+        function stopFire() {
+          if (!timer) return;
+          clearInterval(timer); timer = null;
+          fireBtn.classList.remove('firing');
+          fireBtn.textContent = 'Hold to fire';
+          if (burst > 0) {
+            var g = grade(burst);
+            verdictEl.innerHTML = g[1];
+            var pip = document.createElement('span');
+            pip.className = 'burst-pip ' + g[0];
+            pip.textContent = '×' + burst;
+            logEl.appendChild(pip);
+            burst = 0;
+          }
+          resetTimer = setTimeout(function () { setBloom(0); }, 260); // cone resets after a short pause
+        }
+        fireBtn.addEventListener('pointerdown', function (e) {
+          try { fireBtn.setPointerCapture(e.pointerId); } catch (err) {}
+          startFire(e);
+        });
+        fireBtn.addEventListener('pointerup', stopFire);
+        fireBtn.addEventListener('pointercancel', stopFire);
+        fireBtn.addEventListener('keydown', function (e) {
+          if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) startFire(e);
+        });
+        fireBtn.addEventListener('keyup', function (e) {
+          if (e.key === ' ' || e.key === 'Enter') stopFire();
+        });
+        fireBtn.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+        resetBtn.addEventListener('click', function () {
+          stopFire();
+          var dots = stage.querySelectorAll('.sim-shot');
+          for (var i = 0; i < dots.length; i++) dots[i].remove();
+          shots = 0; hits = 0; burst = 0;
+          shotsEl.textContent = '0'; hitsEl.textContent = '0'; accEl.textContent = '—';
+          logEl.innerHTML = '';
+          verdictEl.textContent = 'Your bursts will be graded here — green at 5 pulls, tolerable up to 8.';
+          setBloom(0);
+        });
+      })();
+      
+    
+  </script>
+</body>
+</html>

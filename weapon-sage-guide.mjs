@@ -25,6 +25,11 @@
         var lab = document.querySelector('.lab');
         var slider = document.getElementById('labRange');
         if (!lab || !slider) return;
+        // Pages that keep their own lab script carry no standard
+        // data-rpm (sniper cycle/OHK labs, pump/bolt/tap trainers) or
+        // a data-pellets marker (shotgun pull labs) — the shared lab
+        // stays out so it cannot clobber their values with NaN.
+        if (!lab.dataset.rpm || lab.dataset.pellets) return;
         var distEl = document.getElementById('labDist');
         var bandEl = document.getElementById('labBand');
         var dmgEl = document.getElementById('labDmg');

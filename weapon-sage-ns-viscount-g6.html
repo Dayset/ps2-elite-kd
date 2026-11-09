@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>NS Viscount G6 Sage Guide &middot; PS2 Elite</title>
+  <meta name="description" content="A beginner's guide to the NS Viscount G6 — The suppressed Baron. Twelve shells in the tube, a built-in suppressor and extended magazine, and the same tight 2.5&amp;deg; pattern as the Baron G5 — at the cost of the slowest refire in the class. This page teaches you to win fights with it today. 4,000 A7 / 799 DBC — Black Market, Sanctuary." />
+  <meta name="color-scheme" content="light dark" />
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="weapon-sage.css?v=20261109-sageguide3" />
+  <style>
+    /* Faction colours for this guide — overrides the shared NC palette. */
+    ol.habits { counter-reset: hab; list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+    ol.habits li { counter-increment: hab; background: var(--surface); border: 1px solid var(--line); padding: 14px 16px 14px 58px; position: relative; }
+    ol.habits li::before {
+            content: counter(hab, decimal-leading-zero);
+            position: absolute; left: 14px; top: 12px;
+            font-family: "Rajdhani", sans-serif; font-weight: 700; font-size: 24px; color: var(--nc-blue);
+          }
+    ol.habits h3 { margin: 0 0 3px; font-size: 19px; }
+    ol.habits p { margin: 0; font-size: 15.5px; }
+    ul.drills { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+    ul.drills li { background: var(--surface); border: 1px solid var(--line); padding: 13px 16px; display: grid; gap: 2px; }
+    ul.drills .d-name { font-family: "Rajdhani", sans-serif; font-weight: 700; font-size: 18px; }
+    ul.drills .d-name span { display: block; font-family: "Barlow", sans-serif; font-weight: 400; font-size: 13.5px; color: var(--ink-soft); }
+    html[data-theme="light"] .chip.free { color: #fff; }
+    html[data-theme="light"] .band .dist { color: #fff; background: var(--nc-blue-deep); }
+    html[data-theme="light"] .sim-fire { background: var(--nc-blue-deep); color: #fff; }
+    section.is-collapsed .sec-toggle-icon { transform: rotate(-90deg); }
+    section.is-collapsed > *:not(.sec-head) { display: none !important; }
+    .strip { background: var(--surface); border: 1px solid var(--line); padding: 16px 18px; margin-bottom: 14px; }
+    .strip h3 { margin: 0 0 2px; font-size: 21px; }
+    .strip .cap { font-size: 15px; margin: 8px 0 0; }
+    .strip-panels { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: stretch; }
+    .strip-panel { flex: 1 1 150px; border: 1px solid var(--line); background: var(--surface-2); padding: 10px; }
+    .strip-panel svg { width: 100%; height: auto; display: block; }
+    .strip-panel .p-cap { font-size: 14px; margin: 8px 0 0; line-height: 1.4; }
+    .strip-panel .p-cap b { display: block; font-family: "Rajdhani", sans-serif; text-transform: uppercase; letter-spacing: 0.05em; font-size: 13.5px; }
+    .strip-panel.bad .p-cap b { color: var(--skip); }
+    .strip-panel.good .p-cap b { color: var(--good); }
+    .strip-arrow { align-self: center; font-size: 24px; color: var(--ink-soft); flex: none; }
+    .strip-exception { border: 2px solid var(--nc-gold); background: var(--situ-bg); padding: 12px 14px; margin-top: 12px; display: flex; gap: 14px; align-items: center; }
+    .strip-exception svg { flex: none; }
+    .strip-exception p { margin: 0; font-size: 15.5px; }
+    .strip-exception b { font-family: "Rajdhani", sans-serif; text-transform: uppercase; letter-spacing: 0.05em; font-size: 14px; color: var(--accent-ink); display: block; }
+    .sim-fire.too-early { background: var(--skip); color: #fff; }
+    .cad-ready-label { font-size: 13px; color: var(--ink-soft); margin: 8px 0 0; }
+  </style>
+</head>
+<body class="site-page">
+    <div class="wrap">
+
+    <p class="sage-back"><a href="weapon-compare.html?w=6011234">← Back to the NS Viscount G6 comparison</a></p>
+
+
+      <header class="hero">
+        <p class="brandline">Sage Guide · Nanite Systems · Shotgun</p>
+        <h1>NS Viscount G6 <span class="thin">— the two-pull shotgun, mastered</span></h1>
+        <p class="sub">The suppressed Baron. Twelve shells in the tube, a built-in suppressor and extended magazine, and the same tight 2.5&deg; pattern as the Baron G5 — at the cost of the slowest refire in the class. This page teaches you to win fights with it today. 4,000 A7 / 799 DBC — Black Market, Sanctuary.</p>
+        <p class="verdict"><strong>The one-line verdict:</strong> a suppressed Baron with twelve shells in the tube and no minimap blip when you fire — bought with the slowest refire in the class (315 ms) and a shorter full-damage reach (10 m).</p>
+        <img class="hero-gun" src="assets/weapons/14641.png" alt="The NS Viscount G6 shotgun, side profile" width="256" height="128" />
+        <p class="hero-gun-cap">The NS Viscount G6 · Nanite Systems · 12-shell magazine</p>
+      </header>
+
+      <div class="stats" role="list" aria-label="NS Viscount G6 key statistics">
+        <div class="stat" role="listitem"><div class="stat-big">588<small> → 469</small></div><div class="stat-label">Damage per pull (7 pellets)</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">190</div><div class="stat-label">Rounds per minute</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">12</div><div class="stat-label">Shells per magazine</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">0.5<small> s</small></div><div class="stat-label">Reload, per shell (tube mag)</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">300<small> m/s</small></div><div class="stat-label">Pellet velocity</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">×1.5</div><div class="stat-label">Headshot damage</div></div>
+      </div>
+
+      <section aria-labelledby="s-first">
+        <div class="sec-head">
+          <span class="num">01</span>
+          <h2 id="s-first">First lesson: stop, aim, <em>then</em> fire</h2>
+          <span class="tag">The mistake almost<br />every new player makes</span>
+        </div>
+        <p class="lede">Picture the scene, because you've probably lived it: you're <strong>sprinting</strong> across a courtyard, an enemy appears, and you do everything at once — pull the trigger <em>while you're still running</em>, then press aim-down-sights (ADS) a split-second later, finger still working. The sight picture snaps in, it <em>looks</em> precise… and your pellets go everywhere except the man in your crosshair. He kills you. It feels like the game cheated. It didn't — here's what actually happened.</p>
+
+        <div class="grid2">
+          <div class="card">
+            <h3>✗ What you did — the spray</h3>
+            <p><strong>You started firing from a sprint, from the hip.</strong> Sprinting is the least accurate state in the game: your cone of fire starts at <strong>7.0° — fully maxed, the widest it can ever be</strong>. Every pull you fire from the hip sends its whole 2.5° pellet pattern out of that cone, centred wherever the sprint is pointing.</p>
+            <p><strong>Then you keep pulling the trigger — and every pull is a fresh pattern.</strong> A semi-auto shotgun fires once per click, as fast as 315 ms apart. Firing from the hip while running means each pattern's centre lands wherever the sprint cone points — and pressing ADS mid-stream does not call any of it back. The sight looks precise; the pellets went where the moving gun was pointing, not where the dot is now.</p>
+            <p>Two timers stack the deck further: your gun needs about <strong>0.3 s to settle after a sprint</strong>, and raising the sight itself takes ~0.15 s. Pulling the trigger through all of it means your first half-second of fire is pure confetti — and with only 12 shells in the magazine, you cannot afford confetti.</p>
+          </div>
+          <div class="card">
+            <h3>✓ The fix — three beats, in order</h3>
+            <p><strong>1 · Feet.</strong> Let go of sprint (and the trigger, if you're already working it). Stop, or drop into a strafe — anything but a full sprint.</p>
+            <p><strong>2 · Sight.</strong> Press ADS and let the sight come up. This takes a heartbeat — about 0.15 s.</p>
+            <p><strong>3 · Trigger — one deliberate pull at a time.</strong> <em>Now</em> fire, one pull per click, about 315 ms apart, re-aiming between pulls. Starting with the sight settled, the first pattern lands where the dot points — and because the spread never grows, every pull is as accurate as the first, as long as your aim is.</p>
+            <p><strong>Stop → aim → fire.</strong> If you take one habit from this entire page, take this one. You'll practise exactly this rhythm in the trigger drill in section 04.</p>
+          </div>
+        </div>
+
+<div class="strip">
+          <h3>What you did — the spray</h3>
+          <p class="cap" style="margin:0">Four beats, left to right — the same mistake the cards above describe, drawn out.</p>
+          <div class="strip-panels">
+            <div class="strip-panel bad">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A soldier sprinting, with a wide dashed cone fanning out from the gun muzzle, labelled 7.0 degrees.">
+                <line x1="8" y1="122" x2="192" y2="122" stroke="var(--line)" stroke-width="2" />
+                <g stroke="var(--ink-soft)" stroke-width="3" stroke-linecap="round" fill="none">
+                  <line x1="18" y1="70" x2="38" y2="70" /><line x1="14" y1="86" x2="34" y2="86" /><line x1="20" y1="102" x2="40" y2="102" />
+                </g>
+                <g stroke="var(--ink)" stroke-width="3" stroke-linecap="round" fill="none">
+                  <line x1="72" y1="58" x2="86" y2="86" /><line x1="86" y1="86" x2="66" y2="118" /><line x1="86" y1="86" x2="106" y2="112" />
+                  <line x1="74" y1="64" x2="56" y2="80" /><line x1="74" y1="64" x2="94" y2="72" />
+                </g>
+                <circle cx="70" cy="46" r="10" fill="var(--ink)" />
+                <rect x="94" y="66" width="28" height="6" rx="2" fill="var(--ink)" transform="rotate(-8 94 66)" />
+                <g stroke="var(--skip)" stroke-width="2" stroke-dasharray="6 5" fill="none">
+                  <line x1="122" y1="62" x2="192" y2="26" /><line x1="122" y1="62" x2="192" y2="98" />
+                </g>
+                <text x="150" y="58" font-size="13" font-weight="700" fill="var(--skip)">7.0°</text>
+              </svg>
+              <p class="p-cap"><b>1 · Sprinting</b>Your cone starts maxed at 7.0° — the widest it can ever be.</p>
+            </div>
+            <div class="strip-arrow" aria-hidden="true">→</div>
+            <div class="strip-panel bad">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A soldier firing from the hip while running, with bullet holes scattering ever wider from the muzzle.">
+                <line x1="8" y1="122" x2="192" y2="122" stroke="var(--line)" stroke-width="2" />
+                <g fill="var(--ink)">
+                  <circle cx="52" cy="46" r="10" />
+                  <rect x="44" y="56" width="18" height="42" rx="6" />
+                  <rect x="46" y="96" width="8" height="26" /><rect x="56" y="96" width="8" height="26" />
+                </g>
+                <rect x="62" y="72" width="30" height="6" rx="2" fill="var(--ink)" />
+                <g fill="var(--skip)">
+                  <circle cx="118" cy="66" r="4" /><circle cx="142" cy="84" r="4" /><circle cx="162" cy="58" r="4" /><circle cx="182" cy="90" r="4" /><circle cx="196" cy="66" r="4" />
+                </g>
+                <text x="118" y="122" font-size="13" font-weight="700" fill="var(--skip)">spreading…</text>
+              </svg>
+              <p class="p-cap"><b>2 · Trigger held</b>Firing from the hip while running — every shot adds bloom.</p>
+            </div>
+            <div class="strip-arrow" aria-hidden="true">→</div>
+            <div class="strip-panel bad">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A round scope view with the crosshair centred on a small soldier, while red crosses mark bullet holes scattered wide around him.">
+                <circle cx="100" cy="70" r="56" fill="none" stroke="var(--ink)" stroke-width="4" />
+                <line x1="100" y1="20" x2="100" y2="120" stroke="var(--ink)" stroke-width="1.5" />
+                <line x1="50" y1="70" x2="150" y2="70" stroke="var(--ink)" stroke-width="1.5" />
+                <g fill="var(--ink)">
+                  <circle cx="100" cy="58" r="5" /><rect x="94" y="63" width="12" height="18" rx="3" />
+                </g>
+                <g stroke="var(--skip)" stroke-width="3" stroke-linecap="round">
+                  <line x1="52" y1="32" x2="62" y2="42" /><line x1="62" y1="32" x2="52" y2="42" />
+                  <line x1="140" y1="30" x2="150" y2="40" /><line x1="150" y1="30" x2="140" y2="40" />
+                  <line x1="48" y1="100" x2="58" y2="110" /><line x1="58" y1="100" x2="48" y2="110" />
+                  <line x1="142" y1="102" x2="152" y2="112" /><line x1="152" y1="102" x2="142" y2="112" />
+                </g>
+              </svg>
+              <p class="p-cap"><b>3 · ADS, mid-hold</b>The sight looks precise — but aiming down sights does <em>not</em> reset bloom.</p>
+            </div>
+            <div class="strip-arrow" aria-hidden="true">→</div>
+            <div class="strip-panel bad">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A soldier target standing untouched while red crosses mark bullet holes all around him.">
+                <line x1="8" y1="122" x2="192" y2="122" stroke="var(--line)" stroke-width="2" />
+                <g fill="var(--ink)">
+                  <circle cx="100" cy="42" r="11" />
+                  <rect x="88" y="54" width="24" height="44" rx="7" />
+                  <rect x="90" y="96" width="9" height="26" /><rect x="101" y="96" width="9" height="26" />
+                </g>
+                <g stroke="var(--skip)" stroke-width="3.5" stroke-linecap="round">
+                  <line x1="52" y1="28" x2="64" y2="40" /><line x1="64" y1="28" x2="52" y2="40" />
+                  <line x1="140" y1="24" x2="152" y2="36" /><line x1="152" y1="24" x2="140" y2="36" />
+                  <line x1="44" y1="92" x2="56" y2="104" /><line x1="56" y1="92" x2="44" y2="104" />
+                  <line x1="146" y1="94" x2="158" y2="106" /><line x1="158" y1="94" x2="146" y2="106" />
+                  <line x1="96" y1="12" x2="106" y2="22" /><line x1="106" y1="12" x2="96" y2="22" />
+                </g>
+                <text x="100" y="138" font-size="13" font-weight="700" fill="var(--skip)" text-anchor="middle">he walks away</text>
+              </svg>
+              <p class="p-cap"><b>4 · The spray</b>Bullets fly out of the wide cone you built. The enemy walks away.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="strip">
+          <h3>The fix — three beats, in order</h3>
+          <p class="cap" style="margin:0">Same fight, done right. Each beat has a job, and the order is the whole lesson.</p>
+          <div class="strip-panels">
+            <div class="strip-panel good">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A soldier standing still with feet planted, next to a small clock showing about 0.3 seconds.">
+                <line x1="8" y1="122" x2="192" y2="122" stroke="var(--line)" stroke-width="2" />
+                <g fill="var(--ink)">
+                  <circle cx="62" cy="46" r="10" />
+                  <rect x="54" y="56" width="18" height="42" rx="6" />
+                  <rect x="56" y="96" width="8" height="26" /><rect x="66" y="96" width="8" height="26" />
+                </g>
+                <rect x="72" y="70" width="26" height="6" rx="2" fill="var(--ink)" />
+                <g fill="none" stroke="var(--good)" stroke-width="3">
+                  <circle cx="152" cy="52" r="20" />
+                  <line x1="152" y1="52" x2="152" y2="38" stroke-linecap="round" />
+                  <line x1="152" y1="52" x2="162" y2="58" stroke-linecap="round" />
+                </g>
+                <text x="152" y="92" font-size="14" font-weight="700" fill="var(--good)" text-anchor="middle">≈ 0.3 s</text>
+                <text x="62" y="138" font-size="12" fill="var(--ink-soft)" text-anchor="middle">feet planted</text>
+              </svg>
+              <p class="p-cap"><b>1 · Stop</b>Let go of sprint (and the trigger). About 0.3 s for the gun to settle.</p>
+            </div>
+            <div class="strip-arrow" aria-hidden="true">→</div>
+            <div class="strip-panel good">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A round scope view rising onto a soldier target, with an upward arrow and about 0.15 seconds labelled.">
+                <circle cx="100" cy="72" r="52" fill="none" stroke="var(--ink)" stroke-width="4" />
+                <line x1="100" y1="26" x2="100" y2="118" stroke="var(--ink)" stroke-width="1.5" />
+                <line x1="54" y1="72" x2="146" y2="72" stroke="var(--ink)" stroke-width="1.5" />
+                <g fill="var(--ink)">
+                  <circle cx="100" cy="58" r="6" /><rect x="93" y="64" width="14" height="22" rx="4" />
+                  <rect x="95" y="84" width="4" height="14" /><rect x="101" y="84" width="4" height="14" />
+                </g>
+                <g stroke="var(--good)" stroke-width="3" fill="none" stroke-linecap="round">
+                  <line x1="28" y1="118" x2="28" y2="84" /><line x1="22" y1="90" x2="28" y2="82" /><line x1="34" y1="90" x2="28" y2="82" />
+                </g>
+                <text x="100" y="138" font-size="14" font-weight="700" fill="var(--good)" text-anchor="middle">≈ 0.15 s</text>
+              </svg>
+              <p class="p-cap"><b>2 · Aim</b>Press ADS and let the sight come up (~0.15 s).</p>
+            </div>
+            <div class="strip-arrow" aria-hidden="true">→</div>
+            <div class="strip-panel good">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A gun firing through a narrow dashed cone at a soldier target, with three green hits grouped on his chest.">
+                <line x1="8" y1="122" x2="192" y2="122" stroke="var(--line)" stroke-width="2" />
+                <rect x="18" y="66" width="30" height="6" rx="2" fill="var(--ink)" />
+                <g stroke="var(--good)" stroke-width="2" stroke-dasharray="6 5" fill="none">
+                  <line x1="48" y1="68" x2="150" y2="58" /><line x1="48" y1="70" x2="150" y2="80" />
+                </g>
+                <g fill="var(--ink)">
+                  <circle cx="162" cy="44" r="10" />
+                  <rect x="152" y="54" width="20" height="40" rx="6" />
+                  <rect x="154" y="92" width="8" height="30" /><rect x="164" y="92" width="8" height="30" />
+                </g>
+                <g fill="var(--good)">
+                  <circle cx="158" cy="66" r="4" /><circle cx="166" cy="72" r="4" /><circle cx="160" cy="78" r="4" />
+                </g>
+              </svg>
+              <p class="p-cap"><b>3 · Fire</b>Now fire — from the aimed cone. First shots land where the dot points.</p>
+            </div>
+          </div>
+          <div class="strip-exception">
+            <svg viewBox="0 0 90 70" width="90" height="70" role="img" aria-label="A soldier hipfiring at a close target inside a small spread ring.">
+              <g fill="var(--ink)">
+                <circle cx="22" cy="18" r="7" /><rect x="17" y="25" width="11" height="24" rx="4" />
+                <rect x="18" y="47" width="5" height="16" /><rect x="25" y="47" width="5" height="16" />
+              </g>
+              <rect x="28" y="30" width="16" height="4" rx="2" fill="var(--ink)" />
+              <circle cx="70" cy="32" r="15" fill="none" stroke="var(--nc-gold)" stroke-width="2" stroke-dasharray="4 3" />
+              <g fill="var(--ink)">
+                <circle cx="70" cy="22" r="5" /><rect x="65" y="27" width="10" height="16" rx="3" />
+              </g>
+              <g fill="var(--good)"><circle cx="68" cy="32" r="2.5" /><circle cx="73" cy="35" r="2.5" /></g>
+            </svg>
+            <p><b>The exception — under ~8 m, skip the whole dance</b>Hipfire works, no ADS needed, and stopping is optional. Keep moving, strafe, and let the hipfire ring do the work.</p>
+          </div>
+        </div>
+        <div class="rule"><strong>One way this gun is different</strong>The strips above are the series-wide lesson, drawn for rifles — and on a rifle every shot adds bloom, so the cone genuinely grows. On this shotgun it does not: <strong>there is no bloom at all</strong>. The pellet spread is a constant 2.5° on every pull, hip or aimed, first pull or last. What the sprint ruins is not the spread but where the pattern <em>lands</em> — while you are sprinting the pattern's centre can sit degrees away from your crosshair, and firing before the sight settles sends the whole pattern there. Stop, aim, then fire still applies — the mechanism underneath it is just cleaner on a shotgun.</div>
+        <div class="rule"><strong>The one exception</strong>Inside ~8 metres, don't ADS at all — hipfire and keep moving (section 03). On a shotgun this is not a corner case, it is home: most of your kills will happen inside 8 m, hipfired, while strafing. Everywhere else: <b>stop → aim → fire</b>, in that order, every time.</div>
+      </section>
+
+      <section class="is-collapsed" aria-labelledby="s-damage">
+        <div class="sec-head">
+          <span class="num">02</span>
+          <h2 id="s-damage">Know your damage</h2>
+          <span class="tag">How many pulls<br />to kill, by range</span>
+        </div>
+        <p class="lede">Every enemy infantry has 1,000 health (500 shield + 500 health). Your pull fires <strong>7 pellets of 84 damage each — 588 damage per pull up close</strong>, fading to <strong>67 per pellet (469 per pull) at long range</strong>. Headshots count 1.5× per pellet, leg shots count less (×0.9). Shots to kill here means <strong>trigger pulls</strong> — never single pellets. That gives you three numbers worth memorising:</p>
+
+        <table class="tbl" aria-label="Trigger pulls to kill by range">
+          <thead>
+            <tr><th>Range</th><th class="n">Damage / pull</th><th class="n">Head</th><th class="n">Chest</th><th class="n">Legs</th><th class="n">Chest vs shielded Heavy</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Close</strong> · 0–10 m</td><td class="n big">7×84 = 588</td><td class="n big">2</td><td class="n big">2</td><td class="n">2</td><td class="n">3</td></tr>
+            <tr><td><strong>Mid</strong> · 10–30 m</td><td class="n big">588→469</td><td class="n big">2</td><td class="n big">2→3</td><td class="n">2→3</td><td class="n">3→4</td></tr>
+            <tr><td><strong>Far</strong> · 30 m+</td><td class="n big">7×67 = 469</td><td class="n big">2</td><td class="n big">3</td><td class="n">3</td><td class="n">4</td></tr>
+          </tbody>
+        </table>
+        <p class="small">Perfect-accuracy times to kill: 2 headshot pulls ≈ 0.32 s, 2 chest pulls ≈ 0.32 s up close — but 3 chest pulls ≈ 0.63 s past 30 m. Perfect accuracy, the magazine holds 6 kills up close and 4 at range. In real fights you will land maybe two-thirds of your pellets — so count on 3 pulls, not 2, and keep the third pull in the tube.</p>
+        <p class="small">Mid-band pulls are a range, not a single number: the table shows the pulls at the near end of the band → the pulls at the far end. The wiki's sampled damage values match the Census linear falloff the lab uses to within rounding, so the lab's pulls agree with the wiki's tables.</p>
+
+        <div class="chart-box">
+          <h3>Damage falloff — where your pellets get weaker</h3>
+          <p class="small" style="margin:0 0 6px">Full power to 10 m, then a steady slide to 67 per pellet at 30 m. The gold line shows Flechette Ammunition, which stretches full power to 30 m — at the cost of one pellet per pull (section 06).</p>
+<svg viewBox="0 0 640 240" width="100%" role="img" aria-label="Line chart of NS Viscount G6 damage per pellet from 0 to 40 metres: 84 damage flat to 10 metres, falling to 67 at 30 metres, then flat. Flechette Ammunition stays at 84 until 30 metres."><g stroke="var(--line)" stroke-width="1"><line x1="56" y1="90" x2="616" y2="90" /><line x1="56" y1="138" x2="616" y2="138" /><line x1="56" y1="189" x2="616" y2="189" /></g><g fill="var(--ink-soft)" font-size="12"><text x="48" y="94" text-anchor="end">100</text><text x="48" y="142" text-anchor="end">84</text><text x="48" y="193" text-anchor="end">67</text><text x="56" y="222">0 m</text><text x="196" y="222" text-anchor="middle">10 m</text><text x="336" y="222" text-anchor="middle">20 m</text><text x="476" y="222" text-anchor="middle">30 m</text><text x="616" y="222" text-anchor="end">40 m</text></g><polyline points="56,138 196,138 476,189 616,189" fill="none" stroke="var(--nc-blue)" stroke-width="3" /><polyline points="56,138 476,138 616,146.5" fill="none" stroke="var(--nc-gold)" stroke-width="2.5" stroke-dasharray="7 5" /><g fill="var(--nc-blue)"><circle cx="196" cy="138" r="4" /><circle cx="476" cy="189" r="4" /></g><g font-size="13" font-weight="600" fill="var(--ink)"><text x="202" y="130">84</text><text x="442" y="209">67 @ 30 m</text><text x="392" y="70" fill="var(--accent-ink)">— with Flechette Ammo</text></g></svg>
+        </div>
+
+        <h3 class="slot-title">How your TTK compares <span>— the other five semi-auto shotguns, rounded refire TTKs, your gun as the baseline</span></h3>
+        <table class="tbl" aria-label="Time to kill compared with the other semi-auto shotguns">
+          <thead>
+            <tr><th>Shotgun</th><th class="n">Close TTK (2 pulls)</th><th class="n">vs yours</th><th class="n">Far TTK</th><th class="n">vs yours</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>NC12 Sweeper</td><td class="n big">267 ms</td><td class="n">−15%</td><td class="n big">534 ms</td><td class="n">−15%</td></tr>
+            <tr><td>TS4 Haymaker</td><td class="n big">267 ms</td><td class="n">−15%</td><td class="n big">534 ms</td><td class="n">−15%</td></tr>
+            <tr><td>Thanatos VE70</td><td class="n big">267 ms</td><td class="n">−15%</td><td class="n big">267 ms</td><td class="n">−58%</td></tr>
+            <tr><td>NS Baron G5</td><td class="n big">300 ms</td><td class="n">−5%</td><td class="n big">600 ms</td><td class="n">−5%</td></tr>
+            <tr><td>SG-100</td><td class="n big">280 ms</td><td class="n">−11%</td><td class="n big">560 ms</td><td class="n">−11%</td></tr>
+            <tr style="font-weight:700"><td>NS Viscount G6 (this gun)</td><td class="n big">315 ms</td><td class="n">—</td><td class="n big">630 ms</td><td class="n">—</td></tr>
+          </tbody>
+        </table>
+        <p class="small">Close TTK is two pulls (one refire interval); far TTK is three pulls (two intervals) — except the Thanatos, which still kills in two pulls at range, so its far TTK is one interval. Percentages are (other − yours) ÷ yours; negative means faster than your gun.</p>
+
+        <div class="rule"><strong>Rule of thumb</strong>Inside 10 m you are at maximum power, and two pulls kill anything that is not a shielded Heavy. Past 30 m you need three pulls — close the distance, or fit Flechette (section 06).</div>
+      </section>
+
+      <section class="is-collapsed" aria-labelledby="s-aim">
+        <div class="sec-head">
+          <span class="num">03</span>
+          <h2 id="s-aim">Aim by distance</h2>
+          <span class="tag">Drag the range,<br />learn the style</span>
+        </div>
+        <p class="lede">One gun, four fighting styles. The right technique changes with distance — use the range finder below to see what your pellets do at any range, then learn the four bands underneath it. The lab counts <strong>trigger pulls</strong>, not pellets: one pull is 7 pellets, and the kill is two pulls if they all land.</p>
+
+        <div class="lab" aria-label="Interactive range finder" data-rpm="190" data-refire-ms="315" data-pellets="7" data-dmg-max="84" data-dmg-min="67" data-max-range="10" data-min-range="30" data-hs-mult="1.5" data-band-names="Point blank,Close range,Stretch range,Don't bother" data-band-limits="10,30,40" data-band-classes="good,good,situ,skip" data-advice-0="Hipfire at the chest and keep strafing. Scoping in here costs time and slows you to 0.75× speed — trust the hipfire pattern and keep moving." data-advice-1="Aim down sights at the centre of the chest. Pull once, re-aim, pull again — two pulls kill if the pellets land." data-advice-2="Aim down sights at the centre of the chest and pull on the beat. The pattern is wider than a torso now — expect three pulls, and close in if you can." data-advice-3="Don't engage — or change the ammo. Your pellets are a coin flip at this range; close the distance behind cover, or fit Flechette or Slug (section 06).">
+          <div class="lab-top">
+            <span class="reading"><span id="labDist">15</span> <small>metres to target</small></span>
+            <span class="chip good" id="labBand">Close range</span>
+          </div>
+          <input type="range" id="labRange" min="0" max="50" step="1" value="15" aria-label="Distance to target in metres" />
+          <div class="lab-scale"><span>0 m</span><span>10 m</span><span>30 m</span><span>40 m</span><span>50 m</span></div>
+          <div class="lab-out">
+            <div class="lab-cell"><div class="v" id="labDmg">558</div><div class="k">Damage / pull (7 pellets)</div></div>
+            <div class="lab-cell"><div class="v" id="labHead">2</div><div class="k">Headshot pulls to kill</div></div>
+            <div class="lab-cell"><div class="v" id="labChest">2</div><div class="k">Chest pulls to kill</div></div>
+            <div class="lab-cell"><div class="v" id="labTtk">0.32 s</div><div class="k">Best-case chest TTK</div></div>
+          </div>
+          <p class="lab-advice"><b>How to fight here</b><span id="labAdvice">Aim down sights at the centre of the chest. Pull once, re-aim, pull again — two pulls kill if the pellets land.</span></p>
+        </div>
+
+        <div style="margin-top:18px">
+          <div class="band">
+            <div class="dist"><span class="d1">0–10 m</span><span class="d2">Point blank</span></div>
+            <div class="body">
+              <h3>Hipfire — don't aim down sights</h3>
+              <p class="aim">Aim: centre of the chest, from the hip. Keep moving.</p>
+              <p>Scoping in costs you time and slows you to 0.75× speed — at arm's length that gets you killed. The NS Viscount G6 puts all 7 pellets inside a 0.44 m circle at 10 m, so the hipfire pattern already covers a torso. Strafe side to side (A/D) while pulling the trigger so you're hard to track.</p>
+            </div>
+          </div>
+          <div class="band">
+            <div class="dist"><span class="d1">10–30 m</span><span class="d2">Close range</span></div>
+            <div class="body">
+              <h3>ADS, centre of mass, paced pulls</h3>
+              <p class="aim">Aim: centre of the chest. One pull per 315 ms, re-aim between pulls.</p>
+              <p>This is where the gun earns its keep: full 84 damage to 10 m, and a two-pull kill that holds as long as the pellets land. Aim at the <strong>centre of the chest</strong> and pull once per 315 ms, re-aiming between pulls. Two pulls kill — the third pull in your magazine is for the second enemy, not for finishing the first.</p>
+            </div>
+          </div>
+          <div class="band">
+            <div class="dist"><span class="d1">30–40 m</span><span class="d2">Stretch range</span></div>
+            <div class="body">
+              <h3>Stretch — the pattern is wider than the man</h3>
+              <p class="aim">Aim: centre of the chest. Two pulls on paper, three in practice.</p>
+              <p>At 20 m the pattern is already <strong>0.87 m wide — wider than the man you're shooting at</strong> — so half your pellets miss a torso and the paper two-pull kill becomes three pulls in practice. Take these shots only at stationary or fleeing targets. Otherwise, close the distance behind cover, or fit Flechette or Slug Ammunition (section 06) and treat it as a different gun.</p>
+            </div>
+          </div>
+          <div class="band">
+            <div class="dist"><span class="d1">40 m +</span><span class="d2">Don't bother</span></div>
+            <div class="body">
+              <h3>Past its range — don't engage</h3>
+              <p class="aim">Aim: centre of the chest. Three pulls, if they all land.</p>
+              <p>At 30 m and beyond you are at minimum damage and the pattern is over a metre wide — most of your pellets miss a torso entirely. Take these shots only at stationary or fleeing targets. Otherwise, your better play is to close the distance behind cover. Knowing when <em>not</em> to shoot is a skill too.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="is-collapsed" aria-labelledby="s-stances">
+        <div class="sec-head">
+          <span class="num">04</span>
+          <h2 id="s-stances">Stances and firing modes</h2>
+          <span class="tag">How you stand and<br />how you hold the trigger</span>
+        </div>
+        <p class="lede">Your accuracy is decided by two things before skill even enters it: <strong>what your body is doing</strong> (your stance sets the starting cone of fire) and <strong>what your finger is doing</strong> (on a semi-auto shotgun, your finger sets the pace — one pull per click, and the gun will not fire faster than its 315 ms refire). The NS Viscount G6 has no fire-mode switch — semi-auto only — so "firing modes" are something you do with your finger, not a setting on the gun.</p>
+
+        <h3 class="slot-title">Stances <span>— the cone you start with, before the first shot</span></h3>
+        <p class="small">Two numbers add up to where your pellets go: the <strong>pellet spread</strong> (2.5° hip, 2.25° aimed) and the <strong>cone of fire</strong> below. Pellet coverage = spread + cone. A rifle's cone blooms with every shot; a shotgun's does not — there is no bloom at all, so the cone you start with is the cone you keep.</p>
+        <table class="tbl" aria-label="NS Viscount G6 cone of fire by stance">
+          <thead>
+            <tr><th>Stance</th><th class="n">Starting cone</th><th>What it means for you</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Sprinting</strong></td><td class="n big">7.0°</td><td>Maxed out — the widest the cone can be. This is the section 01 disaster: never start firing from a sprint.</td></tr>
+            <tr><td><strong>Hipfire, moving</strong></td><td class="n big">2.0°</td><td>Walking or strafing from the hip. The pattern's centre wanders — at 8 m the full coverage is already 0.63 m wide (2.5° spread + 2.0° cone), wider than a torso.</td></tr>
+            <tr><td><strong>Hipfire, standing</strong></td><td class="n big">1.5°</td><td>Your point-blank default. The 0.35 m spread ring at 8 m in section 05 is this stance drawn out — the cone adds 1.5° on top, so the full coverage is 0.56 m (4.0°).</td></tr>
+            <tr><td><strong>Hipfire, crouched</strong></td><td class="n big">1.0°</td><td>The tightest hipfire you have (1.5° if you crouch-walk). Crouch when holding a doorway from the hip.</td></tr>
+            <tr><td><strong>Aimed (ADS), feet planted</strong></td><td class="n big">0.1°</td><td>Standing or crouched makes no difference here. The cone is a dot — but the pellet spread is still 2.25°, so ADS centres the pattern, it does not shrink it. Full coverage at 8 m: 0.33 m.</td></tr>
+            <tr><td><strong>Aimed (ADS), strafing</strong></td><td class="n big">0.7°</td><td>Same tight start, but you move at 0.75× speed — faster on the strafe than an LMG's 0.5×. Strafe <em>between</em> pulls to stay hard to hit; plant your feet during each pull.</td></tr>
+          </tbody>
+        </table>
+
+        <h3 class="slot-title">Firing modes <span>— the pace you set, pull by pull</span></h3>
+        <table class="tbl" aria-label="Firing modes and when to use them">
+          <thead>
+            <tr><th>Mode</th><th>How your finger does it</th><th>Use it at</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>One pull, re-aim — the default</strong></td><td>Click once, let the crosshair settle, click again — one pull every 315 ms</td><td>Almost everything. This is the whole gun.</td></tr>
+            <tr><td><strong>The 3-pull burst — the Dorf discipline</strong></td><td>Three paced pulls, ADS, re-aiming between each — then stop and assess</td><td>20 m fights. At 20 m a 3-pull ADS burst with Smart-Choke + Flechette + Ext Mag kills in one mag 99% of the time (Dorf EP03).</td></tr>
+            <tr><td><strong>The mag dump — mashing</strong></td><td>Clicking as fast as you can, over and over</td><td>Nowhere. The gun cannot fire faster than its 315 ms refire — extra clicks do nothing, and a wandering aim wastes the magazine.</td></tr>
+            <tr><td><strong>Slug — one big bullet</strong></td><td>ADS, aim at the head, single deliberate pulls — only with Slug Ammunition fitted</td><td>20–40 m with Slug Ammunition (section 06). One 450-damage slug, no spread — a different gun. The SG-100's EP12 ADS setup lives here.</td></tr>
+          </tbody>
+        </table>
+
+        <div class="viz" id="cadenceSim" data-refire-ms="315" data-pellets="7" data-spread="2.25" data-distance="20">
+          <h3>Try it: the trigger-cadence window</h3>
+          <p class="small" style="margin:0">A target 20 m away, aiming down sights. <strong>Click PULL THE TRIGGER</strong> (mouse, touch, or Space with the button focused) — one click is one pull, and the gun only fires if at least <strong>315 ms</strong> have passed since the last pull. Click too early and nothing happens: that click is counted as "too early" and the button flashes red. The green bar under the buttons is the gun getting ready — pull again when it is full, and within about 250 ms after it fills: dawdling between pulls is a miss of its own kind. <strong>Every three pulls is one group; all three landing at least half their pellets, on the beat, is a kill.</strong> This practice window replaces the auto-rifle burst simulator from the rest of the series: a semi-auto shotgun has no 5-round burst rhythm to practise, so the drill is paced pulls at the gun's own refire, re-aiming between pulls. Pellets are drawn at true scale from this gun's numbers (7 pellets, 2.25° spread, target at 20 m).</p>
+          <div class="sim-stage" id="cadStage" aria-hidden="true">
+            <svg viewBox="0 0 200 300" width="150" height="300" role="presentation">
+              <g fill="var(--ink-soft)">
+                <circle cx="100" cy="42" r="23" />
+                <rect x="84" y="68" width="11" height="74" rx="5" />
+                <rect x="105" y="68" width="11" height="74" rx="5" />
+                <rect x="60" y="66" width="80" height="112" rx="14" />
+                <rect x="66" y="178" width="28" height="18" />
+                <rect x="68" y="194" width="22" height="102" />
+                <rect x="110" y="194" width="22" height="102" />
+              </g>
+              <circle cx="100" cy="126" r="5" fill="var(--nc-gold)" />
+            </svg>
+          </div>
+          <div class="sim-controls">
+            <button type="button" class="sim-fire" id="cadFire">Pull the trigger</button>
+            <button type="button" class="sim-reset" id="cadReset">Reset target</button>
+          </div>
+          <div class="bloom-track" aria-hidden="true"><div class="bloom-fill" id="cadReady" style="width:100%"></div></div>
+          <p class="cad-ready-label">Gun ready — the bar fills over 315 ms after each pull. Green means ready.</p>
+          <div class="sim-read">
+            <div class="lab-cell"><div class="v" id="cadPulls">0</div><div class="k">Pulls fired</div></div>
+            <div class="lab-cell"><div class="v" id="cadHits">0 / 0</div><div class="k">Pellets on target</div></div>
+            <div class="lab-cell"><div class="v" id="cadEarly">0</div><div class="k">Too-early clicks</div></div>
+            <div class="lab-cell"><div class="v" id="cadGap">—</div><div class="k">Gap since last pull</div></div>
+          </div>
+          <p class="sim-verdict" id="cadVerdict">Your 3-pull groups will be graded here — three landed pulls, on the beat, is a kill.</p>
+          <div class="burst-log" id="cadLog" aria-label="Your 3-pull groups so far"></div>
+        </div>
+
+        <div class="rule"><strong>Trigger discipline, in numbers</strong>At 20 m a single pellet's hit chance falls from 55% on the first shot to 18% on the last when you spray (Dorf EP03). The fix is not an attachment, it is a rhythm: <strong>three paced pulls, ADS, re-aiming between each</strong>. With Smart-Choke + Flechette + Extended Mag that 3-pull burst kills in one mag 99% of the time — against a 46% chance to <em>not</em> kill before the reload when spraying with MPL + Flechette. Bursting beats attachments for ammo: the same shells, fired on the beat, go twice as far.</div>
+      </section>
+
+      <section class="is-collapsed" aria-labelledby="s-see">
+        <div class="sec-head">
+          <span class="num">05</span>
+          <h2 id="s-see">See it: the pictures</h2>
+          <span class="tag">Spread, bursts<br />and sights, drawn</span>
+        </div>
+        <p class="lede">Some things are easier to show than to say. Here's what your pellets actually do: how wide the pattern is at 8 metres, what a good trigger rhythm looks like, and what the 2x sight really changes. The hands-on version — pulling the trigger yourself, on the beat — is the practice window in section 04.</p>
+
+        <div class="viz">
+          <h3>Hipfire at 8 metres — where the pellets land</h3>
+          <p class="small" style="margin:0">A full-size target 8 m away — an arm's-length room fight. The rings show where your pellets land around your aim point (the chest). Sizes are drawn to scale from the gun's real pellet-spread numbers.</p>
+          <svg viewBox="0 0 640 320" width="100%" role="img" aria-label="Diagram of a soldier target at 8 metres with spread rings drawn at true scale: hipfire while moving spreads about 0.63 metres wide, hipfire standing still about 0.35 metres, and with a Smart-Choke while aiming about 0.19 metres. Aiming down sights lands in a slightly tighter ring.">
+            <line x1="20" y1="292" x2="620" y2="292" stroke="var(--line)" stroke-width="2" />
+            <g fill="var(--ink-soft)">
+              <circle cx="320" cy="58" r="17" />
+              <rect x="281" y="86" width="13" height="66" rx="6" />
+              <rect x="346" y="86" width="13" height="66" rx="6" />
+              <rect x="297" y="82" width="46" height="78" rx="10" />
+              <rect x="301" y="158" width="38" height="16" />
+              <rect x="303" y="172" width="15" height="118" />
+              <rect x="322" y="172" width="15" height="118" />
+            </g>
+            <circle cx="320" cy="128" r="44" fill="none" stroke="var(--skip)" stroke-width="2" stroke-dasharray="7 5" />
+            <circle cx="320" cy="128" r="24" fill="var(--nc-blue)" opacity="0.16" />
+            <circle cx="320" cy="128" r="24" fill="none" stroke="var(--nc-blue)" stroke-width="2" />
+            <circle cx="320" cy="128" r="22" fill="none" stroke="var(--good)" stroke-width="2" />
+            <circle cx="320" cy="128" r="13" fill="var(--nc-gold)" opacity="0.22" />
+            <circle cx="320" cy="128" r="13" fill="none" stroke="var(--nc-gold)" stroke-width="2" />
+            <circle cx="320" cy="128" r="5" fill="var(--good)" />
+            <g font-size="14" font-weight="600" fill="var(--ink)">
+              <text x="24" y="46">Target at 8 m</text>
+              <text x="24" y="66" fill="var(--ink-soft)" font-weight="400">≈ 1.8 m tall, drawn to scale</text>
+              <text x="470" y="66" fill="var(--skip)">strafing: ≈ 0.63 m wide</text>
+              <text x="470" y="118" fill="var(--nc-blue)">standing: ≈ 0.35 m wide</text>
+              <text x="470" y="180" fill="var(--accent-ink)">+ Smart-Choke, ADS: ≈ 0.19 m</text>
+              <text x="470" y="238" fill="var(--good)">aimed (ADS): slightly tighter</text>
+            </g>
+            <g stroke="var(--ink-soft)" stroke-width="1">
+              <line x1="462" y1="62" x2="354" y2="106" />
+              <line x1="462" y1="114" x2="350" y2="124" />
+              <line x1="462" y1="176" x2="340" y2="140" />
+              <line x1="462" y1="234" x2="326" y2="132" />
+            </g>
+          </svg>
+          <div class="legend">
+            <span><i style="background:var(--skip)"></i>Hipfire, strafing (4.5° coverage)</span><span><i style="background:var(--nc-blue)"></i>Hipfire, standing (2.50° spread)</span><span><i style="background:var(--good)"></i>Aimed (ADS) (2.25° spread)</span><span><i style="background:var(--nc-gold)"></i>+ Smart-Choke, ADS (1.35° spread)</span>
+          </div>
+          <p class="cap">Read it this way: standing still, the <b>0.35 m ring roughly covers the chest</b> — most pellets hit a target this size, which is why hipfire works point-blank. But move and it grows to <b>0.63 m — wider than the torso</b> — so the edge pellets start leaking past him. Aim down sights and the spread tightens a touch (2.25° → 0.31 m), the only shotgun in the class where ADS does that — and the Smart-Choke tightens it further to 0.19 m. The rings only grow with distance while the man doesn't. Past ~10 m that's pellets missing entirely: the exact moment to stop hipfiring and start re-aiming between pulls. (Ring sizes use the real geometry: spread diameter = 2 × distance × tan(spread ÷ 2). The full pellet coverage adds the cone of fire on top — hipfire standing is 0.56 m, not 0.35 m.)</p>
+        </div>
+
+        <div class="viz">
+          <h3>Pull – re-aim – pull: the 3-pull rhythm</h3>
+          <p class="small" style="margin:0">Same 18 pulls, two very different outcomes. Mashing the trigger wastes the magazine; three paced pulls, re-aiming between each, kills:</p>
+          <svg viewBox="0 0 640 216" width="100%" role="img" aria-label="Diagram comparing trigger patterns. Bad: mashing the trigger for 18 straight pulls, the pattern centres wander and the last pulls land in a large circle. Good: three pulls, re-aim, three pulls, re-aim, three pulls — all three groups stay small.">
+            <g font-family="Rajdhani, sans-serif" font-weight="700">
+              <text x="8" y="52" font-size="17" fill="var(--skip)">✗ MASH</text>
+              <text x="8" y="152" font-size="17" fill="var(--good)">✓ 3 PULLS, RE-AIM</text>
+            </g>
+            <rect x="120" y="34" width="380" height="16" fill="var(--skip)" opacity="0.75" />
+            <polygon points="120,42 520,16 520,68" fill="var(--skip)" opacity="0.14" />
+            <ellipse cx="540" cy="42" rx="34" ry="30" fill="none" stroke="var(--skip)" stroke-width="2" />
+            <g fill="var(--ink)" font-size="13.5">
+              <text x="120" y="24">Trigger mashed — 18 pulls, never re-aimed</text>
+              <text x="452" y="96">last pulls: pattern centres wandering</text>
+            </g>
+            <g fill="var(--nc-blue)">
+              <rect x="120" y="134" width="118" height="16" />
+              <rect x="278" y="134" width="118" height="16" />
+              <rect x="436" y="134" width="118" height="16" />
+            </g>
+            <g fill="none" stroke="var(--nc-blue)" stroke-width="2">
+              <ellipse cx="252" cy="142" rx="11" ry="10" />
+              <ellipse cx="410" cy="142" rx="11" ry="10" />
+              <ellipse cx="568" cy="142" rx="11" ry="10" />
+            </g>
+            <g fill="var(--ink)" font-size="13.5">
+              <text x="152" y="124">3 pulls</text>
+              <text x="310" y="124">3 pulls</text>
+              <text x="468" y="124">3 pulls</text>
+              <text x="238" y="172" text-anchor="middle" fill="var(--good)" font-weight="600">re-aim ≈315 ms</text>
+              <text x="396" y="172" text-anchor="middle" fill="var(--good)" font-weight="600">re-aim ≈315 ms</text>
+              <text x="120" y="196">Every group starts centred — all three groups stay fist-sized.</text>
+            </g>
+          </svg>
+          <p class="cap"><b>The target pattern is three pulls, re-aiming between each — that is the ideal.</b> At 20 m a single pellet's hit chance falls from 55% on the first shot to 18% on the last when you spray, so the extra pulls mostly decorate the wall behind your enemy instead of hitting him. Three paced pulls, ADS, with Smart-Choke + Flechette + Extended Mag kills in one mag 99% of the time — against a 46% chance to <em>not</em> kill before the reload when spraying with MPL + Flechette (Dorf EP03). Short groups also leave you shells for the second enemy — remember, the magazine is only 12.</p>
+        </div>
+
+        <div class="viz2">
+          <div class="viz">
+            <h3>CCLR — 1x</h3>
+            <svg viewBox="0 0 300 210" width="100%" role="img" aria-label="View through the 1x reflex sight at a target 20 metres away: the soldier appears small in an open frame, with buildings and a crate visible around him.">
+              <rect x="0" y="0" width="300" height="152" fill="var(--surface-2)" />
+              <rect x="0" y="152" width="300" height="58" fill="var(--line)" opacity="0.55" />
+              <rect x="238" y="58" width="28" height="94" fill="var(--ink-soft)" opacity="0.55" />
+              <rect x="22" y="118" width="52" height="34" fill="var(--ink-soft)" opacity="0.7" />
+              <g fill="var(--ink)" transform="translate(150,152)">
+                <circle cx="0" cy="-57" r="6.5" />
+                <rect x="-8" y="-51" width="16" height="27" rx="4" />
+                <rect x="-7" y="-24" width="6" height="24" />
+                <rect x="1" y="-24" width="6" height="24" />
+              </g>
+              <circle cx="150" cy="110" r="4" fill="var(--skip)" />
+              <circle cx="150" cy="110" r="10" fill="none" stroke="var(--skip)" stroke-width="1.5" />
+              <rect x="8" y="8" width="284" height="194" rx="14" fill="none" stroke="var(--ink)" stroke-width="5" />
+            </svg>
+            <p class="cap">No zoom. The target at 20 m is <b>small but the view is wide open</b> — you see the crate, the tower, and the next enemy coming. Fast to aim, nothing blocks your edges. Best inside ~25 m.</p>
+          </div>
+          <div class="viz">
+            <h3>ACRA — 3.4x</h3>
+            <svg viewBox="0 0 300 210" width="100%" role="img" aria-label="View through the magnified sight at the same target 20 metres away: the soldier appears larger and fills the round scope, while the crate and tower are cropped out of view.">
+              <rect x="0" y="0" width="300" height="168" fill="var(--surface-2)" />
+              <rect x="0" y="168" width="300" height="42" fill="var(--line)" opacity="0.55" />
+              <rect x="-52" y="100" width="104" height="68" fill="var(--ink-soft)" opacity="0.7" />
+              <g fill="var(--ink)" transform="translate(150,168) scale(2)">
+                <circle cx="0" cy="-57" r="6.5" />
+                <rect x="-8" y="-51" width="16" height="27" rx="4" />
+                <rect x="-7" y="-24" width="6" height="24" />
+                <rect x="1" y="-24" width="6" height="24" />
+              </g>
+              <circle cx="150" cy="88" r="4.5" fill="var(--skip)" />
+              <circle cx="150" cy="88" r="12" fill="none" stroke="var(--skip)" stroke-width="1.5" />
+              <circle cx="150" cy="105" r="97" fill="none" stroke="var(--ink)" stroke-width="7" />
+            </svg>
+            <p class="cap">Same target, same 20 m — but he looks <b>more than three times as tall</b>, so placing the pattern's centre on his chest gets much easier. The price: your view narrows to the round window, the crate and tower are gone, and close targets feel fast and huge. Best at 15–30 m.</p>
+          </div>
+        </div>
+        <p class="cap" style="margin-top:12px">That's the whole sight decision from section 06 in one picture: <b>1x for awareness, magnified for precision.</b> Most veterans carry both and swap per base — indoors 1x, open ground magnified. On a shotgun the sight matters less than on a rifle: it centres the pattern, it never shrinks it.</p>
+      </section>
+
+      <section class="is-collapsed" aria-labelledby="s-att">
+        <div class="sec-head">
+          <span class="num">06</span>
+          <h2 id="s-att">Attachments: what to buy, what to skip</h2>
+          <span class="tag">Every slot, judged<br />for a new player</span>
+        </div>
+        <p class="lede">Good news: the most important thing on this gun — the trigger discipline in section 04 — costs nothing. Everything below is an optional sidegrade, not an upgrade. Buy in the order shown and stop whenever the gun feels right.</p>
+
+        <h3 class="slot-title">Optic <span>— your window on the fight</span></h3>
+
+        <div class="att">
+          <div class="att-head"><h4>No optic — iron sights</h4><span class="chip free">Already yours</span><span class="cost">0 A7</span></div>
+          <p class="effect">The default open sights. Honest, unobstructed, and free — and on a shotgun the sight only centres the pattern, so irons lose you very little.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> your first weeks. Spend A7 on your suit and shield first.</p>
+            <p><b class="bad-t">Bad:</b> nothing — there's no downside to an empty slot.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>CCLR (1x)</h4><span class="chip first">First buy</span><span class="cost">25 A7</span></div>
+          <p class="effect">A clean red-dot sight with no zoom. Your default upgrade, and honestly your best all-round option.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> everywhere indoors and out to ~25 m — which is most shotgun fights.</p>
+            <p><b class="bad-t">Bad:</b> picking out targets past 30 m; that's what the magnified sight is for.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>HS/NV Scope (1x)</h4><span class="chip situ">Situational</span><span class="cost">25 A7</span></div>
+          <p class="effect">Night-vision sight: enemies glow white against a dark view, and it sees through smoke.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> night fights, smoky doorways, spotting infiltrators by their outline.</p>
+            <p><b class="bad-t">Bad:</b> daytime and long range — its view is short-ranged and washes out in bright light.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>3.4x scopes</h4><span class="chip skip">Skip for now</span><span class="cost">25 A7</span></div>
+          <p class="effect">ACRA (3.4x) — sniper-style magnification on a shotgun.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> almost nothing a beginner does — recoil magnifies too, and tunnels your vision.</p>
+            <p><b class="bad-t">Bad:</b> any fight inside 30 m, which is where you'll spend your first hundred hours.</p>
+          </div>
+        </div>
+
+        <h3 class="slot-title">Barrel <span>— one real choice. "None" is a real choice too.</span></h3>
+
+        <div class="att">
+          <div class="att-head"><h4>No barrel slot — built-in suppressor</h4><span class="chip free">Already yours</span><span class="cost">0 A7</span></div>
+          <p class="effect">The Viscount comes with a built-in suppressor and extended magazine: you are off the minimap when you fire, and there is no barrel slot to fill. You cannot fit a Smart-Choke — the tight 2.5° pattern is what you get, and it is already the tightest in the class.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> silent flanking and point holds — the stealth is free, so use it.</p>
+            <p><b class="bad-t">Bad:</b> nothing — the only cost is that you can't tighten the pattern further.</p>
+          </div>
+        </div>
+
+        <h3 class="slot-title">Rail <span>— pick ONE playstyle: aimed or hipfire</span></h3>
+
+        <div class="att">
+          <div class="att-head"><h4>No rail attachment</h4><span class="chip free">Already yours</span><span class="cost">0 A7</span></div>
+          <p class="effect">Nothing fitted. Fine while you learn the gun — the rail is the last slot to fill, not the first.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> your first weeks. The choke and the sight matter more.</p>
+            <p><b class="bad-t">Bad:</b> nothing meaningful.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>Comfort Grip</h4><span class="chip good">Good</span><span class="cost">100 A7</span></div>
+          <p class="effect">Weapon swap is 30% faster, horizontal recoil falls 20%, vertical recoil rises 20%. The aimed-shooting grip.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> the aimed, mid-range game — and swapping to your sidearm when the tube runs dry.</p>
+            <p><b class="bad-t">Bad:</b> hipfire builds — it does nothing for the hip, and the extra vertical kick shows on the second pull.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>Darklight Flashlight</h4><span class="chip situ">Situational</span><span class="cost">100 A7</span></div>
+          <p class="effect">Reveals cloaked infiltrators in a cone in front of you. It also announces exactly where you are.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> hunting infiltrators around a point, and night fights in tight buildings.</p>
+            <p><b class="bad-t">Bad:</b> open play — the light is a beacon, and you are a shotgun: you want to be close before they see you.</p>
+          </div>
+        </div>
+
+        <p class="small">Extended Magazine: already built in — the Viscount's 12-shell tube <em>is</em> the extended magazine. There is nothing to buy here.</p>
+
+        <div class="att">
+          <div class="att-head"><h4>Muzzle Mounted Light (MPL)</h4><span class="chip good">Good — CQB build</span><span class="cost">100 A7</span></div>
+          <p class="effect">Cuts vertical and horizontal recoil by 60% when fired from the hip. This is the shotgun's laser — but read it carefully: it cuts <em>recoil</em>, it does not tighten your hipfire cone the way a Laser Sight does on a rifle.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> indoor point-holds and stairwell fights where you hipfire inside 8 m.</p>
+            <p><b class="bad-t">Bad:</b> open bases — you give up the Comfort Grip's aimed control for a bonus you rarely use.</p>
+          </div>
+        </div>
+
+        <h3 class="slot-title">Ammo <span>— the load that changes the gun</span></h3>
+
+        <div class="att">
+          <div class="att-head"><h4>Standard pellets</h4><span class="chip free">Already yours</span><span class="cost">0 A7</span></div>
+          <p class="effect">7 pellets per pull, 84 damage each up close. The honest default — every number in section 02 is this ammo.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> learning the gun, and every close fight. Nothing to unlearn later.</p>
+            <p><b class="bad-t">Bad:</b> nothing — it is the baseline everything else is measured against.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>Flechette Ammunition</h4><span class="chip good">Good</span><span class="cost">100 A7</span></div>
+          <p class="effect">Triples your full-damage range (10 m → 30 m) and stretches the falloff to 90 m — but costs one pellet per pull (7 → 6). Two pulls still kill to about 32 m. The same trade as the Baron — two pulls still kill to about 32 m — and the built-in suppressor means the extra range costs you nothing in stealth.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> stretching your two-pull kill out to range, and the EP03 one-mag kill combo (with Smart-Choke + Ext Mag).</p>
+            <p><b class="bad-t">Bad:</b> close fights — up close it is the same two pulls for one fewer pellet, and on the Thanatos it is strictly worse.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>Slug Ammunition</h4><span class="chip situ">Situational</span><span class="cost">100 A7</span></div>
+          <p class="effect">One 450-damage slug per pull, falling to 300 at the weapon's minimum damage range. No spread at all — a headshot is 675 damage. Turns the shotgun into a slow battle rifle: 2 pulls to the chest, 2 to the head at range.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> 20–40 m shots at exposed targets, and the SG-100's EP12 ADS setup (slugs + Comfort Grip + Smart-Choke, aim for the head).</p>
+            <p><b class="bad-t">Bad:</b> close fights — you give up the whole pellet pattern for one slug, and a miss is a whole pull wasted.</p>
+          </div>
+        </div>
+
+      </section>
+
+      <section class="is-collapsed" aria-labelledby="s-loadouts">
+        <div class="sec-head">
+          <span class="num">07</span>
+          <h2 id="s-loadouts">Four ready-made setups</h2>
+          <span class="tag">Copy one,<br />go fight</span>
+        </div>
+        <div class="grid2">
+          <div class="loadout">
+            <p class="cost">0 A7 · Day one</p>
+            <h3>Standard Issue</h3>
+            <ul>
+              <li><b>Optic:</b> Iron sights</li><li><b>Barrel:</b> built-in suppressor</li><li><b>Rail:</b> none</li><li><b>Ammo:</b> standard</li>
+            </ul>
+            <p>What the Black Market hands you — silent, with twelve shells in the tube. Genuinely good before spending anything.</p>
+          </div>
+          <div class="loadout pick">
+            <p class="cost">225 A7 · Recommended</p>
+            <h3>All-Rounder</h3>
+            <ul>
+              <li><b>Optic:</b> CCLR 1x</li><li><b>Barrel:</b> built-in suppressor</li><li><b>Rail:</b> Comfort Grip</li><li><b>Ammo:</b> Flechette</li>
+            </ul>
+            <p>The best value in this whole guide. Silent, tight, and stretched to a 45 m full-damage reach.</p>
+          </div>
+          <div class="loadout">
+            <p class="cost">225 A7 · Indoor brawler</p>
+            <h3>Point Hold</h3>
+            <ul>
+              <li><b>Optic:</b> CCLR 1x</li><li><b>Barrel:</b> built-in suppressor</li><li><b>Rail:</b> MPL</li><li><b>Ammo:</b> Flechette</li>
+            </ul>
+            <p>Built to hipfire down stairwells and hold a capture point room — without ever showing on the minimap.</p>
+          </div>
+          <div class="loadout">
+            <p class="cost">225 A7 · Silent flanker</p>
+            <h3>Night Ghost</h3>
+            <ul>
+              <li><b>Optic:</b> HS/NV Scope</li><li><b>Barrel:</b> built-in suppressor</li><li><b>Rail:</b> Comfort Grip</li><li><b>Ammo:</b> Slug</li>
+            </ul>
+            <p>Silent by design, night vision for the dark, slugs for the 20–40 m shots. The flanker build — don't take fair fights.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="is-collapsed" aria-labelledby="s-kill">
+        <div class="sec-head">
+          <span class="num">08</span>
+          <h2 id="s-kill">Kill efficiently: six habits</h2>
+          <span class="tag">Technique beats<br />attachments</span>
+        </div>
+        <ol class="habits">
+          <li>
+            <h3>Aim at the centre of the chest</h3><p>Headshots deal 1.5× per pellet, but a chest is a bigger target than a head, and two chest pulls kill to 10 m anyway. So aim at the <strong>centre of the chest</strong> and let the whole pattern land. Chasing headshots with a shotgun is how you land three pellets instead of 7.</p>
+          </li>
+          <li>
+            <h3>Pull only when the dot is on him</h3><p>Every pull is a whole pattern — a pull fired at a wall is 588 damage thrown away. Wait the 315 ms, let the crosshair settle on the chest, then pull. The trigger-cadence window in section 04 trains exactly this: too-early clicks do nothing, so the only fast pull is a pull that lands.</p>
+          </li>
+          <li>
+            <h3>Three pulls, then assess</h3><p>Three paced pulls, ADS, re-aiming between each — then stop and look. Three landed pulls kill anything that isn't a shielded Heavy, and the pause tells you whether he's dead, wounded, or never there. Emptying the tube on one target is how you meet his friend with an empty gun.</p>
+          </li>
+          <li>
+            <h3>Reload on your terms — interrupt the tube</h3><p>Shells load one at a time — 0.5 s per shell, so a full tube takes about 6.1 s. But you can interrupt it: <strong>after any single shell the gun is ready to fire</strong>. Fire two, load two, fire again — never stand through a full tube reload in the open. Treat the last 2 shells as your emergency reserve, not your working magazine.</p>
+          </li>
+          <li>
+            <h3>Pre-aim the doorway, then strafe</h3><p>Walk with your crosshair at chest height, pointed where an enemy's chest will appear — a doorway edge, a corner, stairs. Most beginners lose fights in the half-second spent dragging the crosshair onto target. While firing, tap A/D to strafe: a moving target is dramatically harder to headshot back, and at 8 m your hipfire pattern still covers his torso.</p>
+          </li>
+          <li>
+            <h3>Pick fights inside 30 m, best inside 10</h3><p>Your damage, pattern and reload all shine at close range. Sprint between cover, use buildings and rocks as stepping stones, and arrive at <em>your</em> range before opening fire. The player who chooses the range usually wins the duel — make it you.</p>
+          </li>
+        </ol>
+      </section>
+
+      <section class="is-collapsed" aria-labelledby="s-weak">
+        <div class="sec-head">
+          <span class="num">09</span>
+          <h2 id="s-weak">The honest weak spots</h2>
+          <span class="tag">Know them,<br />play around them</span>
+        </div>
+        <p class="lede">Every gun has a price. Here's where the NS Viscount G6 pays — and the habit that covers each hole.</p>
+
+        <div class="weak">
+          <h3>1 · The range wall</h3><p>Past 30 m you need three pulls and the pattern is 1.31 m wide — most of your pellets miss a torso entirely. The tight pattern buys you reach, not range without end.</p><p class="fix"><b>Play around it:</b> fight inside 30 m, and fit Flechette to stretch the two-pull kill to about 47 m.</p>
+        </div>
+        <div class="weak">
+          <h3>2 · A half-pattern is a living enemy</h3><p>Two pulls kill only if all 7 pellets land. A pull that lands half its pellets does 294 damage — and the enemy is still shooting. Pellet RNG is not a rounding error, it is the whole fight.</p><p class="fix"><b>Play around it:</b> get closer. Every metre closer is more pellets on the torso — range is accuracy on a shotgun.</p>
+        </div>
+        <div class="weak">
+          <h3>3 · Your follow-up is 315 ms away</h3><p>190 RPM sounds fast until you miss the first pull: the second pull arrives 315 ms later, and a missed first pull costs you a third of a second of the enemy shooting back. There is no spray to save you.</p><p class="fix"><b>Play around it:</b> pull only when the dot is on him (habit 2). The fastest second pull is a first pull that landed.</p>
+        </div>
+        <div class="weak">
+          <h3>4 · The tube reload</h3><p>A full tube takes about 6.1 s — an eternity mid-fight — and the gun is useless while you stand there loading it. A dry tube at the wrong moment is a death sentence.</p><p class="fix"><b>Play around it:</b> interrupt the reload after any shell (habit 4). Fire two, load two, fire again — the tube is a magazine you can top up, not a reload you have to finish.</p>
+        </div>
+        <div class="weak">
+          <h3>5 · Recoil climbs, and ADS slows you</h3><p>Vertical recoil 2.8, horizontal 0.22, a 2.2× first-shot kick — the first pull jumps hardest, and the pattern's centre walks up with every pull. Aiming down sights slows you to 0.75× speed.</p><p class="fix"><b>Play around it:</b> re-aim between pulls instead of fighting the climb, and hipfire inside 8 m instead of scoping (that's the Point Hold build's whole idea).</p>
+        </div>
+      </section>
+
+      <section class="is-collapsed" aria-labelledby="s-drills">
+        <div class="sec-head">
+          <span class="num">10</span>
+          <h2 id="s-drills">Training: five VR drills</h2>
+          <span class="tag">VR Training area<br />~15 minutes a session</span>
+        </div>
+        <p class="lede">Open the world map, travel to <strong>VR Training</strong>, and run these on the target dummies. Five minutes before a play session beats an hour of dying confused.</p>
+        <ul class="drills">
+          <li>
+            <div class="d-name">The Pattern Test <span>2 minutes · spread</span></div>
+            <p>Fire at a wall at 8 m, then 15 m, then 20 m. See the ring grow — 0.35 m at 8 m, 0.87 m at 20 m. Repeat with the Smart-Choke: 0.19 m at 8 m ADS. Learn what the pattern looks like before you trust it.</p>
+          </li>
+          <li>
+            <div class="d-name">Cadence Drill <span>4 minutes · trigger pace</span></div>
+            <p>Use the section 04 window first, then live: at 20 m, kill dummies with single pulls exactly 315 ms apart. Count your too-early clicks — zero is the goal. The gun cannot fire faster than its refire, so the only fast pull is a pull that lands.</p>
+          </li>
+          <li>
+            <div class="d-name">3-Pull Burst <span>4 minutes · the Dorf discipline</span></div>
+            <p>At 20 m, ADS, kill dummies with groups of three pulls, re-aiming between each. With Smart-Choke + Flechette + Ext Mag, the whole kill should fit in one magazine — 99% of the time, per Dorf EP03.</p>
+          </li>
+          <li>
+            <div class="d-name">Circle Strafe <span>3 minutes · hipfire</span></div>
+            <p>Pick a dummy, stand 5 m away, and circle it with A/D while hipfiring it down without stopping. This is your point-blank survival skill — the one that fires while your movement does the defending.</p>
+          </li>
+          <li>
+            <div class="d-name">Reload Discipline <span>3 minutes · habit</span></div><p>Fire exactly 2 shells, reload 2, fire again — practise the interrupt until it's automatic. Then try a full tube reload behind cover and count the seconds: about 6.1 s is why you never do it in the open.</p>
+          </li>
+        </ul>
+
+        <div class="rule"><strong>Pocket summary — screenshot this</strong>
+          NS Viscount G6 · fight inside 30 m · centre of mass, one pull per 315 ms, re-aim between pulls · 3 pulls, then assess · reload on your terms — interrupt the tube · buy the CCLR (25 A7) and no choke to buy — the pattern is already tight · hipfire under 8 m · past 30 m, close in or change ammo.
+        </div>
+      </section>
+
+      <footer>
+        <p><strong>About this guide.</strong> An entry in the Sage tutorial series — one weapon, one page, written for a brand-new player. Stats are the NS Viscount G6's live game values (588→469 damage per pull, 190 RPM, 12-shell magazine) as listed by the community wiki and the Census API data feed; times to kill are calculated from damage, refire time and pulls to kill, and the six-way TTK comparison in section 02 uses rounded refire-ms TTKs with this gun as the baseline.</p>
+        <p>Sources: <a href="https://planetside.fandom.com/wiki/NS_Viscount_G6">NS Viscount G6 — PlanetSide 2 Wiki</a> · <a href="https://liquidwarp.honu.pw/stats/weapons/infantry/ns-viscount-g6-6011234.html">NS Viscount G6 weapon data — PS2 LiquidWarp (Honu)</a>. Weapon render via the Census API; spread rings and sight views are scale diagrams drawn from the gun's published pellet-spread and magnification values. PlanetSide 2 is a Daybreak Game Company title; this is a fan-made tutorial, not affiliated with Daybreak.</p>
+      </footer>
+    </div>
+
+  <script type="module" src="weapon-sage-guide.mjs?v=20261109-sageguide3"></script>
+  <script>
+
+
+// Sage guide interactivity, pellet-aware fork of weapon-sage-guide.mjs.
+// Range lab: per-pellet falloff (Census single linear segment); the lab
+// counts trigger pulls, never single pellets. Damage shown is damage
+// per pull (all pellets hit); TTK = (chest pulls - 1) x refire ms.
+// Trigger-cadence drill (section 04): replaces the auto-rifle
+// hold-and-release simulator — a semi-auto shotgun has no burst
+// rhythm, so the drill is paced pulls at the gun's refire, re-aiming
+// between pulls, graded in groups of three (the Dorf EP03 discipline).
+// Collapsible sections 01-10.
+      (function () {
+        var lab = document.querySelector('.lab');
+        var slider = document.getElementById('labRange');
+        if (!lab || !slider) return;
+        var distEl = document.getElementById('labDist');
+        var bandEl = document.getElementById('labBand');
+        var dmgEl = document.getElementById('labDmg');
+        var headEl = document.getElementById('labHead');
+        var chestEl = document.getElementById('labChest');
+        var ttkEl = document.getElementById('labTtk');
+        var advEl = document.getElementById('labAdvice');
+        var dmgMax = parseFloat(lab.dataset.dmgMax);
+        var dmgMin = parseFloat(lab.dataset.dmgMin);
+        var maxRange = parseFloat(lab.dataset.maxRange);
+        var minRange = parseFloat(lab.dataset.minRange);
+        var hsMult = parseFloat(lab.dataset.hsMult || '1.5');
+        var pellets = parseInt(lab.dataset.pellets || '1', 10);
+        var refireMs = parseFloat(lab.dataset.refireMs || (60000 / parseFloat(lab.dataset.rpm || '600')));
+        function damageAt(d) {
+          if (d <= maxRange) return dmgMax;
+          if (d >= minRange) return dmgMin;
+          return dmgMax - (d - maxRange) * (dmgMax - dmgMin) / (minRange - maxRange);
+        }
+        var BAND_NAMES = (lab.dataset.bandNames || 'Point blank,Close range,Stretch range,Don\'t bother').split(',');
+        var BAND_LIMITS = (lab.dataset.bandLimits || '8,20,30').split(',').map(Number);
+        var BAND_CLASSES = (lab.dataset.bandClasses || 'good,good,situ,skip').split(',');
+        function adviceFor(d) {
+          for (var i = 0; i < BAND_LIMITS.length; i++) {
+            if (d < BAND_LIMITS[i]) return [BAND_NAMES[i], lab.dataset['advice' + i] || '', BAND_CLASSES[i] || 'good'];
+          }
+          return [BAND_NAMES[BAND_NAMES.length - 1], lab.dataset['advice' + (BAND_NAMES.length - 1)] || '', BAND_CLASSES[BAND_CLASSES.length - 1] || 'skip'];
+        }
+        function update() {
+          var d = parseInt(slider.value, 10);
+          var perPellet = damageAt(d);
+          var perPull = pellets * perPellet;
+          var head = Math.ceil(1000 / (perPull * hsMult));
+          var chest = Math.ceil(1000 / perPull);
+          var ttk = (chest - 1) * refireMs / 1000;
+          var a = adviceFor(d);
+          distEl.textContent = d;
+          if (dmgEl) dmgEl.textContent = Math.round(perPull);
+          headEl.textContent = head;
+          chestEl.textContent = chest;
+          ttkEl.textContent = ttk.toFixed(2) + ' s';
+          bandEl.textContent = a[0];
+          advEl.textContent = a[1];
+          bandEl.className = 'chip ' + a[2];
+        }
+        slider.addEventListener('input', update);
+        update();
+      })();
+
+      /* ---------- trigger-cadence drill (section 04) ----------
+         One click = one pull, but only if the gun is ready: the refire
+         is REFIRE_MS between pulls, and clicks that land too early do
+         nothing (counted as "too early"). Each pull draws its pellets
+         inside the spread circle at DIST metres, at true scale
+         (view ~3 m wide). Groups of three pulls are graded on two
+         things: every pull landing at least half its pellets, and
+         every gap between pulls being on the beat (within REFIRE_MS +
+         250 ms) — dawdling between pulls fails the group. */
+      (function () {
+        var box = document.getElementById('cadenceSim');
+        var stage = document.getElementById('cadStage');
+        var fireBtn = document.getElementById('cadFire');
+        var resetBtn = document.getElementById('cadReset');
+        var readyEl = document.getElementById('cadReady');
+        var pullsEl = document.getElementById('cadPulls');
+        var hitsEl = document.getElementById('cadHits');
+        var earlyEl = document.getElementById('cadEarly');
+        var gapEl = document.getElementById('cadGap');
+        var verdictEl = document.getElementById('cadVerdict');
+        var logEl = document.getElementById('cadLog');
+        if (!box || !stage || !fireBtn) return;
+        function profile(name, fallback) {
+          var v = parseFloat(box.getAttribute('data-' + name));
+          return isNaN(v) ? fallback : v;
+        }
+        var REFIRE_MS = profile('refire-ms', 267);
+        var PELLETS = profile('pellets', 6);
+        var SPREAD = profile('spread', 3);      // degrees, ADS pellet spread
+        var DIST = profile('distance', 20);     // metres to target
+        var lastPull = 0, pulls = 0, pelletHits = 0, pelletTotal = 0, tooEarly = 0;
+        var group = []; // {frac, gap} per pull in the current group of 3
+        var readyTimer = null;
+        function aimPoint() {
+          var r = stage.getBoundingClientRect();
+          return { x: r.width / 2, y: r.height * 0.42, ppm: r.width / 3 };
+        }
+        function setReady(pct) {
+          readyEl.style.width = Math.min(100, pct) + '%';
+        }
+        function tickReady() {
+          var el = performance.now() - lastPull;
+          var pct = (el / REFIRE_MS) * 100;
+          setReady(pct);
+          if (pct < 100) { readyTimer = setTimeout(tickReady, 25); }
+        }
+        function firePull() {
+          var now = performance.now();
+          if (now - lastPull < REFIRE_MS) {
+            tooEarly++;
+            earlyEl.textContent = tooEarly;
+            fireBtn.classList.add('too-early');
+            setTimeout(function () { fireBtn.classList.remove('too-early'); }, 180);
+            verdictEl.innerHTML = '<b>Too soon</b> — the gun was not ready yet (one pull every ' + REFIRE_MS + ' ms). That click did nothing; mashing cannot make a semi-auto fire faster.';
+            return;
+          }
+          var prevPull = lastPull;
+          lastPull = now;
+          if (readyTimer) { clearTimeout(readyTimer); readyTimer = null; }
+          setReady(0);
+          tickReady();
+          var gap = prevPull ? (now - prevPull) : null;
+          if (gapEl) gapEl.textContent = gap === null ? '—' : Math.round(gap) + ' ms';
+          var p = aimPoint();
+          var radiusM = Math.tan(SPREAD * Math.PI / 360) * DIST;
+          var hits = 0;
+          for (var i = 0; i < PELLETS; i++) {
+            var ang = Math.random() * Math.PI * 2;
+            var dist = radiusM * Math.sqrt(Math.random()) * p.ppm;
+            var dx = Math.cos(ang) * dist;
+            var dy = Math.sin(ang) * dist;
+            var dot = document.createElement('span');
+            dot.className = 'sim-shot pellet';
+            var hit = (dx * dx) / (56 * 56) + (dy * dy) / (98 * 98) <= 1;
+            if (hit) { dot.classList.add('hit'); hits++; }
+            dot.style.left = (p.x + dx) + 'px';
+            dot.style.top = (p.y + dy) + 'px';
+            stage.appendChild(dot);
+          }
+          pulls++; pelletHits += hits; pelletTotal += PELLETS;
+          pullsEl.textContent = pulls;
+          hitsEl.textContent = pelletHits + ' / ' + pelletTotal;
+          group.push({ frac: hits / PELLETS, gap: gap });
+          if (group.length === 3) {
+            var landed = 0;
+            var slowGap = 0;
+            for (var j = 0; j < 3; j++) {
+              if (group[j].frac >= 0.5) landed++;
+              if (group[j].gap !== null && group[j].gap > REFIRE_MS + 250) slowGap = Math.max(slowGap, group[j].gap);
+            }
+            var pip = document.createElement('span');
+            var msg;
+            if (landed === 3 && slowGap === 0) {
+              pip.className = 'burst-pip good'; pip.textContent = 'kill';
+              msg = '<b>Kill.</b> All three pulls landed at least half their pellets, and every gap was on the beat (within ' + (REFIRE_MS + 250) + ' ms) — that is a dead enemy, in ' + (2 * REFIRE_MS) + ' ms of firing after the first pull.';
+            } else if (landed === 3) {
+              pip.className = 'burst-pip warn'; pip.textContent = 'slow';
+              msg = '<b>Three pulls landed — but too slowly.</b> One gap was ' + Math.round(slowGap) + ' ms; the beat is ' + REFIRE_MS + ' ms. The enemy shot back between your pulls. Pull when the bar fills, not a second later.';
+            } else if (landed === 2) {
+              pip.className = 'burst-pip warn'; pip.textContent = 'wounded';
+              msg = '<b>Wounded, not dead.</b> Two of three pulls landed — the enemy is hurt but shooting back. One more pull, re-aimed.';
+            } else {
+              pip.className = 'burst-pip bad'; pip.textContent = 'miss';
+              msg = '<b>Missed.</b> Fewer than two pulls landed. At 20 m the pattern is wider than a torso — get closer, or fit the Smart-Choke.';
+            }
+            verdictEl.innerHTML = msg;
+            logEl.appendChild(pip);
+            group = [];
+          } else {
+            verdictEl.innerHTML = 'Pull ' + group.length + ' of 3 in this group — re-aim, wait for the bar to fill, pull again.';
+          }
+        }
+        fireBtn.addEventListener('click', firePull);
+        fireBtn.addEventListener('keydown', function (e) {
+          if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); firePull(); }
+        });
+        fireBtn.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+        resetBtn.addEventListener('click', function () {
+          var dots = stage.querySelectorAll('.sim-shot');
+          for (var i = 0; i < dots.length; i++) dots[i].remove();
+          pulls = 0; pelletHits = 0; pelletTotal = 0; tooEarly = 0; group = []; lastPull = 0;
+          if (readyTimer) { clearTimeout(readyTimer); readyTimer = null; }
+          pullsEl.textContent = '0'; hitsEl.textContent = '0 / 0'; earlyEl.textContent = '0';
+          if (gapEl) gapEl.textContent = '—';
+          logEl.innerHTML = '';
+          verdictEl.textContent = 'Your 3-pull groups will be graded here — three landed pulls, on the beat, is a kill.';
+          setReady(100);
+        });
+        setReady(100);
+      })();
+
+// Collapsible sections 01-10. Sections 02-10 arrive with
+// class="is-collapsed" in the HTML; this wraps each section body in
+// .sec-body, adds the round toggle button to the header, and toggles
+// on header click.
+      (function () {
+        var sections = document.querySelectorAll('section[aria-labelledby]');
+        for (var i = 0; i < sections.length; i++) {
+          (function (sec) {
+            var head = sec.querySelector('.sec-head');
+            if (!head) return;
+            var labelId = sec.getAttribute('aria-labelledby');
+            var body = document.createElement('div');
+            body.className = 'sec-body';
+            body.id = labelId + '-body';
+            var kids = [];
+            for (var c = 0; c < sec.childNodes.length; c++) kids.push(sec.childNodes[c]);
+            for (var k = 0; k < kids.length; k++) {
+              if (kids[k] !== head) body.appendChild(kids[k]);
+            }
+            sec.appendChild(body);
+            var numEl = head.querySelector('.num');
+            var num = numEl ? numEl.textContent.trim() : '';
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'sec-toggle';
+            btn.setAttribute('aria-controls', body.id);
+            btn.innerHTML = '<span class="sec-toggle-icon" aria-hidden="true">▾</span><span class="sr-only">Toggle section ' + num + '</span>';
+            head.appendChild(btn);
+            function sync() {
+              var open = !sec.classList.contains('is-collapsed');
+              btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+              btn.setAttribute('aria-label', (open ? 'Collapse' : 'Expand') + ' section ' + num);
+            }
+            function toggle() {
+              sec.classList.toggle('is-collapsed');
+              sync();
+            }
+            btn.addEventListener('click', function (e) { e.stopPropagation(); toggle(); });
+            head.addEventListener('click', function (e) {
+              if (e.target.closest && e.target.closest('button, a')) return;
+              toggle();
+            });
+            sync();
+          })(sections[i]);
+        }
+      })();
+
+  
+  </script>
+</body>
+</html>

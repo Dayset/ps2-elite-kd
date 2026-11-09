@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>AF-8 RailJack — Sage Guide &middot; PS2 Elite</title>
+  <meta name="description" content="A beginner's guide to the AF-8 RailJack — — 1,000 certs · A 1,000-cert bolt-action railgun: 850 m/s bullets — the fastest of any infantry weapon — 750 damage, and one-shot headshots out to 365 m. The price is a 0.2 s firing delay on every shot and the slowest cycle here." />
+  <meta name="color-scheme" content="light dark" />
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="weapon-sage.css?v=20261109-sageguide3" />
+  <style>
+    /* Faction colours for this guide — overrides the shared NC palette. */
+    ol.habits { counter-reset: hab; list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+    ol.habits li { counter-increment: hab; background: var(--surface); border: 1px solid var(--line); padding: 14px 16px 14px 58px; position: relative; }
+    ol.habits li::before {
+            content: counter(hab, decimal-leading-zero);
+            position: absolute; left: 14px; top: 12px;
+            font-family: "Rajdhani", sans-serif; font-weight: 700; font-size: 24px; color: var(--nc-blue);
+          }
+    ol.habits h3 { margin: 0 0 3px; font-size: 19px; }
+    ol.habits p { margin: 0; font-size: 15.5px; }
+    ul.drills { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+    ul.drills li { background: var(--surface); border: 1px solid var(--line); padding: 13px 16px; display: grid; gap: 2px; }
+    ul.drills .d-name { font-family: "Rajdhani", sans-serif; font-weight: 700; font-size: 18px; }
+    ul.drills .d-name span { display: block; font-family: "Barlow", sans-serif; font-weight: 400; font-size: 13.5px; color: var(--ink-soft); }
+    .strip { background: var(--surface); border: 1px solid var(--line); padding: 16px 18px; margin-bottom: 14px; }
+    .strip h3 { margin: 0 0 2px; font-size: 21px; }
+    .strip .cap { font-size: 15px; margin: 8px 0 0; }
+    .strip-panels { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: stretch; }
+    .strip-panel { flex: 1 1 150px; border: 1px solid var(--line); background: var(--surface-2); padding: 10px; }
+    .strip-panel svg { width: 100%; height: auto; display: block; }
+    .strip-panel .p-cap { font-size: 14px; margin: 8px 0 0; line-height: 1.4; }
+    .strip-panel .p-cap b { display: block; font-family: "Rajdhani", sans-serif; text-transform: uppercase; letter-spacing: 0.05em; font-size: 13.5px; }
+    .strip-panel.bad .p-cap b { color: var(--skip); }
+    .strip-panel.good .p-cap b { color: var(--good); }
+    .strip-arrow { align-self: center; font-size: 24px; color: var(--ink-soft); flex: none; }
+    .strip-exception { border: 2px solid var(--nc-gold); background: var(--situ-bg); padding: 12px 14px; margin-top: 12px; display: flex; gap: 14px; align-items: center; }
+    .strip-exception svg { flex: none; }
+    .strip-exception p { margin: 0; font-size: 15.5px; }
+    .strip-exception b { font-family: "Rajdhani", sans-serif; text-transform: uppercase; letter-spacing: 0.05em; font-size: 14px; color: var(--accent-ink); display: block; }
+    .sim-cross { position: absolute; width: 26px; height: 26px; margin: -13px 0 0 -13px; pointer-events: none; }
+    .sim-cross::before, .sim-cross::after { content: ""; position: absolute; background: var(--skip); }
+    .sim-cross::before { left: 12px; top: 0; width: 2px; height: 26px; }
+    .sim-cross::after { top: 12px; left: 0; height: 2px; width: 26px; }
+  </style>
+</head>
+<body class="site-page">
+    <div class="wrap">
+
+    <p class="sage-back"><a href="weapon-compare.html?w=7301">← Back to the AF-8 RailJack comparison</a></p>
+
+
+      <!-- ================= HERO ================= -->
+      <header class="hero">
+        <p class="brandline">Sage Guide · New Conglomerate · Infiltrator</p>
+        <h1>AF-8 RailJack <span class="thin">— The railgun — fastest bullets, hardest hits, a 0.2 s delay</span></h1>
+        <p class="sub">1,000 certs · A 1,000-cert bolt-action railgun: 850 m/s bullets — the fastest of any infantry weapon — 750 damage, and one-shot headshots out to 365 m. The price is a 0.2 s firing delay on every shot and the slowest cycle here.</p>
+        <p class="verdict"><strong>The one-line verdict:</strong> The hardest-hitting, flattest-shooting rifle NC owns: one-shot headshots to 365 m, two body shots to 335 m, and barely any drop to compensate for. The price is timing — a 0.2 s delay between pulling the trigger and the shot leaving the barrel, a 1.7 s rechamber, and only four rounds before the 4.1 s reload.</p>
+        <img class="hero-gun" src="assets/weapons/13752.png" alt="The RailJack sniper rifle, side profile" width="256" height="128" />
+        <p class="hero-gun-cap">The AF-8 RailJack · New Conglomerate · 4-round railgun bolt-action</p>
+      </header>
+
+      <div class="stats" role="list" aria-label="AF-8 RailJack key statistics">
+        <div class="stat" role="listitem"><div class="stat-big">750<small> → 450</small></div><div class="stat-label">Damage per bullet</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">×2.1</div><div class="stat-label">Headshot damage</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">365<small> m</small></div><div class="stat-label">One-shot headshot range</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">1.7<small> s</small></div><div class="stat-label">Rechamber time</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">4</div><div class="stat-label">Rounds per magazine</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">850<small> m/s</small></div><div class="stat-label">Bullet velocity</div></div>
+      </div>      <!-- ================= 01 FIRST LESSON ================= -->
+      <section aria-labelledby="s-first">
+        <div class="sec-head">
+          <span class="num">01</span>
+          <h2 id="s-first">First lesson: stop, aim, <em>then</em> fire</h2>
+          <span class="tag">The mistake almost<br />every new sniper makes</span></div>
+                <p class="lede">Picture the scene, because you've probably lived it: you're <strong>sprinting</strong> across a courtyard, an enemy appears, and you do everything at once — hold the trigger down <em>while you're still running</em>, then press aim-down-sights (ADS) a split-second later, finger still down. The sight picture snaps in, it <em>looks</em> precise… and your bullet sails past his head. He turns, and you are standing in the open with a bolt to work. It feels like the game cheated. It didn't — here's what actually happened.</p>
+
+        <div class="grid2">
+          <div class="card">
+            <h3>✗ What you did — the spray</h3>
+            <p><strong>You started firing from a sprint, from the hip.</strong> Sprinting is the least accurate state in the game: your cone of fire starts at <strong>7.0° — fully bloomed, the widest it can ever be</strong>. Every shot you fire from the hip widens it further still (+1.0° per shot).</p>
+            <p><strong>Then you pressed ADS mid-hold — and nothing reset.</strong> Aiming down sights does <em>not</em> shrink a cone of fire that is already bloomed. The scope only gives you a precise <em>picture</em>; the bullet keeps flying out of the wide cone you built while running and hipfiring. That's the whole mystery: <strong>accurate-looking aim, wildly inaccurate gun.</strong> And on a bolt-action, a miss isn't a wasted bullet — it's a 1.7 s rechamber while the enemy knows exactly where you are.</p>
+            <p>Two timers stack the deck further: your gun needs a moment to settle after a sprint, and raising the sight itself takes 0.3 s. Firing through all of it means your one shot — the only one that matters — is pure confetti.</p>
+          </div>
+          <div class="card">
+            <h3>✓ The fix — three beats, in order</h3>
+            <p><strong>1 · Feet.</strong> Let go of sprint (and the trigger, if you're already holding it). Stop, or drop into a strafe — anything but a full sprint.</p>
+            <p><strong>2 · Sight.</strong> Press ADS and let the sight come up. This takes 0.3 s on this gun — a touch longer than the reflex-sight timing in the strip below, because a magnified scope is slower to raise. with a 6× or higher scope, your crosshair also <strong>sways</strong> — it drifts on its own, and the higher the magnification, the more the drift shows. Hold <strong>Shift</strong> (hold breath) to steady it, and let go while the bolt cycles so your breath is back for the next shot.</p>
+            <p><strong>3 · Trigger.</strong> <em>Now</em> fire — once. Starting from the aimed cone of <strong>0°</strong>, your shot lands where the dot points, and you control the bloom from zero instead of inheriting a maxed-out cone.</p>
+            <p><strong>Stop → aim → fire.</strong> If you take one habit from this entire page, take this one. You'll practise exactly this rhythm in the simulator in section 04.</p>
+          </div>
+        </div>
+
+        <div class="strip">
+          <h3>What you did — the spray</h3>
+          <p class="cap" style="margin:0">Four beats, left to right — the same mistake the cards above describe, drawn out.</p>
+          <div class="strip-panels">
+            <div class="strip-panel bad">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A soldier sprinting, with a wide dashed cone fanning out from the gun muzzle, labelled 7.0 degrees.">
+                <line x1="8" y1="122" x2="192" y2="122" stroke="var(--line)" stroke-width="2" />
+                <g stroke="var(--ink-soft)" stroke-width="3" stroke-linecap="round" fill="none">
+                  <line x1="18" y1="70" x2="38" y2="70" /><line x1="14" y1="86" x2="34" y2="86" /><line x1="20" y1="102" x2="40" y2="102" />
+                </g>
+                <g stroke="var(--ink)" stroke-width="3" stroke-linecap="round" fill="none">
+                  <line x1="72" y1="58" x2="86" y2="86" /><line x1="86" y1="86" x2="66" y2="118" /><line x1="86" y1="86" x2="106" y2="112" />
+                  <line x1="74" y1="64" x2="56" y2="80" /><line x1="74" y1="64" x2="94" y2="72" />
+                </g>
+                <circle cx="70" cy="46" r="10" fill="var(--ink)" />
+                <rect x="94" y="66" width="28" height="6" rx="2" fill="var(--ink)" transform="rotate(-8 94 66)" />
+                <g stroke="var(--skip)" stroke-width="2" stroke-dasharray="6 5" fill="none">
+                  <line x1="122" y1="62" x2="192" y2="26" /><line x1="122" y1="62" x2="192" y2="98" />
+                </g>
+                <text x="150" y="58" font-size="13" font-weight="700" fill="var(--skip)">7.0°</text>
+              </svg>
+              <p class="p-cap"><b>1 · Sprinting</b>Your cone starts maxed at 7.0° — the widest it can ever be.</p>
+            </div>
+            <div class="strip-arrow" aria-hidden="true">→</div>
+            <div class="strip-panel bad">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A soldier firing from the hip while running, with bullet holes scattering ever wider from the muzzle.">
+                <line x1="8" y1="122" x2="192" y2="122" stroke="var(--line)" stroke-width="2" />
+                <g fill="var(--ink)">
+                  <circle cx="52" cy="46" r="10" />
+                  <rect x="44" y="56" width="18" height="42" rx="6" />
+                  <rect x="46" y="96" width="8" height="26" /><rect x="56" y="96" width="8" height="26" />
+                </g>
+                <rect x="62" y="72" width="30" height="6" rx="2" fill="var(--ink)" />
+                <g fill="var(--skip)">
+                  <circle cx="118" cy="66" r="4" /><circle cx="142" cy="84" r="4" /><circle cx="162" cy="58" r="4" /><circle cx="182" cy="90" r="4" /><circle cx="196" cy="66" r="4" />
+                </g>
+                <text x="118" y="122" font-size="13" font-weight="700" fill="var(--skip)">spreading…</text>
+              </svg>
+              <p class="p-cap"><b>2 · Trigger held</b>Firing from the hip while running — every shot adds bloom.</p>
+            </div>
+            <div class="strip-arrow" aria-hidden="true">→</div>
+            <div class="strip-panel bad">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A round scope view with the crosshair centred on a small soldier, while red crosses mark bullet holes scattered wide around him.">
+                <circle cx="100" cy="70" r="56" fill="none" stroke="var(--ink)" stroke-width="4" />
+                <line x1="100" y1="20" x2="100" y2="120" stroke="var(--ink)" stroke-width="1.5" />
+                <line x1="50" y1="70" x2="150" y2="70" stroke="var(--ink)" stroke-width="1.5" />
+                <g fill="var(--ink)">
+                  <circle cx="100" cy="58" r="5" /><rect x="94" y="63" width="12" height="18" rx="3" />
+                </g>
+                <g stroke="var(--skip)" stroke-width="3" stroke-linecap="round">
+                  <line x1="52" y1="32" x2="62" y2="42" /><line x1="62" y1="32" x2="52" y2="42" />
+                  <line x1="140" y1="30" x2="150" y2="40" /><line x1="150" y1="30" x2="140" y2="40" />
+                  <line x1="48" y1="100" x2="58" y2="110" /><line x1="58" y1="100" x2="48" y2="110" />
+                  <line x1="142" y1="102" x2="152" y2="112" /><line x1="152" y1="102" x2="142" y2="112" />
+                </g>
+              </svg>
+              <p class="p-cap"><b>3 · ADS, mid-hold</b>The sight looks precise — but aiming down sights does <em>not</em> reset bloom.</p>
+            </div>
+            <div class="strip-arrow" aria-hidden="true">→</div>
+            <div class="strip-panel bad">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A soldier target standing untouched while red crosses mark bullet holes all around him.">
+                <line x1="8" y1="122" x2="192" y2="122" stroke="var(--line)" stroke-width="2" />
+                <g fill="var(--ink)">
+                  <circle cx="100" cy="42" r="11" />
+                  <rect x="88" y="54" width="24" height="44" rx="7" />
+                  <rect x="90" y="96" width="9" height="26" /><rect x="101" y="96" width="9" height="26" />
+                </g>
+                <g stroke="var(--skip)" stroke-width="3.5" stroke-linecap="round">
+                  <line x1="52" y1="28" x2="64" y2="40" /><line x1="64" y1="28" x2="52" y2="40" />
+                  <line x1="140" y1="24" x2="152" y2="36" /><line x1="152" y1="24" x2="140" y2="36" />
+                  <line x1="44" y1="92" x2="56" y2="104" /><line x1="56" y1="92" x2="44" y2="104" />
+                  <line x1="146" y1="94" x2="158" y2="106" /><line x1="158" y1="94" x2="146" y2="106" />
+                  <line x1="96" y1="12" x2="106" y2="22" /><line x1="106" y1="12" x2="96" y2="22" />
+                </g>
+                <text x="100" y="138" font-size="13" font-weight="700" fill="var(--skip)" text-anchor="middle">he walks away</text>
+              </svg>
+              <p class="p-cap"><b>4 · The spray</b>Bullets fly out of the wide cone you built. The enemy walks away.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="strip">
+          <h3>The fix — three beats, in order</h3>
+          <p class="cap" style="margin:0">Same fight, done right. Each beat has a job, and the order is the whole lesson.</p>
+          <div class="strip-panels">
+            <div class="strip-panel good">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A soldier standing still with feet planted, next to a small clock showing about 0.3 seconds.">
+                <line x1="8" y1="122" x2="192" y2="122" stroke="var(--line)" stroke-width="2" />
+                <g fill="var(--ink)">
+                  <circle cx="62" cy="46" r="10" />
+                  <rect x="54" y="56" width="18" height="42" rx="6" />
+                  <rect x="56" y="96" width="8" height="26" /><rect x="66" y="96" width="8" height="26" />
+                </g>
+                <rect x="72" y="70" width="26" height="6" rx="2" fill="var(--ink)" />
+                <g fill="none" stroke="var(--good)" stroke-width="3">
+                  <circle cx="152" cy="52" r="20" />
+                  <line x1="152" y1="52" x2="152" y2="38" stroke-linecap="round" />
+                  <line x1="152" y1="52" x2="162" y2="58" stroke-linecap="round" />
+                </g>
+                <text x="152" y="92" font-size="14" font-weight="700" fill="var(--good)" text-anchor="middle">≈ 0.3 s</text>
+                <text x="62" y="138" font-size="12" fill="var(--ink-soft)" text-anchor="middle">feet planted</text>
+              </svg>
+              <p class="p-cap"><b>1 · Stop</b>Let go of sprint (and the trigger). About 0.3 s for the gun to settle.</p>
+            </div>
+            <div class="strip-arrow" aria-hidden="true">→</div>
+            <div class="strip-panel good">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A round scope view rising onto a soldier target, with an upward arrow and about 0.15 seconds labelled.">
+                <circle cx="100" cy="72" r="52" fill="none" stroke="var(--ink)" stroke-width="4" />
+                <line x1="100" y1="26" x2="100" y2="118" stroke="var(--ink)" stroke-width="1.5" />
+                <line x1="54" y1="72" x2="146" y2="72" stroke="var(--ink)" stroke-width="1.5" />
+                <g fill="var(--ink)">
+                  <circle cx="100" cy="58" r="6" /><rect x="93" y="64" width="14" height="22" rx="4" />
+                  <rect x="95" y="84" width="4" height="14" /><rect x="101" y="84" width="4" height="14" />
+                </g>
+                <g stroke="var(--good)" stroke-width="3" fill="none" stroke-linecap="round">
+                  <line x1="28" y1="118" x2="28" y2="84" /><line x1="22" y1="90" x2="28" y2="82" /><line x1="34" y1="90" x2="28" y2="82" />
+                </g>
+                <text x="100" y="138" font-size="14" font-weight="700" fill="var(--good)" text-anchor="middle">≈ 0.15 s</text>
+              </svg>
+              <p class="p-cap"><b>2 · Aim</b>Press ADS and let the sight come up (~0.15 s).</p>
+            </div>
+            <div class="strip-arrow" aria-hidden="true">→</div>
+            <div class="strip-panel good">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A gun firing through a narrow dashed cone at a soldier target, with three green hits grouped on his chest.">
+                <line x1="8" y1="122" x2="192" y2="122" stroke="var(--line)" stroke-width="2" />
+                <rect x="18" y="66" width="30" height="6" rx="2" fill="var(--ink)" />
+                <g stroke="var(--good)" stroke-width="2" stroke-dasharray="6 5" fill="none">
+                  <line x1="48" y1="68" x2="150" y2="58" /><line x1="48" y1="70" x2="150" y2="80" />
+                </g>
+                <g fill="var(--ink)">
+                  <circle cx="162" cy="44" r="10" />
+                  <rect x="152" y="54" width="20" height="40" rx="6" />
+                  <rect x="154" y="92" width="8" height="30" /><rect x="164" y="92" width="8" height="30" />
+                </g>
+                <g fill="var(--good)">
+                  <circle cx="158" cy="66" r="4" /><circle cx="166" cy="72" r="4" /><circle cx="160" cy="78" r="4" />
+                </g>
+              </svg>
+              <p class="p-cap"><b>3 · Fire</b>Now fire — from the aimed cone. First shots land where the dot points.</p>
+            </div>
+          </div>
+          <div class="strip-exception">
+            <svg viewBox="0 0 90 70" width="90" height="70" role="img" aria-label="A soldier hipfiring at a close target inside a small spread ring.">
+              <g fill="var(--ink)">
+                <circle cx="22" cy="18" r="7" /><rect x="17" y="25" width="11" height="24" rx="4" />
+                <rect x="18" y="47" width="5" height="16" /><rect x="25" y="47" width="5" height="16" />
+              </g>
+              <rect x="28" y="30" width="16" height="4" rx="2" fill="var(--ink)" />
+              <circle cx="70" cy="32" r="15" fill="none" stroke="var(--nc-gold)" stroke-width="2" stroke-dasharray="4 3" />
+              <g fill="var(--ink)">
+                <circle cx="70" cy="22" r="5" /><rect x="65" y="27" width="10" height="16" rx="3" />
+              </g>
+              <g fill="var(--good)"><circle cx="68" cy="32" r="2.5" /><circle cx="73" cy="35" r="2.5" /></g>
+            </svg>
+            <p><b>The exception — under ~8 m, skip the whole dance</b>Hipfire works, no ADS needed, and stopping is optional. Keep moving, strafe, and let the hipfire ring do the work.</p>
+          </div>
+        </div>
+
+        <div class="rule"><strong>The one exception</strong>Inside ~8 metres, don't ADS at all — hipfire and keep moving (section 03). The disaster above is a mid-range problem: close enough that you reached for the sight, far enough that the spray missed. When in doubt: release everything, aim, then shoot. And if he is closer than arm's length, your sidearm is faster than any rifle.</div>
+      
+        </section>      <!-- ================= 02 DAMAGE ================= -->
+      <section aria-labelledby="s-damage" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">02</span>
+          <h2 id="s-damage">Know your damage</h2>
+          <span class="tag">How many shots<br />to kill, by range</span></div>
+                <p class="lede">Every enemy infantry has 1,000 health (500 shield + 500 health). Your bullet does <strong>750 damage up close</strong>, fading to <strong>450 at long range</strong>. Headshots count ×2.1, leg shots count less (×0.9). That gives you three numbers worth memorising:</p>
+
+        <table class="tbl" aria-label="Shots to kill by range">
+          <thead>
+            <tr><th>Range</th><th class="n">Damage</th><th class="n">Head</th><th class="n">Chest</th><th class="n">Legs</th><th class="n">Chest vs shielded Heavy</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Close</strong> · 0–10 m</td><td class="n big">750</td><td class="n big">1</td><td class="n big">2</td><td class="n">2</td><td class="n">2</td></tr>
+            <tr><td><strong>Mid</strong> · 10–400 m</td><td class="n big">750→450</td><td class="n big">1 → 2</td><td class="n big">2 → 3</td><td class="n">2 → 3</td><td class="n">2 → 3 → 4</td></tr>
+            <tr><td><strong>Far</strong> · 400 m+</td><td class="n big">450</td><td class="n big">2</td><td class="n big">3</td><td class="n">3</td><td class="n">4</td></tr>
+          </tbody>
+        </table>
+        <p class="small">Two headshots land 1.8 s apart (one rechamber), two body shots the same. A headshot kills an Infiltrator (900 HP) at any range — even at minimum damage, 450 × 2.1 = 945 damage is still a kill; the switches in the mid band happen at 262 m (legs), 335 m (chest), 365 m (head) and 356 m (shielded Heavy) — two body shots drop a shielded Heavy only to 42 m. Magazine: 4 rounds, with 40 in reserve.</p>
+        <p class="small"><strong>A note on Nanoweave.</strong> Sniper rifles use a separate Sniper Rifles resistance type: Nanoweave trims body- and leg-shot damage from sniper rifles, and since the 2026-11-08 Nanoweave rebalance it is the suit slot that matters against snipers. A Nanoweave wearer can need one more body shot than this table says, near the edge of your two-shot range — so if a body shot leaves a man standing at 200 m, assume Nanoweave and aim for the head next. It never touches headshots: your one-shot headshot range is the same against everyone.</p>
+<div class="chart-box">
+          <h3>Damage falloff — where your bullets get weaker</h3>
+          <p class="small" style="margin:0 0 6px">Full power to 10 m, then a steady slide to minimum at 400 m. The red dashed line is the one-shot headshot threshold (476 damage × 2.1 = 1,000): cross it at 365 m and a headshot leaves the enemy alive. The gold line is the two-body-shot threshold (500 damage).</p>
+          <svg viewBox="0 0 640 240" width="100%" role="img" aria-label="Line chart of AF-8 RailJack damage per bullet from 0 to 400 metres: 750 damage flat to 10 metres, falling to 450 at 400 metres, then flat. A dashed line at 476 damage marks where a headshot stops one-shotting — 365 metres.">
+            <g fill="var(--ink-soft)" font-size="12"><text x="48" y="181.1" text-anchor="end">450</text><text x="48" y="66.9" text-anchor="end">750</text><text x="56" y="222" text-anchor="middle">0 m</text><text x="196" y="222" text-anchor="middle">100 m</text><text x="336" y="222" text-anchor="middle">200 m</text><text x="476" y="222" text-anchor="middle">300 m</text><text x="616" y="222" text-anchor="middle">400 m</text></g>
+            <line x1="56" y1="167.2" x2="616" y2="167.2" stroke="var(--skip)" stroke-width="1.5" stroke-dasharray="5 4" /><text x="60" y="162.2" text-anchor="start" font-size="12.5" fill="var(--skip)">one-shot headshot line — 476 dmg</text><line x1="56" y1="158.1" x2="616" y2="158.1" stroke="var(--nc-gold)" stroke-width="1.5" stroke-dasharray="5 4" /><text x="616" y="153.1" text-anchor="end" font-size="12.5" fill="var(--nc-gold)">two body shots — 500 dmg</text>
+            <polyline points="56,62.9 70,62.9 616,177.1 616,177.1" fill="none" stroke="var(--nc-blue)" stroke-width="3" />
+            <g fill="var(--nc-blue)"><circle cx="70" cy="62.9" r="4" /><circle cx="616" cy="177.1" r="4" /></g>
+            <g font-size="13" font-weight="600" fill="var(--ink)">
+              <text x="76" y="54.9">750</text>
+              <text x="608" y="195.1" text-anchor="end">450 @ 400 m</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="rule"><strong>Rule of thumb</strong>Inside 365 m you are a one-shot killer — every fight is decided by the first trigger pull. Past 365 m you need two headshots, which costs a 1.8 s cycle: close the distance, or be certain of the second shot before you take the first.</div>
+      
+        </section>      <!-- ================= 03 RANGE LAB + AIM ================= -->
+      <section aria-labelledby="s-aim" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">03</span>
+          <h2 id="s-aim">Aim by distance</h2>
+          <span class="tag">Drag the range, learn the style</span></div>
+                <p class="lede">One gun, four fighting styles. The right technique changes with distance — use the range finder below to see what your bullets do at any range, then learn the four bands underneath it.</p>
+
+        <div class="lab" id="rangeLab" aria-label="Interactive range finder" data-dmgmax="750" data-dmgmin="450" data-rmax="10" data-rmin="400" data-hs="2.1" data-hs1="365" data-cycle="1.8" data-refire="">
+          <div class="lab-top">
+            <span class="reading"><span id="labDist">100</span> <small>metres to target</small></span>
+            <span class="chip good" id="labBand">One-shot zone</span>
+          </div>
+          <input type="range" id="labRange" min="0" max="400" step="1" value="100" aria-label="Distance to target in metres" />
+          <div class="lab-scale"><span>0 m</span><span>100 m</span><span>200 m</span><span>300 m</span><span>400 m</span></div>
+          <div class="lab-out">
+            <div class="lab-cell"><div class="v" id="labDmg">—</div><div class="k">Damage / bullet</div></div>
+            <div class="lab-cell"><div class="v" id="labHead">—</div><div class="k">Headshots to kill</div></div>
+            <div class="lab-cell"><div class="v" id="labChest">—</div><div class="k">Chest shots to kill</div></div>
+            <div class="lab-cell"><div class="v" id="labTtk">—</div><div class="k">Next shot in</div></div>
+          </div>
+          <p class="lab-advice"><b>How to fight here</b><span id="labAdvice">—</span></p>
+        </div>
+
+        <div style="margin-top:18px">
+          <div class="band">
+            <div class="dist"><span class="d1">0–8 m</span><span class="d2">Point blank</span></div>
+            <div class="body">
+              <h3>Hipfire — don't aim down sights</h3>
+              <p class="aim">Aim: centre of the chest, from the hip. Keep moving.</p>
+              <p>Scoping in costs you time and halves your move speed — at arm's length that gets you killed. Your hipfire cone is wide (5.5° standing), so this is a desperation range for a sniper: two body shots up close still kill, but a carbine or shotgun owner will usually beat you here. Strafe side to side (A/D) while firing, and if you survive the first exchange, reach for your sidearm — it is faster than any rifle at this range.</p>
+            </div>
+          </div>
+<div class="band">
+            <div class="dist"><span class="d1">8–365 m</span><span class="d2">One-shot zone</span></div>
+            <div class="body">
+              <h3>ADS, head, one shot</h3>
+              <p class="aim">Aim: head. One shot, then move.</p>
+              <p>This is the whole gun: inside 365 m a single headshot kills. Scope in (0.3 s), hold your breath, wait for the sway to settle, and take the shot — then break line of sight and reposition, because your shot just put you on the minimap out to 100 m. Your bullet takes 0.24 s to reach 200 m and drops 0.21 m on the way — about a quarter of a standing target — so hold slightly high at the far end of this band.</p>
+            </div>
+          </div>
+<div class="band">
+            <div class="dist"><span class="d1">365–400 m</span><span class="d2">Two-headshot zone</span></div>
+            <div class="body">
+              <h3>ADS, head, twice — or don't shoot</h3>
+              <p class="aim">Aim: head. Two headshots, 1.8 s apart.</p>
+              <p>Past 365 m a headshot leaves the enemy alive with a sliver of health, and your second shot is a full rechamber away. Only take the first shot if you are certain of the second — a stationary target, a man reviving a friend, a target who hasn't seen you. Otherwise close the distance first. Drop at 300 m is 0.47 m and the bullet takes 0.35 s to arrive: lead a walking target by a step, a sprinting one by much more.</p>
+            </div>
+          </div>
+<div class="band">
+            <div class="dist"><span class="d1">400 m +</span><span class="d2">Minimum damage</span></div>
+            <div class="body">
+              <h3>Same kill, more drop — or don't engage</h3>
+              <p class="aim">Aim: head, held high. Two headshots or three chest shots.</p>
+              <p>At minimum damage the kill is the same as the band before — two headshots, three chest shots — but the drop keeps growing and the flight time keeps stretching. Take these shots at stationary or fleeing targets only. Otherwise, your better play is to close the distance behind cover. Knowing when <em>not</em> to shoot is a skill too — and a missed long shot tells every enemy in 100 m exactly where you are.</p>
+            </div>
+          </div>
+        </div>
+      
+        </section>      <!-- ================= 04 STANCES & FIRING MODES ================= -->
+      <section aria-labelledby="s-stances" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">04</span>
+          <h2 id="s-stances">Stances and firing modes</h2>
+          <span class="tag">How you stand and<br />how you hold the trigger</span></div>
+                <p class="lede">Your accuracy is decided by two things before skill even enters it: <strong>what your body is doing</strong> (your stance sets the starting cone of fire) and <strong>what your finger is doing</strong> (holding the trigger grows that cone with every shot). The AF-8 RailJack has no fire-mode switch — bolt-action only — so "firing modes" are something you do with your finger, not a setting on the gun.</p>
+
+        <h3 class="slot-title">Stances <span>— the cone you start with, before the first shot</span></h3>
+        <table class="tbl" aria-label="AF-8 RailJack cone of fire by stance">
+          <thead>
+            <tr><th>Stance</th><th class="n">Starting cone</th><th>What it means for you</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Sprinting</strong></td><td class="n big">7.0°</td><td>Maxed out — the widest the cone can be. This is the section 01 disaster: never start firing from a sprint.</td></tr>
+            <tr><td><strong>Hipfire, moving</strong></td><td class="n big">6.5°</td><td>Walking or strafing from the hip. Fine inside ~8 m, leaks rounds past the target beyond it.</td></tr>
+            <tr><td><strong>Hipfire, standing</strong></td><td class="n big">5.5°</td><td>Your point-blank default. The 0.77 m ring at 8 m in section 05 is this stance drawn out.</td></tr>
+            <tr><td><strong>Hipfire, crouched</strong></td><td class="n big">5.0°</td><td>The tightest hipfire you have. Crouch when holding a doorway from the hip.</td></tr>
+            <tr><td><strong>Aimed (ADS), feet planted</strong></td><td class="n big">0°</td><td>Standing or crouched makes no difference here — a perfect point. This is why section 01's order matters.</td></tr>
+            <tr><td><strong>Aimed (ADS), strafing</strong></td><td class="n big">0.55°</td><td>Just over half a degree — still a dot at any range you will shoot from. Strafe <em>between</em> shots to stay hard to hit; plant your feet for the shot itself.</td></tr>
+          </tbody>
+        </table>
+        <p><strong>Scope sway.</strong> With a 6× or higher scope, your crosshair drifts on its own — the same amount on every rifle and every scope, but higher magnification makes it look bigger. Hold <strong>Shift</strong> (hold breath) to almost completely suppress it. Your breath is limited, so release Shift while the bolt cycles and it will be back for the next shot. The Target Focus implant stretches your hold-breath time if you want more of it.</p>
+        <p><strong>Scope-in time:</strong> raising the sight takes 0.3 s on this gun — the 6× and higher scopes are slower to raise than a reflex sight. Add the brief blackout as the magnified overlay appears, and you are looking at roughly a third of a second from decision to shot: pre-aim the doorway or the ridge line <em>before</em> the enemy appears, don't start scoping after you see him.</p>
+
+        <h3 class="slot-title">Shot discipline <span>— the firing mode is you, not a setting on the gun</span></h3>
+        <table class="tbl" aria-label="Shot discipline and when to use it">
+          <thead>
+            <tr><th>Mode</th><th>How you do it</th><th>Use it at</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>The one shot</strong></td><td>Stop, scope in, hold breath, wait for the sway to settle, fire once</td><td>Every kill inside 365 m. This is the gun's whole job — one headshot, one kill.</td></tr>
+            <tr><td><strong>Rechamber &amp; re-acquire</strong></td><td>Release Shift while the bolt cycles (1.7 s), re-acquire the target, scope back in</td><td>After any shot — hit or miss. Your breath is back and the sway is gone by the time the next round is chambered.</td></tr>
+            <tr><td><strong>The follow-up</strong></td><td>Second shot only when the target is still there and still exposed</td><td>Past 365 m, or a body shot that left him wounded. If he reached cover during the rechamber, don't chase the shot — reposition.</td></tr>
+          </tbody>
+        </table>
+
+        <div class="viz" id="rechamberSim" data-chamber="1.7" data-sway="yes">
+          <h3>Try it: one shot, one rechamber</h3>
+          <p class="small" style="margin:0">A target 100 m away, aiming down sights. The crosshair drifts with scope sway — hold <strong>HOLD BREATH</strong> (or hold Shift) to steady it. Click <strong>FIRE</strong> when the crosshair is on the head: a headshot kills outright, a body shot only wounds (two body shots kill), a miss costs a full 1.7 s rechamber before you can shoot again. This practice window is shared by the whole Sage series: it's driven by a weapon profile plugged into the window — here the AF-8 RailJack's (1.7 s rechamber, 0.3 s scope-in, target at 100 m) — and the sway is drawn from the game's real mechanics.</p>
+          <div class="sim-stage" id="simStage" aria-hidden="true">
+            <svg viewBox="0 0 200 300" width="150" height="300" role="presentation">
+              <g fill="var(--ink-soft)">
+                <circle cx="100" cy="42" r="23" />
+                <rect x="84" y="68" width="11" height="74" rx="5" />
+                <rect x="105" y="68" width="11" height="74" rx="5" />
+                <rect x="60" y="66" width="80" height="112" rx="14" />
+                <rect x="66" y="178" width="28" height="18" />
+                <rect x="68" y="194" width="22" height="102" />
+                <rect x="110" y="194" width="22" height="102" />
+              </g>
+              <circle cx="100" cy="126" r="5" fill="var(--nc-gold)" />
+            </svg>
+            <div class="sim-cross" id="simCross"></div>
+          </div>
+          <div class="sim-controls">
+            <button type="button" class="sim-fire" id="simFire">Fire</button>
+            <button type="button" class="sim-fire" id="simBreath">Hold breath</button>
+            <button type="button" class="sim-reset" id="simReset">Reset target</button>
+          </div>
+          <div class="bloom-track" aria-hidden="true"><div class="bloom-fill" id="simRech"></div></div>
+          <p class="small" style="margin:4px 0 0">Rechamber — fills as the bolt cycles.</p>
+          <div class="bloom-track" aria-hidden="true"><div class="bloom-fill" id="simBreathFill" style="width:100%"></div></div>
+          <p class="small" style="margin:4px 0 0">Breath — drains while you hold your breath, refills when you let go.</p>
+          <div class="sim-read">
+            <div class="lab-cell"><div class="v" id="simShots">0</div><div class="k">Shots fired</div></div>
+            <div class="lab-cell"><div class="v" id="simHeads">0</div><div class="k">Headshots</div></div>
+            <div class="lab-cell"><div class="v" id="simKills">0</div><div class="k">Kills</div></div>
+          </div>
+          <p class="sim-verdict" id="simVerdict">Your shots will be graded here — a headshot kills outright; a body shot only wounds.</p>
+          <div class="burst-log" id="simLog" aria-label="Your shots so far"></div>
+        </div>
+      
+        </section>      <!-- ================= 05 SEE IT ================= -->
+      <section aria-labelledby="s-see" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">05</span>
+          <h2 id="s-see">See it: the pictures</h2>
+          <span class="tag">Spread, rhythm<br />and sights, drawn</span></div>
+                <p class="lede">Some things are easier to show than to say. Here's what your bullets actually do: how wide hipfire spreads at 8 metres, what the shot rhythm looks like, and what the scopes really change. The hands-on version — firing the rifle yourself — is the practice window in section 04.</p>
+
+<div class="viz">
+          <h3>Hipfire at 8 metres — where the bullets land</h3>
+          <p class="small" style="margin:0">A full-size target 8 m away — an arm's-length room fight. The rings show where hipfire rounds land around your aim point (the chest). Sizes are drawn to scale from the gun's real cone-of-fire numbers.</p>
+          <svg viewBox="0 0 640 320" width="100%" role="img" aria-label="Diagram of a soldier target at 8 metres with three spread rings drawn at true scale: hipfire while moving spreads about 0.91 metres wide, hipfire standing still about 0.77 metres, hipfire crouched about 0.70 metres. Aiming down sights while strafing lands in a dot about 0.08 metres wide.">
+            <line x1="20" y1="292" x2="620" y2="292" stroke="var(--line)" stroke-width="2" />
+            <g fill="var(--ink-soft)">
+              <circle cx="320" cy="58" r="17" />
+              <rect x="281" y="86" width="13" height="66" rx="6" />
+              <rect x="346" y="86" width="13" height="66" rx="6" />
+              <rect x="297" y="82" width="46" height="78" rx="10" />
+              <rect x="301" y="158" width="38" height="16" />
+              <rect x="303" y="172" width="15" height="118" />
+              <rect x="322" y="172" width="15" height="118" />
+            </g>
+            <circle cx="320" cy="128" r="63.6" fill="none" stroke="var(--skip)" stroke-width="2" stroke-dasharray="7 5" />
+            <circle cx="320" cy="128" r="53.8" fill="var(--nc-blue)" opacity="0.16" />
+            <circle cx="320" cy="128" r="53.8" fill="none" stroke="var(--nc-blue)" stroke-width="2" />
+            <circle cx="320" cy="128" r="48.9" fill="var(--nc-gold)" opacity="0.22" />
+            <circle cx="320" cy="128" r="48.9" fill="none" stroke="var(--nc-gold)" stroke-width="2" />
+            <circle cx="320" cy="128" r="5" fill="var(--good)" />
+            <g font-size="14" font-weight="600" fill="var(--ink)">
+              <text x="24" y="46">Target at 8 m</text>
+              <text x="24" y="66" fill="var(--ink-soft)" font-weight="400">≈ 1.8 m tall, drawn to scale</text>
+              <text x="470" y="66" fill="var(--skip)">moving: ≈ 0.91 m wide</text>
+              <text x="470" y="118" fill="var(--nc-blue)">standing: ≈ 0.77 m wide</text>
+              <text x="470" y="180" fill="var(--accent-ink)">crouched: ≈ 0.70 m wide</text>
+              <text x="470" y="238" fill="var(--good)">aimed, strafing: ≈ 0.08 m</text>
+            </g>
+            <g stroke="var(--ink-soft)" stroke-width="1">
+              <line x1="462" y1="62" x2="365" y2="83" />
+              <line x1="462" y1="114" x2="358" y2="90" />
+              <line x1="462" y1="176" x2="354" y2="128" />
+              <line x1="462" y1="234" x2="326" y2="132" />
+            </g>
+          </svg>
+          <div class="legend">
+            <span><i style="background:var(--skip)"></i>Hipfire, strafing (6.5° cone)</span>
+            <span><i style="background:var(--nc-blue)"></i>Hipfire, standing (5.5° cone)</span>
+            <span><i style="background:var(--nc-gold)"></i>Hipfire, crouched (5.0° cone)</span>
+            <span><i style="background:var(--good)"></i>Aimed down sights, strafing (0.55° cone)</span>
+          </div>
+          <p class="cap">Read it this way: standing still, the <b>0.77 m ring roughly covers the chest</b> — most rounds hit a target this size, which is why hipfire works point-blank. But move and it grows to <b>0.91 m — wider than the torso</b> — so the edge rounds start leaking past him, and the rings only grow with distance while the man doesn't. Past ~10 m that's rounds missing entirely: the exact moment to switch to aiming down sights, where the spread shrinks to a dot 0.08 m wide even while strafing. (Ring sizes use the real geometry: spread diameter = 2 × distance × tan(cone ÷ 2).)</p>
+        </div>
+
+<div class="viz">
+          <h3>Fire — rechamber — re-acquire: the bolt-action rhythm</h3>
+          <p class="small" style="margin:0">One aimed shot, then the bolt. There is no second shot until the rechamber finishes — 1.7 s of working the bolt, then re-acquire and fire again. Two body shots take 1.80 s plus your aim time; a headshot takes one.</p>
+          <svg viewBox="0 0 640 216" width="100%" role="img" aria-label="Diagram of the bolt-action shot rhythm. One shot, then 1.7 seconds of rechambering, then re-acquire the target and fire again — 1.80 seconds between shots.">
+            <g font-family="Rajdhani, sans-serif" font-weight="700">
+              <text x="8" y="52" font-size="17" fill="var(--skip)">✗ SPRAY</text>
+              <text x="8" y="152" font-size="17" fill="var(--good)">✓ RHYTHM</text>
+            </g>
+            <rect x="120" y="34" width="380" height="16" fill="var(--skip)" opacity="0.75" />
+            <text x="120" y="24" font-size="13.5" fill="var(--ink)">Trying to fire twice fast — the second shot isn't ready</text>
+            <text x="452" y="96" font-size="13.5" fill="var(--ink)">click… nothing yet</text>
+            <g fill="var(--nc-blue)">
+              <rect x="120" y="134" width="10" height="16" />
+              <rect x="130" y="134" width="239" height="16" opacity="0.35" />
+              <rect x="373" y="134" width="10" height="16" />
+            </g>
+            <g fill="var(--ink)" font-size="13.5">
+              <text x="120" y="124">shot 1</text>
+              <text x="134" y="172" text-anchor="middle" fill="var(--good)" font-weight="600">rechamber 1.7 s</text>
+              <text x="369" y="124">shot 2 · 1.80 s later</text>
+              <text x="120" y="196">Release Hold Breath while the bolt cycles — your breath is back for the next shot.</text>
+            </g>
+          </svg>
+          <p class="cap"><b>The discipline is the gun.</b> A bolt-action does not forgive a rushed second shot — it simply isn't ready. Aim once, fire once, work the bolt, and let the sway settle before the next shot. The practice window in section 04 trains exactly this: one shot, one rechamber, one re-acquire.</p>
+        </div>
+
+<div class="viz2"><div class="viz">
+            <h3>6× BDS</h3>
+            <svg viewBox="0 0 300 210" width="100%" role="img" aria-label="View through the 6x scope at a target 200 metres away: the soldier appears at moderate size inside a round scope window, with ground visible around him.">
+              <defs><clipPath id="clip-6×"><circle cx="150" cy="105" r="97" /></clipPath></defs>
+              <rect x="0" y="0" width="300" height="168" fill="var(--surface-2)" />
+              <rect x="0" y="168" width="300" height="42" fill="var(--line)" opacity="0.55" />
+              <g clip-path="url(#clip-6×)">
+                <rect x="-52" y="100" width="104" height="68" fill="var(--ink-soft)" opacity="0.7" />
+                <g fill="var(--ink)" transform="translate(150,168) scale(1.0)">
+                  <circle cx="0" cy="-57" r="6.5" />
+                  <rect x="-8" y="-51" width="16" height="27" rx="4" />
+                  <rect x="-7" y="-24" width="6" height="24" />
+                  <rect x="1" y="-24" width="6" height="24" />
+                </g>
+              </g>
+              <circle cx="150" cy="88" r="4.5" fill="var(--skip)" />
+              <circle cx="150" cy="88" r="12" fill="none" stroke="var(--skip)" stroke-width="1.5" />
+              <circle cx="150" cy="105" r="97" fill="none" stroke="var(--ink)" stroke-width="7" />
+            </svg>
+            <p class="cap">Same target, same 200 m — but he looks <b>four times as tall</b>, so placing a shot on his head gets much easier. The price: your view narrows to the round window and close targets feel fast and huge. Best past 50 m.</p>
+          </div><div class="viz">
+            <h3>12×</h3>
+            <svg viewBox="0 0 300 210" width="100%" role="img" aria-label="View through the 12x scope at the same target 200 metres away: the soldier appears twice as tall and fills the round scope, with the surroundings cropped out.">
+              <defs><clipPath id="clip-12×"><circle cx="150" cy="105" r="97" /></clipPath></defs>
+              <rect x="0" y="0" width="300" height="168" fill="var(--surface-2)" />
+              <rect x="0" y="168" width="300" height="42" fill="var(--line)" opacity="0.55" />
+              <g clip-path="url(#clip-12×)">
+                <rect x="-52" y="100" width="104" height="68" fill="var(--ink-soft)" opacity="0.7" />
+                <g fill="var(--ink)" transform="translate(150,168) scale(2.0)">
+                  <circle cx="0" cy="-57" r="6.5" />
+                  <rect x="-8" y="-51" width="16" height="27" rx="4" />
+                  <rect x="-7" y="-24" width="6" height="24" />
+                  <rect x="1" y="-24" width="6" height="24" />
+                </g>
+              </g>
+              <circle cx="150" cy="88" r="4.5" fill="var(--skip)" />
+              <circle cx="150" cy="88" r="12" fill="none" stroke="var(--skip)" stroke-width="1.5" />
+              <circle cx="150" cy="105" r="97" fill="none" stroke="var(--ink)" stroke-width="7" />
+            </svg>
+            <p class="cap">Same target, same 200 m — but he looks <b>twice as tall</b>, so placing a shot on his head gets much easier. The price: your view narrows to the round window, the surroundings are gone, and close targets feel fast and huge. Best past 150 m.</p>
+          </div></div>
+        <p class="cap" style="margin-top:12px">That's the whole 30-cert decision from section 06 in one picture: <b>6× for awareness, 12× for precision.</b> At 12× the target looks twice as tall — and so does the sway, so hold your breath before the shot.</p>
+      
+        </section>      <!-- ================= 06 ATTACHMENTS ================= -->
+      <section aria-labelledby="s-att" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">06</span>
+          <h2 id="s-att">Attachments: what to buy, what to skip</h2>
+          <span class="tag">Every slot, judged<br />for a new player</span></div>
+                <p class="lede">Honest news first: the rifle arrives bare — a 6× scope, no rail, no barrel, standard ammo. Nothing here is free except the scope and the iron sights it replaces, so buy in the order shown and stop whenever the gun feels right. Everything below is an optional sidegrade, not an upgrade.</p>
+
+        <h3 class="slot-title">Optic <span>— your window on the fight</span></h3>
+
+        <div class="att">
+          <div class="att-head"><h4>BDS 6× — the default scope</h4><span class="chip free">Already yours</span><span class="cost">0 certs</span></div>
+          <p class="effect">The 6× scope the rifle arrives with. No sway-free lunch — it sways like every 6× scope — but it is the right magnification for most sniper work.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> nearly everything: 100–300 m shots with a wide enough view to track a moving target.</p>
+            <p><b class="bad-t">Bad:</b> the very longest shots past 300 m, where the target is small — that's what the 10× and 12× are for.</p>
+          </div>
+        </div>        <div class="att">
+          <div class="att-head"><h4>M7 7×</h4><span class="chip good">Good</span><span class="cost">30 certs</span></div>
+          <p class="effect">A small step up in magnification for 30 certs. Same sway, slightly bigger target.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> open-field bases where targets sit past 150 m.</p>
+            <p><b class="bad-t">Bad:</b> close work — you will never need 7× inside 50 m.</p>
+          </div>
+        </div>        <div class="att">
+          <div class="att-head"><h4>A-Eight 8×</h4><span class="chip good">Good</span><span class="cost">30 certs</span></div>
+          <p class="effect">The sweet spot for long-range bolts: the target is a third bigger than at 6×, the view still wide enough to find him.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> your 200–300 m game, especially on the Longshot and RailJack.</p>
+            <p><b class="bad-t">Bad:</b> aggressive play — the tunnel narrows and the sway looks bigger.</p>
+          </div>
+        </div>        <div class="att">
+          <div class="att-head"><h4>IO-10 10×</h4><span class="chip situ">Situational</span><span class="cost">30 certs</span></div>
+          <p class="effect">Serious magnification for serious distance. The target fills the scope — and so does the sway.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> shots past 300 m from a fixed position, with hold-breath discipline.</p>
+            <p><b class="bad-t">Bad:</b> anything under 150 m, or any target who might move — you will lose him out of the window.</p>
+          </div>
+        </div>        <div class="att">
+          <div class="att-head"><h4>IO-12 12×</h4><span class="chip skip">Skip for now</span><span class="cost">30 certs</span></div>
+          <p class="effect">The biggest scope in the game. Twelve times magnification turns a man at 300 m into a portrait — and turns your sway into a wobble you have to fight on every shot.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> almost nothing a new sniper does — the 8× does the same job with a wider view.</p>
+            <p><b class="bad-t">Bad:</b> learning the rifle: the tunnel vision hides the second enemy, and the magnified sway punishes every rushed shot.</p>
+          </div>
+        </div>
+
+        <h3 class="slot-title">Barrel <span>— one slot, two trade-offs. "None" is a real choice.</span></h3>
+
+        <div class="att">
+          <div class="att-head"><h4>No barrel attachment</h4><span class="chip free">Already yours</span><span class="cost">0 certs</span></div>
+          <p class="effect">The rifle's full damage and full velocity, exactly as the tables in section 02 say. Plenty of veterans run this slot empty forever.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> your first weeks, and any fight where you want the longest one-shot headshot range this gun can give.</p>
+            <p><b class="bad-t">Bad:</b> nothing — there's no downside to an empty slot.</p>
+          </div>
+        </div>        <div class="att">
+          <div class="att-head"><h4>Suppressor</h4><span class="chip situ">Situational</span><span class="cost">100 certs</span></div>
+          <p class="effect">You vanish from the minimap when firing and your shots are quiet. In exchange, damage starts dropping off 20 m sooner — your one-shot headshot range falls from 365 m to 347 m — and bullets fly 15% slower (850 → 722 m/s), so moving targets need more lead.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> flanking behind enemy lines, rooftop and tree work, solo play behind the front.</p>
+            <p><b class="bad-t">Bad:</b> front-line fighting where everyone already knows where you are — you pay the damage cost for stealth you don't need.</p>
+          </div>
+        </div>
+
+        <h3 class="slot-title">Rail <span>— pick ONE playstyle</span></h3>
+
+        <div class="att">
+          <div class="att-head"><h4>No rail attachment</h4><span class="chip free">Already yours</span><span class="cost">0 certs</span></div>
+          <p class="effect">The rifle ships with an empty rail. Plenty of veterans run it empty until they pick a playstyle.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> your first weeks. Spend certs on your suit and cloak first.</p>
+            <p><b class="bad-t">Bad:</b> nothing — there's no downside to an empty slot.</p>
+          </div>
+        </div>        <div class="att">
+          <div class="att-head"><h4>Straight-Pull Bolt</h4><span class="chip first">First buy</span><span class="cost">100 certs</span></div>
+          <p class="effect">Lets you chamber the next round while staying aimed down sights — and lets you enter or leave ADS during the rechamber. Without it, every shot forces you out of the scope.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> every bolt-action build: it is the single biggest quality-of-life purchase on this rifle.</p>
+            <p><b class="bad-t">Bad:</b> nothing meaningful. It only stops helping if you never scope in.</p>
+          </div>
+        </div>        <div class="att">
+          <div class="att-head"><h4>Comfort Grip</h4><span class="chip good">Good</span><span class="cost">100 certs</span></div>
+          <p class="effect">Cuts the time it takes to swap to the weapon by 30%, reduces horizontal recoil by 20%, but increases vertical recoil by 20%. (Since the 2022 Arsenal Update, this replaces the Forward Grip on sniper rifles.)</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> general play — the faster swap is the real prize when a fight surprises you with your sidearm out.</p>
+            <p><b class="bad-t">Bad:</b> nothing major. On a bolt-action the recoil change barely matters — you fire one shot at a time.</p>
+          </div>
+        </div>        <div class="att">
+          <div class="att-head"><h4>Darklight Flashlight</h4><span class="chip situ">Tool, not a buff</span><span class="cost">100 certs</span></div>
+          <p class="effect">A torch whose beam reveals cloaked infiltrators. Toggle it with the attachment key (X by default).</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> hunting a stalker infiltrator camping your capture point — sweep corners with it.</p>
+            <p><b class="bad-t">Bad:</b> as your everyday rail — it gives zero accuracy help, and the beam advertises your position.</p>
+          </div>
+        </div>
+
+        <h3 class="slot-title">Ammo <span>— nothing here</span></h3>
+
+        <div class="att">
+          <div class="att-head"><h4>No ammo attachments</h4><span class="chip skip">None available</span><span class="cost">—</span></div>
+          <p class="effect">This weapon takes no ammo type attachments. There is no soft point or high velocity option for sniper rifles — the damage and velocity in section 02 are the whole story.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> nothing to buy, nothing to choose. Spend the certs on optics and rails instead.</p>
+            <p><b class="bad-t">Bad:</b> wishing for it — the rifle is complete without it.</p>
+          </div>
+        </div>
+
+        <div class="rule"><strong>Spend order for your first certs</strong>Straight-Pull Bolt (100) → 10× scope (30) → then stop. Add the 12× (30) only when you are comfortable at 300 m+, and the Suppressor (100) when you start flanking. Put the next several hundred certs into your cloak and suit slots — they win more fights than any barrel.</div>
+      
+        </section>      <!-- ================= 07 LOADOUTS ================= -->
+      <section aria-labelledby="s-loadouts" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">07</span>
+          <h2 id="s-loadouts">Four ready-made setups</h2>
+          <span class="tag">Copy one,<br />go fight</span></div>
+                <div class="grid2">
+          <div class="loadout">
+            <p class="cost">1,000 certs · The gun itself</p>
+            <h3>Standard Issue</h3>
+            <ul>
+              <li><b>Optic:</b> BDS 6× (default)</li><li><b>Barrel:</b> none</li><li><b>Rail:</b> none</li><li><b>Ammo:</b> standard</li>
+            </ul>
+            <p>What 1,000 certs buys you before a single attachment. Genuinely usable — learn the rifle on this before spending anything.</p>
+          </div>          <div class="loadout pick">
+            <p class="cost">130 certs in attachments · Recommended</p>
+            <h3>All-Rounder</h3>
+            <ul>
+              <li><b>Optic:</b> IO-10 10×</li><li><b>Barrel:</b> none</li><li><b>Rail:</b> Straight-Pull Bolt</li><li><b>Ammo:</b> standard</li>
+            </ul>
+            <p>The best value in this whole guide. One-shot headshots to 365 m, and you never leave the scope to work the bolt.</p>
+          </div>          <div class="loadout">
+            <p class="cost">230 certs in attachments · Ridge holder</p>
+            <h3>Long-Range</h3>
+            <ul>
+              <li><b>Optic:</b> IO-12 12×</li><li><b>Barrel:</b> none</li><li><b>Rail:</b> Straight-Pull Bolt</li><li><b>Ammo:</b> standard</li>
+            </ul>
+            <p>Parked on a ridge at 350 m: the biggest scope, the straight-pull bolt, and the fastest bullets in the game. Weak up close — don't take fair close fights.</p>
+          </div>          <div class="loadout">
+            <p class="cost">200 certs in attachments · Flanker</p>
+            <h3>Ghost</h3>
+            <ul>
+              <li><b>Optic:</b> BDS 6× (default)</li><li><b>Barrel:</b> Suppressor</li><li><b>Rail:</b> Straight-Pull Bolt</li><li><b>Ammo:</b> standard</li>
+            </ul>
+            <p>Built to shoot from rooftops and trees without appearing on the minimap. Your one-shot range drops to 347 m — stay inside it.</p>
+          </div>
+        </div>
+      
+        </section>      <!-- ================= 08 KILL EFFICIENTLY ================= -->
+      <section aria-labelledby="s-kill" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">08</span>
+          <h2 id="s-kill">Kill efficiently: six habits</h2>
+          <span class="tag">Technique beats<br />attachments</span></div>
+                <ol class="habits">
+          <li>
+            <h3>Aim for the head, not the chest</h3><p>Headshots deal ×2.1 damage: one kills out to 365 m, versus two to the chest. Don't aim at the head directly — aim at the top of the head and let the sway carry the shot, or hold your breath and put the dot on the skull. It's the single biggest damage upgrade you own, and it's free.</p>
+          </li>
+          <li>
+            <h3>Stop, aim, then fire</h3><p>The section 01 lesson, every single time: stop sprinting, scope in (0.3 s), then fire. A shot taken from a sprint is a shot wasted — and on this rifle a wasted shot costs a 1.7 s rechamber while the enemy knows where you are.</p>
+          </li>
+          <li>
+            <h3>Hold your breath — then let it go</h3><p>Hold Shift to steady the sway before the shot, and release it while the bolt cycles: your breath is back by the time the next round is chambered. Holding your breath through the whole rechamber just wastes it.</p>
+          </li>
+          <li>
+            <h3>Never reload on empty</h3>
+            <p>Reloading with even 1 bullet left takes <strong>4.1 s</strong>; an empty gun takes <strong>5.1 s</strong> — an eternity mid-fight. Count roughly: after one or two kills, duck behind cover and reload early. Treat the last 4 rounds as your emergency reserve, not your working magazine.</p>
+          </li>
+          <li>
+            <h3>Reposition after every shot</h3>
+            <p>Every shot you fire puts you on the enemy minimap out to 100 m. One kill from a ridge is a triumph; two from the same ridge is a death sentence — the second shot tells every enemy in 100 m exactly where to look. Shoot, move, shoot from somewhere new.</p>
+          </li>
+          <li>
+            <h3>Pick fights inside 365 metres</h3><p>Your damage, your one-shot range and your whole job all live inside 365 m. Sprint between cover, use buildings and rocks as stepping stones, and arrive at <em>your</em> range before opening fire. The player who chooses the range usually wins the duel — make it you.</p>
+          </li>
+        </ol>
+      
+        </section>      <!-- ================= 09 WEAK SPOTS ================= -->
+      <section aria-labelledby="s-weak" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">09</span>
+          <h2 id="s-weak">The honest weak spots</h2>
+          <span class="tag">Know them,<br />play around them</span></div>
+                <p class="lede">Every gun has a price. Here's where the AF-8 RailJack pays — and the habit that covers each hole.</p>
+
+        <div class="weak">
+          <h3>1 · The 0.2 s firing delay</h3>
+          <p>Pull the trigger and the shot leaves 0.2 s later — the longest delay of any infantry weapon. A target walking at 200 m has moved before your bullet even starts flying, and a target who steps behind cover during the delay is safe.</p>
+          <p class="fix"><b>Play around it:</b> Play around it: lead moving targets by more than you think, and only shoot at targets who are standing still or walking predictably. The delay is also a gift: it does your quick-scope timing for you.</p>
+        </div>        <div class="weak">
+          <h3>2 · The slowest cycle of any bolt here</h3>
+          <p>1.7 s to work the bolt, 1.8 s between shots — and the delay on top. Miss the head and the enemy has nearly two seconds to reach cover or find you.</p>
+          <p class="fix"><b>Play around it:</b> Play around it: only take shots you are certain of. A shot not taken costs nothing; a shot missed costs the kill.</p>
+        </div>        <div class="weak">
+          <h3>3 · Four rounds, then a 4.1 s reload</h3>
+          <p>Four rounds is the smallest magazine in this guide — and the longest reload. Empty it on a squad and you are defenceless for 4.1 s — 5.1 s on empty.</p>
+          <p class="fix"><b>Play around it:</b> Play around it: reload early, behind cover, after every kill. Never let the magazine hit zero in the open.</p>
+        </div>        <div class="weak">
+          <h3>4 · Scope sway at 6× and up</h3>
+          <p>Your scope sways, and the sway is magnified with the scope. A rushed shot at 300 m drifts off the head on its own.</p>
+          <p class="fix"><b>Play around it:</b> Play around it: hold Shift before the shot, and release it while the bolt cycles so your breath is back for the next one.</p>
+        </div>        <div class="weak">
+          <h3>5 · The minimap gives you away</h3>
+          <p>Every shot puts you on the minimap out to 100 m. A sniper who stays in one place is a sniper who gets flanked.</p>
+          <p class="fix"><b>Play around it:</b> Play around it: shoot, move, shoot from somewhere new. The Suppressor (100 certs) removes the dot entirely if you flank often.</p>
+        </div>
+      
+        </section>      <!-- ================= 10 DRILLS ================= -->
+      <section aria-labelledby="s-drills" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">10</span>
+          <h2 id="s-drills">Training: five VR drills</h2>
+          <span class="tag">VR Training area<br />~15 minutes a session</span></div>
+                <p class="lede">Open the world map, travel to <strong>VR Training</strong>, and run these on the target dummies. Five minutes before a play session beats an hour of dying confused.</p>
+        <ul class="drills">
+          <li>
+            <div class="d-name">Sway Watch <span>3 minutes · breath control</span></div>
+            <p>Scope a dummy at 100 m and watch the crosshair drift. Hold Shift (hold breath) and fire when the drift carries the dot onto the head. Release Shift while the bolt cycles — your breath is back for the next shot. Goal: five headshots in a row without a miss.</p>
+          </li>
+          <li>
+            <div class="d-name">Head-Line Walk <span>3 minutes · aim height</span></div>
+            <p>Walk the dummy range keeping your crosshair glued to head height the whole time, snapping to each new target without dipping to the floor or sky. Slow and clean first; speed comes on its own.</p>
+          </li>
+          <li>
+            <div class="d-name">Rechamber Rhythm <span>4 minutes · shot discipline</span></div>
+            <p>One shot per dummy, then rechamber and re-acquire a <em>different</em> dummy — never shoot the same dummy twice in a row. If a shot misses, the next dummy is your penance: take it slow, hold your breath, and make it count.</p>
+          </li>
+          <li>
+            <div class="d-name">Relocate Drill <span>3 minutes · repositioning</span></div>
+            <p>Shoot one dummy, then move to a new position before shooting the next — never fire twice from the same spot. This is your survival skill: in real fights, the second shot from the same ridge is the one that gets you killed.</p>
+          </li>
+          <li>
+            <div class="d-name">Reload Discipline <span>2 minutes · habit</span></div>
+            <p>Fire 4 rounds, step behind a pillar, reload, repeat. Train your hands to reload early and only in cover until it's automatic — with a 4.1 s reload, in real fights you'll do it without thinking, which is the point.</p>
+          </li>
+        </ul>
+
+        <div class="rule"><strong>Pocket summary — screenshot this</strong>
+          AF-8 RailJack · one headshot kills to 365 m · stop, aim, fire · hold breath, release while rechambering · rechamber 1.7 s, cycle 1.8 s · reload early behind cover (never on empty: 4.1 / 5.1 s) · move after every shot — the minimap dot reaches 100 m · past 365 m, two headshots or don't shoot.
+        </div>
+      
+        </section>            <footer>
+        <p><strong>About this guide.</strong> An entry in the Sage tutorial series — one weapon, one page, written for a brand-new player. Stats are the AF-8 RailJack's live game values (750→450 damage, bolt-action, 4-round magazine) as listed by the community wiki and the Census API data feed.</p>
+        <p>Sources: <a href="https://planetside.fandom.com/wiki/AF-8_RailJack">AF-8 RailJack — PlanetSide 2 Wiki</a> · <a href="https://liquidwarp.honu.pw/stats/weapons/infantry/af-8-railjack-7301.html">AF-8 RailJack weapon data — PS2 LiquidWarp (Honu)</a> · <a href="https://iridar-mirror.knyazev.io/planetside2/weapons/sniper-rifles/">Sniper Rifles — Iridar's PlanetSide 2 Guide</a>. Weapon render via the Census API; spread rings and sight views are scale diagrams drawn from the gun's published cone-of-fire and magnification values. PlanetSide 2 is a Daybreak Game Company title; this is a fan-made tutorial, not affiliated with Daybreak.</p>
+      </footer>
+    </div>
+
+  <script type="module" src="weapon-sage-guide.mjs?v=20261109-sageguide3"></script>
+  <script>
+
+      (function () {
+        var box = document.getElementById('rangeLab');
+        var slider = document.getElementById('labRange');
+        var distEl = document.getElementById('labDist');
+        var bandEl = document.getElementById('labBand');
+        var dmgEl = document.getElementById('labDmg');
+        var headEl = document.getElementById('labHead');
+        var chestEl = document.getElementById('labChest');
+        var ttkEl = document.getElementById('labTtk');
+        var advEl = document.getElementById('labAdvice');
+        var DMAX = parseFloat(box.getAttribute('data-dmgmax'));
+        var DMIN = parseFloat(box.getAttribute('data-dmgmin'));
+        var RMAX = parseFloat(box.getAttribute('data-rmax'));
+        var RMIN = parseFloat(box.getAttribute('data-rmin'));
+        var HS = parseFloat(box.getAttribute('data-hs'));
+        var HS1 = parseFloat(box.getAttribute('data-hs1'));
+        var CYCLE = parseFloat(box.getAttribute('data-cycle'));
+        var REFIRE = parseFloat(box.getAttribute('data-refire')) / 1000;
+        function damageAt(d) {
+          if (d <= RMAX) return DMAX;
+          if (d < RMIN) return DMAX - (d - RMAX) * ((DMAX - DMIN) / (RMIN - RMAX));
+          return DMIN;
+        }
+        function adviceFor(d) {
+          if (d < 8) return ['Point blank', 'Hipfire at the chest and keep moving. Scoping in here costs time and halves your speed — trust the hip cone.'];
+          if (d < HS1) return ['One-shot zone', 'Aim down sights at the head. One headshot kills here — hold your breath, wait for the sway to settle, then take the shot.'];
+          if (d < RMIN) return ['Two-headshot zone', 'A headshot no longer kills on its own. Two headshots (1.97 s apart) or three chest shots — and remember your bullet drops 0.47 m by 300 m.'];
+          return ['Minimum damage', 'You are at 450 damage: two headshots or three chest shots, same as the band before — but the drop is real now, so hold over the head.'];
+        }
+        function update() {
+          var d = parseInt(slider.value, 10);
+          var dmg = damageAt(d);
+          var head = Math.ceil(1000 / (dmg * HS));
+          var chest = Math.ceil(1000 / dmg);
+          var a = adviceFor(d);
+          distEl.textContent = d;
+          dmgEl.textContent = Math.round(dmg);
+          headEl.textContent = head;
+          chestEl.textContent = chest;
+          ttkEl.textContent = CYCLE.toFixed(2) + ' s';
+          bandEl.textContent = a[0];
+          advEl.textContent = a[1];
+          bandEl.className = 'chip ' + (d < 8 ? 'situ' : d < HS1 ? 'good' : d < RMIN ? 'good' : 'skip');
+        }
+        slider.addEventListener('input', update);
+        update();
+      })();
+
+      /* ---------- rechamber trainer (bolt-action) ----------
+         One shot, one rechamber, one re-acquire. The crosshair drifts with
+         scope sway; hold HOLD BREATH (or Shift) to steady it. After each shot
+         the button locks for the rechamber time. Driven by this gun's profile:
+         data-chamber (seconds), data-sway ("yes"/"no"). */
+      (function () {
+        var box = document.getElementById('rechamberSim');
+        var stage = document.getElementById('simStage');
+        var cross = document.getElementById('simCross');
+        var fireBtn = document.getElementById('simFire');
+        var breathBtn = document.getElementById('simBreath');
+        var resetBtn = document.getElementById('simReset');
+        var rechEl = document.getElementById('simRech');
+        var shotsEl = document.getElementById('simShots');
+        var headEl = document.getElementById('simHeads');
+        var killsEl = document.getElementById('simKills');
+        var verdictEl = document.getElementById('simVerdict');
+        var logEl = document.getElementById('simLog');
+        var breathEl = document.getElementById('simBreathFill');
+        if (!box || !stage || !fireBtn) return;
+        var CHAMBER_MS = parseFloat(box.getAttribute('data-chamber')) * 1000;
+        var HAS_SWAY = box.getAttribute('data-sway') === 'yes';
+        var shots = 0, heads = 0, kills = 0, wounded = false, rechambering = false;
+        var breathing = false, breath = 100, swayT = 0, swayX = 0, swayY = 0, lastT = 0;
+        function aimPoint() {
+          var r = stage.getBoundingClientRect();
+          return { x: r.width / 2, y: r.height * 0.14, ppm: r.width / 3 }; // aim point is the head
+        }
+        function tick(ts) {
+          if (!lastT) lastT = ts;
+          var dt = Math.min(0.05, (ts - lastT) / 1000); lastT = ts;
+          swayT += dt;
+          if (breathing && breath > 0) { breath = Math.max(0, breath - dt * 20); }
+          else { breath = Math.min(100, breath + dt * 50); }
+          var steady = breathing && breath > 0;
+          var amp = HAS_SWAY ? (steady ? 2 : 34) : 2;
+          swayX = amp * Math.sin(swayT * 1.1);
+          swayY = amp * 0.7 * Math.sin(swayT * 1.7 + 1.3);
+          var p = aimPoint();
+          cross.style.left = (p.x + swayX) + 'px';
+          cross.style.top = (p.y + swayY) + 'px';
+          breathEl.style.width = breath + '%';
+          breathEl.className = 'bloom-fill' + (breath < 25 ? ' hot' : breath < 60 ? ' warm' : '');
+          requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+        function fireShot() {
+          if (rechambering) return;
+          var p = aimPoint();
+          var dx = swayX, dy = swayY;
+          var dot = document.createElement('span');
+          dot.className = 'sim-shot';
+          // head: ellipse on the head (the aim point); torso: larger ellipse 80 px below
+          var headHit = (dx * dx) / (17 * 17) + (dy * dy) / (23 * 23) <= 1;
+          var bodyHit = (dx * dx) / (56 * 56) + ((dy - 80) * (dy - 80)) / (98 * 98) <= 1;
+          shots++;
+          if (headHit) {
+            dot.classList.add('hit'); heads++; kills++; wounded = false;
+            verdictEl.innerHTML = '<b>One shot, one kill</b> — headshot. That is the whole job. Now move: your minimap dot just gave you away.';
+            var pip = document.createElement('span'); pip.className = 'burst-pip good'; pip.textContent = 'headshot · kill';
+            logEl.appendChild(pip);
+          } else if (bodyHit) {
+            dot.style.background = 'var(--nc-gold)';
+            if (wounded) {
+              kills++; wounded = false;
+              verdictEl.innerHTML = '<b>Finished him</b> — second body shot. Two body shots kill, but it cost you a full rechamber in between.';
+              var pip2 = document.createElement('span'); pip2.className = 'burst-pip warn'; pip2.textContent = 'body + body · kill';
+              logEl.appendChild(pip2);
+            } else {
+              wounded = true;
+              verdictEl.innerHTML = '<b>Body shot — he lived.</b> One body shot never kills. Rechamber and finish him before he finds cover.';
+              var pip3 = document.createElement('span'); pip3.className = 'burst-pip warn'; pip3.textContent = 'body · wounded';
+              logEl.appendChild(pip3);
+            }
+          } else {
+            verdictEl.innerHTML = '<b>Miss.</b> A miss costs a full rechamber — ' + (CHAMBER_MS / 1000).toFixed(3).replace(/0+$/, '').replace(/\.$/, '.0') + ' s before you can shoot again. Wait for the sway to settle.';
+            var pip4 = document.createElement('span'); pip4.className = 'burst-pip bad'; pip4.textContent = 'miss';
+            logEl.appendChild(pip4);
+          }
+          dot.style.left = (p.x + dx) + 'px';
+          dot.style.top = (p.y + dy) + 'px';
+          stage.appendChild(dot);
+          shotsEl.textContent = shots; headEl.textContent = heads; killsEl.textContent = kills;
+          rechambering = true;
+          fireBtn.disabled = true;
+          fireBtn.textContent = 'Rechambering…';
+          var t0 = performance.now();
+          rechEl.style.width = '0%';
+          function rechTick(now) {
+            var f = Math.min(1, (now - t0) / CHAMBER_MS);
+            rechEl.style.width = (f * 100) + '%';
+            if (f < 1) { requestAnimationFrame(rechTick); }
+            else {
+              rechambering = false;
+              fireBtn.disabled = false;
+              fireBtn.textContent = 'Fire';
+            }
+          }
+          requestAnimationFrame(rechTick);
+        }
+        fireBtn.addEventListener('click', fireShot);
+        function breathOn(e) { if (e && e.preventDefault) e.preventDefault(); breathing = true; breathBtn.classList.add('firing'); }
+        function breathOff() { breathing = false; breathBtn.classList.remove('firing'); }
+        breathBtn.addEventListener('pointerdown', function (e) { try { breathBtn.setPointerCapture(e.pointerId); } catch (err) {} breathOn(e); });
+        breathBtn.addEventListener('pointerup', breathOff);
+        breathBtn.addEventListener('pointercancel', breathOff);
+        breathBtn.addEventListener('keydown', function (e) { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) breathOn(e); });
+        breathBtn.addEventListener('keyup', function (e) { if (e.key === ' ' || e.key === 'Enter') breathOff(); });
+        breathBtn.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Shift' && !e.repeat) breathing = true; });
+        document.addEventListener('keyup', function (e) { if (e.key === 'Shift') breathing = false; });
+        resetBtn.addEventListener('click', function () {
+          var dots = stage.querySelectorAll('.sim-shot');
+          for (var i = 0; i < dots.length; i++) dots[i].remove();
+          shots = 0; heads = 0; kills = 0; wounded = false;
+          shotsEl.textContent = '0'; headEl.textContent = '0'; killsEl.textContent = '0';
+          logEl.innerHTML = '';
+          verdictEl.textContent = 'Your shots will be graded here — a headshot kills outright; a body shot only wounds.';
+        });
+      })();
+      
+    
+  </script>
+</body>
+</html>

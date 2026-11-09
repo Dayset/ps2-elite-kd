@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>Eclipse VE3A Sage Guide — PlanetSide 2 &middot; PS2 Elite</title>
+  <meta name="description" content="A beginner's guide to the Eclipse VE3A Sage Guide — PlanetSide 2 — The reward for completing the Master Carbines directive: a Solstice VE3 that trades its magazine for a heat gauge, keeps a laser sight built into the frame, and hides an Impulse Launcher under the barrel. No reloads, no ammo packs — just a gauge to respect and a launcher that throws you across the map." />
+  <meta name="color-scheme" content="light dark" />
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="weapon-sage.css?v=20261109-sageguide3" />
+  <style>
+    /* Faction colours for this guide — overrides the shared NC palette. */
+    :root {
+      --accent-ink: #5fd8cb;
+      --hero-bg: #1c0b38;
+      --hero-soft: #b795e8;
+      --nc-blue: #a678e8;
+      --nc-blue-deep: #c39bf5;
+    }
+    html[data-theme="light"] {
+      --accent-ink: #0b6e63;
+      --first: #3d1a6e;
+      --hero-bg: #2a1150;
+      --hero-soft: #c4a8ec;
+      --nc-blue: #7a3fd1;
+      --nc-blue-deep: #3d1a6e;
+      --nc-gold: #17b8a6;
+      --surface-2: #ece9f3;
+    }
+    ol.habits { counter-reset: hab; list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+    ol.habits li { counter-increment: hab; background: var(--surface); border: 1px solid var(--line); padding: 14px 16px 14px 58px; position: relative; }
+    ol.habits li::before {
+            content: counter(hab, decimal-leading-zero);
+            position: absolute; left: 14px; top: 12px;
+            font-family: "Rajdhani", sans-serif; font-weight: 700; font-size: 24px; color: var(--nc-blue);
+          }
+    ol.habits h3 { margin: 0 0 3px; font-size: 19px; }
+    ol.habits p { margin: 0; font-size: 15.5px; }
+    ul.drills { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+    ul.drills li { background: var(--surface); border: 1px solid var(--line); padding: 13px 16px; display: grid; gap: 2px; }
+    ul.drills .d-name { font-family: "Rajdhani", sans-serif; font-weight: 700; font-size: 18px; }
+    ul.drills .d-name span { display: block; font-family: "Barlow", sans-serif; font-weight: 400; font-size: 13.5px; color: var(--ink-soft); }
+    section > details > summary .sec-head { position: relative; padding-right: 36px; }
+  </style>
+</head>
+<body class="site-page">
+    <div class="wrap">
+
+    <p class="sage-back"><a href="weapon-compare.html?w=1919">← Back to the Eclipse VE3A comparison</a></p>
+
+
+      <!-- ================= HERO ================= -->
+      <header class="hero">
+        <p class="brandline">Sage Guide · Vanu Sovereignty · Light Assault / Engineer</p>
+        <h1>Eclipse VE3A <span class="thin">— the auraxium carbine that never reloads</span></h1>
+        <p class="sub">The reward for completing the Master Carbines directive: a Solstice VE3 that trades its magazine for a heat gauge, keeps a laser sight built into the frame, and hides an Impulse Launcher under the barrel. No reloads, no ammo packs — just a gauge to respect and a launcher that throws you across the map.</p>
+        <p class="verdict"><strong>The one-line verdict:</strong> a Solstice with a heat gauge, a built-in laser sight and an Impulse Launcher: the same 0.52-second close-range kill, but you never run dry. Its price is the gauge: 27 shots, then you cool it or it stops you — and every rail attachment costs you the launcher.</p>
+        <img class="hero-gun" src="assets/weapons/79796.png" alt="The Eclipse VE3A carbine, side profile — Vanu auraxium carbine with its heat cell and underbarrel launcher" width="256" height="128" />
+        <p class="hero-gun-cap">The Eclipse VE3A · Vanu Sovereignty · 27-shot heat gauge</p>
+      </header>
+
+      <div class="stats" role="list" aria-label="Eclipse VE3A key statistics">
+        <div class="stat" role="listitem"><div class="stat-big">143<small> → 112</small></div><div class="stat-label">Damage per bullet</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">698</div><div class="stat-label">Rounds per minute</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">27</div><div class="stat-label">Shots before overheat</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">1.65<small> s</small></div><div class="stat-label">Heat reload (R key)</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">464<small> m/s</small></div><div class="stat-label">Bullet velocity</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">×2</div><div class="stat-label">Headshot damage</div></div>
+      </div>
+
+
+      <!-- ================= 01 DAMAGE ================= -->
+            <section aria-labelledby="s-damage">
+        
+        <div class="sec-head">
+          <span class="num">01</span>
+          <h2 id="s-damage">Know your damage</h2>
+          <span class="tag">How many bullets<br />to kill, by range</span>
+        </div>
+        
+        <p class="lede">Every enemy infantry has 1,000 health (500 shield + 500 health). Your bullet does <strong>143 damage up close</strong>, fading to <strong>112 at long range</strong>. Headshots count double, leg shots count less (×0.9). That gives you three numbers worth memorising:</p>
+
+        <table class="tbl" aria-label="Shots to kill by range">
+          <thead>
+            <tr><th>Range</th><th class="n">Damage</th><th class="n">Head</th><th class="n">Chest</th><th class="n">Legs</th><th class="n">Chest vs shielded Heavy</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Close</strong> · 0–10 m</td><td class="n big">143</td><td class="n big">4</td><td class="n big">7</td><td class="n">8</td><td class="n">11</td></tr>
+            <tr><td><strong>Mid</strong> · 10–39 m</td><td class="n big">143→125</td><td class="n big">4</td><td class="n big">8</td><td class="n">9</td><td class="n">12</td></tr>
+            <tr><td><strong>Far</strong> · 39–60 m+</td><td class="n big">125→112</td><td class="n big">5</td><td class="n big">9</td><td class="n">10</td><td class="n">13</td></tr>
+          </tbody>
+        </table>
+        <p class="small">Perfect-accuracy times to kill: 4 headshots ≈ 0.26 s, 7 chest shots ≈ 0.52 s up close. In real fights you'll land maybe half your rounds — still, this is why the head matters so much on this gun. Maximum damage per second is 1,664. The breakpoints are exact: 7 chest shots to 10.2 m, 8 to 39.0 m, 9 past that.</p>
+
+        <div class="chart-box">
+          <h3>Damage falloff — where your bullets get weaker</h3>
+          <p class="small" style="margin:0 0 6px">Full power to 10 m, then a steady slide to minimum at 60 m. The teal line shows Soft Point Ammunition, which stretches full power to 15 m.</p>
+          <svg viewBox="0 0 640 240" width="100%" role="img" aria-label="Line chart of Eclipse VE3A damage per bullet from 0 to 100 metres: 143 damage flat to 10 metres, falling to 125 at 39 metres and 112 at 60 metres, then flat. Soft Point Ammunition stays at 143 until 15 metres.">
+            <g stroke="var(--line)" stroke-width="1">
+              <line x1="56" y1="130" x2="616" y2="130" />
+              <line x1="56" y1="170" x2="616" y2="170" />
+              <line x1="56" y1="210" x2="616" y2="210" />
+            </g>
+            <g fill="var(--ink-soft)" font-size="12">
+              <text x="48" y="134" text-anchor="end">150</text>
+              <text x="48" y="174" text-anchor="end">125</text>
+              <text x="48" y="214" text-anchor="end">100</text>
+              <text x="56" y="228">0 m</text>
+              <text x="196" y="228" text-anchor="middle">25 m</text>
+              <text x="336" y="228" text-anchor="middle">50 m</text>
+              <text x="476" y="228" text-anchor="middle">75 m</text>
+              <text x="616" y="228" text-anchor="end">100 m</text>
+            </g>
+            <polyline points="56,141.2 112,141.2 392,190.8 616,190.8" fill="none" stroke="var(--nc-blue)" stroke-width="3" />
+            <polyline points="56,141.2 140,141.2 392,190.8 616,190.8" fill="none" stroke="var(--nc-gold)" stroke-width="2.5" stroke-dasharray="7 5" />
+            <g fill="var(--nc-blue)">
+              <circle cx="112" cy="141.2" r="4" /><circle cx="274" cy="170" r="4" /><circle cx="392" cy="190.8" r="4" />
+            </g>
+            <g font-size="13" font-weight="600" fill="var(--ink)">
+              <text x="118" y="132">143</text>
+              <text x="280" y="162">125 @ 39 m</text>
+              <text x="398" y="182">112 @ 60 m</text>
+              <text x="330" y="100" fill="var(--accent-ink)">— with Soft Point Ammo</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="rule"><strong>Rule of thumb</strong>Inside 10 m you are at maximum power. Past 39 m every kill takes 9 chest shots — close the distance or burst carefully instead of spraying. And remember: those 7–9 shots come out of a 27-shot heat gauge, not a magazine — section 03 explains the gauge.</div>
+        </section>
+      
+
+      <!-- ================= 02 RANGE LAB + AIM ================= -->
+            <section aria-labelledby="s-aim" class="is-collapsed">
+        
+        <div class="sec-head">
+          <span class="num">02</span>
+          <h2 id="s-aim">Aim by distance</h2>
+          <span class="tag">Drag the range,<br />learn the style</span>
+        </div>
+        
+        <p class="lede">One gun, four fighting styles. The right technique changes with distance — use the range finder below to see what your bullets do at any range, then learn the four bands underneath it.</p>
+
+        <div class="lab" aria-label="Interactive range finder" data-rpm="698" data-dmg-max="143" data-dmg-min="112" data-max-range="10" data-min-range="60" data-hs-mult="2" data-advice-0="Hipfire at the chest and keep strafing. Scoping in here costs time and halves your speed — trust the hip cone and your movement." data-advice-1="Aim down sights at the upper chest and neck. Fire in bursts of 5–8 — your recoil climbs up and to the right into the head for free damage." data-advice-2="Aim down sights at the chest and fire 5–8 round bursts, releasing the trigger between them. Pull gently down-left against the up-and-right climb." data-advice-3="Tap 3–5 rounds at a time, and only at exposed targets. Your damage has faded — closing the distance is usually the better shot.">
+          <div class="lab-top">
+            <span class="reading"><span id="labDist">18</span> <small>metres to target</small></span>
+            <span class="chip good" id="labBand">Sweet spot</span>
+          </div>
+          <input type="range" id="labRange" min="0" max="100" step="1" value="18" aria-label="Distance to target in metres" />
+          <div class="lab-scale"><span>0 m</span><span>10 m</span><span>25 m</span><span>39 m</span><span>60 m</span><span>100 m</span></div>
+          <div class="lab-out">
+            <div class="lab-cell"><div class="v" id="labDmg">138</div><div class="k">Damage / bullet</div></div>
+            <div class="lab-cell"><div class="v" id="labHead">4</div><div class="k">Headshots to kill</div></div>
+            <div class="lab-cell"><div class="v" id="labChest">8</div><div class="k">Chest shots to kill</div></div>
+            <div class="lab-cell"><div class="v" id="labTtk">0.60 s</div><div class="k">Best-case chest TTK</div></div>
+          </div>
+          <p class="lab-advice"><b>How to fight here</b><span id="labAdvice">Aim down sights at the upper chest and neck. Fire in bursts of 5–8 — your recoil climbs up and to the right into the head for free damage.</span></p>
+        </div>
+
+        <div style="margin-top:18px">
+          <div class="band">
+            <div class="dist"><span class="d1">0–8 m</span><span class="d2">Point blank</span></div>
+            <div class="body">
+              <h3>Hipfire — don't aim down sights</h3>
+              <p class="aim">Aim: centre of the chest, from the hip. Keep moving.</p>
+              <p>Scoping in costs you time and halves your move speed — at arm's length that gets you killed. The Eclipse's built-in laser sight makes hipfire genuinely tight (a 1.0° standing cone — the 0.14 m ring at 8 m in section 04). Strafe side to side (A/D) while firing so you're hard to track, and let your jump jets carry you out if the fight turns.</p>
+            </div>
+          </div>
+          <div class="band">
+            <div class="dist"><span class="d1">8–25 m</span><span class="d2">Sweet spot</span></div>
+            <div class="body">
+              <h3>ADS, upper chest, confident bursts</h3>
+              <p class="aim">Aim: neck / upper chest. Bursts of 5–8 rounds.</p>
+              <p>This is where the gun earns its keep: full 143 damage, fast handling, and a 0.52 s chest kill. Start your crosshair at the neck — the recoil climbs up and to the right, so it walks your shots up and across the head, and 4 head hits end the fight in a quarter of a second. Strafe while scoped; you're slower, but a moving target still beats a still one.</p>
+            </div>
+          </div>
+          <div class="band">
+            <div class="dist"><span class="d1">25–50 m</span><span class="d2">Controlled</span></div>
+            <div class="body">
+              <h3>ADS, short bursts, pull down-left</h3>
+              <p class="aim">Aim: chest. Bursts of 5–8 rounds, pause between them.</p>
+              <p>Damage is sliding toward 112 and your cone of fire blooms if you hold the trigger. Fire a burst, release for a split second to let accuracy reset, fire again. The recoil drifts up and to the right (14–17°), so pull your mouse gently down and to the left. Crouch or stand still when you can — both tighten your shots.</p>
+            </div>
+          </div>
+          <div class="band">
+            <div class="dist"><span class="d1">50 m +</span><span class="d2">Plinking</span></div>
+            <div class="body">
+              <h3>Tap-fire only — or don't engage</h3>
+              <p class="aim">Aim: chest. Taps of 3–5 rounds at exposed targets only.</p>
+              <p>At 112 damage you need 9 chest shots — a long, loud advertisement of your position. Take these shots at stationary or fleeing targets, medics reviving, and engineers on turrets. Otherwise, your better play is to close the distance behind cover — as a Light Assault you can cross ground no Heavy can. Knowing when <em>not</em> to shoot is a skill too.</p>
+            </div>
+          </div>
+        </div>
+        </section>
+      
+
+      <!-- ================= 03 STANCES & FIRING MODES ================= -->
+            <section aria-labelledby="s-stances" class="is-collapsed">
+        
+        <div class="sec-head">
+          <span class="num">03</span>
+          <h2 id="s-stances">Stances and firing modes</h2>
+          <span class="tag">How you stand and<br />how you hold the trigger</span>
+        </div>
+        
+        <p class="lede">Your accuracy is decided by two things before skill even enters it: <strong>what your body is doing</strong> (your stance sets the starting cone of fire) and <strong>what your finger is doing</strong> (holding the trigger grows that cone with every shot). The Eclipse has no fire-mode switch — full-auto only — so "firing modes" are something you do with your finger, not a setting on the gun. And then there is the third thing no other Solstice has: <strong>the heat gauge</strong>.</p>
+
+        <h3 class="slot-title">Stances <span>— the cone you start with, before the first shot</span></h3>
+        <table class="tbl" aria-label="Eclipse VE3A cone of fire by stance">
+          <thead>
+            <tr><th>Stance</th><th class="n">Starting cone</th><th>What it means for you</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Sprinting</strong></td><td class="n big">5.0°</td><td>Wide — the hipfire cap is 7.0°, and sprinting puts you most of the way there. Never start firing from a sprint.</td></tr>
+            <tr><td><strong>Hipfire, moving</strong></td><td class="n big">1.34°</td><td>Walking or strafing from the hip. Fine inside ~8 m, leaks rounds past the target beyond it.</td></tr>
+            <tr><td><strong>Hipfire, standing</strong></td><td class="n big">1.0°</td><td>Your point-blank default — tighter than the Solstice's 1.5°, thanks to the built-in laser. The 0.14 m ring at 8 m in section 04 is this stance drawn out.</td></tr>
+            <tr><td><strong>Hipfire, crouched</strong></td><td class="n big">0.67°</td><td>The tightest hipfire you have (1.0° if you crouch-walk) — a 0.09 m ring at 8 m. Crouch when holding a doorway from the hip.</td></tr>
+            <tr><td><strong>Aimed (ADS), feet planted</strong></td><td class="n big">0.10°</td><td>Ten times tighter than hipfire standing.</td></tr>
+            <tr><td><strong>Aimed (ADS), crouched</strong></td><td class="n big">0.10°</td><td>Same as standing — crouching buys you nothing aimed. Crouch-walking is 0.15°, still excellent.</td></tr>
+            <tr><td><strong>Aimed (ADS), strafing</strong></td><td class="n big">0.25°</td><td>Two and a half times wider than planted, and you move at half speed (0.5×). Strafe <em>between</em> bursts to stay hard to hit; plant your feet during each burst.</td></tr>
+          </tbody>
+        </table>
+
+        <h3 class="slot-title">Firing modes <span>— the cone you grow, shot by shot</span></h3>
+        <table class="tbl" aria-label="Firing modes and when to use them">
+          <thead>
+            <tr><th>Mode</th><th>How your finger does it</th><th>Use it at</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>The mag dump</strong></td><td>Hold the trigger and don't let go</td><td>Point blank only, or suppressing a doorway. Bloom maxes out fast — past ~8 rounds you're spraying, not aiming — and you'll burn the whole 27-shot gauge in 2.3 seconds.</td></tr>
+            <tr><td><strong>Bursts — the default</strong></td><td>Hold for <strong>5 rounds</strong>, release ~0.15 s, hold again. 6–8 rounds is fine while you're learning</td><td>Almost everything, 8–50 m. Each release resets the cone, so every burst starts at 0.10°.</td></tr>
+            <tr><td><strong>Tap-fire</strong></td><td>Short taps of 3–5, or single clicks, with a real pause between</td><td>50 m and out, at exposed or stationary targets. Slow, but every round goes where the dot is.</td></tr>
+          </tbody>
+        </table>
+
+        <p>Standing still, your cone holds its starting size for the first <strong>3 aimed shots</strong> (<strong>4 from the hip</strong>) before per-shot bloom starts widening it — the first burst is free accuracy, which is one more reason the ideal burst is 5 rounds. Aimed bloom caps at a <strong>3.0°</strong> cone — and at 0.05° per shot you'd need 58 shots to reach it, more than the 27-shot gauge holds, so you cannot max out the aimed cone in one gauge. Horizontal recoil is <strong>0.2°</strong> per shot with a <strong>0.5°</strong> tolerance, the recoil angle is 14–17° up and to the right, and recovery runs at 18°/s — the sideways walk is small but always to the right, which is why the climb reads as up-and-right and fades fast between bursts.</p>
+
+        <h3 class="slot-title">The heat gauge <span>— your magazine that refills itself</span></h3>
+        <p>Here is what makes the Eclipse different from the Solstice it is built from. There is <strong>no magazine and no reserve ammo</strong>. Every shot pours heat into a gauge; stop shooting and the gauge drains on its own. You never reload because you are empty — you manage heat because the gun will stop you if you don't.</p>
+        <table class="tbl" aria-label="Eclipse VE3A heat numbers">
+          <thead>
+            <tr><th>Heat number</th><th class="n">Value</th><th>What it means</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Shots before overheat</strong></td><td class="n big">27</td><td>One full gauge of fire — 2.3 seconds held down. Census data: 999 heat capacity at 37 heat per shot, so 26 shots leave you just short of the line and the 27th crosses it.</td></tr>
+            <tr><td><strong>Cooling delay</strong></td><td class="n big">0.343 s</td><td>After your last shot, the gauge sits for just over a third of a second before it starts draining.</td></tr>
+            <tr><td><strong>Cooling rate</strong></td><td class="n big">351 / s</td><td>About 9½ shots' worth of heat per second. A 7-shot kill (259 heat) is fully cooled in ~1.1 seconds; a 20-shot burst (741 heat) in ~2.5 seconds.</td></tr>
+            <tr><td><strong>Overheat penalty</strong></td><td class="n big">1.65 s</td><td>Fire the shot that fills the gauge and the gun locks for 1.65 seconds — then it still has to cool all the way to zero before it fires again. Total silence: roughly 4.5 seconds.</td></tr>
+            <tr><td><strong>Manual reload (R key)</strong></td><td class="n big">1.65 s</td><td>Pressing R clears the gauge in 1.65 seconds, at any heat level. This is your "reload" — the only one the gun has.</td></tr>
+            <tr><td><strong>Reserve ammo</strong></td><td class="n big">None</td><td>No ammo pool at all. You never run dry, never visit a terminal, never pick up ammo. The overheat is the price of that freedom.</td></tr>
+          </tbody>
+        </table>
+        <div class="grid2" style="margin-top:14px">
+          <div class="card">
+            <h3>Reload on your terms</h3>
+            <p>After a fight, if the gauge is high, press <strong>R</strong> — 1.65 seconds and it is clear. But if you fired fewer than about <strong>12 shots</strong>, just wait: passive cooling (0.343 s delay + heat ÷ 351) clears that faster than a 1.65-second reload. High gauge → press R. Low gauge → keep moving, it cools itself.</p>
+          </div>
+          <div class="card">
+            <h3>One gauge, several kills</h3>
+            <p>27 shots is <strong>3 kills at perfect accuracy up close</strong> (7 shots each) — realistically 2 with misses. That is the gun's whole economy: never dump a gauge on one doorway, and never let it hit the top mid-fight. Treat the last 7 shots of heat as your emergency reserve — one more close-range kill — not your working gauge.</p>
+          </div>
+        </div>
+        <div class="rule"><strong>The one heat rule</strong>An overheat costs you ~4.5 seconds of silence. A manual reload costs 1.65 seconds. Waiting out a half-full gauge costs ~1.8 seconds. The overheat is the only expensive option — so it is the only one you must never choose. Burst, pause, press R early.</div>
+
+        <div class="viz" id="burstSim" data-rpm="698" data-base-cof="0.10" data-bloom="0.05" data-distance="30">
+          <h3>Try it: the hold-and-release window</h3>
+          <p class="small" style="margin:0">A target 30 m away, aiming down sights. <strong>Press and hold FIRE</strong> (mouse, touch, or hold Space with the button focused) and watch the holes walk wider the longer you hold — that's firing from an ever-growing cone. Release, let the cone reset, fire again. <strong>Aim for bursts of 5; 6–8 is tolerable while you're new.</strong> This practice window is shared by the whole Sage series: it's driven by a weapon profile plugged into the window — here the Eclipse's (698 RPM, 0.10° starting cone, 0.05° bloom per shot, target at 30 m) — and the spread is drawn at true scale from those numbers.</p>
+          <div class="sim-stage" id="simStage" aria-hidden="true">
+            <svg viewBox="0 0 200 300" width="150" height="300" role="presentation">
+              <g fill="var(--ink-soft)">
+                <circle cx="100" cy="42" r="23" />
+                <rect x="84" y="68" width="11" height="74" rx="5" />
+                <rect x="105" y="68" width="11" height="74" rx="5" />
+                <rect x="60" y="66" width="80" height="112" rx="14" />
+                <rect x="66" y="178" width="28" height="18" />
+                <rect x="68" y="194" width="22" height="102" />
+                <rect x="110" y="194" width="22" height="102" />
+              </g>
+              <circle cx="100" cy="126" r="5" fill="var(--nc-gold)" />
+            </svg>
+          </div>
+          <div class="sim-controls">
+            <button type="button" class="sim-fire" id="simFire">Hold to fire</button>
+            <button type="button" class="sim-reset" id="simReset">Reset target</button>
+          </div>
+          <div class="bloom-track" aria-hidden="true"><div class="bloom-fill" id="simBloom"></div></div>
+          <p class="small" style="margin:4px 0 0">Cone of fire — fills as you hold, empties when you release.</p>
+          <div class="sim-read">
+            <div class="lab-cell"><div class="v" id="simShots">0</div><div class="k">Rounds fired</div></div>
+            <div class="lab-cell"><div class="v" id="simHits">0</div><div class="k">Hits on target</div></div>
+            <div class="lab-cell"><div class="v" id="simAcc">—</div><div class="k">Accuracy</div></div>
+          </div>
+          <p class="sim-verdict" id="simVerdict">Your bursts will be graded here — green at 5 rounds, tolerable up to 8.</p>
+          <div class="burst-log" id="simLog" aria-label="Your bursts so far"></div>
+        </div>
+        </section>
+      
+
+      <!-- ================= 04 SEE IT ================= -->
+            <section aria-labelledby="s-see" class="is-collapsed">
+        
+        <div class="sec-head">
+          <span class="num">04</span>
+          <h2 id="s-see">See it: the pictures</h2>
+          <span class="tag">Spread, bursts<br />and sights, drawn</span>
+        </div>
+        
+        <p class="lede">Some things are easier to show than to say. Here's what your bullets actually do: how wide hipfire spreads at 8 metres, what a good burst rhythm looks like, and what the 2x sight really changes. The hands-on version — holding the trigger yourself — is the practice window in section 03.</p>
+
+        <div class="viz">
+          <h3>Hipfire at 8 metres — where the bullets land</h3>
+          <p class="small" style="margin:0">A full-size target 8 m away — an arm's-length room fight. The rings show where hipfire rounds land around your aim point (the chest). Sizes are drawn to scale from the gun's real cone-of-fire numbers.</p>
+          <svg viewBox="0 0 640 320" width="100%" role="img" aria-label="Diagram of a soldier target at 8 metres with three spread rings drawn at true scale: hipfire while moving spreads about 0.19 metres wide, hipfire standing still about 0.14 metres, and hipfire crouched about 0.09 metres. Aiming down sights lands in a dot a few centimetres wide.">
+            <line x1="20" y1="292" x2="620" y2="292" stroke="var(--line)" stroke-width="2" />
+            <g fill="var(--ink-soft)">
+              <circle cx="320" cy="58" r="17" />
+              <rect x="281" y="86" width="13" height="66" rx="6" />
+              <rect x="346" y="86" width="13" height="66" rx="6" />
+              <rect x="297" y="82" width="46" height="78" rx="10" />
+              <rect x="301" y="158" width="38" height="16" />
+              <rect x="303" y="172" width="15" height="118" />
+              <rect x="322" y="172" width="15" height="118" />
+            </g>
+            <circle cx="320" cy="128" r="13" fill="none" stroke="var(--skip)" stroke-width="2" stroke-dasharray="7 5" />
+            <circle cx="320" cy="128" r="10" fill="var(--nc-blue)" opacity="0.16" />
+            <circle cx="320" cy="128" r="10" fill="none" stroke="var(--nc-blue)" stroke-width="2" />
+            <circle cx="320" cy="128" r="6" fill="var(--nc-gold)" opacity="0.22" />
+            <circle cx="320" cy="128" r="6" fill="none" stroke="var(--nc-gold)" stroke-width="2" />
+            <circle cx="320" cy="128" r="4" fill="var(--good)" />
+            <g font-size="14" font-weight="600" fill="var(--ink)">
+              <text x="24" y="46">Target at 8 m</text>
+              <text x="24" y="66" fill="var(--ink-soft)" font-weight="400">≈ 1.8 m tall, drawn to scale</text>
+              <text x="470" y="66" fill="var(--skip)">moving: ≈ 0.19 m wide</text>
+              <text x="470" y="118" fill="var(--nc-blue)">standing: ≈ 0.14 m wide</text>
+              <text x="470" y="180" fill="var(--accent-ink)">crouched: ≈ 0.09 m</text>
+              <text x="470" y="238" fill="var(--good)">aimed (ADS): a dot</text>
+            </g>
+            <g stroke="var(--ink-soft)" stroke-width="1">
+              <line x1="462" y1="62" x2="334" y2="110" />
+              <line x1="462" y1="114" x2="331" y2="124" />
+              <line x1="462" y1="176" x2="327" y2="134" />
+              <line x1="462" y1="234" x2="325" y2="130" />
+            </g>
+          </svg>
+          <div class="legend">
+            <span><i style="background:var(--skip)"></i>Hipfire, strafing (1.34° cone)</span>
+            <span><i style="background:var(--nc-blue)"></i>Hipfire, standing (1.0° cone)</span>
+            <span><i style="background:var(--nc-gold)"></i>Hipfire, crouched (0.67° cone)</span>
+            <span><i style="background:var(--good)"></i>Aimed down sights</span>
+          </div>
+          <p class="cap">Read it this way: standing still, the <b>0.14 m ring sits well inside the chest</b> — most rounds hit a target this size, which is why hipfire works point-blank. Move and it grows to <b>0.19 m — still inside the torso</b> — and crouch and it shrinks to <b>0.09 m</b>. The rings are this small because the laser sight is built into the gun: the Census hipfire numbers already include it, so there is no separate laser ring to draw — the Solstice this gun is built from spreads 1.5° standing, a third wider. Past ~10 m the rings only grow with distance while the man doesn't: the exact moment to switch to aiming down sights, where the spread shrinks to a dot. (Ring sizes use the real geometry: spread diameter = 2 × distance × tan(cone ÷ 2).)</p>
+        </div>
+
+        <div class="viz">
+          <h3>Hold – release – hold – release: the burst rhythm</h3>
+          <p class="small" style="margin:0">Every shot widens your cone of fire ("bloom"). Releasing the trigger for a heartbeat resets it. Same 18 rounds, two very different outcomes:</p>
+          <svg viewBox="0 0 640 216" width="100%" role="img" aria-label="Diagram comparing fire patterns. Bad: holding the trigger for 18 straight rounds, the spread cone widens the whole time and the last rounds land in a large circle. Good: three bursts of 6 rounds with a short release between each, the cone resets every burst and all three groups stay small.">
+            <g font-family="Rajdhani, sans-serif" font-weight="700">
+              <text x="8" y="52" font-size="17" fill="var(--skip)">✗ SPRAY</text>
+              <text x="8" y="152" font-size="17" fill="var(--good)">✓ BURSTS</text>
+            </g>
+            <rect x="120" y="34" width="380" height="16" fill="var(--skip)" opacity="0.75" />
+            <polygon points="120,42 520,16 520,68" fill="var(--skip)" opacity="0.14" />
+            <ellipse cx="540" cy="42" rx="34" ry="30" fill="none" stroke="var(--skip)" stroke-width="2" />
+            <g fill="var(--ink)" font-size="13.5">
+              <text x="120" y="24">Trigger held — 18 rounds, never released</text>
+              <text x="452" y="96">last rounds: huge spread</text>
+            </g>
+            <g fill="var(--nc-blue)">
+              <rect x="120" y="134" width="118" height="16" />
+              <rect x="278" y="134" width="118" height="16" />
+              <rect x="436" y="134" width="118" height="16" />
+            </g>
+            <g fill="none" stroke="var(--nc-blue)" stroke-width="2">
+              <ellipse cx="252" cy="142" rx="11" ry="10" />
+              <ellipse cx="410" cy="142" rx="11" ry="10" />
+              <ellipse cx="568" cy="142" rx="11" ry="10" />
+            </g>
+            <g fill="var(--ink)" font-size="13.5">
+              <text x="152" y="124">6 rounds</text>
+              <text x="310" y="124">6 rounds</text>
+              <text x="468" y="124">6 rounds</text>
+              <text x="238" y="172" text-anchor="middle" fill="var(--good)" font-weight="600">release ≈0.15 s</text>
+              <text x="396" y="172" text-anchor="middle" fill="var(--good)" font-weight="600">release ≈0.15 s</text>
+              <text x="120" y="196">Every burst starts accurate — all three groups stay fist-sized.</text>
+            </g>
+          </svg>
+          <p class="cap"><b>The target pattern is bursts of about 5 rounds — that's the ideal. Bursts of 6–8 are fine while you're new</b> (call it newbie tolerance). Past that, the bloom (0.05° per shot aimed, 0.08° from the hip) keeps growing with every shot, so the extra bullets mostly decorate the wall behind your enemy instead of hitting him. Short bursts also leave you heat for the second enemy — remember, the gauge is only 27 shots, and 18 rounds is two-thirds of it.</p>
+        </div>
+
+        <div class="viz2">
+          <div class="viz">
+            <h3>HPR Reflex — 1x</h3>
+            <svg viewBox="0 0 300 210" width="100%" role="img" aria-label="View through the 1x reflex sight at a target 35 metres away: the soldier appears small in an open frame, with buildings and a crate visible around him.">
+              <rect x="0" y="0" width="300" height="152" fill="var(--surface-2)" />
+              <rect x="0" y="152" width="300" height="58" fill="var(--line)" opacity="0.55" />
+              <rect x="238" y="58" width="28" height="94" fill="var(--ink-soft)" opacity="0.55" />
+              <rect x="22" y="118" width="52" height="34" fill="var(--ink-soft)" opacity="0.7" />
+              <g fill="var(--ink)" transform="translate(150,152)">
+                <circle cx="0" cy="-57" r="6.5" />
+                <rect x="-8" y="-51" width="16" height="27" rx="4" />
+                <rect x="-7" y="-24" width="6" height="24" />
+                <rect x="1" y="-24" width="6" height="24" />
+              </g>
+              <circle cx="150" cy="110" r="4" fill="var(--skip)" />
+              <circle cx="150" cy="110" r="10" fill="none" stroke="var(--skip)" stroke-width="1.5" />
+              <rect x="8" y="8" width="284" height="194" rx="14" fill="none" stroke="var(--ink)" stroke-width="5" />
+            </svg>
+            <p class="cap">No zoom. The target at 35 m is <b>small but the view is wide open</b> — you see the crate, the tower, and the next enemy coming. Fast to aim, nothing blocks your edges. Best inside ~40 m.</p>
+          </div>
+          <div class="viz">
+            <h3>VHO Reflex — 2x</h3>
+            <svg viewBox="0 0 300 210" width="100%" role="img" aria-label="View through the 2x VHO Reflex sight at the same target 35 metres away: the soldier appears twice as tall and fills the round scope, while the crate and tower are cropped out of view.">
+              <rect x="0" y="0" width="300" height="168" fill="var(--surface-2)" />
+              <rect x="0" y="168" width="300" height="42" fill="var(--line)" opacity="0.55" />
+              <rect x="-52" y="100" width="104" height="68" fill="var(--ink-soft)" opacity="0.7" />
+              <g fill="var(--ink)" transform="translate(150,168) scale(2)">
+                <circle cx="0" cy="-57" r="6.5" />
+                <rect x="-8" y="-51" width="16" height="27" rx="4" />
+                <rect x="-7" y="-24" width="6" height="24" />
+                <rect x="1" y="-24" width="6" height="24" />
+              </g>
+              <circle cx="150" cy="88" r="4.5" fill="var(--skip)" />
+              <circle cx="150" cy="88" r="12" fill="none" stroke="var(--skip)" stroke-width="1.5" />
+              <circle cx="150" cy="105" r="97" fill="none" stroke="var(--ink)" stroke-width="7" />
+            </svg>
+            <p class="cap">Same target, same 35 m — but he looks <b>twice as tall</b>, so placing shots on his chest and head gets much easier. The price: your view narrows to the round window, the crate and tower are gone, and close targets feel fast and huge. Best at 25–50 m.</p>
+          </div>
+        </div>
+        <p class="cap" style="margin-top:12px">The 1x sight comes free with the gun; the 2x is 30 certs. <b>1x for awareness, 2x for precision.</b> Most veterans carry both and swap per base — indoors 1x, open ground 2x.</p>
+        </section>
+      
+
+      <!-- ================= 05 ATTACHMENTS ================= -->
+            <section aria-labelledby="s-att" class="is-collapsed">
+        
+        <div class="sec-head">
+          <span class="num">05</span>
+          <h2 id="s-att">Attachments: what to buy, what to skip</h2>
+          <span class="tag">Every slot, judged<br />for a veteran</span>
+        </div>
+        
+        <p class="lede">Old guides will tell you directive weapons take no attachments. That was true before the <strong>March 2022 Arsenal Update</strong> — it isn't anymore. The Eclipse takes attachments in every slot: optics, barrel, rail and ammo. Two honest limits: there is <strong>no High Velocity Ammunition</strong> and no extended magazine — the heat gauge can't be extended — and anything you fit on the rail <strong>replaces the built-in Impulse Launcher</strong>. Everything below is an optional sidegrade, not an upgrade. Buy in the order shown and stop whenever the gun feels right.</p>
+
+        <h3 class="slot-title">Optic <span>— your window on the fight</span></h3>
+
+        <div class="att">
+          <div class="att-head"><h4>HPR Reflex (1x)</h4><span class="chip free">Already yours</span><span class="cost">0 certs · auto-granted</span></div>
+          <p class="effect">A clean Vanu holo sight with no zoom: a red dot-and-circle reticle above the top rail. The Eclipse hands it to you free — auto-granted with the gun — and honestly it's your best all-round option.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> everywhere indoors and out to ~40 m — which is most PlanetSide fights.</p>
+            <p><b class="bad-t">Bad:</b> picking out targets past 50 m; that's what the 2x is for.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>VHO Reflex (2x)</h4><span class="chip good">Good</span><span class="cost">30 certs</span></div>
+          <p class="effect">Doubles your view magnification with a circle-and-dot reticle. The cheapest meaningful choice on this page.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> open-field bases, tower fights, and your 25–50 m burst game. Swap between 1x and 2x per fight.</p>
+            <p><b class="bad-t">Bad:</b> tight indoor rooms — the zoom makes close targets feel fast and huge.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>HS/NV Scope (1x)</h4><span class="chip situ">Situational</span><span class="cost">30 certs</span></div>
+          <p class="effect">Night-vision sight: enemies glow white against a dark view, and it sees through smoke.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> night fights, smoky doorways, spotting infiltrators by their outline.</p>
+            <p><b class="bad-t">Bad:</b> daytime and long range — its view is short-ranged and washes out in bright light.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>3.4x &amp; 4x scopes</h4><span class="chip skip">Skip for now</span><span class="cost">30 certs</span></div>
+          <p class="effect">VMS / V3 Holo (3.4x) and OG-4 / CSZ (4x) — sniper-style magnification on an automatic carbine.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> almost nothing — recoil magnifies too, and tunnels your vision.</p>
+            <p><b class="bad-t">Bad:</b> any fight inside 30 m, which is where you'll spend most of your time with this gun.</p>
+          </div>
+        </div>
+
+        <h3 class="slot-title">Barrel <span>— five options, and "none" is a real choice</span></h3>
+
+        <div class="att">
+          <div class="att-head"><h4>No barrel attachment</h4><span class="chip free">Already yours</span><span class="cost">0 certs</span></div>
+          <p class="effect">The Eclipse's recoil is a gentle up-and-right climb with no wild sideways drift. Plenty of veterans run this slot empty forever.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> your first weeks. Spend certs on your grip and suit slots first.</p>
+            <p><b class="bad-t">Bad:</b> nothing — there's no downside to an empty slot.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>Compensator</h4><span class="chip situ">Situational</span><span class="cost">100 certs</span></div>
+          <p class="effect">Cuts vertical recoil by 30% (0.25° → ~0.18° per shot), but widens hipfire by 15% and puts you on enemy minimaps from 35 m farther away.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> aimed mid-range play, if the climb bothers you.</p>
+            <p><b class="bad-t">Bad:</b> close-quarters builds — it taxes the hipfire this gun is built for.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>Heavy Barrel</h4><span class="chip good">Good</span><span class="cost">100 certs</span></div>
+          <p class="effect">Aimed bloom grows 20% slower (0.05° → 0.04° per shot), so long bursts stay tighter — but you move 20% slower while aimed (0.5× → 0.4×).</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> tap-fire and lane-holding builds at 40 m and out.</p>
+            <p><b class="bad-t">Bad:</b> aggressive Light Assault play, where ADS strafe speed is your defence.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>Short Barrel</h4><span class="chip situ">Situational</span><span class="cost">100 certs</span></div>
+          <p class="effect">Hipfire bloom grows 40% slower — much steadier hip spraying. But vertical recoil rises 20% when you do aim (0.25° → 0.30° per shot).</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> a dedicated close-quarters build.</p>
+            <p><b class="bad-t">Bad:</b> general play — it taxes the aimed shooting you'll do most.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>Suppressor</h4><span class="chip situ">Situational</span><span class="cost">100 certs</span></div>
+          <p class="effect">Hides your muzzle flash and keeps you off the minimap when firing — but damage falls off 20 m sooner and bullets fly 15% slower (464 → ~394 m/s).</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> flanking as a Light Assault, where staying off the minimap is the whole play.</p>
+            <p><b class="bad-t">Bad:</b> open fights at 30 m and out, where the slower bullet needs real lead.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>Flash Suppressor</h4><span class="chip skip">Low priority</span><span class="cost">100 certs</span></div>
+          <p class="effect">Hides your muzzle flash so your own view stays clear at night — but you appear on enemy minimaps from 15 m farther away when you fire.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> night fights where your own flash blinds you. A comfort pick, nothing more.</p>
+            <p><b class="bad-t">Bad:</b> as an early purchase — it changes no fight outcome. Buy it last, if ever.</p>
+          </div>
+        </div>
+
+        <h3 class="slot-title">Rail <span>— pick ONE: the launcher, or a grip</span></h3>
+
+        <div class="att">
+          <div class="att-head"><h4>Impulse Launcher (built-in)</h4><span class="chip free">Already yours</span><span class="cost">0 certs</span></div>
+          <p class="effect">Fires a non-lethal grenade that knocks back you and enemy infantry on impact — press Gear Slot 1 (default "1") to switch to it. It is a movement tool first: fire it at your feet mid-jump and it throws you onto rooftops and over walls no other carbine can reach. It is fitted whenever no other rail attachment is chosen, and adds 0.25 s to your equip time.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> Light Assault rooftop routes and escapes — the reason to fly this gun.</p>
+            <p><b class="bad-t">Bad:</b> nothing — until you fit a rail attachment, which removes it entirely.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>Forward Grip</h4><span class="chip first">First buy</span><span class="cost">100 certs</span></div>
+          <p class="effect">Cuts side-to-side recoil by 25% (0.2° → 0.15°), keeping your bursts on a single target. Tiny cost: weapon swap is 0.15 s slower. It replaces the Impulse Launcher.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> the default for aimed, mid-range play — leave it on until you deliberately build for mobility.</p>
+            <p><b class="bad-t">Bad:</b> it costs you the launcher — the gun's signature trick.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>Underbarrel Shotgun</h4><span class="chip situ">Situational</span><span class="cost">100 certs</span></div>
+          <p class="effect">A single-shot shotgun round for point-blank emergencies — one shell, then it needs its own reload. It replaces the Impulse Launcher and adds 0.25 s to equip time.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> a panic button when something rounds the corner inside 5 m.</p>
+            <p><b class="bad-t">Bad:</b> as an everyday rail — one shell, then you're back to the carbine anyway.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>Smoke Launcher</h4><span class="chip situ">Situational</span><span class="cost">100 certs</span></div>
+          <p class="effect">Lobs a smoke grenade to cover a crossing or a revive. Replaces the Impulse Launcher; adds 0.25 s to equip time.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> squad play, covering a push across open ground.</p>
+            <p><b class="bad-t">Bad:</b> solo play — you rarely need your own smoke.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>Angled Forward Grip</h4><span class="chip situ">Situational</span><span class="cost">100 certs</span></div>
+          <p class="effect">The first shot of each burst kicks 60% less — but side-to-side recoil rises 10% on everything after it. On this gun the first shot is the expensive one (2.8× multiplier), so the trade is better here than on most carbines. Replaces the Impulse Launcher.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> disciplined burst and tap-fire at 40 m+, where every burst starts fresh.</p>
+            <p><b class="bad-t">Bad:</b> long held bursts — the +10% sideways walk eats the benefit once you're past the first shot.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>Darklight Flashlight</h4><span class="chip situ">Tool, not a buff</span><span class="cost">100 certs</span></div>
+          <p class="effect">A torch whose beam reveals cloaked infiltrators. Toggle it with the attachment key (X by default). Replaces the Impulse Launcher.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> hunting a stalker infiltrator camping your capture point — sweep corners with it.</p>
+            <p><b class="bad-t">Bad:</b> as your everyday rail — it gives zero accuracy help, and the beam advertises your position.</p>
+          </div>
+        </div>
+
+        <h3 class="slot-title">Ammo <span>— two options, and no high-velocity one</span></h3>
+
+        <div class="att">
+          <div class="att-head"><h4>Soft Point Ammunition</h4><span class="chip first">First buy</span><span class="cost">100 certs</span></div>
+          <p class="effect">Full 143 damage now reaches to 15 m instead of 10 m (the teal line on the chart above). Cost: bullets fly 10% slower (464 → ~418 m/s).</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> nearly always — most duels happen at 10–20 m, exactly where this extends your 7-shot / 4-headshot kill.</p>
+            <p><b class="bad-t">Bad:</b> long-range duels against runners, where the slower bullet needs more lead. A small price.</p>
+          </div>
+        </div>
+
+        <div class="att">
+          <div class="att-head"><h4>Unstable Ammunition</h4><span class="chip situ">Situational</span><span class="cost">100 certs</span></div>
+          <p class="effect">Projectiles fly much larger — easier hits at close range — but the headshot bonus is cut by 80%, so headshots are barely better than body shots. Aim centre-mass and let the fat bullets do the work. There is no High Velocity Ammunition for this gun.</p>
+          <div class="when">
+            <p><b class="good-t">Good:</b> close-quarters hipfire builds where you never aim for the head anyway.</p>
+            <p><b class="bad-t">Bad:</b> any build that relies on the 4-headshot kill — this ammo throws it away.</p>
+          </div>
+        </div>
+
+        <div class="rule"><strong>Spend order for your first certs</strong>Forward Grip (100) → Soft Point Ammo (100) → then stop. 200 certs total — the 1x sight is already yours. Put the next several hundred certs into your jump jets (Light Assault) and suit slots — they win more fights than any barrel.</div>
+        </section>
+      
+
+      <!-- ================= 06 LOADOUTS ================= -->
+            <section aria-labelledby="s-loadouts" class="is-collapsed">
+        
+        <div class="sec-head">
+          <span class="num">06</span>
+          <h2 id="s-loadouts">Four ready-made setups</h2>
+          <span class="tag">Copy one,<br />go fight</span>
+        </div>
+        
+        <div class="grid2">
+          <div class="loadout">
+            <p class="cost">0 certs · Day one</p>
+            <h3>Standard Issue</h3>
+            <ul>
+              <li><b>Optic:</b> HPR Reflex 1x (auto-granted)</li>
+              <li><b>Barrel:</b> none</li>
+              <li><b>Rail:</b> none — Impulse Launcher fitted</li>
+              <li><b>Ammo:</b> standard</li>
+            </ul>
+            <p>What the directive hands you. Bare — but the gun underneath is already a top-tier carbine, with a launcher no Solstice has. Learn the heat gauge on this before spending anything.</p>
+          </div>
+          <div class="loadout pick">
+            <p class="cost">200 certs · Recommended</p>
+            <h3>All-Rounder</h3>
+            <ul>
+              <li><b>Optic:</b> HPR Reflex 1x (keep the VHO 2x for open bases, +30)</li>
+              <li><b>Barrel:</b> none</li>
+              <li><b>Rail:</b> Forward Grip (Impulse Launcher removed)</li>
+              <li><b>Ammo:</b> Soft Point</li>
+            </ul>
+            <p>The best value in this whole guide. Covers every fight from a doorway to a tower courtyard — at the price of the launcher.</p>
+          </div>
+          <div class="loadout">
+            <p class="cost">200 certs · Indoor brawler</p>
+            <h3>Point Hold</h3>
+            <ul>
+              <li><b>Optic:</b> HPR Reflex 1x</li>
+              <li><b>Barrel:</b> Short Barrel</li>
+              <li><b>Rail:</b> none — Impulse Launcher kept</li>
+              <li><b>Ammo:</b> Soft Point</li>
+            </ul>
+            <p>Built to hipfire down stairwells and hold a capture point room — and the launcher still gets you onto the roof above it. Swap back to the All-Rounder outdoors.</p>
+          </div>
+          <div class="loadout">
+            <p class="cost">230 certs · Long lanes</p>
+            <h3>Tap-Fire</h3>
+            <ul>
+              <li><b>Optic:</b> VHO Reflex 2x</li>
+              <li><b>Barrel:</b> Heavy Barrel</li>
+              <li><b>Rail:</b> Angled Forward Grip</li>
+              <li><b>Ammo:</b> standard</li>
+            </ul>
+            <p>For tower fights and open ground: tighter aimed bloom, a steadier first shot, and a zoomed view for 40–60 m taps. Weak up close — so don't fight up close. No High Velocity Ammunition exists for this gun, so range comes from the barrel and grip, not the ammo.</p>
+          </div>
+        </div>
+        </section>
+      
+
+      <!-- ================= 07 KILL EFFICIENTLY ================= -->
+            <section aria-labelledby="s-kill" class="is-collapsed">
+        
+        <div class="sec-head">
+          <span class="num">07</span>
+          <h2 id="s-kill">Kill efficiently: six habits</h2>
+          <span class="tag">Technique beats<br />attachments</span>
+        </div>
+        
+        <ol class="habits">
+          <li>
+            <h3>Arrive from above, then shoot</h3>
+            <p>As a Light Assault your jump jets are the first weapon: rooftops, ledges and tower struts put you above heads that are watching doorways. The Impulse Launcher adds a second jump — fire it at your feet mid-air for roofs no jet alone reaches. Engineers: use cover the same way — arrive at <em>your</em> range before opening fire, never sprint across the open at theirs.</p>
+          </li>
+          <li>
+            <h3>Aim at the neck, harvest the head</h3>
+            <p>Headshots deal double damage: 4 kills up close versus 7 to the chest. Don't aim at the head directly — aim at the neck and let the gun's natural up-and-right climb carry shots two and three into the skull. It's the single biggest damage upgrade you own, and it's free.</p>
+          </li>
+          <li>
+            <h3>Burst, release, burst</h3>
+            <p>Every shot widens your cone of fire. Holding the trigger past ~8 rounds at range means later bullets fly around your target, not into it. Five rounds is the ideal burst; release the trigger for a heartbeat between bursts — your accuracy resets and your hits per gauge roughly double.</p>
+          </li>
+          <li>
+            <h3>Never overheat — reload on your terms</h3>
+            <p>Pressing <strong>R</strong> clears the heat gauge in <strong>1.65 s</strong>, at any heat level — but an overheat locks you out for ~4.5 seconds. Fired fewer than ~12 shots? Just wait — passive cooling clears that faster than a reload. Fired more? Duck behind cover and press R early. Treat the last few shots of heat as your emergency reserve, not your working gauge.</p>
+          </li>
+          <li>
+            <h3>Pre-aim the doorway, then strafe</h3>
+            <p>Walk with your crosshair at head height, pointed where an enemy's head will appear — a doorway edge, a corner, stairs. Most veterans lose fights in the half-second spent dragging the crosshair onto target. While firing, tap A/D to strafe: a moving target is dramatically harder to headshot back.</p>
+          </li>
+          <li>
+            <h3>Pick fights inside 40 metres</h3>
+            <p>Your damage, accuracy and heat gauge all shine at close-mid range. Sprint between cover, use buildings and rocks as stepping stones, and arrive at <em>your</em> range before opening fire. The player who chooses the range usually wins the duel — make it you.</p>
+          </li>
+        </ol>
+        </section>
+      
+
+      <!-- ================= 08 WEAK SPOTS ================= -->
+            <section aria-labelledby="s-weak" class="is-collapsed">
+        
+        <div class="sec-head">
+          <span class="num">08</span>
+          <h2 id="s-weak">The honest weak spots</h2>
+          <span class="tag">Know them,<br />play around them</span>
+        </div>
+        
+        <p class="lede">Every gun has a price. Here's where the Eclipse pays — and the habit that covers each hole.</p>
+
+        <div class="weak">
+          <h3>1 · Heat punishes long holds</h3>
+          <p>A held trigger burns the whole gauge in 2.3 seconds — and the overheat that follows costs you ~4.5 seconds of silence.</p>
+          <p class="fix"><b>Play around it:</b> burst discipline (habit 3) and early reloads (habit 4). The gauge is a budget: spend it in 5-round bursts and it lasts the whole fight.</p>
+        </div>
+        <div class="weak">
+          <h3>2 · Only 27 shots per gauge — three fewer than the Solstice</h3>
+          <p>The Solstice carries 30 in a magazine. Your 27 vanish fast when suppressing a doorway, and there's no extended-magazine option on a heat weapon at all.</p>
+          <p class="fix"><b>Play around it:</b> burst, don't suppress. Your 1.65 s heat reload is fast — reloading often is the design, not a failure — and you never have to find ammo afterwards.</p>
+        </div>
+        <div class="weak">
+          <h3>3 · A heavy first-shot kick, always up and to the right</h3>
+          <p>Your first shot kicks 2.8× as hard as the rest, on top of 0.25° vertical recoil per shot — and it always pulls up and to the right (14–17°). In a long burst your aim walks off the target's head fast — you'll see this clearly in the VR drill below.</p>
+          <p class="fix"><b>Play around it:</b> pull your mouse down and to the left while firing (the climb is up-and-right). The Angled Forward Grip cuts that first-shot kick by 60% if it keeps bothering you.</p>
+        </div>
+        <div class="weak">
+          <h3>4 · Slow to draw with an underbarrel fitted</h3>
+          <p>It takes 0.55 s to bring the gun up — and any underbarrel, including the Impulse Launcher you start with, adds 0.25 s, taking it to 0.80 s. Slow if a fight surprises you with your sidearm out.</p>
+          <p class="fix"><b>Play around it:</b> keep the Eclipse in your hands when a fight is near, and swap weapons behind cover, never in the open.</p>
+        </div>
+        <div class="weak">
+          <h3>5 · Long range is a pea-shooter</h3>
+          <p>Past 60 m you're at 112 damage: 9 chest shots, 13 against a shielded Heavy, with bloom fighting you the whole way. Snipers and battle rifles own that ground.</p>
+          <p class="fix"><b>Play around it:</b> tap-fire at exposed targets only, and spend the rest of the time closing distance. You're a Light Assault — the rooftops are your address.</p>
+        </div>
+        <div class="weak">
+          <h3>6 · The rail slot is a real choice</h3>
+          <p>Every rail attachment removes the Impulse Launcher — the one thing no other carbine has. Fit a Forward Grip and you trade your escape tool and rooftop routes for 25% less sideways recoil.</p>
+          <p class="fix"><b>Play around it:</b> decide before you cert: if the launcher is why you fly this gun, leave the rail empty. The grip is better on paper; the launcher wins fights the paper never sees.</p>
+        </div>
+        </section>
+      
+
+      <!-- ================= 09 DRILLS ================= -->
+            <section aria-labelledby="s-drills" class="is-collapsed">
+        
+        <div class="sec-head">
+          <span class="num">09</span>
+          <h2 id="s-drills">Training: five VR drills</h2>
+          <span class="tag">VR Training area<br />~15 minutes a session</span>
+        </div>
+        
+        <p class="lede">Open the world map, travel to <strong>VR Training</strong>, and run these on the target dummies. Five minutes before a play session beats an hour of dying confused.</p>
+        <ul class="drills">
+          <li>
+            <div class="d-name">The Wall Test <span>2 minutes · recoil</span></div>
+            <p>Aim at a wall 20 m away and empty a full gauge without touching the mouse. Watch the bullet pattern climb up and to the right — that's your gun's fingerprint. Repeat, this time pulling down-left, until the group stays fist-sized.</p>
+          </li>
+          <li>
+            <div class="d-name">Neck-Line Walk <span>3 minutes · aim height</span></div>
+            <p>Walk the dummy range keeping your crosshair glued to neck height the whole time, snapping to each new target without dipping to the floor or sky. Slow and clean first; speed comes on its own.</p>
+          </li>
+          <li>
+            <div class="d-name">Burst Ladder <span>4 minutes · burst control</span></div>
+            <p>At 30–40 m, kill dummies with bursts of 5–8, releasing the trigger fully between bursts. If a burst goes wide, shorten it. Goal: whole kills without a single wild round.</p>
+          </li>
+          <li>
+            <div class="d-name">Circle Strafe <span>3 minutes · hipfire</span></div>
+            <p>Pick a dummy, stand 5 m away, and circle it with A/D while hipfiring it down without stopping. This is your point-blank survival skill — the one that fires while your movement does the defending.</p>
+          </li>
+          <li>
+            <div class="d-name">Heat Discipline <span>3 minutes · the gauge</span></div>
+            <p>Fire exactly 24 rounds at dummies, stop, press R — feel the 1.65-second clear. Then fire until the gun overheats, once, so you know what the lockout feels like and never choose it in a real fight. Then practise stopping at ~20 shots and letting the gauge cool while you reposition — that pause is free.</p>
+          </li>
+        </ul>
+
+        <div class="rule"><strong>Pocket summary — screenshot this</strong>
+          Eclipse VE3A · auraxium Solstice with a heat gauge, not a magazine · 27 shots, then cool or press R — never overheat (~4.5 s of silence) · fight at 10–40 m · aim neck, burst 5, release, repeat · hipfire under 8 m (laser built in) · Impulse Launcher on Gear Slot 1 for rooftops and escapes — any rail attachment removes it · buy the Forward Grip (100) and Soft Point (100) · past 50 m, tap or close in.
+        </div>
+        </section>
+      
+
+      <footer>
+        <p><strong>About this guide.</strong> Entry in the Sage tutorial series — one weapon, one page, written for a veteran who earned the directive. Stats are the Eclipse VE3A's live game values (143→112 damage, 698 RPM, 27-shot heat gauge, 464 m/s velocity) as listed by the community wiki and the Census API data feed. All time-to-kill figures are computed from rounded refire times in milliseconds, never from the rounded seconds shown on the page.</p>
+        <p>Sources: <a href="https://planetside.fandom.com/wiki/Eclipse_VE3A">Eclipse VE3A — PlanetSide 2 Wiki</a> · <a href="https://census.daybreakgames.com/get/ps2/item?name.en=Eclipse+VE3A">Eclipse VE3A — Census API item data</a>. Weapon render via the Census API; spread rings and sight views are scale diagrams drawn from the gun's published cone-of-fire and magnification values. PlanetSide 2 is a Daybreak Game Company title; this is a fan-made tutorial, not affiliated with Daybreak.</p>
+      </footer>
+    </div>
+
+  <script type="module" src="weapon-sage-guide.mjs?v=20261109-sageguide3"></script>
+</body>
+</html>

@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>PMG-ARX Schrodinger — Sage Guide · PlanetSide 2 &middot; PS2 Elite</title>
+  <meta name="description" content="A beginner's guide to the PMG-ARX Schrodinger — Sage Guide · PlanetSide 2 — The Auraxium reward for finishing the Master Submachine Guns directive — a PMG-100 that fires two pellets per trigger pull. Usable by every class except MAX; this page teaches you to win fights with it today." />
+  <meta name="color-scheme" content="light dark" />
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="weapon-sage.css?v=20261109-sageguide3" />
+  <style>
+    /* Faction colours for this guide — overrides the shared NC palette. */
+    :root {
+      --hero-bg: #0a2422;
+      --nc-blue: #6fc2bb;
+      --nc-blue-deep: #8fd0c9;
+    }
+    html[data-theme="light"] {
+      --first: #173f3d;
+      --hero-bg: #173f3d;
+      --hero-soft: #9fc8c2;
+      --nc-blue: #2f7d78;
+      --nc-blue-deep: #173f3d;
+      --nc-gold: #d9a521;
+    }
+    ol.habits { counter-reset: hab; list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+    ol.habits li { counter-increment: hab; background: var(--surface); border: 1px solid var(--line); padding: 14px 16px 14px 58px; position: relative; }
+    ol.habits li::before {
+            content: counter(hab, decimal-leading-zero);
+            position: absolute; left: 14px; top: 12px;
+            font-family: "Rajdhani", sans-serif; font-weight: 700; font-size: 24px; color: var(--nc-blue);
+          }
+    ol.habits h3 { margin: 0 0 3px; font-size: 19px; }
+    ol.habits p { margin: 0; font-size: 15.5px; }
+    ul.drills { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+    ul.drills li { background: var(--surface); border: 1px solid var(--line); padding: 13px 16px; display: grid; gap: 2px; }
+    ul.drills .d-name { font-family: "Rajdhani", sans-serif; font-weight: 700; font-size: 18px; }
+    ul.drills .d-name span { display: block; font-family: "Barlow", sans-serif; font-weight: 400; font-size: 13.5px; color: var(--ink-soft); }
+  </style>
+</head>
+<body class="site-page">
+    <div class="wrap">
+
+    <p class="sage-back"><a href="weapon-compare.html?w=6011253">← Back to the PMG-ARX Schrodinger comparison</a></p>
+
+
+      <!-- ================= HERO ================= -->
+      <header class="hero">
+        <p class="brandline">Sage Guide · Nanite Systems Operatives · Submachine Gun · Directive Weapon</p>
+        <h1>PMG-ARX Schrodinger <span class="thin">— the directive SMG, mastered</span></h1>
+        <p class="sub">The Auraxium reward for finishing the Master Submachine Guns directive — a PMG-100 that fires two pellets per trigger pull. Usable by every class except MAX; this page teaches you to win fights with it today.</p>
+        <p class="buy-note"><strong>Read this first — you cannot buy this gun.</strong> The PMG-ARX Schrodinger is unlocked only by <strong>completing the Master Submachine Guns directive</strong> — five SMG directives (kills, headshots, and the rest) finished to Auraxium. There is no cert or Daybreak Cash price. If you haven't earned it yet, the PMG-100 it is based on plays almost identically — same 0.54 s chest time-to-kill — and this guide works for it too.</p>
+        <p class="verdict"><strong>The one-line verdict:</strong> Two pellets per pull, 120 damage up close, 896 RPM, and the worst ammo economy of any SMG — 9 pulls to kill, 33 pulls per magazine. Count pulls, not rounds. Fight inside 50 metres, hold five pulls at a time, and it will carry you.</p>
+        <img class="hero-gun" src="assets/weapons/94056.png" alt="The PMG-ARX Schrodinger submachine gun, side profile — an Auraxium PMG-100 variant with a 66-round magazine" width="256" height="128" />
+        <p class="hero-gun-cap">The PMG-ARX Schrodinger · Nanite Systems Operatives · Master Submachine Guns directive · 66-round magazine</p>
+      </header>
+
+      <div class="stats" role="list" aria-label="PMG-ARX Schrodinger key statistics">
+        <div class="stat" role="listitem"><div class="stat-big">120<small> → 100</small></div><div class="stat-label">Damage per trigger pull</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">896</div><div class="stat-label">RPM</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">66</div><div class="stat-label">Rounds per magazine (33 pulls)</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">1.85<small> s</small></div><div class="stat-label">Reload (rounds left)</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">425<small> m/s</small></div><div class="stat-label">Bullet velocity</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">×2</div><div class="stat-label">Headshot damage</div></div>
+      </div>
+      <!-- ================= 01 DAMAGE ================= -->
+      <section aria-labelledby="s-damage">
+        <div class="sec-head">
+          <span class="num">01</span>
+          <h2 id="s-damage">Know your damage</h2>
+          <span class="tag">How many pulls<br />to kill, by range</span>
+        </div>
+        <p class="lede">Every enemy infantry has 1,000 health (500 shield + 500 health). Your gun fires <strong>two pellets per trigger pull</strong> — each pellet does <strong>60 damage up close</strong>, so one pull does <strong>120 damage</strong> if both pellets hit, fading to <strong>100 at long range</strong>. Headshots count double, leg shots count less (×0.9). That gives you three numbers worth memorising — and they're counted in <strong>pulls</strong>, not rounds:</p>
+
+        <table class="tbl" aria-label="Trigger pulls to kill by range">
+          <thead>
+            <tr><th>Range</th><th class="n">Damage / pull</th><th class="n">Head</th><th class="n">Chest</th><th class="n">Legs</th><th class="n">Chest vs shielded Heavy</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Close</strong> · 0–8 m</td><td class="n big">120</td><td class="n big">5</td><td class="n big">9</td><td class="n">10</td><td class="n">13</td></tr>
+            <tr><td><strong>Mid</strong> · 9–26 m</td><td class="n big">120→112</td><td class="n big">5</td><td class="n big">9</td><td class="n">10</td><td class="n">14</td></tr>
+            <tr><td><strong>Far</strong> · 27–50 m+</td><td class="n big">112→100</td><td class="n big">5</td><td class="n big">10</td><td class="n">12</td><td class="n">15</td></tr>
+          </tbody>
+        </table>
+        <p class="small">Perfect-accuracy times to kill, 67 ms per pull: 5 head pulls ≈ 0.27 s, 9 chest pulls ≈ 0.54 s up close. In real fights you'll land maybe half your pulls — still, this is why the head matters so much on this gun. The breakpoints are exact: 9 chest pulls to about 27 m, 10 past that. And remember: every pull eats 2 rounds, so 9 pulls to kill is 18 rounds — a 66-round magazine holds 33 pulls, about three kills.</p>
+
+        <div class="chart-box">
+          <h3>Damage falloff — where your pellets get weaker</h3>
+          <p class="small" style="margin:0 0 6px">Full power to 8 m, then a steady slide to minimum at 50 m. The gold line shows Soft Point Ammunition, which stretches full power to 13 m. Past 27 m the kill costs 10 chest pulls or more.</p>
+          <svg viewBox="0 0 640 240" width="100%" role="img" aria-label="Line chart of PMG-ARX Schrodinger damage per trigger pull from 0 to 100 metres: 120 damage flat to 8 metres, falling to 112 at 26 metres and 100 at 50 metres, then flat. Soft Point Ammunition stays at 120 until 13 metres.">
+            <g stroke="var(--line)" stroke-width="1">
+              <line x1="56" y1="42.0" x2="616" y2="42.0" />
+              <line x1="56" y1="105.4" x2="616" y2="105.4" />
+              <line x1="56" y1="190.0" x2="616" y2="190.0" />
+            </g>
+            <g fill="var(--ink-soft)" font-size="12">
+              <text x="48" y="46.0" text-anchor="end">120</text>
+              <text x="48" y="109.4" text-anchor="end">112</text>
+              <text x="48" y="194.0" text-anchor="end">100</text>
+              <text x="56" y="222">0 m</text>
+              <text x="112.0" y="222" text-anchor="middle">10 m</text>
+              <text x="196" y="222" text-anchor="middle">25 m</text>
+              <text x="336.0" y="222" text-anchor="middle">50 m</text>
+              <text x="616" y="222" text-anchor="end">100 m</text>
+            </g>
+            <polyline points="56,42.0 100.8,42.0 336.0,190.0 616,190.0" fill="none" stroke="var(--nc-blue)" stroke-width="3" />
+            <polyline points="56,42.0 128.8,42.0 336.0,190.0 616,190.0" fill="none" stroke="var(--nc-gold)" stroke-width="2.5" stroke-dasharray="7 5" />
+            <g fill="var(--nc-blue)">
+              <circle cx="100.8" cy="42.0" r="4" /><circle cx="201.6" cy="105.4" r="4" /><circle cx="336.0" cy="190.0" r="4" />
+            </g>
+            <g font-size="13" font-weight="600" fill="var(--ink)">
+              <text x="106.8" y="34.0">120</text>
+              <text x="201.6" y="95.4" text-anchor="middle">112 @ 26 m</text>
+              <text x="336.0" y="210.0" text-anchor="middle">100 @ 50 m</text>
+              <text x="380.0" y="26.0" fill="var(--accent-ink)">— with Soft Point Ammo</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="rule"><strong>Rule of thumb</strong>Inside 8 m you are at maximum power. Past 27 m every kill takes 10 chest pulls or more — close the distance or fire carefully instead of spraying.</div>
+        </section>
+      
+      <!-- ================= 02 RANGE LAB + AIM ================= -->
+      <section aria-labelledby="s-aim" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">02</span>
+          <h2 id="s-aim">Aim by distance</h2>
+          <span class="tag">Drag the range,<br />learn the style</span>
+        </div>
+        <p class="lede">One gun, four fighting styles. The right technique changes with distance — use the range finder below to see what your pellets do at any range, then learn the four bands underneath it.</p>
+
+        <div class="lab" aria-label="Interactive range finder">
+          <div class="lab-top">
+            <span class="reading"><span id="labDist">18</span> <small>metres to target</small></span>
+            <span class="chip good" id="labBand">Sweet spot</span>
+          </div>
+          <input type="range" id="labRange" min="0" max="100" step="1" value="18" aria-label="Distance to target in metres" />
+          <div class="lab-scale"><span>0 m</span><span>8 m</span><span>25 m</span><span>50 m</span><span>100 m</span></div>
+          <div class="lab-out">
+            <div class="lab-cell"><div class="v" id="labDmg">115</div><div class="k">Damage / pull</div></div>
+            <div class="lab-cell"><div class="v" id="labHead">5</div><div class="k">Pulls to kill (head)</div></div>
+            <div class="lab-cell"><div class="v" id="labChest">9</div><div class="k">Pulls to kill (chest)</div></div>
+            <div class="lab-cell"><div class="v" id="labTtk">0.54 s</div><div class="k">Best-case chest TTK</div></div>
+          </div>
+          <p class="lab-advice"><b>How to fight here</b><span id="labAdvice">Aim down sights at the upper chest and neck. Fire in bursts of 5 pulls, then release; your recoil climbs into the head for free damage. Two pellets per pull means both have to land — aim centre-mass, not at the edge of the target.</span></p>
+        </div>
+
+        <div style="margin-top:18px">
+          <div class="band">
+            <div class="dist"><span class="d1">0–8 m</span><span class="d2">Point blank</span></div>
+            <div class="body">
+              <h3>Hipfire — don't aim down sights</h3>
+              <p class="aim">Aim: centre of the chest, from the hip. Keep moving.</p>
+              <p>Scoping in costs you time and drops your speed to 0.75× — at arm's length that gets you killed. SMGs have the tightest hipfire of any weapon class. Strafe side to side (A/D) while firing so you're hard to track. One pull is two pellets, so a short hold is all you need — but both pellets have to land, so aim dead centre, not at the shoulder.</p>
+            </div>
+          </div>
+          <div class="band">
+            <div class="dist"><span class="d1">8–20 m</span><span class="d2">Sweet spot</span></div>
+            <div class="body">
+              <h3>ADS, upper chest, five-pull holds</h3>
+              <p class="aim">Aim: neck / upper chest. Holds of 5 pulls.</p>
+              <p>This is where the gun earns its keep: full 120 damage to 8 m, still 115 at 18 m, fast handling. Start your crosshair at the neck — the natural upward climb walks your shots into the head, and 5 head pulls end the fight in 0.27 s. Strafe while scoped; at 0.75× you move faster aimed than a scoped Heavy, and a moving target still beats a still one.</p>
+            </div>
+          </div>
+          <div class="band">
+            <div class="dist"><span class="d1">20–50 m</span><span class="d2">Controlled</span></div>
+            <div class="body">
+              <h3>ADS, short holds, pull down and to the left</h3>
+              <p class="aim">Aim: chest. Holds of 5 pulls, pause between them.</p>
+              <p>Damage is sliding from ~115 toward 100 and your cone of fire blooms if you hold the trigger. Fire five pulls, release for a split second to let accuracy reset, fire again. The recoil drifts up and to the right (17–20° angle), so pull your mouse gently down and to the left. Crouch or stand still when you can — both tighten your shots. And watch the pellet spread: at 30 m the two pellets are about 17 cm apart, so a pull aimed at the edge of the target can lose one pellet entirely.</p>
+            </div>
+          </div>
+          <div class="band">
+            <div class="dist"><span class="d1">50 m +</span><span class="d2">Plinking</span></div>
+            <div class="body">
+              <h3>Short holds only — or don't engage</h3>
+              <p class="aim">Aim: chest. Short holds of 5 pulls at exposed targets only.</p>
+              <p>At 100 damage per pull you need 10 chest pulls — a long, loud advertisement of your position. Take these shots at stationary or fleeing targets, medics reviving, and engineers on turrets. Otherwise, your better play is to close the distance behind cover. Knowing when <em>not</em> to shoot is a skill too.</p>
+            </div>
+          </div>
+        </div>
+        </section>
+      
+      <!-- ================= 03 STANCES & FIRING MODES ================= -->
+      <section aria-labelledby="s-stances" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">03</span>
+          <h2 id="s-stances">Stances and firing modes</h2>
+          <span class="tag">How you stand and<br />how you hold the trigger</span>
+        </div>
+        <p class="lede">Your accuracy is decided by two things before skill even enters it: <strong>what your body is doing</strong> (your stance sets the starting cone of fire) and <strong>what your finger is doing</strong> (holding the trigger grows that cone with every pull). This gun is full-auto only — there is no fire-mode switch — so "firing modes" are something you do with your finger, not a setting on the gun. Every trigger pull fires two pellets and eats two rounds.</p>
+
+        <h3 class="slot-title">Stances <span>— the cone you start with, before the first shot</span></h3>
+        <table class="tbl" aria-label="PMG-ARX Schrodinger cone of fire by stance">
+          <thead>
+            <tr><th>Stance</th><th class="n">Starting cone</th><th>What it means for you</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Sprinting</strong></td><td class="n big">7.0°</td><td>Maxed out — the widest the cone can be. Never start firing from a sprint; stop for a heartbeat first.</td></tr>
+            <tr><td><strong>Hipfire, moving</strong></td><td class="n big">1.5°</td><td>Walking or strafing from the hip. Fine inside ~8 m, leaks rounds past the target beyond it.</td></tr>
+            <tr><td><strong>Hipfire, standing</strong></td><td class="n big">1.0°</td><td>Your point-blank default. The 0.14 m ring at 8 m in section 04 is this stance drawn out.</td></tr>
+            <tr><td><strong>Hipfire, crouched</strong></td><td class="n big">1.0°</td><td>The tightest hipfire you have (1.25° if you crouch-walk). Crouch when holding a doorway from the hip.</td></tr>
+            <tr><td><strong>Aimed (ADS), feet planted</strong></td><td class="n big">0.30°</td><td>Standing or crouched makes no difference here — about three times tighter than hipfire.</td></tr>
+            <tr><td><strong>Aimed (ADS), strafing</strong></td><td class="n big">0.30°</td><td>The moving floor — the same as standing still, so strafing costs you nothing in cone size on this gun. You still move at 0.75× while scoped, faster than most guns' 0.5×. Strafe <em>between</em> holds to stay hard to hit; plant your feet during each hold.</td></tr>
+          </tbody>
+        </table>
+
+        <h3 class="slot-title">Firing modes <span>— the cone you grow, pull by pull</span></h3>
+        <table class="tbl" aria-label="Firing modes and when to use them">
+          <thead>
+            <tr><th>Mode</th><th>How your finger does it</th><th>Use it at</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>The mag dump</strong></td><td>Hold the trigger and don't let go</td><td>Point blank only, or suppressing a doorway. Bloom maxes out fast — past ~8 pulls you're spraying, not aiming, and 33 pulls is gone in 2.1 seconds.</td></tr>
+            <tr><td><strong>Five pulls — the default</strong></td><td>Hold for <strong>5 pulls</strong>, release ~0.15 s, hold again. 5 pulls is the ideal, 6–8 is fine while you're learning</td><td>Almost everything, 8–50 m. Each release resets the cone, so every hold starts at 0.30°.</td></tr>
+            <tr><td><strong>Tap-fire</strong></td><td>Short holds of 3 pulls with a real pause between</td><td>50 m and out, at exposed or stationary targets. Slow, but every pull goes where the dot is.</td></tr>
+          </tbody>
+        </table>
+
+        <p class="small">One more thing worth knowing: the two pellets in each pull spread apart as they fly — about 5 cm apart at 8 m, 9 cm at 15 m, 17 cm at 30 m — so a pull aimed at the edge of the target can lose one pellet and do half damage. Aim centre-mass. The cone still grows 0.05° with every pull, so there are no free pulls with no cone growth on this gun. And the first pull of each hold kicks double — the first-shot recoil multiplier is 2×, so your first pull climbs twice as hard as the rest; start low and let it climb.</p>
+
+        <div class="viz" id="burstSim" data-rpm="896" data-base-cof="0.30" data-bloom="0.05" data-distance="30">
+          <h3>Try it: the hold-and-release window</h3>
+          <p class="small" style="margin:0">A target 30 m away, aiming down sights. <strong>Press and hold FIRE</strong> (mouse, touch, or hold Space with the button focused) and watch the holes walk wider the longer you hold — that's firing from an ever-growing cone. Release, let the cone reset, fire again. <strong>Aim for holds of 5 pulls; 6–8 is tolerable while you're new.</strong> On this gun each "shot" in the window is one trigger pull — two pellets, two rounds — so a hold of 5 pulls is 10 rounds, and your 66-round magazine holds 33 pulls. This practice window is shared by the whole Sage series: it's driven by a weapon profile plugged into the window — here the PMG-ARX Schrodinger's (896 RPM, 0.30° starting cone, 0.05° bloom per pull, target at 30 m) — and the spread is drawn at true scale from those numbers.</p>
+          <div class="sim-stage" id="simStage" aria-hidden="true">
+            <svg viewBox="0 0 200 300" width="150" height="300" role="presentation">
+              <g fill="var(--ink-soft)">
+                <circle cx="100" cy="42" r="23" />
+                <rect x="84" y="68" width="11" height="74" rx="5" />
+                <rect x="105" y="68" width="11" height="74" rx="5" />
+                <rect x="60" y="66" width="80" height="112" rx="14" />
+                <rect x="66" y="178" width="28" height="18" />
+                <rect x="68" y="194" width="22" height="102" />
+                <rect x="110" y="194" width="22" height="102" />
+              </g>
+              <circle cx="100" cy="126" r="5" fill="var(--nc-gold)" />
+            </svg>
+          </div>
+          <div class="sim-controls">
+            <button type="button" class="sim-fire" id="simFire">Hold to fire</button>
+            <button type="button" class="sim-reset" id="simReset">Reset target</button>
+          </div>
+          <div class="bloom-track" aria-hidden="true"><div class="bloom-fill" id="simBloom"></div></div>
+          <p class="small" style="margin:4px 0 0">Cone of fire — fills as you hold, empties when you release.</p>
+          <div class="sim-read">
+            <div class="lab-cell"><div class="v" id="simShots">0</div><div class="k">Pulls fired</div></div>
+            <div class="lab-cell"><div class="v" id="simHits">0</div><div class="k">Hits on target</div></div>
+            <div class="lab-cell"><div class="v" id="simAcc">—</div><div class="k">Accuracy</div></div>
+          </div>
+          <p class="sim-verdict" id="simVerdict">Your holds will be graded here — green at 5 pulls, tolerable up to 8.</p>
+          <div class="burst-log" id="simLog" aria-label="Your holds so far"></div>
+        </div>
+        </section>
+      
+      <!-- ================= 04 SEE IT ================= -->
+      <section aria-labelledby="s-see" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">04</span>
+          <h2 id="s-see">See it</h2>
+          <span class="tag">What the numbers<br />look like in-game</span>
+        </div>
+        <p class="lede">Numbers are abstract. These three pictures are the same numbers drawn to scale, so you can feel them before you queue up.</p>
+<div class="viz">
+          <h3>Hipfire at 8 metres — where the bullets land</h3>
+          <p class="small" style="margin:0">A full-size target 8 m away — an arm's-length room fight. The rings show where hipfire rounds land around your aim point (the chest). Sizes are drawn to scale from the gun's real cone-of-fire numbers.</p>
+          <svg viewBox="0 0 640 320" width="100%" role="img" aria-label="Diagram of a soldier target at 8 metres with three spread rings drawn at true scale: hipfire while moving spreads about 0.21 metres wide, hipfire standing still about 0.14 metres, and hipfire with a Laser Sight about 0.09 metres. Aiming down sights lands in a dot a few centimetres wide.">
+            <line x1="20" y1="292" x2="620" y2="292" stroke="var(--line)" stroke-width="2" />
+            <g fill="var(--ink-soft)">
+              <circle cx="320" cy="58" r="17" />
+              <rect x="281" y="86" width="13" height="66" rx="6" />
+              <rect x="346" y="86" width="13" height="66" rx="6" />
+              <rect x="297" y="82" width="46" height="78" rx="10" />
+              <rect x="301" y="158" width="38" height="16" />
+              <rect x="303" y="172" width="15" height="118" />
+              <rect x="322" y="172" width="15" height="118" />
+            </g>
+            <circle cx="320" cy="128" r="14" fill="none" stroke="var(--skip)" stroke-width="2" stroke-dasharray="7 5" />
+            <circle cx="320" cy="128" r="9" fill="var(--nc-blue)" opacity="0.16" />
+            <circle cx="320" cy="128" r="9" fill="none" stroke="var(--nc-blue)" stroke-width="2" />
+            <circle cx="320" cy="128" r="6" fill="var(--nc-gold)" opacity="0.22" />
+            <circle cx="320" cy="128" r="6" fill="none" stroke="var(--nc-gold)" stroke-width="2" />
+            <circle cx="320" cy="128" r="5" fill="var(--good)" />
+            <g font-size="14" font-weight="600" fill="var(--ink)">
+              <text x="24" y="46">Target at 8 m</text>
+              <text x="24" y="66" fill="var(--ink-soft)" font-weight="400">≈ 1.8 m tall, drawn to scale</text>
+              <text x="470" y="66" fill="var(--skip)">moving: ≈ 0.21 m wide</text>
+              <text x="470" y="118" fill="var(--nc-blue)">standing: ≈ 0.14 m wide</text>
+              <text x="470" y="180" fill="var(--accent-ink)">+ Laser Sight: ≈ 0.09 m</text>
+              <text x="470" y="238" fill="var(--good)">aimed (ADS): a dot</text>
+            </g>
+            <g stroke="var(--ink-soft)" stroke-width="1">
+              <line x1="462" y1="62" x2="340" y2="112" />
+              <line x1="462" y1="114" x2="336" y2="124" />
+              <line x1="462" y1="176" x2="331" y2="132" />
+              <line x1="462" y1="234" x2="326" y2="132" />
+            </g>
+          </svg>
+          <div class="legend">
+            <span><i style="background:var(--skip)"></i>Hipfire, strafing (1.5° cone)</span>
+            <span><i style="background:var(--nc-blue)"></i>Hipfire, standing (1.0° cone)</span>
+            <span><i style="background:var(--nc-gold)"></i>With Laser Sight (−33%)</span>
+            <span><i style="background:var(--good)"></i>Aimed down sights</span>
+          </div>
+          <p class="cap">Read it this way: standing still, the <b>0.14 m ring fits well inside the chest</b> — most rounds hit a target this size, which is why hipfire works point-blank on this gun. Move and it grows to <b>0.21 m — still inside the torso</b> — so even strafing hipfire stays on him at arm's length. The rings only grow with distance while the man doesn't, so past ~10 m they start leaking past him: the exact moment to switch to aiming down sights, where the spread shrinks to a dot. (Ring sizes use the real geometry: spread diameter = 2 × distance × tan(cone ÷ 2).)</p>
+        </div>
+          <p class="cap" style="margin-top:12px">The middle ring is your standing hipfire cone — the tightest practical hipfire stance for this gun. Crouched is the same 1.0°; crouch-walking is 1.25°. Your sights are 0.30° when planted, so the aimed cone is tighter still — and while you strafe it's the same 0.30°.</p>
+<div class="viz">
+          <h3>Hold – release – hold – release: the burst rhythm</h3>
+          <p class="small" style="margin:0">Every shot widens your cone of fire ("bloom"). Releasing the trigger for a heartbeat resets it. Same 18 rounds, two very different outcomes:</p>
+          <svg viewBox="0 0 640 216" width="100%" role="img" aria-label="Diagram comparing fire patterns. Bad: holding the trigger for 18 straight rounds, the spread cone widens the whole time and the last rounds land in a large circle. Good: three bursts of 6 rounds with a short release between each, the cone resets every burst and all three groups stay small.">
+            <g font-family="Rajdhani, sans-serif" font-weight="700">
+              <text x="8" y="52" font-size="17" fill="var(--skip)">✗ SPRAY</text>
+              <text x="8" y="152" font-size="17" fill="var(--good)">✓ BURSTS</text>
+            </g>
+            <!-- bad: one long hold -->
+            <rect x="120" y="34" width="380" height="16" fill="var(--skip)" opacity="0.75" />
+            <polygon points="120,42 520,16 520,68" fill="var(--skip)" opacity="0.14" />
+            <ellipse cx="540" cy="42" rx="34" ry="30" fill="none" stroke="var(--skip)" stroke-width="2" />
+            <g fill="var(--ink)" font-size="13.5">
+              <text x="120" y="24">Trigger held — 18 rounds, never released</text>
+              <text x="452" y="96">last rounds: huge spread</text>
+            </g>
+            <!-- good: 6 - release - 6 - release - 6 -->
+            <g fill="var(--nc-blue)">
+              <rect x="120" y="134" width="118" height="16" />
+              <rect x="278" y="134" width="118" height="16" />
+              <rect x="436" y="134" width="118" height="16" />
+            </g>
+            <g fill="none" stroke="var(--nc-blue)" stroke-width="2">
+              <ellipse cx="252" cy="142" rx="11" ry="10" />
+              <ellipse cx="410" cy="142" rx="11" ry="10" />
+              <ellipse cx="568" cy="142" rx="11" ry="10" />
+            </g>
+            <g fill="var(--ink)" font-size="13.5">
+              <text x="152" y="124">6 rounds</text>
+              <text x="310" y="124">6 rounds</text>
+              <text x="468" y="124">6 rounds</text>
+              <text x="238" y="172" text-anchor="middle" fill="var(--good)" font-weight="600">release ≈0.15 s</text>
+              <text x="396" y="172" text-anchor="middle" fill="var(--good)" font-weight="600">release ≈0.15 s</text>
+              <text x="120" y="196">Every burst starts accurate — all three groups stay fist-sized.</text>
+            </g>
+          </svg>
+                <p class="cap"><b>The target pattern is bursts of about 5 rounds — that's the ideal. Bursts of 6–8 are fine while you're new</b> (call it newbie tolerance). Past that, the bloom (0.05° per shot aimed, 0.05° from the hip) keeps growing with every shot, so the extra bullets mostly decorate the wall behind your enemy instead of hitting him. Short bursts also leave you rounds for the second enemy — remember, the magazine is only 25.</p>
+        </div>
+          <p class="cap" style="margin-top:12px">Three short holds, each one a tight group. Fifteen pulls is more than the 9 that end a fight at any range this gun is meant for — and 15 pulls is 30 rounds, nearly half your magazine.</p>
+        <div class="viz2">
+          <h3>Your sights</h3>
+          <p class="small" style="margin:0">Both cost 30 certs, both are worth it. Your default iron sights are fine, but a clean dot makes it easier to hold that neck aim in the 8–20 m band. The 1× ABLE dot is the safest first buy; the 2× ABLE is for the 20–50 m band and is a second buy, not a first. There is no 3.4× that helps here — it only magnifies the wobble.</p>
+        <div class="viz2">
+<div class="viz">
+            <h3>ABLE 1.0 — 1x</h3>
+            <svg viewBox="0 0 300 210" width="100%" role="img" aria-label="View through the 1x reflex sight at a target 25 metres away: the soldier appears small in an open frame, with buildings and a crate visible around him.">
+              <rect x="0" y="0" width="300" height="152" fill="var(--surface-2)" />
+              <rect x="0" y="152" width="300" height="58" fill="var(--line)" opacity="0.55" />
+              <rect x="238" y="58" width="28" height="94" fill="var(--ink-soft)" opacity="0.55" />
+              <rect x="22" y="118" width="52" height="34" fill="var(--ink-soft)" opacity="0.7" />
+              <g fill="var(--ink)" transform="translate(150,152)">
+                <circle cx="0" cy="-57" r="6.5" />
+                <rect x="-8" y="-51" width="16" height="27" rx="4" />
+                <rect x="-7" y="-24" width="6" height="24" />
+                <rect x="1" y="-24" width="6" height="24" />
+              </g>
+              <circle cx="150" cy="110" r="4" fill="var(--skip)" />
+              <circle cx="150" cy="110" r="10" fill="none" stroke="var(--skip)" stroke-width="1.5" />
+              <rect x="8" y="8" width="284" height="194" rx="14" fill="none" stroke="var(--ink)" stroke-width="5" />
+            </svg>
+            <p class="cap">No zoom. The target at 25 m is <b>small but the view is wide open</b> — you see the crate, the tower, and the next enemy coming. Fast to aim, nothing blocks your edges. Best inside ~25 m.</p>
+          </div>
+<div class="viz">
+            <h3>ABLE 2.0 — 2x</h3>
+            <svg viewBox="0 0 300 210" width="100%" role="img" aria-label="View through the 2x ABLE sight at the same target 25 metres away: the soldier appears twice as tall and fills the round scope, while the crate and tower are cropped out of view.">
+              <rect x="0" y="0" width="300" height="168" fill="var(--surface-2)" />
+              <rect x="0" y="168" width="300" height="42" fill="var(--line)" opacity="0.55" />
+              <rect x="-52" y="100" width="104" height="68" fill="var(--ink-soft)" opacity="0.7" />
+              <g fill="var(--ink)" transform="translate(150,168) scale(2)">
+                <circle cx="0" cy="-57" r="6.5" />
+                <rect x="-8" y="-51" width="16" height="27" rx="4" />
+                <rect x="-7" y="-24" width="6" height="24" />
+                <rect x="1" y="-24" width="6" height="24" />
+              </g>
+              <circle cx="150" cy="88" r="4.5" fill="var(--skip)" />
+              <circle cx="150" cy="88" r="12" fill="none" stroke="var(--skip)" stroke-width="1.5" />
+              <circle cx="150" cy="105" r="97" fill="none" stroke="var(--ink)" stroke-width="7" />
+            </svg>
+            <p class="cap">Same target, same 25 m — but he looks <b>twice as tall</b>, so placing shots on his chest and head gets much easier. The price: your view narrows to the round window, the crate and tower are gone, and close targets feel fast and huge. Best at 15–40 m.</p>
+          </div>
+        </div>
+          <p class="cap" style="margin-top:12px">That's the whole 30-cert decision. Everything else on the gun costs more and matters less.</p>
+        </div>
+        </section>
+      
+      <!-- ================= 05 ATTACHMENTS ================= -->
+      <section aria-labelledby="s-attach" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">05</span>
+          <h2 id="s-attach">Attachments and ammo</h2>
+          <span class="tag">The whole shop,<br />in the order to buy it</span>
+        </div>
+        <p class="lede">Every attachment has a real price and a real effect on this gun's numbers — nothing here is cosmetic. The certs below are per attachment; the costs are the same for every NSO character, and they stay with the gun once bought.</p>
+
+        <div class="buy-grid" aria-label="Attachment prices and effects">
+          <h3 class="buy-col-head" style="grid-column:1 / -1">Sights</h3>
+          <div class="buy-row"><div class="buy-name">ABLE 1.0</div><div class="buy-cost">30</div><div class="buy-what">Clean 1× reflex sight. Your default first buy — a dot you can see at 25 m beats iron sights you have to guess through.</div></div>
+          <div class="buy-row"><div class="buy-name">ABLE 2.0</div><div class="buy-cost">30</div><div class="buy-what">2× zoom. Helps at 20–50 m, but magnifies the wobble — a second buy, not a first.</div></div>
+          <div class="buy-row"><div class="buy-name">ABLE 3.4</div><div class="buy-cost">30</div><div class="buy-what">3.4× zoom. Not recommended for an SMG — at SMG ranges it just magnifies the recoil.</div></div>
+          <div class="buy-row"><div class="buy-name">THM-1</div><div class="buy-cost">30</div><div class="buy-what">1× reflex with a bigger frame. Same job as the ABLE 1.0 — pick the one whose dot you like looking at.</div></div>
+          <h3 class="buy-col-head" style="grid-column:1 / -1">Barrel</h3>
+          <div class="buy-row"><div class="buy-name">Compensator</div><div class="buy-cost">100</div><div class="buy-what">Reduces your vertical recoil, at the cost of showing up on the minimap when you fire. Your vertical kick is already low, so this is a luxury, not a need.</div></div>
+          <div class="buy-row"><div class="buy-name">Hybrid Suppressor</div><div class="buy-cost">100</div><div class="buy-what">Hides your muzzle flash and your dot from the minimap, with a smaller velocity penalty than a full suppressor — your bullets slow to 340 m/s. For flanking, not for brawling.</div></div>
+          <h3 class="buy-col-head" style="grid-column:1 / -1">Rail</h3>
+          <div class="buy-row"><div class="buy-name">Darklight Flashlight</div><div class="buy-cost">100</div><div class="buy-what">Reveals cloaked infiltrators within 25 m when pointed at them. Situational — take it only if stalkers are eating your squad.</div></div>
+          <div class="buy-row"><div class="buy-name">Extended Magazine</div><div class="buy-cost">200</div><div class="buy-what">+14 rounds (66 → 80). That's 40 pulls instead of 33 — one more full kill per magazine, and the single biggest quality-of-life buy on this gun.</div></div>
+          <div class="buy-row"><div class="buy-name">Forward Grip</div><div class="buy-cost">100</div><div class="buy-what">Reduces your horizontal recoil — the sideways walk that pulls your holds off target. This gun's horizontal tolerance is already small, so this is the second attachment to buy after the sight.</div></div>
+          <div class="buy-row"><div class="buy-name">Hybrid Laser</div><div class="buy-cost">100</div><div class="buy-what">Tightens your hipfire cone by a third (standing 1.0° → 0.67°). That shrinks the 8 m hipfire ring from 0.14 m across to 0.09 m — the difference between grazing a shoulder and hitting the chest, and between landing one pellet or both. For the point-blank playstyle.</div></div>
+          <h3 class="buy-col-head" style="grid-column:1 / -1">Ammo</h3>
+          <div class="buy-row"><div class="buy-name">High-Velocity Ammunition</div><div class="buy-cost">100</div><div class="buy-what">+10% velocity (425 → 468 m/s), max-damage range shrinks 8 m → 6 m and minimum range extends 50 m → 70 m. Buy it if you fight at 20–50 m a lot; skip it if you live inside 15 m.</div></div>
+          <div class="buy-row"><div class="buy-name">Soft Point Ammunition</div><div class="buy-cost">100</div><div class="buy-what">Max-damage range extends 8 m → 13 m, but your bullets slow to 383 m/s. The default pick for close-quarters fights — it stretches the 120-damage band across the whole sweet spot.</div></div>
+        </div>
+
+        <p class="small">Notable gaps: there is no plain Suppressor or plain Laser Sight for this gun — the Hybrid versions are the only options, and both are slightly gentler than their plain counterparts. If you want tighter holds, that's the Forward Grip's job.</p>
+        </section>
+      
+      <!-- ================= 06 LOADOUTS ================= -->
+      <section aria-labelledby="s-loadouts" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">06</span>
+          <h2 id="s-loadouts">Four builds</h2>
+          <span class="tag">Total cert cost<br />next to each one</span>
+        </div>
+        <p class="lede">Four complete builds, each with a job, a cert total, and a reason. The gun itself costs no certs — you earned it with the directive — so the totals below are attachments only.</p>
+
+        <div class="cards">
+          <div class="card">
+            <div class="card-num">01</div>
+            <div class="card-body">
+              <h3>Standard Issue <span class="card-cost">0 certs</span></h3>
+              <p class="card-sub">The gun as it comes. Learn the pull rhythm before spending anything.</p>
+              <p class="card-meta"><strong>Attachments:</strong> none · <strong>Ammo:</strong> standard · <strong>Total:</strong> 0 certs</p>
+              <p class="card-why">Why: the stock gun is already strong — 120 damage per pull, 896 RPM, the fastest handling in the PMG family. If you're not winning fights with it stock, an attachment won't fix that; the five-pull rhythm in section 03 will.</p>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-num">02</div>
+            <div class="card-body">
+              <h3>All-Rounder <span class="card-cost">230 certs</span></h3>
+              <p class="card-sub">The default recommendation for most players.</p>
+              <p class="card-meta"><strong>Attachments:</strong> ABLE 1.0 (30) + Forward Grip (100) · <strong>Ammo:</strong> Soft Point (100) · <strong>Total:</strong> 230 certs</p>
+              <p class="card-why">Why: a clean 1× dot, tamed horizontal recoil, and the 120-damage band stretched to 13 m — the whole sweet spot. This is the build the rest of the guide assumes.</p>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-num">03</div>
+            <div class="card-body">
+              <h3>Point Hold <span class="card-cost">230 certs</span></h3>
+              <p class="card-sub">For holding a doorway, a cap point, a staircase.</p>
+              <p class="card-meta"><strong>Attachments:</strong> ABLE 1.0 (30) + Hybrid Laser (100) · <strong>Ammo:</strong> Soft Point (100) · <strong>Total:</strong> 230 certs</p>
+              <p class="card-why">Why: hipfire is your weapon inside 8 m, and the laser shrinks your hipfire ring by a third — which matters twice as much on this gun, because a pull that grazes the edge can lose a whole pellet. You pre-aim the doorway, strafe in, and hold. The trade: your holds past 20 m walk wider without the grip.</p>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-num">04</div>
+            <div class="card-body">
+              <h3>Ghost <span class="card-cost">230 certs</span></h3>
+              <p class="card-sub">For flanking — the infiltrator's and light assault's build.</p>
+              <p class="card-meta"><strong>Attachments:</strong> ABLE 1.0 (30) + Hybrid Suppressor (100) + Forward Grip (100) · <strong>Ammo:</strong> standard · <strong>Total:</strong> 230 certs</p>
+              <p class="card-why">Why: no minimap dot, no muzzle flash, and the grip keeps your holds on target while your bullets fly at 340 m/s. You trade raw reach for invisibility — pick your fights, and never take the same flank twice.</p>
+            </div>
+          </div>
+        </div>
+        </section>
+      
+      <!-- ================= 07 HABITS ================= -->
+      <section aria-labelledby="s-habits" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">07</span>
+          <h2 id="s-habits">Six habits to build</h2>
+          <span class="tag">What good players<br />do without thinking</span>
+        </div>
+        <p class="lede">Gear gets you to the fight. Habits win it. Six, in the order to learn them.</p>
+        <ol class="habits">
+          <li><strong>Count pulls, not rounds.</strong> Your magazine holds 33 pulls, not 66 shots. A 9-pull kill is 18 rounds — nearly a third of the mag. When you think in rounds, you think you have twice as much ammo as you do.</li>
+          <li><strong>Aim centre-mass, not at the edge.</strong> Two pellets per pull means a pull at the target's edge can lose one pellet and do half damage. The neck is your aim point at range; the chest is your aim point up close.</li>
+          <li><strong>Five pulls, then release.</strong> Five pulls, a beat, five more. Every release resets the cone; every hold that runs past 8 pulls is accuracy you're throwing away.</li>
+          <li><strong>Never fire from a sprint.</strong> A 7.0° cone is a miss with extra steps. Stop for a heartbeat and your 1.0° hipfire or 0.30° aimed cone comes back.</li>
+          <li><strong>Reload early, behind cover.</strong> 33 pulls is three full kills and change — then you're empty in the middle of a room. Reload after every kill or two, while you have cover, not when the gun clicks dry. 1.85 s is a long time in a doorway.</li>
+          <li><strong>Fight inside 50 m on purpose.</strong> That's where your damage is high and your pulls land. If you're losing fights past 50 m, the fix is positioning, not aim — close the gap first.</li>
+        </ol>
+        </section>
+      
+      <!-- ================= 08 WEAK SPOTS ================= -->
+      <section aria-labelledby="s-weak" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">08</span>
+          <h2 id="s-weak">Five weak spots</h2>
+          <span class="tag">Where this gun<br />loses fights</span>
+        </div>
+        <p class="lede">Know these before your enemies teach them to you.</p>
+        <ol class="weak">
+          <li><strong>The directive reward doesn't outgun the PMG-100.</strong> Same 0.54 s chest time-to-kill, same 0.27 s head time-to-kill — the Schrodinger is a prestige skin with a different ammo economy, not an upgrade. You're carrying it because you earned it, not because it kills faster.</li>
+          <li><strong>One pellet off is half a pull wasted.</strong> At 30 m the pellets are 17 cm apart, so a pull at the edge of a moving target can land one pellet and do 50 damage instead of 100. No other SMG punishes a near-miss this hard.</li>
+          <li><strong>33 pulls is three kills, then nothing.</strong> A 9–10-pull kill leaves you a mag and a half into a room full of enemies. Extended Magazine (+14 rounds, 40 pulls) exists for exactly this reason.</li>
+          <li><strong>Past 50 m you're plinking.</strong> 100 damage per pull, 10 chest pulls, and every other SMG has the same problem worse — but a carbine or LMG at that range will out-damage you and out-range you. Don't take that duel twice.</li>
+          <li><strong>Shielded Heavies eat your pulls.</strong> 1,450 effective health means 13 chest pulls up close, 15 far — nearly half a magazine on one target if your aim is chest-only. Aim for the head, or don't take the fight alone.</li>
+        </ol>
+        </section>
+      
+      <!-- ================= 09 DRILLS ================= -->
+      <section aria-labelledby="s-drills" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">09</span>
+          <h2 id="s-drills">Five drills — and the pocket summary</h2>
+          <span class="tag">Ten minutes in VR,<br />then play</span>
+        </div>
+        <p class="lede">Do these in VR Training against the dummies, then take them live. Ten minutes total.</p>
+        <ol class="drills">
+          <li><strong>The five-pull metronome.</strong> At 15 m, hold for exactly five pulls, release, repeat. Do it until you can feel the 67 ms pull rhythm without counting. Five minutes.</li>
+          <li><strong>Centre-mass both pellets.</strong> At 10 m, aim at the dummy's chest and watch for two holes per pull. Then aim at the dummy's edge and watch one pellet miss — learn what "half a pull" looks like before a live target teaches you.</li>
+          <li><strong>Neck-start headshots.</strong> At 10 m, start every hold at the dummy's neck and watch the climb walk into the head. Count head pulls per 5-pull hold; you're looking for 2+.</li>
+          <li><strong>The reload habit.</strong> Fire 18 rounds (9 pulls), reload behind the nearest cover, re-engage. Do it five times. You're training the reload-after-one-kill reflex, not the reload-when-empty one.</li>
+          <li><strong>The 50 m tap.</strong> At 50 m, short holds of 3 pulls only, chest aim. Count how many of 3 holds land both pellets on every pull. If it's fewer than two, you're rushing the pause.</li>
+        </ol>
+
+        <div class="pocket" aria-label="Pocket summary">
+          <h3>Pocket summary — screenshot this</h3>
+          <p>PMG-ARX Schrodinger · Master SMGs directive · fight inside 50 m · count pulls, not rounds: 33 pulls per mag · aim neck, burst 5 pulls, release, repeat · reload early behind cover (1.85 s) · buy the 1x (30) + Forward Grip (100) · hipfire under 8 m · past 50 m, tap or close in.</p>
+        </div>
+        </section>
+      
+      <footer class="foot">
+        <p>Stats from the Census API and the <a href="https://planetside.fandom.com/wiki/PMG-ARX_Schrodinger">PMG-ARX Schrodinger wiki page</a>. Damage, cone of fire and recoil from the game's data; time-to-kill counted per trigger pull (67 ms between pulls, two pellets per pull). Attachment prices are the in-game cert costs. If the game changes, the numbers here go stale — check the wiki for the current values.</p>
+      </footer>
+    </div>
+
+  <script type="module" src="weapon-sage-guide.mjs?v=20261109-sageguide3"></script>
+  <script>
+
+      (function () {
+        var slider = document.getElementById('labRange');
+        var distEl = document.getElementById('labDist');
+        var bandEl = document.getElementById('labBand');
+        var dmgEl = document.getElementById('labDmg');
+        var headEl = document.getElementById('labHead');
+        var chestEl = document.getElementById('labChest');
+        var ttkEl = document.getElementById('labTtk');
+        var advEl = document.getElementById('labAdvice');
+        var REFIRE_MS = 67; // ms between trigger pulls (rounded refire)
+
+        function damageAt(d) {
+          if (d <= 8) return 120; // damage per pull: two 60-damage pellets
+          if (d < 50) return 120 - (d - 8) * (20 / 42);
+          return 100;
+        }
+        function headAt(d) {
+          return Math.ceil(1000 / (damageAt(d) * 2));
+        }
+        function adviceFor(d) {
+          if (d < 8) return ['Point blank', 'Hipfire at the chest and keep strafing. Scoping in here costs time and drops your speed to 0.75× — trust the hip cone; at 1.0° standing it stays on his chest. Aim dead centre so both pellets land.'];
+          if (d < 20) return ['Sweet spot', 'Aim down sights at the upper chest and neck. Fire in bursts of 5 pulls, then release; your recoil climbs into the head for free damage. Two pellets per pull means both have to land — aim centre-mass, not at the edge of the target.'];
+          if (d < 50) return ['Controlled range', 'Aim down sights at the chest and fire 5-pull bursts, releasing the trigger between them. Pull down and to the left against the recoil — it climbs up and to the right at 17–20°. At 30 m the pellets are 17 cm apart, so a pull at the edge can lose one.'];
+          return ['Plinking range', 'Short holds of 5 pulls at exposed targets only. Your damage has faded to 100 per pull — closing the distance is usually the better shot.'];
+        }
+        function update() {
+          var d = parseInt(slider.value, 10);
+          var dmg = damageAt(d);
+          var head = headAt(d);
+          var chest = Math.ceil(1000 / dmg);
+          var ttkMs = (chest - 1) * REFIRE_MS; // integer ms: TTK from rounded refire
+          var a = adviceFor(d);
+          distEl.textContent = d;
+          dmgEl.textContent = Math.round(dmg);
+          headEl.textContent = head;
+          chestEl.textContent = chest;
+          ttkEl.textContent = (Math.round(ttkMs / 10) / 100).toFixed(2) + ' s'; // decimal rounding, no float drift
+          bandEl.textContent = a[0];
+          advEl.textContent = a[1];
+          bandEl.className = 'chip ' + (d < 8 ? 'situ' : d < 20 ? 'good' : d < 50 ? 'good' : 'skip');
+        }
+        slider.addEventListener('input', update);
+        update();
+      })();
+
+      /* ---------- hold-and-release simulator (reusable across the Sage series) ----------
+         The window is driven by a weapon profile on its container element:
+         data-rpm, data-base-cof (degrees), data-bloom (degrees per shot),
+         data-distance (metres to target). Each gun page plugs in its own.
+         On this gun one "shot" is one trigger pull — two pellets, two rounds. */
+      (function () {
+        var box = document.getElementById('burstSim');
+        var stage = document.getElementById('simStage');
+        var fireBtn = document.getElementById('simFire');
+        var resetBtn = document.getElementById('simReset');
+        var bloomEl = document.getElementById('simBloom');
+        var shotsEl = document.getElementById('simShots');
+        var hitsEl = document.getElementById('simHits');
+        var accEl = document.getElementById('simAcc');
+        var verdictEl = document.getElementById('simVerdict');
+        var logEl = document.getElementById('simLog');
+        if (!box || !stage || !fireBtn) return;
+
+        function profile(name, fallback) {
+          var v = parseFloat(box.getAttribute('data-' + name));
+          return isNaN(v) ? fallback : v;
+        }
+        var REFIRE_MS = 60000 / profile('rpm', 750);
+        var BASE_COF = profile('base-cof', 0.10);   // degrees, ADS standing still
+        var BLOOM = profile('bloom', 0.05);          // degrees added per pull, ADS
+        var COF_CAP = 1.6;                           // degrees, display cap
+        var DIST = profile('distance', 30);          // metres to target
+        var timer = null, resetTimer = null;
+        var burst = 0, shots = 0, hits = 0;
+
+        function aimPoint() {
+          var r = stage.getBoundingClientRect();
+          return { x: r.width / 2, y: r.height * 0.42, ppm: r.width / 3 }; // view ≈ 3 m wide at the target
+        }
+        function setBloom(cof) {
+          var pct = Math.min(100, (cof / COF_CAP) * 100);
+          bloomEl.style.width = pct + '%';
+          bloomEl.className = 'bloom-fill' + (cof > 0.95 ? ' hot' : cof > 0.5 ? ' warm' : '');
+        }
+        function fireShot() {
+          var p = aimPoint();
+          var cof = BASE_COF + BLOOM * burst;      // bloom state BEFORE this pull settles
+          var radiusM = Math.tan(cof * Math.PI / 180) * DIST;
+          var ang = Math.random() * Math.PI * 2;
+          var dist = radiusM * Math.sqrt(Math.random()) * p.ppm; // true scale: view is ~3 m wide at the target
+          var dx = Math.cos(ang) * dist;
+          var dy = Math.sin(ang) * dist - burst * 0.9; // recoil climbs a touch as the hold goes on
+          var dot = document.createElement('span');
+          dot.className = 'sim-shot';
+          var hit = (dx * dx) / (56 * 56) + (dy * dy) / (98 * 98) <= 1; // torso/head ellipse
+          if (hit) { dot.classList.add('hit'); hits++; }
+          dot.style.left = (p.x + dx) + 'px';
+          dot.style.top = (p.y + dy) + 'px';
+          stage.appendChild(dot);
+          burst++; shots++;
+          setBloom(BASE_COF + BLOOM * burst);
+          shotsEl.textContent = shots;
+          hitsEl.textContent = hits;
+          accEl.textContent = Math.round((hits / shots) * 100) + '%';
+        }
+        function grade(n) {
+          if (n < 5) return ['good', '<b>Short &amp; safe</b> — ' + n + ' pulls. Tight group; stretch to 5 for the ideal hold and a faster kill.'];
+          if (n === 5) return ['good', '<b>Ideal hold</b> — 5 pulls exactly. That is the rhythm to make automatic.'];
+          if (n <= 8) return ['warn', '<b>Tolerable</b> — ' + n + ' pulls. Inside the 6–8 newbie window, but the last pulls were already spreading. Aim for 5.'];
+          return ['bad', '<b>Too long</b> — ' + n + ' pulls held. Past 8 the cone has grown enough that the extra pulls mostly miss. Release, reset, re-fire.'];
+        }
+        function startFire(e) {
+          if (timer) return;
+          if (e && e.preventDefault) e.preventDefault();
+          if (resetTimer) { clearTimeout(resetTimer); resetTimer = null; }
+          fireBtn.classList.add('firing');
+          fireBtn.textContent = 'Firing…';
+          fireShot();
+          timer = setInterval(fireShot, REFIRE_MS);
+        }
+        function stopFire() {
+          if (!timer) return;
+          clearInterval(timer); timer = null;
+          fireBtn.classList.remove('firing');
+          fireBtn.textContent = 'Hold to fire';
+          if (burst > 0) {
+            var g = grade(burst);
+            verdictEl.innerHTML = g[1];
+            var pip = document.createElement('span');
+            pip.className = 'burst-pip ' + g[0];
+            pip.textContent = '×' + burst;
+            logEl.appendChild(pip);
+            burst = 0;
+          }
+          resetTimer = setTimeout(function () { setBloom(0); }, 260); // cone resets after a short pause
+        }
+        fireBtn.addEventListener('pointerdown', function (e) {
+          try { fireBtn.setPointerCapture(e.pointerId); } catch (err) {}
+          startFire(e);
+        });
+        fireBtn.addEventListener('pointerup', stopFire);
+        fireBtn.addEventListener('pointercancel', stopFire);
+        fireBtn.addEventListener('keydown', function (e) {
+          if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) startFire(e);
+        });
+        fireBtn.addEventListener('keyup', function (e) {
+          if (e.key === ' ' || e.key === 'Enter') stopFire();
+        });
+        fireBtn.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+        resetBtn.addEventListener('click', function () {
+          stopFire();
+          var dots = stage.querySelectorAll('.sim-shot');
+          for (var i = 0; i < dots.length; i++) dots[i].remove();
+          shots = 0; hits = 0; burst = 0;
+          shotsEl.textContent = '0'; hitsEl.textContent = '0'; accEl.textContent = '—';
+          logEl.innerHTML = '';
+          verdictEl.textContent = 'Your holds will be graded here — green at 5 pulls, tolerable up to 8.';
+          setBloom(0);
+        });
+      })();
+    
+  </script>
+</body>
+</html>
