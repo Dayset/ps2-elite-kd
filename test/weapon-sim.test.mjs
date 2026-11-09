@@ -115,8 +115,8 @@ test("aiming uses the weapon's own ADS fire mode and cone when Census has one", 
 
 test("attachment slots: one barrel part, rail part and ammo each; optics and cosmetics are not listed", () => {
   assert.deepEqual([...SLOTS], ["barrel", "rail", "ammo"]);
-  for (const n of ["Compensator", "Suppressor", "Flash Suppressor"]) assert.equal(slotOf(n), "barrel", n);
-  for (const n of ["Forward Grip", "Laser Sight", "Darklight Flashlight", "Comfort Grip", "Heavy Barrel", "Short Barrel", "Extended Magazine"]) assert.equal(slotOf(n), "rail", n);
+  for (const n of ["Compensator", "Suppressor", "Flash Suppressor", "Heavy Barrel", "Short Barrel"]) assert.equal(slotOf(n), "barrel", n);
+  for (const n of ["Forward Grip", "Laser Sight", "Darklight Flashlight", "Comfort Grip", "Extended Magazine"]) assert.equal(slotOf(n), "rail", n);
   for (const n of ["High Velocity Ammunition", "Soft Point Ammunition", "Flechette Ammunition"]) assert.equal(slotOf(n), "ammo", n);
   for (const n of ["NiCO (1x)", "Default Magazine", "Pink Laser Sight", "Default Back Sight", "Cert Attachment"]) assert.equal(slotOf(n), null, n);
 });

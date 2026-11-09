@@ -29,17 +29,17 @@ export const ASSUMPTIONS = Object.freeze([
 
 /**
  * Attachment slots, from the PlanetSide 2 wiki (Fandom, read 6 Nov 2026): Compensator, Suppressor and
- * Flash Suppressor are barrel attachments; the grips, Laser Sight, Hybrid Laser, flashlight, Heavy
- * Barrel, Short Barrel and Extended Magazine are all RAIL attachments (so Heavy Barrel + Short
- * Barrel, or a grip + laser, cannot be fitted together); ammunition types are the ammo slot.
+ * Flash Suppressor, Heavy Barrel and Short Barrel are barrel attachments (one barrel part at a time);
+ * the grips, Laser Sight, Hybrid Laser, flashlight and Extended Magazine are RAIL attachments (so a
+ * grip + laser cannot be fitted together); ammunition types are the ammo slot.
  * Census lists what a weapon can mount but not the slot, so it comes from the name. Rarer parts
  * (Muzzle Brake, Smart-Choke, launchers, Heavy Magazine...) are placed by the same rule, unverified.
  * Optics, default parts, cosmetic laser colours and cert items are not listed.
  */
 export const SLOTS = Object.freeze(["barrel", "rail", "ammo"]);
 const SLOT_RE = {
-  barrel: /^(Compensator|Flash Suppressor|Suppressor|Muzzle Brake|Enhanced Plasma Containment|Smart-Choke|Hybrid Suppressor|Emission Condenser|Burst Stabilizer|Recoil Stabilizer|Confetti Suppressor|Single-Fire Barrel|Stabilizing Rotor|Tungsten Liner)$/i,
-  rail: /^(MPL|Weighted Receiver|Straight-Pull Bolt|Supercooled Coil|Vented Power Core|Forward Grip|Angled Forward Grip|Comfort Grip|Laser Sight|Hybrid Laser|Darklight Flashlight|Zip Light|Heavy Barrel|Short Barrel|Extended Magazine|Lightweight Materials|Smart Feeder|Grenade Launcher|Underbarrel Shotgun|Smoke Launcher|Cure Launcher|Adaptive Class Underbarrel|Safety Override|High-capacity Battery|Ballistics Computer)$/i,
+  barrel: /^(Compensator|Flash Suppressor|Heavy Barrel|Short Barrel|Suppressor|Muzzle Brake|Enhanced Plasma Containment|Smart-Choke|Hybrid Suppressor|Emission Condenser|Burst Stabilizer|Recoil Stabilizer|Confetti Suppressor|Single-Fire Barrel|Stabilizing Rotor|Tungsten Liner)$/i,
+  rail: /^(MPL|Weighted Receiver|Straight-Pull Bolt|Supercooled Coil|Vented Power Core|Forward Grip|Angled Forward Grip|Comfort Grip|Laser Sight|Hybrid Laser|Darklight Flashlight|Zip Light|Extended Magazine|Lightweight Materials|Smart Feeder|Grenade Launcher|Underbarrel Shotgun|Smoke Launcher|Cure Launcher|Adaptive Class Underbarrel|Safety Override|High-capacity Battery|Ballistics Computer)$/i,
   ammo: /(Ammunition|Bolt|^Heavy Magazine)$/i,
 };
 /** Names Census gives the same part (the wiki lists them as one attachment): the effect of the first is used. "Muzzle Brake" has no wiki page; it sits beside Compensator on the same weapons, so it is treated as one (assumption). */
