@@ -6,7 +6,7 @@ import fs from "node:fs";
 import {
   PINNED, SHOTS, RECOVERY_RATE, TARGET_D, COST_DISTANCES, nStill, simulate, simulatePlain, resetInfo,
   paramsFor, deriveCurrent, finalsHtml, spreadD, hitChance, burstHitAvg, costSummary, pctNum, costHtml, fmt, fmtT,
-  SORT_KEYS, sortValue, compareValues, sortEntries, orderEntries, imageSrcFor, compareHrefFor, slugName, detailHtml, rowHtml,
+  SORT_KEYS, sortValue, compareValues, sortEntries, orderEntries, imageSrcFor, compareHrefFor, slugName, detailHtml, rowHtml, lossPair, lossCell,
   ATT_KEYS, ATT_EFFECTS, attTogglesFor, applyAttachments,
 } from "../weapon-adad.mjs";
 
@@ -74,6 +74,56 @@ test("costSummary: the acceptance numbers — miss % and DPS loss of full moveme
       near(r.lossIdeal, lossIdeal, 0.0005, `${name} @${r.dist} m cost of the ideal rhythm vs standing still`);
     }
   }
+});
+
+test("lossPair: the acceptance numbers — the cost panel's loss lines, as table columns", () => {
+  // { still, move, bloom } ADS standing; expected fractions from costSummary.
+  const guns = {
+    "NSX Naginata": [0.15, 0.4, 0.06, { m35: 0.038, i35: 0, m60: 0.3177, i60: 0.0103 }],
+    "GD-22S": [0.03, 0.35, 0.06, { m35: 0.0182, i35: 0, m60: 0.3174, i60: 0.0117 }],
+    "TRAC-5": [0.1, 0.3, 0.05, { m35: 0, i35: 0, m60: 0.2024, i60: 0 }],
+  };
+  for (const [name, [still, move, bloom, want]] of Object.entries(guns)) {
+    const rec = { as: [still, move], ac: [still, move], hs: [still, move], hc: [still, move], ba: bloom, bh: bloom, rpm: 600 };
+    const p = lossPair(rec);
+    assert.ok(p, `${name}: computable`);
+    near(p.m35, want.m35, 0.0005, `${name} @35 m moving-vs-ideal loss`);
+    near(p.i35, want.i35, 0.0005, `${name} @35 m ideal-vs-still cost`);
+    near(p.m60, want.m60, 0.0005, `${name} @60 m moving-vs-ideal loss`);
+    near(p.i60, want.i60, 0.0005, `${name} @60 m ideal-vs-still cost`);
+    assert.equal(pctNum(p.m60), (want.m60 * 100).toFixed(1), `${name} @60 m prints one decimal`);
+  }
+  assert.equal(pctNum(lossPair({ as: [0.15, 0.4], ac: [0.15, 0.35], hs: [3, 4.5], hc: [2.25, 4], ba: 0.06, bh: 0.12, rpm: 659 }).m60), "31.8", "Naginata 60 m: 31.8%");
+  assert.equal(pctNum(lossPair({ as: [0.15, 0.4], ac: [0.15, 0.35], hs: [3, 4.5], hc: [2.25, 4], ba: 0.06, bh: 0.12, rpm: 659 }).i60), "1.0", "Naginata 60 m ideal cost: 1.0%");
+  assert.equal(pctNum(lossPair({ as: [0.03, 0.35], ac: [0.03, 0.2], hs: [3, 3.75], hc: [2.25, 3], ba: 0.06, bh: 0.12, rpm: 577 }).i60), "1.2", "GD-22S 60 m ideal cost is 1.2%, not 1.0% — check the model, never guess");
+  assert.equal(pctNum(lossPair({ as: [0.03, 0.35], ac: [0.03, 0.2], hs: [3, 3.75], hc: [2.25, 3], ba: 0.06, bh: 0.12, rpm: 577 }).m35), "1.8", "GD-22S 35 m: 1.8%");
+});
+
+test("lossPair: the same acceptance numbers from both data versions, and nulls where there is no data", () => {
+  for (const name of ["NSX Naginata", "GD-22S", "TRAC-5"]) {
+    const hist = lossPair(byName(name));
+    const cur = lossPair(deriveCurrent(byName(name), recoil, itemIds[name]));
+    assert.ok(hist && cur, `${name}: computable in both versions`);
+    for (const k of ["m35", "i35", "m60", "i60"]) near(hist[k], cur[k], 0.0005, `${name} ${k}: both versions agree`);
+  }
+  assert.equal(lossPair(byName("MANA Anti-Personnel Turret")), null, "the turret has no moving ADS value in 2018");
+  assert.equal(lossPair(byName("NSX Fujin")), null, "the Fujin has no bloom in 2018");
+  assert.equal(lossPair(deriveCurrent(byName("ML-7"), recoil, itemIds["ML-7"])), null, "rocket launchers have no current data");
+  assert.equal(lossPair(deriveCurrent(byName("NS-AM7 Archer"), recoil, itemIds["NS-AM7 Archer"])), null);
+  assert.equal(lossPair(deriveCurrent(byName("NSX Fujin"), recoil, itemIds["NSX Fujin"])), null);
+  assert.equal(lossPair(deriveCurrent(byName("Equinox VE2 Burst"), recoil, null)), null, "the variant has no Census item");
+  assert.equal(lossPair({ as: [null, null, null], ac: [null, null, null], hs: [null, null, null], hc: [null, null, null], ba: null, bh: null, rpm: null }), null, "an all-null record");
+  assert.equal(lossPair(null), null);
+});
+
+test("lossCell: main loss % with the ideal cost underneath; a dash for nulls", () => {
+  const nag = { m35: 0.038, i35: 0, m60: 0.3177, i60: 0.0103 };
+  assert.equal(lossCell(nag, "m60", "i60"), '<span class="loss">31.8%<span class="loss-sub">ideal −1.0%</span></span>');
+  assert.equal(lossCell(nag, "m35", "i35"), '<span class="loss">3.8%<span class="loss-sub">ideal −0.0%</span></span>');
+  assert.equal(lossCell({ m35: 0.0182, i35: 0, m60: 0.3174, i60: 0.0117 }, "m60", "i60"), '<span class="loss">31.7%<span class="loss-sub">ideal −1.2%</span></span>', "GD-22S 60 m: 31.7%, ideal −1.2%");
+  assert.equal(lossCell({ m35: 0, i35: 0, m60: 0.2024, i60: 0 }, "m60", "i60"), '<span class="loss">20.2%<span class="loss-sub">ideal −0.0%</span></span>', "TRAC-5 60 m: 20.2%");
+  assert.equal(lossCell(null, "m60", "i60"), "—");
+  assert.equal(lossCell({ m35: null, i35: null, m60: null, i60: null }, "m60", "i60"), "—");
 });
 
 test("costSummary: the ideal rhythm costs almost nothing vs standing still — the movement is nearly free", () => {
@@ -320,7 +370,52 @@ test("sortEntries: ascending and descending, nulls last, no-bloom first when des
   assert.equal(sortValue(entry("NSX Naginata"), "freeAds"), 4);
   assert.equal(sortValue(entry("MANA Anti-Personnel Turret"), "freeAds"), null);
   assert.equal(sortValue(entry("Mauler S6"), "freeAds"), Infinity);
-  assert.deepEqual(SORT_KEYS, ["name", "faction", "category", "rpm", "adsStill", "adsMove", "adsBloom", "freeAds", "hipStill", "hipMove", "hipBloom", "freeHip"]);
+  assert.deepEqual(SORT_KEYS, ["name", "faction", "category", "rpm", "adsStill", "adsMove", "adsBloom", "freeAds", "hipStill", "hipMove", "hipBloom", "freeHip", "loss35", "loss60"]);
+});
+
+test("sortValue / sortEntries: the loss columns sort, nulls last both ways, and the top loss is not the Naginata", () => {
+  const entry = (n) => ({ row: byName(n), rec: byName(n) }); // 2018 rows as their own record
+  const entryCur = (n) => {
+    const row = byName(n);
+    const rec = deriveCurrent(row, recoil, itemIds[n]) || { ...row, as: [null, null, null], ac: [null, null, null], hs: [null, null, null], hc: [null, null, null], ba: null, bh: null, rpm: null };
+    return { row, rec };
+  };
+  near(sortValue(entry("NSX Naginata"), "loss60"), 0.3177, 0.0005, "Naginata 60 m loss");
+  near(sortValue(entry("GD-22S"), "loss60"), 0.3174, 0.0005, "GD-22S 60 m loss");
+  near(sortValue(entry("TRAC-5"), "loss60"), 0.2024, 0.0005, "TRAC-5 60 m loss");
+  near(sortValue(entry("T2 Striker"), "loss60"), 0.821, 0.001, "T2 Striker 2018: ADS 0.1→1.0°, the widest moving cone");
+  near(sortValue(entry("Mauler S6"), "loss60"), 0.719, 0.001, "Mauler 2018: bloom 0 but ADS move 0.9° vs still 0.1°");
+  assert.equal(sortValue(entry("MANA Anti-Personnel Turret"), "loss60"), null, "no ADS numbers, no loss");
+  assert.equal(sortValue(entry("NSX Fujin"), "loss35"), null);
+  assert.equal(sortValue(entryCur("ML-7"), "loss60"), null, "no current data, no loss");
+  for (const [label, make] of [["2018", entry], ["current", entryCur]]) {
+    const entries = d2018.weapons.map((w) => make(w.n));
+    for (const [key, dir] of [["loss60", -1], ["loss60", 1], ["loss35", -1], ["loss35", 1]]) {
+      const sorted = sortEntries(entries, key, dir);
+      const vals = sorted.map((e) => sortValue(e, key));
+      const firstNull = vals.findIndex((v) => v === null);
+      const nonNull = vals.filter((v) => v !== null);
+      assert.ok(firstNull === -1 || firstNull === nonNull.length, `${label} ${key} ${dir > 0 ? "asc" : "desc"}: nulls after every non-null`);
+      const ordered = dir > 0 ? [...nonNull].sort((a, b) => a - b) : [...nonNull].sort((a, b) => b - a);
+      assert.deepEqual(nonNull, ordered, `${label} ${key} ${dir > 0 ? "asc" : "desc"}: non-nulls in order`);
+    }
+    const desc = sortEntries(entries, "loss60", -1);
+    const max = Math.max(...entries.map((e) => sortValue(e, "loss60")).filter((v) => v !== null));
+    assert.equal(sortValue(desc[0], "loss60"), max, `${label}: descending puts the highest loss first`);
+    assert.notEqual(desc[0].row.n, "NSX Naginata", `${label}: the top loss is not the Naginata`);
+    assert.ok(sortValue(desc[0], "loss60") > sortValue(make("NSX Naginata"), "loss60"), `${label}: the top loss beats the Naginata's 31.8%`);
+    const nonNullDesc = desc.filter((e) => sortValue(e, "loss60") !== null);
+    assert.equal(sortValue(nonNullDesc[nonNullDesc.length - 1], "loss60"), 0, `${label}: the lowest non-null loss is 0.0%`);
+    const asc = sortEntries(entries, "loss60", 1);
+    assert.equal(sortValue(asc[0], "loss60"), 0, `${label}: ascending starts at 0.0%`);
+  }
+});
+
+test("orderEntries: the pins stay on top when sorting by a loss column", () => {
+  const entry = (n) => ({ row: byName(n), rec: byName(n) });
+  const names = (es) => es.map((e) => e.row.n);
+  assert.deepEqual(names(orderEntries([entry("T2 Striker"), entry("TRAC-5"), entry("NSX Naginata")], "loss60", -1)), ["NSX Naginata", "TRAC-5", "T2 Striker"], "the 82.1% Striker sorts under the pins");
+  assert.deepEqual(names(orderEntries([entry("T2 Striker"), entry("NSX Naginata")], "loss35", -1)), ["NSX Naginata", "T2 Striker"]);
 });
 
 test("orderEntries: the pinned examples stay on top in order, the rest sort under them", () => {
@@ -366,6 +461,8 @@ test("rowHtml: the collapsed summary — toggle, image, free counts, Compare; no
   assert.match(html, /▸/);
   assert.match(html, />4<\/td>/, "free ADS 4");
   assert.match(html, />12<\/td>/, "free hip 12");
+  assert.match(html, /31\.8%<span class="loss-sub">ideal −1\.0%<\/span>/, "60 m loss cell: 31.8%, ideal −1.0%");
+  assert.match(html, /3\.8%<span class="loss-sub">ideal −0\.0%<\/span>/, "35 m loss cell: 3.8%, ideal −0.0%");
   assert.ok(!html.includes("0.15"), "no ADS still value in the summary");
   assert.ok(!html.includes("0.06"), "no bloom value in the summary");
   assert.ok(!html.includes('class="detail"'), "collapsed: no detail row");
@@ -376,6 +473,9 @@ test("rowHtml: the collapsed summary — toggle, image, free counts, Compare; no
   assert.match(open, /id="detail-nsx-naginata"/);
   assert.match(open, /0\.76<\/td>/, "the open detail carries the worked burst");
   assert.match(open, /ADS, standing/);
+  assert.match(open, /colspan="11"/, "the detail row spans all eleven columns");
+  const mana = byName("MANA Anti-Personnel Turret");
+  assert.match(rowHtml({ row: mana, rec: mana }, opts), /<td class="n" data-l="Loss @ 60 m">—<\/td>/, "no ADS numbers, no invented loss");
   const burst = byName("Equinox VE2 Burst");
   const bhtml = rowHtml({ row: burst, rec: burst }, opts);
   assert.ok(!bhtml.includes("<img"), "the variant has no image");
@@ -442,8 +542,13 @@ test("applyAttachments: the acceptance numbers — Blitz hip 10 → 6 → 11, GD
 
 test("the page is wired: pins, ids, back link, and the link from weapon-compare", () => {
   const html = read("../weapon-adad.html");
-  assert.match(html, /weapon-adad\.css\?v=20261109-adadatt1/);
-  assert.match(html, /weapon-adad\.mjs\?v=20261109-adadatt1/);
+  assert.match(html, /weapon-adad\.css\?v=20261109-adadloss1/);
+  assert.match(html, /weapon-adad\.mjs\?v=20261109-adadloss1/);
+  assert.match(html, /data-sort="loss35"/, "the 35 m loss header sorts");
+  assert.match(html, /data-sort="loss60"/, "the 60 m loss header sorts");
+  assert.match(html, /data-i18n="adad\.col\.loss35"/, "the 35 m loss header is translated");
+  assert.match(html, /data-i18n="adad\.col\.loss60"/, "the 60 m loss header is translated");
+  assert.match(read("../weapon-adad.css"), /\.loss-sub/, "the loss sub-line has its styles");
   assert.match(html, /id="costBox"/, "the cost panel sits under the finals");
   assert.match(html, /id="attBox"/, "the attachment toggles sit in the calculator");
   assert.match(html, /id="attRow"/);

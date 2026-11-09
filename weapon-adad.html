@@ -23,7 +23,7 @@
   <link rel="preload" href="assets/weapons/recoil.json" as="fetch" crossorigin />
   <link rel="stylesheet" href="styles.css?v=20261031-fr1" />
   <link rel="stylesheet" href="weapon-compare.css?v=20261109-sage1" />
-  <link rel="stylesheet" href="weapon-adad.css?v=20261109-adadatt1" />
+  <link rel="stylesheet" href="weapon-adad.css?v=20261109-adadloss1" />
 </head>
 <body class="site-page">
   <main class="wc-wrap">
@@ -165,6 +165,8 @@
             <th scope="col" data-sort="rpm" aria-sort="none"><button type="button" data-sort="rpm"><span data-i18n="adad.col.rpm">RPM</span> <span class="sort-ind" aria-hidden="true"></span></button></th>
             <th scope="col" data-sort="freeAds" aria-sort="none"><button type="button" data-sort="freeAds"><span data-i18n="adad.col.freeAds">Free ADS</span> <span class="sort-ind" aria-hidden="true"></span></button></th>
             <th scope="col" data-sort="freeHip" aria-sort="none"><button type="button" data-sort="freeHip"><span data-i18n="adad.col.freeHip">Free hip</span> <span class="sort-ind" aria-hidden="true"></span></button></th>
+            <th scope="col" data-sort="loss35" aria-sort="none"><button type="button" data-sort="loss35"><span data-i18n="adad.col.loss35">Loss @ 35 m</span> <span class="sort-ind" aria-hidden="true"></span></button></th>
+            <th scope="col" data-sort="loss60" aria-sort="none"><button type="button" data-sort="loss60"><span data-i18n="adad.col.loss60">Loss @ 60 m</span> <span class="sort-ind" aria-hidden="true"></span></button></th>
             <th scope="col" data-i18n="adad.col.compare">Compare</th>
           </tr></thead>
           <tbody></tbody>
@@ -187,6 +189,6 @@
       <p data-i18n-html="adad.foot">Method paraphrased from Iridar's <i>Weapon Mechanics</i> guide (<a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/" target="_blank" rel="noopener">archived copy</a>). Weapon data extracted from the Stats sheet of <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/Iridars-Toolbox-v6h.zip" target="_blank" rel="noopener">Iridar's Toolbox v6h</a> (Stats sheet dated 2018-08-19). Current data from the Census API via the site's weapon snapshot. Worked examples verified by hand: TRAC-5 ADS (0.3 − 0.1) ÷ 0.05 = 4 free shots; NSX Naginata ADS (0.4 − 0.15) ÷ 0.06 = 4.17 → 4 free shots.</p>
     </footer>
   </main>
-  <script type="module" src="weapon-adad.mjs?v=20261109-adadatt1"></script>
+  <script type="module" src="weapon-adad.mjs?v=20261109-adadloss1"></script>
 </body>
 </html>

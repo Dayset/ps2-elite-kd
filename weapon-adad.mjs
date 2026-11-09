@@ -274,8 +274,38 @@ export function costHtml(rows, t) {
   return html;
 }
 
+/** Strafing-loss pair for one version-specific record, from the page's own
+ *  cost model: the 10-round ADS burst, standing, against the 0.5 m torso.
+ *  { m35, i35, m60, i60 } are the lossMoving / lossIdeal fractions at 35 m
+ *  and 60 m (see costSummary), or null when the gun has no usable ADS
+ *  numbers in this version — the table then shows a dash, never an invented
+ *  number. Base numbers only: the attachment toggles are calculator-only
+ *  and do not reach this helper. */
+export function lossPair(rec) {
+  const ads = paramsFor(rec, "ads", "stand");
+  if (!ads || ads.still === null || ads.move === null || ads.bloom === null) return null;
+  const n = nStill(ads.still, ads.move, ads.bloom);
+  const rows = costSummary(ads.still, ads.move, ads.bloom, n, SHOTS);
+  return {
+    m35: rows[0].lossMoving, i35: rows[0].lossIdeal,
+    m60: rows[1].lossMoving, i60: rows[1].lossIdeal,
+  };
+}
+
+/** One loss cell for the weapon table: the moving-vs-ideal loss % as the
+ *  main value, the ideal-vs-standing-still cost as a smaller muted figure —
+ *  the same two numbers the cost panel's loss lines print. A dash when the
+ *  pair (or the main value) is not computable. */
+export function lossCell(pair, mainKey, idealKey) {
+  const main = pair?.[mainKey] ?? null;
+  if (main === null || main === undefined) return "—";
+  const ideal = pair?.[idealKey] ?? null;
+  const sub = ideal === null || ideal === undefined ? "" : `<span class="loss-sub">${tr("adad.loss.ideal", "ideal −{pct}%", { pct: pctNum(ideal) })}</span>`;
+  return `<span class="loss">${pctNum(main)}%${sub}</span>`;
+}
+
 /* ---------- the weapon table: images, sorting, compare links, detail rows ---------- */
-export const SORT_KEYS = ["name", "faction", "category", "rpm", "adsStill", "adsMove", "adsBloom", "freeAds", "hipStill", "hipMove", "hipBloom", "freeHip"];
+export const SORT_KEYS = ["name", "faction", "category", "rpm", "adsStill", "adsMove", "adsBloom", "freeAds", "hipStill", "hipMove", "hipBloom", "freeHip", "loss35", "loss60"];
 
 /** Local render for a weapon from the image map (name -> Census image id), or
  *  null when the gun has none — the four fire-mode variants have no Census
@@ -316,6 +346,8 @@ export function sortValue(entry, key) {
     case "hipMove": return hip?.move ?? null;
     case "hipBloom": return hip?.bloom ?? null;
     case "freeHip": return nStill(hip?.still, hip?.move, hip?.bloom);
+    case "loss35": return lossPair(rec)?.m35 ?? null;
+    case "loss60": return lossPair(rec)?.m60 ?? null;
     default: return null;
   }
 }
@@ -616,6 +648,7 @@ export function rowHtml(entry, opts) {
   const href = compareHrefFor(row.n, idMap);
   const isOpen = open.has(row.n);
   const detailId = `detail-${slugName(row.n)}`;
+  const losses = lossPair(rec);
   const toggleLabel = isOpen
     ? tr("adad.row.collapse", "Hide details for {name}", { name: row.n })
     : tr("adad.row.expand", "Show details for {name}", { name: row.n });
@@ -628,8 +661,10 @@ export function rowHtml(entry, opts) {
     + `<td data-l="${esc(tr("adad.col.rpm", "RPM"))}">${rec?.rpm ?? "—"}</td>`
     + `<td class="n" data-l="${esc(tr("adad.col.freeAds", "Free ADS"))}">${nCell(ads?.still, ads?.move, ads?.bloom)}</td>`
     + `<td class="n" data-l="${esc(tr("adad.col.freeHip", "Free hip"))}">${nCell(hip?.still, hip?.move, hip?.bloom)}</td>`
+    + `<td class="n" data-l="${esc(tr("adad.col.loss35", "Loss @ 35 m"))}">${lossCell(losses, "m35", "i35")}</td>`
+    + `<td class="n" data-l="${esc(tr("adad.col.loss60", "Loss @ 60 m"))}">${lossCell(losses, "m60", "i60")}</td>`
     + `<td class="cmpcell" data-l="${esc(tr("adad.col.compare", "Compare"))}">${href ? `<a href="${href}">${esc(tr("adad.compare", "Compare"))}</a>` : "—"}</td></tr>`;
-  if (isOpen) html += `<tr class="detail" id="${detailId}"><td colspan="9">${detailHtml(rec, detailStrings())}</td></tr>`;
+  if (isOpen) html += `<tr class="detail" id="${detailId}"><td colspan="11">${detailHtml(rec, detailStrings())}</td></tr>`;
   return html;
 }
 

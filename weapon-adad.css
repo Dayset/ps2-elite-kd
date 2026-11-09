@@ -87,7 +87,7 @@ svg.chart { width: 100%; height: auto; display: block; }
 .tools input:focus-visible, .tools select:focus-visible { outline: 1px solid var(--accent); }
 .count { font-size: 13px; color: var(--dim); align-self: center; }
 .tscroll { overflow-x: auto; }
-table.weapons { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 760px; }
+table.weapons { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 920px; }
 table.weapons th, table.weapons td { padding: 7px 9px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
 table.weapons th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--dim); position: sticky; top: 0; background: var(--panel); }
 table.weapons td:nth-child(3), table.weapons th:nth-child(3),
@@ -114,6 +114,12 @@ tr.detail td { background: var(--bg); padding: 12px 14px; white-space: normal; }
 .detail-box table.shots { max-width: 640px; }
 .detail-nodata { font-size: 14px; color: var(--dim); margin: 0; }
 table.weapons td.n { font-family: var(--adad-mono); font-weight: 700; font-size: 16px; color: var(--accent); }
+/* strafing-loss cells: the loss % on top, the ideal rhythm's own cost vs
+ * standing still as a smaller muted line underneath. The wrapper is one
+ * block so the two lines stay stacked — including in the narrow-screen card
+ * layout, where the td is a flex row and the wrapper is a single item. */
+table.weapons td .loss { display: block; }
+table.weapons td .loss-sub { display: block; font-size: 11px; font-weight: 400; color: var(--dim); }
 table.weapons td.raw { font-family: var(--adad-mono); color: var(--dim); }
 table.weapons tbody tr { cursor: pointer; }
 table.weapons tbody tr:hover td { background: var(--bg); }
