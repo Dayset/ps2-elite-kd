@@ -27,6 +27,15 @@
 .field input:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
 .field .hint { font-size: 12px; color: var(--dim); margin-top: 3px; }
 
+/* attachments that change the cone or the bloom */
+.attbox { margin: 6px 0 0; }
+.attbox h3 { font-size: 15px; margin: 0 0 6px; }
+.att-row { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.att-row label.att { display: flex; gap: 6px; align-items: center; font-size: 14px; cursor: pointer; }
+.att-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); margin: 0; }
+.att-row input[type="checkbox"]:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
+.att-note { font-size: 13px; color: var(--dim); margin: 6px 0 0; }
+
 /* verdict */
 .verdict { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; background: var(--bg); padding: 14px 16px; margin: 14px 0; }
 .bignum { font: 700 52px/1 var(--adad-mono); color: var(--accent); }
@@ -49,6 +58,18 @@ tr.switchrow td { background: var(--bg); font-weight: 700; }
 .final .t { font-size: 12px; color: var(--dim); font-weight: 600; }
 .final .v { font: 700 22px var(--adad-mono); }
 .final.win { border-color: var(--wc-good); }
+
+/* what it costs: the same burst counted in hits */
+.costbox { margin-top: 16px; border-top: 1px dashed var(--border); padding-top: 12px; }
+.costbox h3 { font-size: 15px; margin: 0 0 6px; }
+.cost-intro { font-size: 14px; color: var(--dim); margin: 0 0 10px; }
+table.cost { width: 100%; border-collapse: collapse; font-family: var(--adad-mono); font-size: 13.5px; }
+table.cost th, table.cost td { padding: 5px 8px; text-align: right; border-bottom: 1px solid var(--border); }
+table.cost th { color: var(--dim); font-weight: 600; }
+table.cost td:first-child, table.cost th:first-child,
+table.cost td:nth-child(2), table.cost th:nth-child(2) { text-align: left; }
+.cost-loss { font-size: 14.5px; margin: 10px 0 0; }
+.cost-caveat { font-size: 13px; color: var(--dim); margin: 10px 0 0; }
 .resetbox { border-top: 1px dashed var(--border); margin-top: 16px; padding-top: 12px; font-size: 14.5px; }
 svg.chart { width: 100%; height: auto; display: block; }
 .chart .ax { stroke: var(--border); stroke-width: 1; }
@@ -69,9 +90,29 @@ svg.chart { width: 100%; height: auto; display: block; }
 table.weapons { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 760px; }
 table.weapons th, table.weapons td { padding: 7px 9px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
 table.weapons th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--dim); position: sticky; top: 0; background: var(--panel); }
-table.weapons td:nth-child(1), table.weapons th:nth-child(1),
-table.weapons td:nth-child(2), table.weapons th:nth-child(2),
-table.weapons td:nth-child(3), table.weapons th:nth-child(3) { text-align: left; }
+table.weapons td:nth-child(3), table.weapons th:nth-child(3),
+table.weapons td:nth-child(4), table.weapons th:nth-child(4),
+table.weapons td:nth-child(5), table.weapons th:nth-child(5) { text-align: left; }
+table.weapons td.rowtoggle, table.weapons td.imgcell { text-align: center; }
+table.weapons td.imgcell img { display: block; margin: 0 auto; }
+
+/* sortable headers: the label is a button so it is keyboard reachable; the
+ * arrow marks the sorted column and aria-sort on the th announces it. */
+table.weapons th button[data-sort] { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit; cursor: pointer; }
+table.weapons th button[data-sort]:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
+.sort-ind { color: var(--accent); font-size: 11px; }
+
+/* row expand toggle */
+.row-toggle { background: none; border: 0; padding: 2px 6px; font: 700 16px var(--adad-mono); color: var(--text); cursor: pointer; }
+.row-toggle:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
+
+/* expanded detail row: all four stances plus the worked burst */
+tr.detail { cursor: default; }
+tr.detail td { background: var(--bg); padding: 12px 14px; white-space: normal; }
+.detail-box h4 { font-size: 14px; margin: 0 0 8px; }
+.detail-box h4 + table { margin-bottom: 14px; }
+.detail-box table.shots { max-width: 640px; }
+.detail-nodata { font-size: 14px; color: var(--dim); margin: 0; }
 table.weapons td.n { font-family: var(--adad-mono); font-weight: 700; font-size: 16px; color: var(--accent); }
 table.weapons td.raw { font-family: var(--adad-mono); color: var(--dim); }
 table.weapons tbody tr { cursor: pointer; }
@@ -87,6 +128,9 @@ table.weapons tr.pin td { background: var(--row-alt); }
   table.weapons td::before { content: attr(data-l); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--dim); font-weight: 600; padding-top: 2px; }
   table.weapons td.namecell { font-size: 17px; font-weight: 700; }
   table.weapons td.namecell::before { display: none; }
+  table.weapons tr.detail td { display: block; padding: 0; }
+  table.weapons tr.detail td::before { display: none; }
+  .detail-box table.shots { max-width: none; }
 }
 .note { font-size: 13.5px; color: var(--dim); margin-top: 8px; }
 ul.notes { margin: 6px 0 0; padding-left: 18px; font-size: 14px; color: var(--dim); }

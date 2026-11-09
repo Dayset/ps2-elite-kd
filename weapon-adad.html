@@ -19,10 +19,11 @@
   </script>
   <link rel="preload" href="assets/weapons/adad-2018.json" as="fetch" crossorigin />
   <link rel="preload" href="assets/weapons/adad-item-ids.json" as="fetch" crossorigin />
+  <link rel="preload" href="assets/weapons/adad-images.json" as="fetch" crossorigin />
   <link rel="preload" href="assets/weapons/recoil.json" as="fetch" crossorigin />
   <link rel="stylesheet" href="styles.css?v=20261031-fr1" />
   <link rel="stylesheet" href="weapon-compare.css?v=20261109-sage1" />
-  <link rel="stylesheet" href="weapon-adad.css?v=20261109-adad1" />
+  <link rel="stylesheet" href="weapon-adad.css?v=20261109-adadatt1" />
 </head>
 <body class="site-page">
   <main class="wc-wrap">
@@ -106,6 +107,12 @@
         </div>
       </div>
 
+      <div class="attbox" id="attBox">
+        <h3 data-i18n="adad.att.h">Attachments</h3>
+        <div class="att-row" id="attRow" role="group" aria-label="Attachments" data-i18n-aria-label="adad.att.h"></div>
+        <p class="att-note" id="attNote"></p>
+      </div>
+
       <div class="verdict" aria-live="polite">
         <div class="bignum" id="nBig">–</div>
         <div>
@@ -122,6 +129,7 @@
             <tbody></tbody>
           </table>
           <div class="finals" id="finals"></div>
+          <div class="costbox" id="costBox"></div>
         </div>
         <div>
           <h3 data-i18n="adad.chart.h">Cone growth</h3>
@@ -137,7 +145,7 @@
 
     <section class="wc-panel" aria-labelledby="tblH">
       <h2 id="tblH" data-i18n="adad.table.hCur">Every weapon — current Census data</h2>
-      <p class="sub" data-i18n="adad.table.sub">Still-shot counts use the <b>standing</b> values. Tap any row to load that weapon into the calculator, where you can also switch to its crouching numbers. A dash means there is no usable value for that gun — nothing has been filled in.</p>
+      <p class="sub" data-i18n="adad.table.sub">Still-shot counts use the <b>standing</b> values. Tap any row to load that weapon into the calculator, where you can also switch to its crouching numbers. Expand a row (▸) for all four stances and its worked burst; Compare opens the in-depth comparison. A dash means there is no usable value for that gun — nothing has been filled in.</p>
       <div class="tools">
         <input type="search" id="q" placeholder="Search weapons… (e.g. Naginata, SAW, carbine)" aria-label="Search weapons" data-i18n-placeholder="adad.search" data-i18n-aria-label="adad.searchAria">
         <select id="fFac" aria-label="Filter by faction" data-i18n-aria-label="adad.facAria">
@@ -149,9 +157,15 @@
       <div class="tscroll">
         <table class="weapons" id="wtable">
           <thead><tr>
-            <th data-i18n="adad.col.weapon">Weapon</th><th data-i18n="adad.col.faction">Faction</th><th data-i18n="adad.col.category">Category</th><th data-i18n="adad.col.rpm">RPM</th>
-            <th data-i18n="adad.col.adsStill">ADS still</th><th data-i18n="adad.col.adsMove">ADS move</th><th data-i18n="adad.col.adsBloom">ADS bloom</th><th data-i18n="adad.col.freeAds">Free ADS</th>
-            <th data-i18n="adad.col.hipStill">Hip still</th><th data-i18n="adad.col.hipMove">Hip move</th><th data-i18n="adad.col.hipBloom">Hip bloom</th><th data-i18n="adad.col.freeHip">Free hip</th>
+            <th scope="col"></th>
+            <th scope="col" data-i18n="adad.col.image">Image</th>
+            <th scope="col" data-sort="name" aria-sort="ascending"><button type="button" data-sort="name"><span data-i18n="adad.col.weapon">Weapon</span> <span class="sort-ind" aria-hidden="true">▲</span></button></th>
+            <th scope="col" data-sort="faction" aria-sort="none"><button type="button" data-sort="faction"><span data-i18n="adad.col.faction">Faction</span> <span class="sort-ind" aria-hidden="true"></span></button></th>
+            <th scope="col" data-sort="category" aria-sort="none"><button type="button" data-sort="category"><span data-i18n="adad.col.category">Category</span> <span class="sort-ind" aria-hidden="true"></span></button></th>
+            <th scope="col" data-sort="rpm" aria-sort="none"><button type="button" data-sort="rpm"><span data-i18n="adad.col.rpm">RPM</span> <span class="sort-ind" aria-hidden="true"></span></button></th>
+            <th scope="col" data-sort="freeAds" aria-sort="none"><button type="button" data-sort="freeAds"><span data-i18n="adad.col.freeAds">Free ADS</span> <span class="sort-ind" aria-hidden="true"></span></button></th>
+            <th scope="col" data-sort="freeHip" aria-sort="none"><button type="button" data-sort="freeHip"><span data-i18n="adad.col.freeHip">Free hip</span> <span class="sort-ind" aria-hidden="true"></span></button></th>
+            <th scope="col" data-i18n="adad.col.compare">Compare</th>
           </tr></thead>
           <tbody></tbody>
         </table>
@@ -173,6 +187,6 @@
       <p data-i18n-html="adad.foot">Method paraphrased from Iridar's <i>Weapon Mechanics</i> guide (<a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/" target="_blank" rel="noopener">archived copy</a>). Weapon data extracted from the Stats sheet of <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/Iridars-Toolbox-v6h.zip" target="_blank" rel="noopener">Iridar's Toolbox v6h</a> (Stats sheet dated 2018-08-19). Current data from the Census API via the site's weapon snapshot. Worked examples verified by hand: TRAC-5 ADS (0.3 − 0.1) ÷ 0.05 = 4 free shots; NSX Naginata ADS (0.4 − 0.15) ÷ 0.06 = 4.17 → 4 free shots.</p>
     </footer>
   </main>
-  <script type="module" src="weapon-adad.mjs?v=20261109-adad1"></script>
+  <script type="module" src="weapon-adad.mjs?v=20261109-adadatt1"></script>
 </body>
 </html>

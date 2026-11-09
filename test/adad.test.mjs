@@ -4,13 +4,16 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import {
-  PINNED, SHOTS, RECOVERY_RATE, nStill, simulate, simulatePlain, resetInfo,
-  paramsFor, deriveCurrent, finalsHtml, fmt, fmtT,
+  PINNED, SHOTS, RECOVERY_RATE, TARGET_D, COST_DISTANCES, nStill, simulate, simulatePlain, resetInfo,
+  paramsFor, deriveCurrent, finalsHtml, spreadD, hitChance, burstHitAvg, costSummary, pctNum, costHtml, fmt, fmtT,
+  SORT_KEYS, sortValue, compareValues, sortEntries, orderEntries, imageSrcFor, compareHrefFor, slugName, detailHtml, rowHtml,
+  ATT_KEYS, ATT_EFFECTS, attTogglesFor, applyAttachments,
 } from "../weapon-adad.mjs";
 
 const read = (p) => fs.readFileSync(new URL(p, import.meta.url), "utf8");
 const d2018 = JSON.parse(read("../assets/weapons/adad-2018.json"));
 const itemIds = JSON.parse(read("../assets/weapons/adad-item-ids.json"));
+const images = JSON.parse(read("../assets/weapons/adad-images.json"));
 const recoil = JSON.parse(read("../assets/weapons/recoil.json"));
 const catalog = JSON.parse(read("../assets/weapons/catalog.json"));
 const byName = (n) => d2018.weapons.find((w) => w.n === n);
@@ -42,8 +45,72 @@ test("simulate: the Naginata's 10-round ideal burst ends at 0.76 deg, strafing f
   assert.equal(RECOVERY_RATE, 20, "CoF recovery is 20 deg/s");
 });
 
-test("finalsHtml: .win is hardcoded on the ideal rhythm, as in the artifact", () => {
-  const html = finalsHtml(0.76, 0.75, 1.0, { ideal: "Ideal rhythm", still: "Still throughout", moving: "Moving throughout" });
+test("spreadD / hitChance: the cone is the full angle, the target a 0.5 m torso circle", () => {
+  assert.equal(TARGET_D, 0.5, "the torso circle is 0.5 m across");
+  assert.deepEqual(COST_DISTANCES, [35, 60], "the panel shows 35 m and 60 m");
+  near(spreadD(0.15, 200), 0.5236, 0.0001, "0.15 deg at 200 m spreads 0.52 m — Dorf's Naginata anchor");
+  near(spreadD(3, 8), 0.419, 0.001, "GD-22S hipfire standing at 8 m: 0.42 m, as the sage guide shows");
+  assert.equal(hitChance(0.03, 35), 1, "the GD-22S's 0.03 deg ADS cone at 35 m cannot miss the torso");
+  near(hitChance(0.15, 200), 0.9119, 0.0001, "the Naginata's first shot at 200 m");
+  near(hitChance(1.0, 60), 0.228, 0.001, "a 1 deg cone at 60 m");
+  assert.equal(hitChance(0, 60), 1, "a zero cone always hits");
+});
+
+test("costSummary: the acceptance numbers — miss % and DPS loss of full movement vs the ideal rhythm", () => {
+  // { still, move, bloom, nFree } per gun; expected fractions (miss = 1 - avg hit).
+  const guns = {
+    "NSX Naginata": [0.15, 0.4, 0.06, 4, { 35: [0, 0.038, 0.038, 0], 60: [0.1457, 0.4171, 0.3177, 0.0103] }],
+    "GD-22S": [0.03, 0.35, 0.06, 5, { 35: [0, 0.0182, 0.0182, 0], 60: [0.0534, 0.3539, 0.3174, 0.0117] }],
+    "TRAC-5": [0.1, 0.3, 0.05, 4, { 35: [0, 0, 0, 0], 60: [0.0335, 0.2291, 0.2024, 0] }],
+  };
+  for (const [name, [still, move, bloom, n, want]] of Object.entries(guns)) {
+    const rows = costSummary(still, move, bloom, n, SHOTS);
+    assert.deepEqual(rows.map((r) => r.dist), [35, 60], `${name}: both distances`);
+    for (const r of rows) {
+      const [missIdeal, missMoving, lossMoving, lossIdeal] = want[r.dist];
+      near(1 - r.ideal, missIdeal, 0.0005, `${name} @${r.dist} m ideal miss`);
+      near(1 - r.moving, missMoving, 0.0005, `${name} @${r.dist} m moving miss`);
+      near(r.lossMoving, lossMoving, 0.0005, `${name} @${r.dist} m DPS loss, moving vs ideal`);
+      near(r.lossIdeal, lossIdeal, 0.0005, `${name} @${r.dist} m cost of the ideal rhythm vs standing still`);
+    }
+  }
+});
+
+test("costSummary: the ideal rhythm costs almost nothing vs standing still — the movement is nearly free", () => {
+  for (const [still, move, bloom, n] of [[0.15, 0.4, 0.06, 4], [0.03, 0.35, 0.06, 5], [0.1, 0.3, 0.05, 4]]) {
+    const r60 = costSummary(still, move, bloom, n, SHOTS).find((r) => r.dist === 60);
+    assert.ok(r60.lossIdeal >= 0 && r60.lossIdeal <= 0.012, `ideal vs still at 60 m is 0–1.2% (got ${(r60.lossIdeal * 100).toFixed(1)}%)`);
+  }
+});
+
+test("burstHitAvg edges: bloom 0 and zero free shots", () => {
+  assert.equal(burstHitAvg(0.4, 1.0, 0, Infinity, SHOTS, 60, "ideal"), 1, "bloom 0: the ideal rhythm fires all 10 from the still cone");
+  assert.equal(burstHitAvg(0.4, 1.0, 0, Infinity, SHOTS, 60, "still"), 1, "bloom 0: still throughout is the same burst");
+  near(burstHitAvg(0.4, 1.0, 0, Infinity, SHOTS, 60, "moving"), 0.228, 0.001, "bloom 0: moving fires all 10 from the moving cone");
+  const zero = costSummary(0.1, 0.3, 0.05, 0, SHOTS);
+  for (const r of zero) assert.equal(r.lossMoving, 0, `no free shots: the ideal rhythm IS moving, so the loss is 0 at ${r.dist} m`);
+  assert.equal(pctNum(0.3177), "31.8", "one-decimal percent, bare number");
+  assert.equal(pctNum(null), "—", "null loss prints a dash, never NaN");
+});
+
+test("costHtml: the panel carries both distances, all three rhythms, and the loss lines", () => {
+  const rows = costSummary(0.15, 0.4, 0.06, 4, SHOTS);
+  const html = costHtml(rows, {
+    h: "What it costs", intro: "intro", colDist: "Distance", colRhythm: "Rhythm", colMiss: "Miss", colHits: "Hits per burst",
+    ideal: "Ideal rhythm", still: "Still throughout", moving: "Moving throughout",
+    losses: ["At 35 m, loss 3.8%.", "At 60 m, loss 31.8%."], caveat: "caveat",
+  });
+  assert.match(html, /<h3>What it costs<\/h3>/);
+  assert.match(html, /35 m<\/td>/);
+  assert.match(html, /60 m<\/td>/);
+  for (const label of ["Ideal rhythm", "Still throughout", "Moving throughout"]) assert.ok(html.includes(label), label);
+  assert.match(html, /14\.6%/);
+  assert.match(html, /41\.7%/);
+  assert.match(html, /8\.5<\/td>/, "Naginata ideal hits 8.5 of 10 at 60 m");
+  assert.match(html, /At 60 m, loss 31\.8%\./);
+});
+
+test("finalsHtml: .win is hardcoded on the ideal rhythm, as in the artifact", () => {  const html = finalsHtml(0.76, 0.75, 1.0, { ideal: "Ideal rhythm", still: "Still throughout", moving: "Moving throughout" });
   assert.match(html, /<div class="final win"><div class="t">Ideal rhythm<\/div><div class="v">0.76°<\/div><\/div>/);
   assert.match(html, /<div class="final"><div class="t">Still throughout<\/div><div class="v">0.75°<\/div><\/div>/);
   assert.match(html, /<div class="final"><div class="t">Moving throughout<\/div><div class="v">1°<\/div><\/div>/);
@@ -210,14 +277,194 @@ test("item map: every 2018 row is mapped, every id is a real catalog item, deriv
   assert.ok(nulled < 25, `few rows are current-dataless (got ${nulled})`);
 });
 
+test("images map: every mapped weapon has a local render; the four variants have none", () => {
+  assert.equal(Object.keys(images).length, 190, "190 of 194 weapons have a Census item");
+  const mapped = Object.keys(itemIds).filter((n) => itemIds[n] !== null);
+  assert.deepEqual(Object.keys(images).sort(), mapped.sort(), "the map covers exactly the mapped weapons");
+  const webp = new Set(fs.readdirSync(new URL("../assets/weapons/", import.meta.url)).filter((f) => f.endsWith(".webp")).map((f) => f.slice(0, -5)));
+  for (const [name, img] of Object.entries(images)) assert.ok(webp.has(String(img)), `${name}: ${img}.webp exists on the site`);
+  assert.equal(images["GD-22S"], 5340, "the GD-22S render is Census 5340, as the sage guide uses");
+  assert.equal(images["TRAC-5"], 5364);
+  for (const n of ["Equinox VE2 Burst", "Gauss Compact Burst", "Gauss Compact S", "Solstice SF"]) assert.equal(images[n], undefined, `${n} has no image`);
+});
+
+test("imageSrcFor / compareHrefFor: a local render and a compare link, or nothing invented", () => {
+  assert.equal(imageSrcFor("GD-22S", images), "assets/weapons/5340.webp");
+  assert.equal(imageSrcFor("TRAC-5", images), "assets/weapons/5364.webp");
+  assert.equal(imageSrcFor("Equinox VE2 Burst", images), null);
+  assert.equal(imageSrcFor("GD-22S", null), null, "no map loaded: dash, not a guess");
+  assert.equal(compareHrefFor("NSX Naginata", itemIds), "weapon-compare.html?w=804249");
+  assert.equal(compareHrefFor("TRAC-5", itemIds), "weapon-compare.html?w=43");
+  for (const n of ["Equinox VE2 Burst", "Gauss Compact Burst", "Gauss Compact S", "Solstice SF"]) assert.equal(compareHrefFor(n, itemIds), null, `${n}: no id, no link`);
+  assert.equal(compareHrefFor("NSX Naginata", null), null);
+  assert.equal(slugName("NSX Naginata"), "nsx-naginata");
+  assert.equal(slugName("T9A \"Butcher\""), "t9a-butcher");
+});
+
+test("sortEntries: ascending and descending, nulls last, no-bloom first when descending", () => {
+  const entry = (n) => ({ row: byName(n), rec: byName(n) }); // 2018 rows as their own record
+  const names = (es) => es.map((e) => e.row.n);
+  assert.deepEqual(names(sortEntries([entry("TRAC-5"), entry("NSX Naginata"), entry("GD-22S")], "rpm", 1)), ["GD-22S", "NSX Naginata", "TRAC-5"]);
+  assert.deepEqual(names(sortEntries([entry("TRAC-5"), entry("NSX Naginata"), entry("GD-22S")], "rpm", -1)), ["TRAC-5", "NSX Naginata", "GD-22S"]);
+  assert.deepEqual(names(sortEntries([entry("NSX Naginata"), entry("TRAC-5"), entry("GD-22S")], "freeHip", 1)), ["TRAC-5", "GD-22S", "NSX Naginata"], "free hip: 5, 6, 12");
+  assert.deepEqual(names(sortEntries([entry("NSX Naginata"), entry("TRAC-5")], "name", 1)), ["NSX Naginata", "TRAC-5"]);
+  assert.deepEqual(names(sortEntries([entry("NSX Naginata"), entry("TRAC-5")], "name", -1)), ["TRAC-5", "NSX Naginata"]);
+  assert.deepEqual(names(sortEntries([entry("GD-22S"), entry("TRAC-5")], "faction", 1)), ["GD-22S", "TRAC-5"], "NC before TR");
+  assert.deepEqual(names(sortEntries([entry("Mauler S6"), entry("TRAC-5"), entry("NSX Naginata")], "adsBloom", 1)), ["Mauler S6", "TRAC-5", "NSX Naginata"], "ADS bloom 0, 0.05, 0.06");
+  // the MANA turret has no moving ADS value, so its free ADS count is null — last in both directions
+  assert.deepEqual(names(sortEntries([entry("MANA Anti-Personnel Turret"), entry("TRAC-5")], "freeAds", 1)), ["TRAC-5", "MANA Anti-Personnel Turret"]);
+  assert.deepEqual(names(sortEntries([entry("MANA Anti-Personnel Turret"), entry("TRAC-5")], "freeAds", -1)), ["TRAC-5", "MANA Anti-Personnel Turret"]);
+  // the Mauler never blooms in 2018, so its free count is Infinity — last ascending, first descending
+  assert.deepEqual(names(sortEntries([entry("Mauler S6"), entry("TRAC-5")], "freeAds", 1)), ["TRAC-5", "Mauler S6"]);
+  assert.deepEqual(names(sortEntries([entry("Mauler S6"), entry("TRAC-5")], "freeAds", -1)), ["Mauler S6", "TRAC-5"]);
+  assert.equal(sortValue(entry("NSX Naginata"), "freeAds"), 4);
+  assert.equal(sortValue(entry("MANA Anti-Personnel Turret"), "freeAds"), null);
+  assert.equal(sortValue(entry("Mauler S6"), "freeAds"), Infinity);
+  assert.deepEqual(SORT_KEYS, ["name", "faction", "category", "rpm", "adsStill", "adsMove", "adsBloom", "freeAds", "hipStill", "hipMove", "hipBloom", "freeHip"]);
+});
+
+test("orderEntries: the pinned examples stay on top in order, the rest sort under them", () => {
+  const entry = (n) => ({ row: byName(n), rec: byName(n) });
+  const names = (es) => es.map((e) => e.row.n);
+  assert.deepEqual(names(orderEntries([entry("GD-22S"), entry("TRAC-5"), entry("NSX Naginata")], "name", -1)), ["NSX Naginata", "TRAC-5", "GD-22S"]);
+  assert.deepEqual(names(orderEntries([entry("TRAC-5"), entry("GD-22S"), entry("NSX Naginata")], "rpm", 1)), ["NSX Naginata", "TRAC-5", "GD-22S"], "pins ignore the RPM sort");
+  assert.deepEqual(names(orderEntries([entry("GD-22S"), entry("TRAC-5")], "name", 1)), ["TRAC-5", "GD-22S"], "a pin still comes first even when it sorts after");
+});
+
+test("detailHtml: all four stances and the worked burst for the Naginata", () => {
+  const t = {
+    h: "All stances", stance: "Stance", still: "Still min", move: "Moving min", bloom: "Bloom",
+    adsStand: "ADS, standing", adsCrouch: "ADS, crouching", hipStand: "Hipfire, standing", hipCrouch: "Hipfire, crouching",
+    burstH: "Worked burst — 10 rounds, ideal rhythm (ADS, standing)", shot: "Shot", stanceCol: "Stance",
+    cof: "CoF after shot", ifMoving: "If moving all along", stillWord: "Still", moving: "Moving",
+    switchWord: "start strafing", noData: "No usable numbers for this gun in this version.",
+  };
+  const html = detailHtml(byName("NSX Naginata"), t);
+  for (const label of ["ADS, standing", "ADS, crouching", "Hipfire, standing", "Hipfire, crouching"]) assert.ok(html.includes(label), label);
+  assert.match(html, /<td>0\.15<\/td><td>0\.4<\/td><td>0\.06<\/td>/, "ADS stand pair");
+  assert.match(html, /<td>0\.15<\/td><td>0\.35<\/td><td>0\.06<\/td>/, "ADS crouch pair");
+  assert.match(html, /<td>3<\/td><td>4\.5<\/td><td>0\.12<\/td>/, "hip stand pair");
+  assert.match(html, /<td>2\.25<\/td><td>4<\/td><td>0\.12<\/td>/, "hip crouch pair");
+  assert.match(html, /0\.76<\/td>/, "the burst ends at 0.76");
+  assert.match(html, /start strafing/);
+  assert.equal((html.match(/class="switchrow"/g) || []).length, 1, "one switch row, shot 5");
+  const empty = detailHtml({ as: [null, null, null], ac: [null, null, null], hs: [null, null, null], hc: [null, null, null], ba: null, bh: null, rpm: null }, t);
+  assert.match(empty, /No usable numbers for this gun in this version\./);
+  assert.ok(!empty.includes("Worked burst"), "no burst table without numbers");
+});
+
+test("rowHtml: the collapsed summary — toggle, image, free counts, Compare; no CoF values", () => {
+  const opts = { imgMap: images, idMap: itemIds, open: new Set() };
+  const nag = byName("NSX Naginata");
+  const html = rowHtml({ row: nag, rec: nag }, opts);
+  assert.match(html, /assets\/weapons\/86949\.webp/);
+  assert.match(html, /weapon-compare\.html\?w=804249/);
+  assert.match(html, /Compare<\/a>/);
+  assert.match(html, /aria-expanded="false"/);
+  assert.match(html, /aria-controls="detail-nsx-naginata"/);
+  assert.match(html, /Show details for NSX Naginata/);
+  assert.match(html, /▸/);
+  assert.match(html, />4<\/td>/, "free ADS 4");
+  assert.match(html, />12<\/td>/, "free hip 12");
+  assert.ok(!html.includes("0.15"), "no ADS still value in the summary");
+  assert.ok(!html.includes("0.06"), "no bloom value in the summary");
+  assert.ok(!html.includes('class="detail"'), "collapsed: no detail row");
+  const open = rowHtml({ row: nag, rec: nag }, { ...opts, open: new Set(["NSX Naginata"]) });
+  assert.match(open, /aria-expanded="true"/);
+  assert.match(open, /Hide details for NSX Naginata/);
+  assert.match(open, /▾/);
+  assert.match(open, /id="detail-nsx-naginata"/);
+  assert.match(open, /0\.76<\/td>/, "the open detail carries the worked burst");
+  assert.match(open, /ADS, standing/);
+  const burst = byName("Equinox VE2 Burst");
+  const bhtml = rowHtml({ row: burst, rec: burst }, opts);
+  assert.ok(!bhtml.includes("<img"), "the variant has no image");
+  assert.ok(!bhtml.includes("weapon-compare.html?w="), "the variant has no Compare link");
+});
+
+test("attTogglesFor: only the CoF/bloom attachments the gun can mount", () => {
+  assert.deepEqual(ATT_KEYS, ["Laser Sight", "Compensator", "Heavy Barrel", "Short Barrel"]);
+  assert.deepEqual(ATT_EFFECTS["Laser Sight"], { hipMinCof: 0.67 }, "the laser factor is weapon-sim.mjs's");
+  assert.deepEqual(ATT_EFFECTS["Compensator"], { hipMinCof: 1.15 });
+  assert.deepEqual(ATT_EFFECTS["Heavy Barrel"], { adsBloom: 0.8 });
+  assert.deepEqual(ATT_EFFECTS["Short Barrel"], { hipBloom: 0.6 });
+  assert.equal(itemIds["Blitz GD-10"], 27001);
+  assert.deepEqual(attTogglesFor(27001, recoil), ["Laser Sight", "Compensator"], "the Blitz mounts a laser and a compensator, nothing else that matters");
+  assert.equal(itemIds["GD-22S"], 7233);
+  assert.deepEqual(attTogglesFor(7233, recoil), ["Laser Sight", "Compensator", "Heavy Barrel", "Short Barrel"], "the GD-22S mounts all four");
+  assert.equal(itemIds["T9A \"Butcher\""], 1924);
+  assert.deepEqual(attTogglesFor(1924, recoil), ["Laser Sight", "Compensator", "Heavy Barrel"], "the Butcher's Muzzle Brake counts as a Compensator (weapon-sim.mjs's alias); no Short Barrel");
+  assert.deepEqual(attTogglesFor(null, recoil), [], "a variant row with no Census item gets no toggles");
+  assert.deepEqual(attTogglesFor(999999, recoil), [], "an unknown item id gets no toggles");
+  assert.deepEqual(attTogglesFor(7233, null), [], "recoil not loaded: no toggles, never a guess");
+  assert.deepEqual(attTogglesFor(7233, {}), [], "no att data at all: no toggles");
+});
+
+test("applyAttachments: the acceptance numbers — Blitz hip 10 → 6 → 11, GD-22S ADS 5 → 6, hip 6 → 10", () => {
+  const n = (p, stance, active) => nStill(...Object.values(applyAttachments(p, stance, new Set(active))).slice(0, 3));
+  // Blitz GD-10 hipfire: still 1.0, moving 1.5, bloom 0.05 — base 10 free shots.
+  const blitzHip = { still: 1.0, move: 1.5, bloom: 0.05 };
+  assert.equal(n(blitzHip, "hip", []), 10, "Blitz hip, base");
+  const laser = applyAttachments(blitzHip, "hip", new Set(["Laser Sight"]));
+  near(laser.still, 0.67, 1e-9, "laser: still min ×0.67");
+  near(laser.move, 1.005, 1e-9, "laser: moving min ×0.67 too");
+  assert.equal(n(blitzHip, "hip", ["Laser Sight"]), 6, "Blitz hip with a Laser Sight: floor(0.335 / 0.05) = 6");
+  const comp = applyAttachments(blitzHip, "hip", new Set(["Compensator"]));
+  near(comp.still, 1.15, 1e-9, "compensator: still min ×1.15");
+  near(comp.move, 1.725, 1e-9, "compensator: moving min ×1.15 too");
+  assert.equal(n(blitzHip, "hip", ["Compensator"]), 11, "Blitz hip with a Compensator: floor(0.575 / 0.05) = 11");
+  assert.equal(n(blitzHip, "hip", ["Laser Sight", "Compensator"]), 7, "both: the factors multiply (0.67 × 1.15), floor(0.38525 / 0.05) = 7");
+  assert.equal(n(blitzHip, "hip", ["Heavy Barrel"]), 10, "a Heavy Barrel does nothing to hipfire");
+  // Blitz ADS: the cone is flat 0.3° standing and moving — strafe from shot 1, attachments or not.
+  const blitzAds = { still: 0.3, move: 0.3, bloom: 0.05 };
+  assert.equal(n(blitzAds, "ads", []), 0, "Blitz ADS, base");
+  assert.equal(n(blitzAds, "ads", ["Laser Sight", "Compensator", "Heavy Barrel"]), 0, "Blitz ADS stays 0 with any of them");
+  // GD-22S ADS: still 0.03, moving 0.35, bloom 0.06 — base 5 free shots.
+  const gdAds = { still: 0.03, move: 0.35, bloom: 0.06 };
+  assert.equal(n(gdAds, "ads", []), 5, "GD-22S ADS, base");
+  const heavy = applyAttachments(gdAds, "ads", new Set(["Heavy Barrel"]));
+  near(heavy.bloom, 0.048, 1e-9, "heavy barrel: ADS bloom ×0.8");
+  assert.equal(heavy.still, 0.03, "the heavy barrel leaves the minima alone");
+  assert.equal(n(gdAds, "ads", ["Heavy Barrel"]), 6, "GD-22S ADS with a Heavy Barrel: floor(0.32 / 0.048) = 6");
+  assert.equal(n(gdAds, "ads", ["Laser Sight"]), 5, "a laser does nothing to ADS");
+  // GD-22S hipfire: still 3.0, moving 3.75, bloom 0.12 — base 6 free shots.
+  const gdHip = { still: 3.0, move: 3.75, bloom: 0.12 };
+  assert.equal(n(gdHip, "hip", []), 6, "GD-22S hip, base");
+  const short = applyAttachments(gdHip, "hip", new Set(["Short Barrel"]));
+  near(short.bloom, 0.072, 1e-9, "short barrel: hip bloom ×0.6");
+  assert.equal(n(gdHip, "hip", ["Short Barrel"]), 10, "GD-22S hip with a Short Barrel: floor(0.75 / 0.072) = 10");
+  assert.equal(n(gdHip, "hip", ["Heavy Barrel"]), 6, "a heavy barrel does nothing to hipfire");
+  // Nulls pass through; an unknown name in the set is inert.
+  assert.deepEqual(applyAttachments({ still: null, move: 0.3, bloom: 0.05 }, "hip", new Set(["Laser Sight"])), { still: null, move: 0.201, bloom: 0.05 });
+  assert.deepEqual(applyAttachments({ still: 0.1, move: 0.3, bloom: 0.05 }, "ads", new Set(["Forward Grip"])), { still: 0.1, move: 0.3, bloom: 0.05 });
+  assert.equal(applyAttachments(null, "ads", new Set()), null);
+});
+
 test("the page is wired: pins, ids, back link, and the link from weapon-compare", () => {
   const html = read("../weapon-adad.html");
-  assert.match(html, /weapon-adad\.css\?v=/);
-  assert.match(html, /weapon-adad\.mjs\?v=/);
+  assert.match(html, /weapon-adad\.css\?v=20261109-adadatt1/);
+  assert.match(html, /weapon-adad\.mjs\?v=20261109-adadatt1/);
+  assert.match(html, /id="costBox"/, "the cost panel sits under the finals");
+  assert.match(html, /id="attBox"/, "the attachment toggles sit in the calculator");
+  assert.match(html, /id="attRow"/);
+  assert.match(html, /id="attNote"/);
+  assert.match(html, /adad-images\.json/, "the image map is preloaded");
+  assert.match(html, /data-sort="name"/, "the name header sorts");
+  assert.match(html, /data-sort="faction"/);
+  assert.match(html, /data-sort="category"/);
+  assert.match(html, /data-sort="rpm"/);
+  assert.match(html, /data-sort="freeAds"/);
+  assert.match(html, /data-sort="freeHip"/);
+  assert.match(html, /aria-sort="ascending"/, "name is the default sort");
+  assert.match(read("../weapon-adad.css"), /\.costbox/, "the cost panel has its styles");
+  assert.match(read("../weapon-adad.css"), /\.attbox/, "the attachment toggles have their styles");
+  assert.match(read("../weapon-adad.css"), /\.row-toggle/, "the row toggle has its styles");
+  assert.match(read("../weapon-adad.css"), /\.detail-box/, "the detail row has its styles");
+  assert.match(read("../weapon-adad.css"), /\.sort-ind/, "the sort indicator has its styles");
   assert.match(html, /href="weapon-compare\.html"/);
   assert.match(html, /Iridars-Toolbox-v6h\.zip/);
   assert.match(html, /Historical \(Toolbox v6h, Aug 2018\)/);
-  for (const id of ["adadVerCur", "adadVerHist", "adadBanner", "gunName", "gunMeta", "btnAds", "btnHip", "btnStand", "btnCrouch", "inStill", "inMove", "inBloom", "inRpm", "inMax", "nBig", "nWhat", "nFormula", "shotTable", "finals", "chart", "resetBox", "tblH", "q", "fFac", "fCat", "rowCount", "wtable", "langSelect"]) {
+  for (const id of ["adadVerCur", "adadVerHist", "adadBanner", "gunName", "gunMeta", "btnAds", "btnHip", "btnStand", "btnCrouch", "inStill", "inMove", "inBloom", "inRpm", "inMax", "attBox", "attRow", "attNote", "nBig", "nWhat", "nFormula", "shotTable", "finals", "costBox", "chart", "resetBox", "tblH", "q", "fFac", "fCat", "rowCount", "wtable", "langSelect"]) {
     assert.match(html, new RegExp(`id="${id}"`), id);
   }
   assert.match(read("../weapon-compare.html"), /href="weapon-adad\.html"/);
