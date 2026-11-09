@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="data:," />
+  <title data-i18n="adad.title">🎯 Ideal ADAD calculator</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="preload" href="assets/weapons/adad-2018.json" as="fetch" crossorigin />
+  <link rel="preload" href="assets/weapons/adad-item-ids.json" as="fetch" crossorigin />
+  <link rel="preload" href="assets/weapons/recoil.json" as="fetch" crossorigin />
+  <link rel="stylesheet" href="styles.css?v=20261031-fr1" />
+  <link rel="stylesheet" href="weapon-compare.css?v=20261109-screenh1" />
+  <link rel="stylesheet" href="weapon-adad.css?v=20261109-adad1" />
+</head>
+<body class="site-page">
+  <main class="wc-wrap">
+    <header class="wc-panel wc-head">
+      <a class="wc-back" href="weapon-compare.html" aria-label="Back to weapon comparison" data-i18n-aria-label="adad.back">🔙</a>
+      <div class="wc-headtext">
+        <h1 data-i18n="adad.title">🎯 Ideal ADAD calculator</h1>
+        <div class="wc-sub" data-i18n="adad.sub">Your cone of fire only grows by a fixed amount per shot, and it can never drop below the minimum cone of the stance you're in. Fire the free shots still, then strafe — once your cone reaches the moving minimum, moving costs nothing.</div>
+      </div>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+
+    <section class="wc-panel" aria-label="Data version" data-i18n-aria-label="adad.ver.label">
+      <div class="wc-segwrap"><span data-i18n="adad.ver.label">Data version</span>
+        <div class="wc-seg" role="radiogroup" aria-label="Data version" data-i18n-aria-label="adad.ver.label">
+          <button type="button" class="wc-segbtn" id="adadVerCur" aria-checked="true">Current (Census)</button>
+          <button type="button" class="wc-segbtn" id="adadVerHist" aria-checked="false" data-i18n="adad.ver.hist">Historical (Toolbox v6h, Aug 2018)</button>
+        </div>
+      </div>
+      <p class="wc-note" data-i18n="adad.ver.histNote">Historical version: Toolbox v6h data, Aug 2018 — the old stats and mechanics. Switch to it anytime to see the numbers Iridar's readers used; the calculator, the table and the worked examples all follow the switch.</p>
+    </section>
+
+    <div class="adad-banner" id="adadBanner" role="note"></div>
+    <div id="adadMsg" class="wc-msg" role="status" aria-live="polite"></div>
+
+    <section class="wc-panel" aria-labelledby="calcH">
+      <div class="calc-head">
+        <div>
+          <h2 id="calcH" data-i18n="adad.calc.h">Calculator</h2>
+          <div id="gunName">—</div>
+          <div id="gunMeta"></div>
+        </div>
+        <div>
+          <div class="segrow">
+            <span class="lbl" id="stanceLbl" data-i18n="adad.stance">Stance</span>
+            <span class="wc-seg" role="group" aria-labelledby="stanceLbl">
+              <button type="button" class="wc-segbtn" id="btnAds" aria-checked="true" data-i18n="adad.ads">ADS</button>
+              <button type="button" class="wc-segbtn" id="btnHip" aria-checked="false" data-i18n="adad.hip">Hipfire</button>
+            </span>
+            <span class="lbl" id="postureLbl" data-i18n="adad.posture">Posture</span>
+            <span class="wc-seg" role="group" aria-labelledby="postureLbl">
+              <button type="button" class="wc-segbtn" id="btnStand" aria-checked="true" data-i18n="adad.stand">Standing</button>
+              <button type="button" class="wc-segbtn" id="btnCrouch" aria-checked="false" data-i18n="adad.crouch">Crouching</button>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="adad-grid">
+        <div class="field">
+          <label for="inStill" data-i18n="adad.in.still">Still minimum CoF (°)</label>
+          <input id="inStill" type="number" step="0.01" min="0" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label for="inMove" data-i18n="adad.in.move">Moving minimum CoF (°)</label>
+          <input id="inMove" type="number" step="0.01" min="0" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label for="inBloom" data-i18n="adad.in.bloom">Bloom per shot (°)</label>
+          <input id="inBloom" type="number" step="0.005" min="0" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label for="inRpm" data-i18n="adad.in.rpm">Rate of fire (RPM)</label>
+          <input id="inRpm" type="number" step="1" min="1" inputmode="numeric">
+          <div class="hint" data-i18n="adad.in.rpmHint">Used for the still-window and reset timing.</div>
+        </div>
+        <div class="field">
+          <label for="inMax" data-i18n="adad.in.max">Still maximum CoF (°) — optional</label>
+          <input id="inMax" type="number" step="0.01" min="0" inputmode="decimal" placeholder="unknown">
+          <div class="hint" id="inMaxHint" data-i18n="adad.in.maxHintHist">The reset clamp. Not stored in the Toolbox — leave blank if you don't know it.</div>
+        </div>
+      </div>
+
+      <div class="verdict" aria-live="polite">
+        <div class="bignum" id="nBig">–</div>
+        <div>
+          <div class="what" id="nWhat"></div>
+          <div class="formula" id="nFormula"></div>
+        </div>
+      </div>
+
+      <div class="cols">
+        <div>
+          <h3 data-i18n="adad.burst.h">Worked burst — 10 rounds, ideal rhythm</h3>
+          <table class="shots" id="shotTable">
+            <thead><tr><th data-i18n="adad.burst.shot">Shot</th><th data-i18n="adad.burst.stance">Stance</th><th data-i18n="adad.burst.cof">CoF after shot</th><th data-i18n="adad.burst.ifmoving">If moving all along</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="finals" id="finals"></div>
+        </div>
+        <div>
+          <h3 data-i18n="adad.chart.h">Cone growth</h3>
+          <div id="chart"></div>
+          <div class="legend">
+            <span><span class="sw" style="background:var(--accent)"></span><span data-i18n="adad.chart.ideal">Ideal rhythm</span></span>
+            <span><span class="sw" style="background:var(--adad-move)"></span><span data-i18n="adad.chart.moving">Moving the whole burst</span></span>
+          </div>
+          <div class="resetbox" id="resetBox"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="wc-panel" aria-labelledby="tblH">
+      <h2 id="tblH" data-i18n="adad.table.hCur">Every weapon — current Census data</h2>
+      <p class="sub" data-i18n="adad.table.sub">Still-shot counts use the <b>standing</b> values. Tap any row to load that weapon into the calculator, where you can also switch to its crouching numbers. A dash means there is no usable value for that gun — nothing has been filled in.</p>
+      <div class="tools">
+        <input type="search" id="q" placeholder="Search weapons… (e.g. Naginata, SAW, carbine)" aria-label="Search weapons" data-i18n-placeholder="adad.search" data-i18n-aria-label="adad.searchAria">
+        <select id="fFac" aria-label="Filter by faction" data-i18n-aria-label="adad.facAria">
+          <option value="" data-i18n="adad.fac.all">All factions</option><option>TR</option><option>NC</option><option>VS</option><option>NS</option>
+        </select>
+        <select id="fCat" aria-label="Filter by category" data-i18n-aria-label="adad.catAria"><option value="" data-i18n="adad.cat.all">All categories</option></select>
+        <span class="count" id="rowCount"></span>
+      </div>
+      <div class="tscroll">
+        <table class="weapons" id="wtable">
+          <thead><tr>
+            <th data-i18n="adad.col.weapon">Weapon</th><th data-i18n="adad.col.faction">Faction</th><th data-i18n="adad.col.category">Category</th><th data-i18n="adad.col.rpm">RPM</th>
+            <th data-i18n="adad.col.adsStill">ADS still</th><th data-i18n="adad.col.adsMove">ADS move</th><th data-i18n="adad.col.adsBloom">ADS bloom</th><th data-i18n="adad.col.freeAds">Free ADS</th>
+            <th data-i18n="adad.col.hipStill">Hip still</th><th data-i18n="adad.col.hipMove">Hip move</th><th data-i18n="adad.col.hipBloom">Hip bloom</th><th data-i18n="adad.col.freeHip">Free hip</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="note" data-i18n="adad.table.note">“Free” = shots you can fire standing still before strafing costs nothing. Weapons with <b>0 bloom</b> (most shotguns) never grow their cone while firing, so every still shot is free — shown as “no bloom” rather than a count. The NSX Naginata and TRAC-5 are pinned at the top as the worked examples.</p>
+    </section>
+
+    <section class="wc-panel" aria-labelledby="noteH">
+      <h2 id="noteH" data-i18n="adad.notes.h">The reset, and the fine print</h2>
+      <ul class="notes">
+        <li data-i18n="adad.notes.reset"><b>Resetting the cone:</b> stop firing and recovery begins after a delay of one refire time (60,000 ÷ RPM milliseconds), then the cone shrinks at <b>20° per second</b> down to your current stance's minimum. Standing still also clamps a bloomed cone instantly down to the still <i>maximum</i> CoF — famously small on the Naginata — but the 2018 Toolbox data doesn't store maximum CoF for any stance, so in the historical version that value is unknown unless you type it into the calculator yourself; the current Census data fills it in.</li>
+        <li data-i18n="adad.notes.direction"><b>Direction changes:</b> the free-shot count is your gun's clock. How often you flip direction is the enemy's clock — forum math on strafe speeds puts a useful flip at well under a second per direction, kept unpredictable. This page computes the gun side only.</li>
+        <li id="notesNs"><b>NS-11C discrepancy, flagged honestly:</b> Iridar's article text credits the NS-11C with 5 free ADS shots, but the v6h sheet's own numbers for it (still 0.1, moving 0.25, bloom 0.05) compute to <b>3</b>. The table shows what the sheet computes; the article was likely written against older stats.</li>
+        <li data-i18n="adad.notes.rounding"><b>Rounding:</b> counts are floored — a fractional shot doesn't exist. If the cone lands exactly on the moving minimum, that shot counts as free, matching Iridar's TRAC-5 example (4 shots: 0.1 + 4 × 0.05 = 0.3).</li>
+      </ul>
+    </section>
+
+    <footer class="wc-panel">
+      <p data-i18n-html="adad.foot">Method paraphrased from Iridar's <i>Weapon Mechanics</i> guide (<a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/" target="_blank" rel="noopener">archived copy</a>). Weapon data extracted from the Stats sheet of <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/Iridars-Toolbox-v6h.zip" target="_blank" rel="noopener">Iridar's Toolbox v6h</a> (Stats sheet dated 2018-08-19). Current data from the Census API via the site's weapon snapshot. Worked examples verified by hand: TRAC-5 ADS (0.3 − 0.1) ÷ 0.05 = 4 free shots; NSX Naginata ADS (0.4 − 0.15) ÷ 0.06 = 4.17 → 4 free shots.</p>
+    </footer>
+  </main>
+  <script type="module" src="weapon-adad.mjs?v=20261109-adad1"></script>
+</body>
+</html>

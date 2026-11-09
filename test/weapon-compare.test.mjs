@@ -46,6 +46,7 @@ test("the page is wired: stylesheet, module, language menu, footer link, credits
   assert.match(html, /Izubrr\/planetside_weapon_compare/);
   assert.match(html, /B4rrCH\/Ps2TtkCalculator/);
   assert.match(read("index.html"), /href="weapon-compare\.html"/);
+  assert.match(html, /href="weapon-adad\.html"/);
   assert.match(read("NOTICE"), /weapon-compare\.html/);
 });
 

@@ -1,0 +1,94 @@
+/* weapon-adad.html: the Ideal ADAD calculator. Flat style (square corners), theme
+ * tokens only — the calculator chrome from the standalone artifact, restyled to
+ * sit next to weapon-compare. */
+:root {
+  --adad-move: #6ea8fe;
+  --adad-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+}
+:root[data-theme="light"] {
+  --adad-move: #2563eb;
+}
+
+#gunName { font-size: 22px; font-weight: 700; }
+#gunMeta { color: var(--dim); font-size: 13.5px; font-family: var(--adad-mono); }
+.adad-banner { background: var(--bg); border: 1px solid var(--wc-gold); padding: 12px 14px; font-size: 14.5px; }
+.adad-banner strong { text-transform: uppercase; letter-spacing: .04em; font-size: 12.5px; }
+
+/* calculator head: name | stance + posture */
+.calc-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; justify-content: space-between; }
+.calc-head h2 { font-size: 1rem; margin: 0 0 6px; }
+.segrow { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin: 12px 0 4px; }
+.segrow .lbl { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); font-weight: 700; }
+
+/* editable parameters */
+.adad-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 14px 0 6px; }
+.field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--dim); margin-bottom: 4px; }
+.field input { width: 100%; padding: 9px 10px; font: 600 17px var(--adad-mono); color: var(--text); background: var(--input-bg); border: 1px solid var(--border); border-radius: 0; }
+.field input:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
+.field .hint { font-size: 12px; color: var(--dim); margin-top: 3px; }
+
+/* verdict */
+.verdict { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; background: var(--bg); padding: 14px 16px; margin: 14px 0; }
+.bignum { font: 700 52px/1 var(--adad-mono); color: var(--accent); }
+.verdict .what { font-size: 15px; max-width: 52ch; }
+.formula { font-family: var(--adad-mono); font-size: 14px; color: var(--dim); }
+.formula b { color: var(--text); }
+
+/* worked burst + chart */
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 760px) { .cols { grid-template-columns: 1fr; } }
+.cols h3 { font-size: 15px; margin: 0 0 6px; }
+table.shots { width: 100%; border-collapse: collapse; font-family: var(--adad-mono); font-size: 13.5px; }
+table.shots th, table.shots td { padding: 5px 8px; text-align: right; border-bottom: 1px solid var(--border); }
+table.shots th { color: var(--dim); font-weight: 600; }
+table.shots td:first-child, table.shots th:first-child { text-align: left; }
+tr.switchrow td { background: var(--bg); font-weight: 700; }
+.tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .03em; background: var(--chip-active-bg); color: var(--text); padding: 1px 6px; margin-left: 6px; vertical-align: 2px; }
+.finals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+.final { border: 1px solid var(--border); padding: 10px 12px; }
+.final .t { font-size: 12px; color: var(--dim); font-weight: 600; }
+.final .v { font: 700 22px var(--adad-mono); }
+.final.win { border-color: var(--wc-good); }
+.resetbox { border-top: 1px dashed var(--border); margin-top: 16px; padding-top: 12px; font-size: 14.5px; }
+svg.chart { width: 100%; height: auto; display: block; }
+.chart .ax { stroke: var(--border); stroke-width: 1; }
+.chart .ax-t { fill: var(--dim); font-size: 11px; }
+.chart .line-ideal { stroke: var(--accent); stroke-width: 2; }
+.chart .line-move { stroke: var(--adad-move); stroke-width: 2; }
+.legend { font-size: 12.5px; color: var(--dim); display: flex; gap: 16px; flex-wrap: wrap; }
+.legend .sw { width: 18px; height: 3px; vertical-align: middle; margin-right: 5px; }
+
+/* weapon table */
+.sub { color: var(--dim); font-size: 14px; }
+.tools { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+.tools input[type="search"] { flex: 1 1 240px; padding: 10px 12px; font: 500 15px inherit; color: var(--text); background: var(--input-bg); border: 1px solid var(--border); border-radius: 0; }
+.tools select { padding: 10px; font: 500 14px inherit; color: var(--text); background: var(--input-bg); border: 1px solid var(--border); border-radius: 0; }
+.tools input:focus-visible, .tools select:focus-visible { outline: 1px solid var(--accent); }
+.count { font-size: 13px; color: var(--dim); align-self: center; }
+.tscroll { overflow-x: auto; }
+table.weapons { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 760px; }
+table.weapons th, table.weapons td { padding: 7px 9px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
+table.weapons th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--dim); position: sticky; top: 0; background: var(--panel); }
+table.weapons td:nth-child(1), table.weapons th:nth-child(1),
+table.weapons td:nth-child(2), table.weapons th:nth-child(2),
+table.weapons td:nth-child(3), table.weapons th:nth-child(3) { text-align: left; }
+table.weapons td.n { font-family: var(--adad-mono); font-weight: 700; font-size: 16px; color: var(--accent); }
+table.weapons td.raw { font-family: var(--adad-mono); color: var(--dim); }
+table.weapons tbody tr { cursor: pointer; }
+table.weapons tbody tr:hover td { background: var(--bg); }
+table.weapons tr.pin td { background: var(--row-alt); }
+@media (max-width: 760px) {
+  .tscroll { overflow: visible; }
+  table.weapons { min-width: 0; }
+  table.weapons thead { display: none; }
+  table.weapons, table.weapons tbody, table.weapons tr, table.weapons td { display: block; width: 100%; }
+  table.weapons tbody tr { border: 1px solid var(--border); margin: 0 0 12px; padding: 10px 12px; background: var(--panel); }
+  table.weapons td { border: 0; padding: 3px 0; text-align: left; white-space: normal; display: flex; justify-content: space-between; gap: 14px; }
+  table.weapons td::before { content: attr(data-l); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--dim); font-weight: 600; padding-top: 2px; }
+  table.weapons td.namecell { font-size: 17px; font-weight: 700; }
+  table.weapons td.namecell::before { display: none; }
+}
+.note { font-size: 13.5px; color: var(--dim); margin-top: 8px; }
+ul.notes { margin: 6px 0 0; padding-left: 18px; font-size: 14px; color: var(--dim); }
+ul.notes li { margin-bottom: 5px; }
+ul.notes b { color: var(--text); }
