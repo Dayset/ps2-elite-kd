@@ -5,7 +5,8 @@
 // cheesy players like LapinFonce (K/D #70, Brave #103, Infantry 95.6% —
 // 25.99%, #1042 under the old formula, 99.07%, #4 under this one). So
 // Infantry no longer scores: it lives only in the gate — the cheesy set is
-// Brave under 1.7 and Infantry under 50% (see the columns page card).
+// Brave under 1.7 on PC (2.9 on PlayStation, same trimmed-mean method) and
+// Infantry under 50% (see the columns page card).
 //   G = (1 − rkdRank/N) × (1 − braveRank/N) × 100,
 // the share of the population you beat on K/D and Brave at once (N =
 // players with a K/D; ranks 1 = best — K/D high, Brave low). Most players

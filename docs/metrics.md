@@ -4,6 +4,10 @@ How each number on the site is calculated. For an overview, see the [README](../
 
 Use the **Raw** and **Smooth** chart views to see the underlying curve. The table columns below are the summaries built from it.
 
+## Rooms: PC and PlayStation are computed separately
+
+Apply the PC/PS difference in calculations from the beginning: every constant, threshold, cut and calibration is computed separately per room from that room's own data — never carry a PC value onto PlayStation (or vice versa). Rank-based scores are room-relative by construction (ranks inside the room's own population); any absolute number needs one PC value and one PS value. First case: the 🌈 G gate's Brave line is 1.7 on PC and 2.9 on PlayStation, both by the same drop-top-2 trimmed-mean method on the top 100 by K/D of that room.
+
 ## Default columns
 
 ### ⚔️ iVi (skill rating)
