@@ -2,7 +2,7 @@
 import { S, FACS, esc, $, when, info, wide } from "./state.js?v=20261018-scrub2";
 import { get } from "./api.js?v=20261018-scrub2";
 import { poolLabel } from "./other.js?v=20261107-fac1";
-import { t as tr } from "../../i18n.mjs";
+import { t as tr, currentLang } from "../../i18n.mjs";
 import { renderSkillFoot } from "./skill-foot.js?v=20261102-globfoot1";
 import { myVoteMark } from "./vote.js?v=20261101-votejoin1";
 
@@ -34,6 +34,18 @@ function benchLine(sl) {
   return out.join(" · ");
 }
 
+/** Census "final" numbers mean different things per alert kind (#117): % of regions, facilities or points. */
+export const finalIsCount = (a) => a.kind === "aerial" || a.kind === "pressure" || a.kind === "facility";
+export function finalNum(a, f) {
+  const v = +a.final[f];
+  return finalIsCount(a) ? Math.round(v).toLocaleString(currentLang()) : v.toFixed(1);
+}
+export function finalUnit(a) {
+  if (a.kind === "aerial" || a.kind === "pressure") return ` ${tr("or.unitPts", "pts")}`;
+  if (a.kind === "facility") return ` ${tr("or.unitFac", "facilities")}`;
+  return "%";
+}
+
 const HIST_MAX_WIDE = 40, HIST_MAX_PHONE = 10;   // phone: shorter card list (#16)
 export function renderHist() {
   const HIST_MAX = wide() ? HIST_MAX_WIDE : HIST_MAX_PHONE;
@@ -41,7 +53,7 @@ export function renderHist() {
   const rows = list.map((a) => `<tr data-k="${esc(a.key)}" tabindex="0" role="button" aria-label="${tr("or.openAlert", "Open {a} alert", { a: `${esc(a.world_name)} ${esc(a.zone_name)}` })}"><td class="hend">${a.end_ts ? when(a.end_ts) : "—"}</td><td class="hsrv">${esc(a.world_name)}</td><td class="hzone">${esc(a.zone_name)}${a.kind === "meltdown" ? `<span class="melt">${tr("or.meltdown", "Meltdown")}</span>` : ""}</td>
       <td class="num hlen">${a.dur ? tr("or.nMin", "{n} min", { n: esc(a.dur) }) : "—"}</td>
       <td class="hwin">${a.winner ? `<b class="${a.winner}">${a.winner}</b>` : (a.status === "interrupted" ? `<span title="${esc(tr("or.int", "Server went down mid-alert. No winner, votes refunded."))}">${esc(tr("or.badge.interrupted", "interrupted"))}</span>` : esc(a.status === "unresolved" ? tr("or.badge.unresolved", "unresolved") : a.status))}${myVoteMark(myVotes, a.key)}</td>
-      <td class="num hfin">${a.final ? FACS.map((f) => (+a.final[f]).toFixed(1)).join(" / ") : "—"}</td>
+      <td class="num hfin">${a.final ? FACS.map((f) => finalNum(a, f)).join(" / ") + (finalIsCount(a) ? finalUnit(a) : "") : "—"}</td>
       <td class="hbas">${a.basis === "sudden_death" ? tr("or.st.sd", "sudden death") : a.basis === "snapshot" ? tr("or.basisSnap", "map snapshot") : a.basis ? tr("or.basisFinal", "Census final") : ""}</td>
       <td class="flag">${a.report && a.report.flagged ? `${a.report.confirmed ? `☠️${a.report.confirmed} ` : ""}${a.report.flagged - a.report.confirmed ? `⚠️${a.report.flagged - a.report.confirmed} ` : ""}` : ""}${(a.flags || []).map((f) => esc(f.replace(/_/g, " "))).join(", ")}</td></tr>`);
   $("hist").querySelector("tbody").innerHTML = rows.join("") || `<tr><td colspan="8" class="note">${tr("or.noHist", "No settled alerts yet.")}</td></tr>`;

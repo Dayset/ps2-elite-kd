@@ -32,6 +32,6 @@ test("focus box: one fixed height, long names ellipsis, never grows", () => {
 
 test("focus pins: commander + main + css move together", () => {
   assert.match(main, /\.\/commander\.js\?v=20261102-layout1/);
-  assert.match(html, /js\/main\.js\?v=20261107-fac1/);
+  assert.match(html, /js\/main\.js\?v=20261109-fin1/);
   assert.match(html, /oracle\.css\?v=20261102-layout1/);
 });

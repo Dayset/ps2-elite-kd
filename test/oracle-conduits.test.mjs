@@ -138,7 +138,7 @@ test("wiring: button, toggle handler, filter call, pins, keys", () => {
   assert.ok(main.includes("delete soloMem[S.selected]"), "toggle clears sticky state");
   assert.ok(main.includes('localStorage.setItem(CONDUIT_KEY'), "toggle persists");
   assert.ok(main.includes("delete soloMem[a.key]"), "regions load clears sticky state");
-  assert.ok(index.includes('js/main.js?v=20261107-fac1'), "main pin bumped");
+  assert.ok(index.includes('js/main.js?v=20261109-fin1'), "main pin bumped");
   assert.ok(index.includes('oracle.css?v=20261102-layout1'), "css pin bumped");
   assert.ok(map.includes('fights.js?v=20261102-conduit1'), "map fights import bumped");
   assert.ok(css.includes(".conduitbtn:not(.on)"), "conduit button off style");

@@ -168,7 +168,8 @@ async function getMeta(db, k) {
 /**
  * Live-state input guard -> list of reasons (empty = clean).
  *   neutral_heavy:<owned%>  under 90 % of regions owned (Census map gone neutral);
- *                           not checked for Meltdowns, which lock most of the map by design
+ *                           not checked for Meltdowns, which lock most of the map by design,
+ *                           nor for aerial / pressure (points races: territory cannot change the result, #117)
  *   map_frozen              zone map identical to 10+ min ago while 2+ captures happened
  *   map_stale               no fresh map for 5+ min
  *   one_faction:<FAC>       one faction holds >= ONE_FACTION_PCT of the territory (#114: Indar 100 % NC
@@ -178,11 +179,14 @@ async function getMeta(db, k) {
  */
 export const ONE_FACTION_PCT = 98;
 export const DEGENERATE_BY_MIN = 10;
+/** Kinds whose result depends on the territory map, so a neutral-heavy map matters (#117). */
+export const neutralMatters = (kind) => kind !== "meltdown" && kind !== "aerial" && kind !== "pressure";
+
 export function dataSuspect(zNow, nowTs, s10, zone, flipsIn10, now, kind = "territory", tMin = 0, dur = Infinity) {
   const out = [];
   const terr = territory(zNow);
   const owned = terr.VS + terr.NC + terr.TR;
-  if (kind !== "meltdown" && owned < 90) out.push(`neutral_heavy:${owned.toFixed(1)}`);
+  if (neutralMatters(kind) && owned < 90) out.push(`neutral_heavy:${owned.toFixed(1)}`);
   const z10 = s10 && s10.zones[String(zone)];
   if (z10 && now - s10.ts <= 900 && flipsIn10 >= 2 && JSON.stringify(z10) === JSON.stringify(zNow)) out.push("map_frozen");
   if (now - nowTs > 300) out.push("map_stale");
@@ -547,7 +551,7 @@ export async function runCycle(env, nowMs = Date.now()) {
       if (z) {
         const terr = territory(z);
         const owned = terr.VS + terr.NC + terr.TR;
-        if (base.kind !== "meltdown" && owned < 90) flags.push(`neutral_heavy:${owned.toFixed(1)}`);
+        if (neutralMatters(base.kind) && owned < 90) flags.push(`neutral_heavy:${owned.toFixed(1)}`);
         const sw = scoreWinner(terr);
         if (finalOk && sw !== scoreWinner(final)) flags.push(`snapshot_winner_${sw}`);
         if (endTs - pre.ts > 600) flags.push("snapshot_stale");
