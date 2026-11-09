@@ -5,9 +5,9 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import {
   SHOTS, RECOVERY_RATE, TARGET_D, COST_DISTANCES, nStill, simulate, simulatePlain, resetInfo,
-  paramsFor, deriveCurrent, finalsHtml, spreadD, hitChance, burstHitAvg, costSummary, pctNum, costHtml, fmt, fmtT,
+  paramsFor, deriveCurrent, finalsHtml, spreadD, hitChance, burstHitAvg, costSummary, costCurve, COST_MAX_D, pctNum, fmt, fmtT,
   SORT_KEYS, sortValue, compareValues, sortEntries, orderEntries, imageSrcFor, compareHrefFor, slugName, detailHtml, rowHtml, lossPair, lossCell,
-  ATT_KEYS, ATT_EFFECTS, attTogglesFor, applyAttachments,
+  ATT_KEYS, ATT_EFFECTS, attTogglesFor, applyAttachments, chooseAtt, attSlot, groupByCategory,
 } from "../weapon-adad.mjs";
 
 const read = (p) => fs.readFileSync(new URL(p, import.meta.url), "utf8");
@@ -143,21 +143,23 @@ test("burstHitAvg edges: bloom 0 and zero free shots", () => {
   assert.equal(pctNum(null), "—", "null loss prints a dash, never NaN");
 });
 
-test("costHtml: the panel carries both distances, all three rhythms, and the loss lines", () => {
-  const rows = costSummary(0.15, 0.4, 0.06, 4, SHOTS);
-  const html = costHtml(rows, {
-    h: "What it costs", intro: "intro", colDist: "Distance", colRhythm: "Rhythm", colMiss: "Miss", colHits: "Hits per burst",
-    ideal: "Ideal rhythm", still: "Still throughout", moving: "Moving throughout",
-    losses: ["At 35 m, loss 3.8%.", "At 60 m, loss 31.8%."], caveat: "caveat",
-  });
-  assert.match(html, /<h3>What it costs<\/h3>/);
-  assert.match(html, /35 m<\/td>/);
-  assert.match(html, /60 m<\/td>/);
-  for (const label of ["Ideal rhythm", "Still throughout", "Moving throughout"]) assert.ok(html.includes(label), label);
-  assert.match(html, /14\.6%/);
-  assert.match(html, /41\.7%/);
-  assert.match(html, /8\.5<\/td>/, "Naginata ideal hits 8.5 of 10 at 60 m");
-  assert.match(html, /At 60 m, loss 31\.8%\./);
+test("costCurve: one point per metre, and it agrees with costSummary at 35 m and 60 m", () => {
+  const rows = costCurve(0.15, 0.4, 0.06, 4, SHOTS);
+  assert.equal(rows.length, COST_MAX_D);
+  assert.equal(rows[0].dist, 1);
+  assert.equal(rows[COST_MAX_D - 1].dist, COST_MAX_D);
+  const sum = costSummary(0.15, 0.4, 0.06, 4, SHOTS);
+  for (const s of sum) {
+    const r = rows[s.dist - 1];
+    near(r.ideal, s.ideal, 1e-12, `ideal hits at ${s.dist} m`);
+    near(r.moving, s.moving, 1e-12, `moving hits at ${s.dist} m`);
+    near(r.lossMoving, s.lossMoving, 1e-12, `strafing loss at ${s.dist} m`);
+    near(r.lossIdeal, s.lossIdeal, 1e-12, `ideal-rhythm cost at ${s.dist} m`);
+  }
+  assert.ok(rows.every((r) => r.ideal >= r.moving - 1e-12), "the ideal rhythm never hits less than moving the whole burst");
+  assert.ok(rows.every((r) => r.still >= r.ideal - 1e-12), "standing still never hits less than the ideal rhythm");
+  assert.ok(rows.every((r) => r.lossMoving >= 0 && r.lossMoving <= 1 && r.lossIdeal >= 0 && r.lossIdeal <= 1), "losses are fractions, never NaN");
+  assert.equal(rows[0].lossMoving, 0, "at 1 m everything hits: no loss");
 });
 
 test("finalsHtml: .win is hardcoded on the ideal rhythm, as in the artifact", () => {  const html = finalsHtml(0.76, 0.75, 1.0, { ideal: "Ideal rhythm", still: "Still throughout", moving: "Moving throughout" });
@@ -472,7 +474,7 @@ test("rowHtml: the collapsed summary — toggle, image, free counts, Compare; no
   assert.match(open, /id="detail-nsx-naginata"/);
   assert.match(open, /0\.76<\/td>/, "the open detail carries the worked burst");
   assert.match(open, /ADS, standing/);
-  assert.match(open, /colspan="11"/, "the detail row spans all eleven columns");
+  assert.match(open, /colspan="10"/, "the detail row spans all ten columns");
   const mana = byName("MANA Anti-Personnel Turret");
   assert.match(rowHtml({ row: mana, rec: mana }, opts), /<td class="n" data-l="Loss @ 60 m">—<\/td>/, "no ADS numbers, no invented loss");
   const burst = byName("Equinox VE2 Burst");
@@ -482,11 +484,14 @@ test("rowHtml: the collapsed summary — toggle, image, free counts, Compare; no
 });
 
 test("attTogglesFor: only the CoF/bloom attachments the gun can mount", () => {
-  assert.deepEqual(ATT_KEYS, ["Laser Sight", "Compensator", "Heavy Barrel", "Short Barrel"]);
+  assert.deepEqual(ATT_KEYS, ["Laser Sight", "Compensator", "Heavy Barrel", "Short Barrel", "Hybrid Laser", "Weighted Receiver", "Stabilizing Rotor", "Heavy Magazine"]);
   assert.deepEqual(ATT_EFFECTS["Laser Sight"], { hipMinCof: 0.67 }, "the laser factor is weapon-sim.mjs's");
   assert.deepEqual(ATT_EFFECTS["Compensator"], { hipMinCof: 1.15 });
   assert.deepEqual(ATT_EFFECTS["Heavy Barrel"], { adsBloom: 0.8 });
   assert.deepEqual(ATT_EFFECTS["Short Barrel"], { hipBloom: 0.6 });
+  assert.deepEqual(ATT_EFFECTS["Weighted Receiver"], { adsZeroCof: 1 }, "the Weighted Receiver zeroes the aimed cone (weapon-sim.mjs)");
+  assert.deepEqual(ATT_EFFECTS["Stabilizing Rotor"], { hipBloom: 0.75, adsBloom: 0.75 });
+  assert.deepEqual(ATT_EFFECTS["Heavy Magazine"], { hipMinCof: 1.2 });
   assert.equal(itemIds["Blitz GD-10"], 27001);
   assert.deepEqual(attTogglesFor(27001, recoil), ["Laser Sight", "Compensator"], "the Blitz mounts a laser and a compensator, nothing else that matters");
   assert.equal(itemIds["GD-22S"], 7233);
@@ -541,8 +546,8 @@ test("applyAttachments: the acceptance numbers — Blitz hip 10 → 6 → 11, GD
 
 test("the page is wired: ids, back link, and the link from weapon-compare", () => {
   const html = read("../weapon-adad.html");
-  assert.match(html, /weapon-adad\.css\?v=20261109-adadux1/);
-  assert.match(html, /weapon-adad\.mjs\?v=20261109-adadux1/);
+  assert.match(html, /weapon-adad\.css\?v=20261109-adadux2/);
+  assert.match(html, /weapon-adad\.mjs\?v=20261109-adadux2/);
   assert.match(html, /data-sort="loss35"/, "the 35 m loss header sorts");
   assert.match(html, /data-sort="loss60"/, "the 60 m loss header sorts");
   assert.match(html, /data-i18n="adad\.col\.loss35"/, "the 35 m loss header is translated");
@@ -555,7 +560,7 @@ test("the page is wired: ids, back link, and the link from weapon-compare", () =
   assert.match(html, /adad-images\.json/, "the image map is preloaded");
   assert.match(html, /data-sort="name"/, "the name header sorts");
   assert.match(html, /data-sort="faction"/);
-  assert.match(html, /data-sort="category"/);
+  assert.ok(!/data-sort="category"/.test(html), "no category column: every group header names its category");
   assert.match(html, /data-sort="rpm"/);
   assert.match(html, /data-sort="freeAds"/);
   assert.match(html, /data-sort="freeHip"/);
@@ -568,9 +573,60 @@ test("the page is wired: ids, back link, and the link from weapon-compare", () =
   assert.match(html, /href="weapon-compare\.html"/);
   assert.match(html, /Iridars-Toolbox-v6h\.zip/);
   assert.match(html, /Historical \(Toolbox v6h, Aug 2018\)/);
-  for (const id of ["adadVerCur", "adadVerHist", "adadBanner", "gunName", "gunMeta", "btnAds", "btnHip", "btnStand", "btnCrouch", "inStill", "inMove", "inBloom", "inRpm", "inMax", "attBox", "attRow", "attNote", "nBig", "nWhat", "nFormula", "shotTable", "finals", "costBox", "chart", "resetBox", "tblH", "q", "fFac", "fCat", "rowCount", "wtable", "langSelect"]) {
+  for (const id of ["adadVerCur", "adadVerHist", "adadBanner", "gunName", "gunMeta", "btnAds", "btnHip", "btnStand", "btnCrouch", "inStill", "inMove", "inBloom", "inRpm", "inMax", "attBox", "attRow", "attNote", "nBig", "nWhat", "nFormula", "shotTable", "finals", "costBox", "costChart", "costLegend", "costAt", "costLoss", "costDist", "costDistVal", "costModeLoss", "costModeHits", "chart", "resetBox", "tblH", "q", "fFac", "catChips", "catToggleAll", "rowCount", "wtable", "langSelect"]) {
     assert.match(html, new RegExp(`id="${id}"`), id);
   }
   assert.match(read("../weapon-compare.html"), /href="weapon-adad\.html"/);
   assert.match(read("../NOTICE"), /weapon-adad\.html/);
+});
+
+test("chooseAtt: one part per slot — a barrel part replaces the other barrel part, a rail part stays", () => {
+  assert.equal(attSlot("Heavy Barrel"), "barrel");
+  assert.equal(attSlot("Short Barrel"), "barrel");
+  assert.equal(attSlot("Muzzle Brake"), "barrel", "a Muzzle Brake is a Compensator, a barrel part");
+  assert.equal(attSlot("Laser Sight"), "rail");
+  assert.equal(attSlot("Weighted Receiver"), "rail");
+  let a = chooseAtt(new Set(), "barrel", "Heavy Barrel");
+  assert.deepEqual([...a], ["Heavy Barrel"]);
+  a = chooseAtt(a, "rail", "Laser Sight");
+  assert.deepEqual([...a].sort(), ["Heavy Barrel", "Laser Sight"], "a barrel part and a rail part together are fine");
+  a = chooseAtt(a, "barrel", "Short Barrel");
+  assert.deepEqual([...a].sort(), ["Laser Sight", "Short Barrel"], "Short Barrel replaces Heavy Barrel: both are barrel parts");
+  a = chooseAtt(a, "rail", "Weighted Receiver");
+  assert.deepEqual([...a].sort(), ["Short Barrel", "Weighted Receiver"], "two rail parts cannot be fitted together either");
+  a = chooseAtt(a, "barrel", "");
+  assert.deepEqual([...a], ["Weighted Receiver"], "None empties the slot");
+  const before = new Set(["Heavy Barrel"]);
+  chooseAtt(before, "barrel", "Short Barrel");
+  assert.deepEqual([...before], ["Heavy Barrel"], "pure: the old set is not touched");
+});
+
+test("applyAttachments: Weighted Receiver zeroes the ADS cone, Stabilizing Rotor cuts both blooms, Heavy Magazine raises the hip cone", () => {
+  const ads = applyAttachments({ still: 0.15, move: 0.4, bloom: 0.06 }, "ads", new Set(["Weighted Receiver"]));
+  assert.deepEqual([ads.still, ads.move, ads.bloom], [0, 0, 0.06]);
+  assert.equal(nStill(ads.still, ads.move, ads.bloom), 0, "no cone to grow out of: strafe from shot 1");
+  assert.deepEqual(applyAttachments({ still: 0.15, move: 0.4, bloom: 0.06 }, "hip", new Set(["Weighted Receiver"])), { still: 0.15, move: 0.4, bloom: 0.06 }, "hipfire is untouched");
+  const rotor = new Set(["Stabilizing Rotor"]);
+  near(applyAttachments({ still: 1, move: 1.5, bloom: 0.1 }, "ads", rotor).bloom, 0.075, 1e-9, "rotor: ADS bloom ×0.75");
+  near(applyAttachments({ still: 1, move: 1.5, bloom: 0.1 }, "hip", rotor).bloom, 0.075, 1e-9, "rotor: hip bloom ×0.75");
+  const mag = applyAttachments({ still: 1, move: 1.5, bloom: 0.1 }, "hip", new Set(["Heavy Magazine"]));
+  near(mag.still, 1.2, 1e-9); near(mag.move, 1.8, 1e-9);
+  assert.deepEqual(applyAttachments({ still: null, move: 0.3, bloom: 0.05 }, "ads", new Set(["Weighted Receiver"])), { still: null, move: 0, bloom: 0.05 }, "a null passes through");
+});
+
+test("groupByCategory: category order, every weapon in exactly one group", () => {
+  const e = (n, c) => ({ row: { n, c } });
+  const g = groupByCategory([e("a", "Pistol"), e("b", "Carbine"), e("c", "Assault Rifle"), e("d", "Carbine"), e("e", "Zeta Gun"), e("f", "Amp Gun")]);
+  assert.deepEqual(g.map(([c]) => c), ["Assault Rifle", "Carbine", "Pistol", "Amp Gun", "Zeta Gun"], "known categories in the site's order, others alphabetically after them");
+  assert.deepEqual(g[1][1].map((x) => x.row.n), ["b", "d"]);
+  assert.equal(g.reduce((m, [, l]) => m + l.length, 0), 6);
+});
+
+test("the page has the category groups, the faction chips and no filter dropdowns", () => {
+  const html = read("../weapon-adad.html");
+  assert.ok(!/id="fCat"/.test(html), "no category dropdown: the table is grouped by category");
+  assert.ok(!/<select id="fFac"/.test(html), "no faction dropdown: chips");
+  assert.match(html, /data-fac="VS"/);
+  assert.match(read("../weapon-adad.css"), /\.cat-head/, "the category header row has its styles");
+  assert.match(read("../weapon-adad.css"), /\.att-slot/, "the attachment slot groups have styles");
 });

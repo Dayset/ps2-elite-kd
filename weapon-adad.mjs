@@ -16,6 +16,7 @@
  * Pure maths is exported for tests; the DOM wiring runs at the bottom.
  */
 import { t as tr, currentLang, ready } from "./i18n.mjs";
+import { ATTACHMENTS, SLOTS, canon, slotOf } from "./weapon-sim.mjs?v=20261109-deepfollow1";
 
 export const RECOVERY_RATE = 20; // deg/s: CoF recovery after one refire of delay
 export const SHOTS = 10;
@@ -142,51 +143,54 @@ export function nCell(still, move, bloom) {
 }
 
 /* ---------- attachments that change the cone or the bloom ---------- */
-/** The four attachments that change the ADAD math, with the site's own
- *  weapon-model factors (weapon-sim.mjs): Laser Sight and Compensator scale
- *  the hip CoF minima, Heavy Barrel scales ADS bloom, Short Barrel scales
- *  hip bloom. No other attachment touches CoF or bloom, so no other
- *  attachment gets a toggle. */
-export const ATT_KEYS = ["Laser Sight", "Compensator", "Heavy Barrel", "Short Barrel"];
-export const ATT_EFFECTS = {
-  "Laser Sight": { hipMinCof: 0.67 },
-  "Compensator": { hipMinCof: 1.15 },
-  "Heavy Barrel": { adsBloom: 0.8 },
-  "Short Barrel": { hipBloom: 0.6 },
-};
-/** Census names weapon-sim.mjs treats as one of the four (its alias map):
- *  the Muzzle Brake sits beside the Compensator on the same weapons, so a
- *  gun that mounts one mounts a compensator-effect barrel part. */
-export const ATT_ALIASES = { "Muzzle Brake": "Compensator" };
+/** Every attachment in the site's weapon model (weapon-sim.mjs ATTACHMENTS, the
+ *  single source for the factors) that changes the cone or the bloom: Laser
+ *  Sight, Hybrid Laser and Compensator (hip cone), Heavy Magazine (hip cone),
+ *  Heavy Barrel (ADS bloom), Short Barrel (hip bloom), Stabilizing Rotor (both
+ *  blooms) and Weighted Receiver (ADS cone 0). Census names that weapon-sim
+ *  treats as the same part (Muzzle Brake = Compensator ...) count as it. */
+const ADAD_FX = ["hipMinCof", "hipBloom", "adsBloom", "adsZeroCof"];
+export const ATT_KEYS = ["Laser Sight", "Compensator", "Heavy Barrel", "Short Barrel", "Hybrid Laser", "Weighted Receiver", "Stabilizing Rotor", "Heavy Magazine"];
+export const ATT_EFFECTS = Object.freeze(Object.fromEntries(ATT_KEYS.map((k) => [k, Object.fromEntries(ADAD_FX.filter((fx) => ATTACHMENTS[k]?.[fx] !== undefined).map((fx) => [fx, ATTACHMENTS[k][fx]]))])));
+export const ATT_SLOTS = SLOTS; // barrel | rail | ammo: one part per slot
+export const attSlot = (name) => slotOf(canon(name));
 
-/** Which of the four CoF/bloom attachments the loaded gun can mount, from
- *  the bundled Census att data (recoil.json att[itemId] -> indices into
- *  atts, each [name, descIndex] — the same mechanism weapon-compare uses).
- *  Returned in ATT_KEYS order. [] when there is no att data (recoil not
- *  loaded, or a variant row with no Census item). */
+/** Which of those attachments the loaded gun can mount, from the bundled
+ *  Census att data (recoil.json att[itemId] -> indices into atts, each
+ *  [name, descIndex]). Returned in ATT_KEYS order. [] when there is no att
+ *  data (recoil not loaded, or a variant row with no Census item). */
 export function attTogglesFor(itemId, recoil) {
   if (!recoil || !itemId || !recoil.att || !recoil.atts) return [];
-  const names = new Set((recoil.att[String(itemId)] || []).map((i) => recoil.atts[i]?.[0]).filter(Boolean));
-  return ATT_KEYS.filter((k) => names.has(k) || [...names].some((n) => ATT_ALIASES[n] === k));
+  const names = new Set((recoil.att[String(itemId)] || []).map((i) => recoil.atts[i]?.[0]).filter(Boolean).map(canon));
+  return ATT_KEYS.filter((k) => names.has(k));
+}
+
+/** The loadout after choosing `name` in `slot` ("" = none): a slot holds one
+ *  part (a Heavy Barrel and a Short Barrel are both barrel parts, so they
+ *  cannot be fitted together; a barrel part and a rail part can). Pure: a new Set. */
+export function chooseAtt(active, slot, name) {
+  const next = new Set([...(active || [])].filter((n) => attSlot(n) !== slot));
+  if (name) next.add(name);
+  return next;
 }
 
 /** Modified (still, move, bloom) for one stance under the active
  *  attachments. p = { still, move, bloom } (nulls pass through unchanged);
- *  active = a Set of attachment names. Laser/Compensator scale the hip
- *  minima, Heavy Barrel scales ADS bloom, Short Barrel scales hip bloom;
- *  factors multiply when two apply. Pure. */
+ *  active = a Set of attachment names. Hip: the cone minima and the bloom
+ *  scale; ADS: the bloom scales, and a Weighted Receiver sets both minima to 0;
+ *  factors multiply when two parts apply. Pure. */
 export function applyAttachments(p, stance, active) {
   if (!p) return p;
   let { still, move, bloom } = p;
-  const has = (name) => active && active.has(name);
+  const fx = (key) => [...(active || [])].reduce((m, n) => m * (ATT_EFFECTS[n]?.[key] ?? 1), 1);
+  const has = (key) => [...(active || [])].some((n) => ATT_EFFECTS[n]?.[key]);
+  const mul = (v, f) => (v === null || v === undefined ? v : v * f);
   if (stance === "hip") {
-    const minMul = (has("Laser Sight") ? ATT_EFFECTS["Laser Sight"].hipMinCof : 1)
-      * (has("Compensator") ? ATT_EFFECTS["Compensator"].hipMinCof : 1);
-    if (still !== null && still !== undefined) still *= minMul;
-    if (move !== null && move !== undefined) move *= minMul;
-    if (has("Short Barrel") && bloom !== null && bloom !== undefined) bloom *= ATT_EFFECTS["Short Barrel"].hipBloom;
+    const minMul = fx("hipMinCof");
+    still = mul(still, minMul); move = mul(move, minMul); bloom = mul(bloom, fx("hipBloom"));
   } else if (stance === "ads") {
-    if (has("Heavy Barrel") && bloom !== null && bloom !== undefined) bloom *= ATT_EFFECTS["Heavy Barrel"].adsBloom;
+    bloom = mul(bloom, fx("adsBloom"));
+    if (has("adsZeroCof")) { still = mul(still, 0); move = mul(move, 0); }
   }
   return { ...p, still, move, bloom };
 }
@@ -256,21 +260,23 @@ export function pctNum(x) {
   return (x * 100).toFixed(1);
 }
 
-export function costHtml(rows, t) {
-  const miss = (v) => pctNum(1 - v) + "%";
-  const hits = (v) => (v * SHOTS).toFixed(1);
-  const cell = (label, v) => `<td class="c-txt">${label}</td><td class="c-num">${miss(v)}</td><td class="c-num">${hits(v)}</td>`;
-  let html = `<h3>${t.h}</h3><p class="cost-intro">${t.intro}</p>`
-    + `<table class="cost"><thead><tr><th class="c-txt">${t.colDist}</th><th class="c-txt">${t.colRhythm}</th><th class="c-num">${t.colMiss}</th><th class="c-num">${t.colHits}</th></tr></thead><tbody>`;
-  for (const r of rows) {
-    html += `<tr class="grp"><td class="c-dist" rowspan="3">${r.dist} m</td>${cell(t.ideal, r.ideal)}</tr>`
-      + `<tr>${cell(t.moving, r.moving)}</tr>`
-      + `<tr>${cell(t.still, r.still)}</tr>`;
+/** The cost at every whole metre from 1 to COST_MAX_D: hits per burst for the
+ *  three rhythms and the two losses (strafing the whole burst vs the ideal
+ *  rhythm, the ideal rhythm vs standing still). Pure; feeds the graph. */
+export const COST_MAX_D = 100;
+export function costCurve(still, move, bloom, nFree, shots, maxD = COST_MAX_D) {
+  const out = [];
+  for (let dist = 1; dist <= maxD; dist++) {
+    const ideal = burstHitAvg(still, move, bloom, nFree, shots, dist, "ideal");
+    const moving = burstHitAvg(still, move, bloom, nFree, shots, dist, "moving");
+    const stl = burstHitAvg(still, move, bloom, nFree, shots, dist, "still");
+    out.push({
+      dist, ideal, moving, still: stl,
+      lossMoving: ideal > 0 ? 1 - moving / ideal : 0,
+      lossIdeal: stl > 0 ? 1 - ideal / stl : 0,
+    });
   }
-  html += "</tbody></table>";
-  for (const line of t.losses) html += `<p class="cost-loss">${line}</p>`;
-  html += `<p class="cost-caveat">${t.caveat}</p>`;
-  return html;
+  return out;
 }
 
 /** Strafing-loss pair for one version-specific record, from the page's own
@@ -420,6 +426,9 @@ let loaded = null;       // the loaded 2018 row (version-independent identity)
 let sortKey = "name";    // current sort column (name first, as the table was ordered)
 let sortDir = 1;         // 1 = ascending, -1 = descending
 const expanded = new Set(); // weapon names whose detail row is open (keyed by name, so an open row follows its gun through sorts and filters)
+let costDist = 35;        // the distance the cost graph's readout is read at (m)
+let costMode = "loss";    // 'loss' | 'hits': what the cost graph plots
+let lastCost = null;     // { still, move, bloom, n } of the last compute(), so the slider redraws without recomputing
 let activeAtts = new Set(); // attachment toggles: session-only, off by default, reset on a new gun or a version switch
 
 function recordFor(row) {
@@ -474,27 +483,38 @@ function applyWeapon(row, resetAtts = true) {
   compute();
 }
 
-/** The attachment toggles for the loaded gun: only the CoF/bloom
- *  attachments it can mount. Rebuilt whenever the gun or the version
- *  changes; a gun that mounts none of the four gets the one-line note
- *  instead of an empty box. */
+/** The attachment choices for the loaded gun: only the parts it can mount
+ *  that change the cone or the bloom, one radio group per slot (a slot holds
+ *  one part). Rebuilt whenever the gun or the version changes. */
+const SLOT_EN = { barrel: "Barrel", rail: "Rail", ammo: "Ammo" };
 function renderAttBox() {
   const list = attTogglesFor(loaded ? itemIds?.[loaded.n] : null, recoil);
-  $("attRow").innerHTML = list.map((name) => `<label class="att"><input type="checkbox" data-att="${esc(name)}"${activeAtts.has(name) ? " checked" : ""}> ${esc(attLabel(name))}</label>`).join("");
+  $("attRow").innerHTML = ATT_SLOTS.map((sl) => {
+    const names = list.filter((n) => attSlot(n) === sl);
+    if (!names.length) return "";
+    const chosen = names.find((n) => activeAtts.has(n)) || "";
+    const slotName = tr("adad.att.slot." + sl, SLOT_EN[sl]);
+    const opt = (n) => `<label class="att"><input type="radio" name="att-${sl}" data-slot="${sl}" data-att="${esc(n)}"${chosen === n ? " checked" : ""}> <span>${n ? esc(attLabel(n)) : esc(tr("adad.att.off", "None"))}</span></label>`;
+    return `<div class="att-slot" role="radiogroup" aria-label="${esc(slotName)}"><span class="att-slotname">${esc(slotName)}</span>${["", ...names].map(opt).join("")}</div>`;
+  }).join("");
   $("attNote").textContent = list.length
-    ? tr("adad.att.note", "Only the attachments that change the cone or the bloom are listed — a grip, a suppressor, ammunition and optics leave these numbers alone.")
+    ? tr("adad.att.note", "Only the attachments that change the cone or the bloom are listed, one part per slot: a barrel part and a rail part can be fitted together, two barrel parts cannot.")
     : tr("adad.att.none", "No attachment changes this gun's numbers — nothing it can mount touches the cone or the bloom.");
 }
 
-/** The toggle label for one attachment, with its effect on the math. */
+/** The choice label for one attachment, with its effect on the math. */
 function attLabel(name) {
-  switch (name) {
-    case "Laser Sight": return tr("adad.att.laser", "Laser Sight — hip cone ×0.67");
-    case "Compensator": return tr("adad.att.comp", "Compensator — hip cone ×1.15");
-    case "Heavy Barrel": return tr("adad.att.heavy", "Heavy Barrel — ADS bloom ×0.8");
-    case "Short Barrel": return tr("adad.att.short", "Short Barrel — hip bloom ×0.6");
-    default: return name;
-  }
+  const fx = ATT_EFFECTS[name] || {};
+  const parts = Object.entries(fx).map(([k, f]) => {
+    switch (k) {
+      case "hipMinCof": return tr("adad.att.fx.hipMinCof", "hip cone ×{f}", { f });
+      case "hipBloom": return tr("adad.att.fx.hipBloom", "hip bloom ×{f}", { f });
+      case "adsBloom": return tr("adad.att.fx.adsBloom", "ADS bloom ×{f}", { f });
+      case "adsZeroCof": return tr("adad.att.fx.adsZeroCof", "ADS cone 0");
+      default: return "";
+    }
+  }).filter(Boolean);
+  return parts.length ? `${name} — ${parts.join(", ")}` : name;
 }
 
 function setStance(s) {
@@ -527,7 +547,7 @@ function compute() {
     $("nBig").textContent = "–";
     $("nWhat").textContent = tr("adad.verdict.empty", "Enter still minimum, moving minimum and bloom per shot to get the count.");
     $("nFormula").textContent = "";
-    tbody.innerHTML = ""; $("finals").innerHTML = ""; $("costBox").innerHTML = ""; $("chart").innerHTML = ""; $("resetBox").innerHTML = "";
+    tbody.innerHTML = ""; $("finals").innerHTML = ""; lastCost = null; renderCost(); $("chart").innerHTML = ""; $("resetBox").innerHTML = "";
     return;
   }
   const n = nStill(still, move, bloom);
@@ -567,21 +587,9 @@ function compute() {
     moving: tr("adad.final.moving", "Moving throughout"),
   });
 
-  // What it costs: the same burst counted in hits, at 35 m and 60 m.
-  const costs = costSummary(still, move, bloom, n, SHOTS);
-  $("costBox").innerHTML = costHtml(costs, {
-    h: tr("adad.cost.h", "What it costs"),
-    intro: tr("adad.cost.intro", "Same burst, counted in hits instead of cone size. “Miss” is the share of the 10 shots that miss a 0.5 m torso; damage is proportional to hits, so the loss is a DPS loss too."),
-    colDist: tr("adad.cost.col.dist", "Distance"),
-    colRhythm: tr("adad.cost.col.rhythm", "Rhythm"),
-    colMiss: tr("adad.cost.col.miss", "Miss"),
-    colHits: tr("adad.cost.col.hits", "Hits per burst"),
-    ideal: tr("adad.final.ideal", "Ideal rhythm"),
-    still: tr("adad.final.still", "Still throughout"),
-    moving: tr("adad.final.moving", "Moving throughout"),
-    losses: costs.map((r) => tr("adad.cost.loss", "At {dist} m, strafing the whole burst loses <b>{loss}%</b> of your damage vs the ideal rhythm. The ideal rhythm itself costs <b>{free}%</b> vs standing still — the movement is nearly free.", { dist: r.dist, loss: pctNum(r.lossMoving), free: pctNum(r.lossIdeal) })),
-    caveat: tr("adad.cost.caveat", "A 10-round burst at the stance and posture above, against a 0.5 m circle — a rough torso. This counts cone spread only, not the gun climbing off target (recoil), so the real loss is bigger."),
-  });
+  // What it costs: the same burst counted in hits, graphed over distance.
+  lastCost = { still, move, bloom, n };
+  renderCost();
 
   // Cone growth: CoF after each shot, ideal rhythm vs moving the whole burst.
   const series = [
@@ -618,6 +626,55 @@ function compute() {
     ? tr("adad.reset.line", "Refire <b>{refire}</b>; recovery starts after one refire, then the cone shrinks at <b>20°/s</b> down to the still minimum. Full reset takes about <b>{total}</b>.", { refire: fmtT(info.refireMs), total: fmtT(info.totalMs) })
       + (info.clamped ? tr("adad.reset.clamp", " Standing still clamps the bloomed cone instantly to the still maximum (<b>{max}°</b>) first.", { max: fmt(maxC) }) : "")
     : "";
+}
+
+/** The cost graph's frame (viewBox units), shared with the click handler. */
+const COST_VB = { W: 520, H: 190, PL: 44, PR: 12, PT: 10, PB: 26 };
+
+function setCostMode(m) {
+  costMode = m;
+  $("costModeLoss").setAttribute("aria-checked", String(m === "loss"));
+  $("costModeHits").setAttribute("aria-checked", String(m === "hits"));
+  renderCost();
+}
+
+/** The "What it costs" graph: over distance (1–100 m), either the DPS loss
+ *  (strafing the whole burst vs the ideal rhythm; the ideal rhythm vs standing
+ *  still) or the hits per burst of the three rhythms, with a marker at the
+ *  chosen distance and its numbers underneath. The slider and a click on the
+ *  graph move the marker. */
+function renderCost() {
+  const chart = $("costChart"), legend = $("costLegend"), at = $("costAt"), loss = $("costLoss");
+  $("costDistVal").textContent = `${costDist} m`;
+  if (!lastCost) { chart.innerHTML = ""; legend.innerHTML = ""; at.innerHTML = ""; loss.innerHTML = ""; return; }
+  const { still, move, bloom, n } = lastCost;
+  const rows = costCurve(still, move, bloom, n, SHOTS);
+  const { W, H, PL, PR, PT, PB } = COST_VB;
+  const isLoss = costMode === "loss";
+  const series = isLoss
+    ? [{ cls: "move", v: (r) => r.lossMoving * 100 }, { cls: "ideal", v: (r) => r.lossIdeal * 100 }]
+    : [{ cls: "ideal", v: (r) => r.ideal * SHOTS }, { cls: "move", v: (r) => r.moving * SHOTS }, { cls: "still", v: (r) => r.still * SHOTS }];
+  const peak = isLoss ? Math.max(10, Math.ceil(Math.max(...rows.map((r) => Math.max(r.lossMoving, r.lossIdeal) * 100)) / 10) * 10) : SHOTS;
+  const x = (d) => PL + (d / COST_MAX_D) * (W - PL - PR);
+  const y = (v) => PT + (1 - v / peak) * (H - PT - PB);
+  const path = (f) => rows.map((r, i) => `${i ? "L" : "M"}${x(r.dist).toFixed(1)},${y(f(r)).toFixed(1)}`).join(" ");
+  const unit = isLoss ? "%" : "";
+  const grid = [0, 0.5, 1].map((f) => `<line x1="${PL}" y1="${y(peak * f).toFixed(1)}" x2="${W - PR}" y2="${y(peak * f).toFixed(1)}" class="grid"/><text x="${PL - 6}" y="${(y(peak * f) + 4).toFixed(1)}" class="ax-t" text-anchor="end">${fmt(peak * f)}${unit}</text>`).join("");
+  const ticks = [0, 20, 40, 60, 80, 100].map((d) => `<text x="${x(d).toFixed(1)}" y="${H - 8}" class="ax-t" text-anchor="${d === 100 ? "end" : "middle"}">${d}${d === 100 ? " m" : ""}</text>`).join("");
+  const cur = rows[Math.min(rows.length, Math.max(1, costDist)) - 1];
+  const marks = series.map((s) => `<rect x="${(x(costDist) - 3).toFixed(1)}" y="${(y(s.v(cur)) - 3).toFixed(1)}" width="6" height="6" class="dot-${s.cls}"/>`).join("");
+  chart.innerHTML = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(tr("adad.cost.h", "What it costs"))}">`
+    + grid + `<line x1="${PL}" y1="${H - PB}" x2="${W - PR}" y2="${H - PB}" class="ax"/>`
+    + series.map((s) => `<path d="${path(s.v)}" class="line-${s.cls}" fill="none"/>`).join("")
+    + `<line x1="${x(costDist).toFixed(1)}" y1="${PT}" x2="${x(costDist).toFixed(1)}" y2="${H - PB}" class="cursor"/>`
+    + marks + ticks + `</svg>`;
+  const sw = (c, label) => `<span><span class="sw" style="background:var(--${c})"></span>${label}</span>`;
+  legend.innerHTML = isLoss
+    ? sw("adad-move", tr("adad.cost.legend.moving", "Strafing the whole burst — loss vs the ideal rhythm")) + sw("accent", tr("adad.cost.legend.ideal", "Ideal rhythm — loss vs standing still"))
+    : sw("accent", tr("adad.final.ideal", "Ideal rhythm")) + sw("adad-move", tr("adad.final.moving", "Moving throughout")) + sw("dim", tr("adad.final.still", "Still throughout"));
+  const card = (label, v) => `<div class="final"><div class="t">${label}</div><div class="v">${(v * SHOTS).toFixed(1)}<small> / ${SHOTS}</small></div><div class="s">${esc(tr("adad.cost.col.miss", "Miss"))} ${pctNum(1 - v)}%</div></div>`;
+  at.innerHTML = card(tr("adad.final.ideal", "Ideal rhythm"), cur.ideal) + card(tr("adad.final.moving", "Moving throughout"), cur.moving) + card(tr("adad.final.still", "Still throughout"), cur.still);
+  loss.innerHTML = tr("adad.cost.loss", "At {dist} m, strafing the whole burst loses <b>{loss}%</b> of your damage vs the ideal rhythm. The ideal rhythm itself costs <b>{free}%</b> vs standing still — the movement is nearly free.", { dist: costDist, loss: pctNum(cur.lossMoving), free: pctNum(cur.lossIdeal) });
 }
 
 /** Strings for one row's detail, translated at render time. */
@@ -666,14 +723,13 @@ export function rowHtml(entry, opts) {
     + `<td class="imgcell" data-l="${esc(tr("adad.col.image", "Image"))}">${img ? `<img src="${img}" alt="" width="56" height="28" loading="lazy" onerror="this.style.visibility='hidden'" />` : "—"}</td>`
     + `<td class="namecell" data-l="${esc(tr("adad.col.weapon", "Weapon"))}">${esc(row.n)}</td>`
     + `<td data-l="${esc(tr("adad.col.faction", "Faction"))}">${esc(row.f)}</td>`
-    + `<td data-l="${esc(tr("adad.col.category", "Category"))}">${esc(row.c)}</td>`
     + `<td data-l="${esc(tr("adad.col.rpm", "RPM"))}">${rec?.rpm ?? "—"}</td>`
     + `<td class="n" data-l="${esc(tr("adad.col.freeAds", "Free ADS"))}">${nCell(ads?.still, ads?.move, ads?.bloom)}</td>`
     + `<td class="n" data-l="${esc(tr("adad.col.freeHip", "Free hip"))}">${nCell(hip?.still, hip?.move, hip?.bloom)}</td>`
     + `<td class="n" data-l="${esc(tr("adad.col.loss35", "Loss @ 35 m"))}">${lossCell(losses, "m35", "i35")}</td>`
     + `<td class="n" data-l="${esc(tr("adad.col.loss60", "Loss @ 60 m"))}">${lossCell(losses, "m60", "i60")}</td>`
     + `<td class="cmpcell" data-l="${esc(tr("adad.col.compare", "Compare"))}">${href ? `<a href="${href}">${esc(tr("adad.compare", "Compare"))}</a>` : "—"}</td></tr>`;
-  if (isOpen) html += `<tr class="detail" id="${detailId}"><td colspan="11">${detailHtml(rec, detailStrings())}</td></tr>`;
+  if (isOpen) html += `<tr class="detail" id="${detailId}"><td colspan="10">${detailHtml(rec, detailStrings())}</td></tr>`;
   return html;
 }
 
@@ -692,16 +748,41 @@ function setSort(key) {
   renderTable();
 }
 
+/** Display order of the weapon categories; anything else follows alphabetically. */
+export const CAT_ORDER = ["Assault Rifle", "Carbine", "SMG", "LMG", "Battle Rifle", "Scout Rifle", "Sniper Rifle", "Shotgun", "Pistol", "Rocket Launcher", "Heavy Gun", "Crossbow", "Grenade", "Infantry Weapons"];
+
+/** Entries grouped by category, in CAT_ORDER: [[category, entries[]], ...]. Pure. */
+export function groupByCategory(entries) {
+  const m = new Map();
+  for (const e of entries) { const c = e.row.c || "—"; if (!m.has(c)) m.set(c, []); m.get(c).push(e); }
+  const rank = (c) => { const i = CAT_ORDER.indexOf(c); return i < 0 ? CAT_ORDER.length : i; };
+  return [...m.entries()].sort((a, b) => rank(a[0]) - rank(b[0]) || a[0].localeCompare(b[0]));
+}
+
+const collapsedCats = new Set(); // categories folded shut
+let facFilter = "";              // "" = every faction
+
 function renderTable() {
   if (!data2018) return;
   const q = ($("q").value || "").toLowerCase();
-  const fac = $("fFac").value, cat = $("fCat").value;
-  const rows = data2018.weapons.filter((w) =>
-    (!q || w.n.toLowerCase().includes(q)) && (!fac || w.f === fac) && (!cat || w.c === cat));
-  const entries = rows.map((w) => ({ row: w, rec: recordFor(w) }));
-  const ordered = orderEntries(entries, sortKey, sortDir);
+  const rows = data2018.weapons.filter((w) => (!q || w.n.toLowerCase().includes(q)) && (!facFilter || w.f === facFilter));
+  const groups = groupByCategory(rows.map((w) => ({ row: w, rec: recordFor(w) })));
   const opts = { imgMap: images, idMap: itemIds, open: expanded };
-  document.querySelector("#wtable tbody").innerHTML = ordered.map((e) => rowHtml(e, opts)).join("");
+  const tbody = document.querySelector("#wtable tbody");
+  tbody.innerHTML = groups.map(([cat, list]) => {
+    const shut = collapsedCats.has(cat);
+    const head = `<tr class="cat-head" data-cat="${esc(cat)}"><th colspan="10" scope="colgroup"><button type="button" class="cat-toggle" data-cat="${esc(cat)}" aria-expanded="${!shut}"><span class="cat-arrow" aria-hidden="true">${shut ? "▸" : "▾"}</span> <span class="cat-name">${esc(cat)}</span> <span class="cat-n">${nf(list.length)}</span></button></th></tr>`;
+    return head + (shut ? "" : orderEntries(list, sortKey, sortDir).map((e) => rowHtml(e, opts)).join(""));
+  }).join("");
+  let i = 0; // zebra restarts in every category
+  for (const rowEl of tbody.children) {
+    if (rowEl.classList.contains("cat-head")) i = 0;
+    else if (rowEl.dataset.name) rowEl.classList.toggle("alt", i++ % 2 === 1);
+  }
+  $("catChips").innerHTML = groups.map(([cat, list]) => `<button type="button" class="catchip" data-cat="${esc(cat)}">${esc(cat)} <span class="cat-n">${nf(list.length)}</span></button>`).join("");
+  const allShut = groups.length > 0 && groups.every(([cat]) => collapsedCats.has(cat));
+  $("catToggleAll").textContent = allShut ? tr("adad.cat.expand", "Expand all") : tr("adad.cat.collapse", "Collapse all");
+  $("catToggleAll").dataset.shut = allShut ? "1" : "";
   $("rowCount").textContent = tr("adad.count", "{shown} of {total} weapons", { shown: nf(rows.length), total: nf(data2018.weapons.length) });
   paintSort();
 }
@@ -719,19 +800,56 @@ async function init() {
   $("btnCrouch").addEventListener("click", () => setPosture("crouch"));
   ["inStill", "inMove", "inBloom", "inRpm", "inMax"].forEach((id) => $(id).addEventListener("input", compute));
   $("attRow").addEventListener("change", (e) => {
-    const cb = e.target.closest('input[type="checkbox"][data-att]');
-    if (!cb) return;
-    if (cb.checked) activeAtts.add(cb.dataset.att); else activeAtts.delete(cb.dataset.att);
+    const r = e.target.closest('input[type="radio"][data-slot]');
+    if (!r) return;
+    activeAtts = chooseAtt(activeAtts, r.dataset.slot, r.dataset.att);
     compute();
+  });
+  $("costDist").addEventListener("input", () => { costDist = Number($("costDist").value); renderCost(); });
+  $("costModeLoss").addEventListener("click", () => setCostMode("loss"));
+  $("costModeHits").addEventListener("click", () => setCostMode("hits"));
+  $("costChart").addEventListener("click", (e) => {
+    const svg = e.target.closest("svg"); if (!svg) return;
+    const box = svg.getBoundingClientRect();
+    const px = ((e.clientX - box.left) / box.width) * COST_VB.W; // pointer in viewBox units
+    const d = Math.round(((px - COST_VB.PL) / (COST_VB.W - COST_VB.PL - COST_VB.PR)) * COST_MAX_D);
+    costDist = Math.max(1, Math.min(COST_MAX_D, d));
+    $("costDist").value = String(costDist);
+    renderCost();
   });
   $("adadVerCur").addEventListener("click", () => setVersion("current"));
   $("adadVerHist").addEventListener("click", () => setVersion("hist"));
-  for (const id of ["q", "fFac", "fCat"]) $(id).addEventListener("input", renderTable);
+  $("q").addEventListener("input", renderTable);
+  $("fFac").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-fac]"); if (!b) return;
+    facFilter = b.dataset.fac;
+    for (const x of $("fFac").querySelectorAll("button[data-fac]")) x.setAttribute("aria-checked", String(x === b));
+    renderTable();
+  });
+  $("catChips").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-cat]"); if (!b) return;
+    const cat = b.dataset.cat;
+    if (collapsedCats.delete(cat)) renderTable();
+    document.querySelector(`#wtable tr.cat-head[data-cat="${CSS.escape(cat)}"]`)?.scrollIntoView({ block: "start" });
+  });
+  $("catToggleAll").addEventListener("click", () => {
+    const cats = [...document.querySelectorAll("#wtable tr.cat-head")].map((r) => r.dataset.cat);
+    if ($("catToggleAll").dataset.shut) collapsedCats.clear(); else for (const c of cats) collapsedCats.add(c);
+    renderTable();
+  });
   document.querySelector("#wtable thead").addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-sort]");
     if (btn) setSort(btn.dataset.sort);
   });
   document.querySelector("#wtable tbody").addEventListener("click", (e) => {
+    const catBtn = e.target.closest("button.cat-toggle");
+    if (catBtn) {
+      const c = catBtn.dataset.cat;
+      if (collapsedCats.has(c)) collapsedCats.delete(c); else collapsedCats.add(c);
+      renderTable();
+      document.querySelector(`button.cat-toggle[data-cat="${CSS.escape(c)}"]`)?.focus();
+      return;
+    }
     const toggle = e.target.closest("button.row-toggle");
     if (toggle) {
       const name = toggle.dataset.toggle;
@@ -765,8 +883,6 @@ async function init() {
   } catch {
     images = null; // rows render with a dash where the image would be
   }
-  const cats = [...new Set(data2018.weapons.map((w) => w.c))].sort();
-  $("fCat").innerHTML = `<option value="">${esc(tr("adad.cat.all", "All categories"))}</option>` + cats.map((c) => `<option>${esc(c)}</option>`).join("");
   if (!recoil) {
     version = "hist";
     $("adadMsg").textContent = tr("adad.recoilFail", "Could not load the current Census data — showing the historical 2018 version instead.");

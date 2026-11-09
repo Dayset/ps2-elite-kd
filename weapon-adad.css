@@ -45,10 +45,12 @@
 /* attachments that change the cone or the bloom */
 .attbox { border-top: 1px dashed var(--border); padding-top: 12px; }
 .attbox h3, .chartbox h3, .burstbox h3, .costbox h3 { font-size: .8rem; margin: 0 0 8px; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); }
-.att-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px 14px; }
-.att-row label.att { display: flex; gap: 8px; align-items: center; font-size: 14px; cursor: pointer; }
-.att-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); margin: 0; flex: none; }
-.att-row input[type="checkbox"]:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
+.att-row { display: flex; flex-direction: column; gap: 8px; }
+.att-slot { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: center; }
+.att-slotname { flex: 0 0 4.2rem; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); font-weight: 700; }
+.att-row label.att { display: flex; gap: 6px; align-items: center; font-size: 14px; cursor: pointer; }
+.att-row input[type="radio"] { width: 16px; height: 16px; accent-color: var(--accent); margin: 0; flex: none; }
+.att-row input[type="radio"]:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
 .att-note { font-size: 12.5px; color: var(--dim); margin: 8px 0 0; }
 
 /* verdict: big number, the sentence, the formula underneath */
@@ -80,9 +82,9 @@ svg.chart { width: 100%; height: auto; display: block; }
 /* worked burst | what it costs: side by side, one table look */
 .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); align-items: start; }
 @media (max-width: 860px) { .cols { grid-template-columns: 1fr; } }
-table.shots, table.cost { width: 100%; border-collapse: collapse; font-family: var(--adad-mono); font-size: 13.5px; font-variant-numeric: tabular-nums; }
-table.shots th, table.shots td, table.cost th, table.cost td { padding: 5px 8px; text-align: right; border-bottom: 1px solid var(--border); }
-table.shots th, table.cost th { color: var(--dim); font-weight: 600; font-size: 12px; vertical-align: bottom; }
+table.shots { width: 100%; border-collapse: collapse; font-family: var(--adad-mono); font-size: 13.5px; font-variant-numeric: tabular-nums; }
+table.shots th, table.shots td { padding: 5px 8px; text-align: right; border-bottom: 1px solid var(--border); }
+table.shots th { color: var(--dim); font-weight: 600; font-size: 12px; vertical-align: bottom; }
 table.shots td:first-child, table.shots th:first-child { text-align: left; }
 table.shots:not(.detail-stances) td:nth-child(2), table.shots:not(.detail-stances) th:nth-child(2) { text-align: left; }
 table.shots tbody tr:nth-child(even) td { background: var(--row-alt); }
@@ -96,13 +98,32 @@ tr.switchrow td:first-child { box-shadow: inset 3px 0 var(--accent); }
 .final.win { border-color: var(--wc-good); }
 
 .cost-intro { font-size: 13px; color: var(--dim); margin: 0 0 8px; }
-table.cost .c-txt, table.cost th.c-txt { text-align: left; }
-table.cost .c-num, table.cost th.c-num { text-align: right; }
-table.cost td.c-dist { text-align: left; font-weight: 700; vertical-align: middle; border-right: 1px solid var(--border); }
-table.cost tr.grp td { border-top: 2px solid var(--border); }
+.cost-ctl { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 0 0 6px; }
+.cost-dist { display: flex; align-items: center; gap: 8px; flex: 1 1 220px; font-size: 13px; color: var(--dim); }
+.cost-dist input[type="range"] { flex: 1; min-width: 80px; accent-color: var(--accent); }
+.cost-dist output { font: 700 14px var(--adad-mono); color: var(--text); min-width: 4ch; text-align: right; }
+.chart .line-still { stroke: var(--dim); stroke-width: 2; stroke-dasharray: 5 4; }
+.chart .dot-still { fill: var(--dim); }
+.chart .cursor { stroke: var(--text); stroke-width: 1; opacity: .5; }
+#costChart svg.chart { cursor: crosshair; }
+.final .v small { font-size: 12px; font-weight: 400; color: var(--dim); }
+.final .s { font: 12px var(--adad-mono); color: var(--dim); }
 .cost-loss { font-size: 13.5px; margin: 10px 0 0; }
 .cost-caveat { font-size: 12.5px; color: var(--dim); margin: 10px 0 0; }
 .costbox { min-width: 0; }
+
+/* category bar: jump chips + collapse all, then one header row per category */
+.cat-bar { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin: 0 0 10px; }
+.cat-chips { display: flex; flex-wrap: wrap; gap: 6px; flex: 1 1 320px; }
+.catchip, .cat-all { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 0; padding: 4px 10px; font: 600 13px inherit; cursor: pointer; }
+.catchip:hover, .cat-all:hover { border-color: var(--accent); }
+.catchip:focus-visible, .cat-all:focus-visible, .cat-toggle:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
+.cat-n { color: var(--dim); font-weight: 600; font-variant-numeric: tabular-nums; }
+.cat-all { color: var(--dim); }
+table.weapons tbody tr.cat-head th { position: static; text-align: left; background: var(--bg); border-top: 2px solid var(--border); border-bottom: 1px solid var(--border); padding: 0; text-transform: none; letter-spacing: 0; scroll-margin-top: 38px; }
+.cat-toggle { display: flex; width: 100%; align-items: baseline; gap: 8px; padding: 9px 10px; background: none; border: 0; color: var(--text); font: 700 15px inherit; text-align: left; cursor: pointer; }
+.cat-arrow { color: var(--dim); width: 1em; }
+table.weapons tbody tr.alt td { background: var(--row-alt); }
 
 /* weapon table: a scroll box with the header pinned to its top, zebra rows */
 .sub { color: var(--dim); font-size: 14px; }
@@ -112,18 +133,16 @@ table.cost tr.grp td { border-top: 2px solid var(--border); }
 .tools input:focus-visible, .tools select:focus-visible { outline: 1px solid var(--accent); }
 .count { font-size: 13px; color: var(--dim); align-self: center; margin-left: auto; }
 .tscroll { overflow: auto; max-height: min(74vh, 860px); border: 1px solid var(--border); }
-table.weapons { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; min-width: 940px; }
+table.weapons { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; min-width: 860px; }
 table.weapons th, table.weapons td { padding: 7px 10px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
 table.weapons th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--dim); position: sticky; top: 0; z-index: 2; background: var(--panel); border-bottom: 2px solid var(--border); }
 table.weapons td:nth-child(3), table.weapons th:nth-child(3),
-table.weapons td:nth-child(4), table.weapons th:nth-child(4),
-table.weapons td:nth-child(5), table.weapons th:nth-child(5) { text-align: left; }
+table.weapons td:nth-child(4), table.weapons th:nth-child(4) { text-align: left; }
 table.weapons td.rowtoggle, table.weapons td.imgcell, table.weapons th:nth-child(1), table.weapons th:nth-child(2),
 table.weapons td.cmpcell, table.weapons th:last-child { text-align: center; }
 table.weapons td.imgcell img { display: block; margin: 0 auto; }
 table.weapons td.namecell { font-weight: 600; }
-table.weapons tbody tr:nth-child(even) td { background: var(--row-alt); }
-table.weapons tbody tr:hover td { background: var(--chip-active-bg); }
+table.weapons tbody tr[data-name]:hover td { background: var(--chip-active-bg); }
 
 /* sortable headers: the label is a button so it is keyboard reachable */
 table.weapons th button[data-sort] { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit; cursor: pointer; }
@@ -154,7 +173,9 @@ table.weapons tbody tr { cursor: pointer; }
   table.weapons thead { display: none; }
   table.weapons, table.weapons tbody, table.weapons tr, table.weapons td { display: block; width: 100%; box-sizing: border-box; }
   table.weapons tbody tr { border: 1px solid var(--border); margin: 0 0 12px; padding: 10px 12px; background: var(--panel); }
-  table.weapons tbody tr:nth-child(even) td, table.weapons tbody tr:hover td { background: transparent; }
+  table.weapons tbody tr.alt td, table.weapons tbody tr:hover td { background: transparent; }
+  table.weapons tbody tr.cat-head { border: 0; padding: 0; margin: 14px 0 8px; background: none; }
+  table.weapons tbody tr.cat-head th { display: block; width: 100%; box-sizing: border-box; border: 1px solid var(--border); }
   table.weapons td { border: 0; padding: 3px 0; text-align: left; white-space: normal; display: flex; justify-content: space-between; gap: 14px; }
   table.weapons td::before { content: attr(data-l); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--dim); font-weight: 600; padding-top: 2px; }
   table.weapons td.namecell { font-size: 17px; font-weight: 700; }

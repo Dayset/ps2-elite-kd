@@ -23,7 +23,7 @@
   <link rel="preload" href="assets/weapons/recoil.json" as="fetch" crossorigin />
   <link rel="stylesheet" href="styles.css?v=20261031-fr1" />
   <link rel="stylesheet" href="weapon-compare.css?v=20261109-sage1" />
-  <link rel="stylesheet" href="weapon-adad.css?v=20261109-adadux1" />
+  <link rel="stylesheet" href="weapon-adad.css?v=20261109-adadux2" />
 </head>
 <body class="site-page">
   <main class="wc-wrap">
@@ -145,7 +145,25 @@
           </table>
           <div class="finals" id="finals"></div>
         </div>
-        <div class="costbox" id="costBox"></div>
+        <div class="costbox" id="costBox">
+          <h3 data-i18n="adad.cost.h">What it costs</h3>
+          <p class="cost-intro" data-i18n="adad.cost.intro">Same burst, counted in hits instead of cone size. “Miss” is the share of the 10 shots that miss a 0.5 m torso; damage is proportional to hits, so the loss is a DPS loss too.</p>
+          <div class="cost-ctl">
+            <span class="wc-seg" role="group" aria-label="Graph" data-i18n-aria-label="adad.cost.graph">
+              <button type="button" class="wc-segbtn" id="costModeLoss" aria-checked="true" data-i18n="adad.cost.mode.loss">DPS loss</button>
+              <button type="button" class="wc-segbtn" id="costModeHits" aria-checked="false" data-i18n="adad.cost.col.hits">Hits per burst</button>
+            </span>
+            <label class="cost-dist" for="costDist"><span data-i18n="adad.cost.col.dist">Distance</span>
+              <input id="costDist" type="range" min="1" max="100" step="1" value="35">
+              <output id="costDistVal" for="costDist">35 m</output>
+            </label>
+          </div>
+          <div id="costChart"></div>
+          <div class="legend" id="costLegend"></div>
+          <div class="finals" id="costAt"></div>
+          <p class="cost-loss" id="costLoss"></p>
+          <p class="cost-caveat" data-i18n="adad.cost.caveat">A 10-round burst at the stance and posture above, against a 0.5 m circle — a rough torso. This counts cone spread only, not the gun climbing off target (recoil), so the real loss is bigger.</p>
+        </div>
       </div>
     </section>
 
@@ -154,11 +172,18 @@
       <p class="sub" data-i18n="adad.table.sub">Still-shot counts use the <b>standing</b> values. Tap any row to load that weapon into the calculator, where you can also switch to its crouching numbers. Expand a row (▸) for all four stances and its worked burst; Compare opens the in-depth comparison. A dash means there is no usable value for that gun — nothing has been filled in.</p>
       <div class="tools">
         <input type="search" id="q" placeholder="Search weapons… (e.g. Naginata, SAW, carbine)" aria-label="Search weapons" data-i18n-placeholder="adad.search" data-i18n-aria-label="adad.searchAria">
-        <select id="fFac" aria-label="Filter by faction" data-i18n-aria-label="adad.facAria">
-          <option value="" data-i18n="adad.fac.all">All factions</option><option>TR</option><option>NC</option><option>VS</option><option>NS</option>
-        </select>
-        <select id="fCat" aria-label="Filter by category" data-i18n-aria-label="adad.catAria"><option value="" data-i18n="adad.cat.all">All categories</option></select>
+        <span class="wc-seg" id="fFac" role="radiogroup" aria-label="Filter by faction" data-i18n-aria-label="adad.facAria">
+          <button type="button" class="wc-segbtn" data-fac="" aria-checked="true" data-i18n="adad.fac.all">All factions</button>
+          <button type="button" class="wc-segbtn" data-fac="TR" aria-checked="false">TR</button>
+          <button type="button" class="wc-segbtn" data-fac="NC" aria-checked="false">NC</button>
+          <button type="button" class="wc-segbtn" data-fac="VS" aria-checked="false">VS</button>
+          <button type="button" class="wc-segbtn" data-fac="NS" aria-checked="false">NS</button>
+        </span>
         <span class="count" id="rowCount"></span>
+      </div>
+      <div class="cat-bar">
+        <div class="cat-chips" id="catChips" role="group" aria-label="Jump to category" data-i18n-aria-label="adad.catJump"></div>
+        <button type="button" class="cat-all" id="catToggleAll" data-i18n="adad.cat.collapse">Collapse all</button>
       </div>
       <div class="tscroll">
         <table class="weapons" id="wtable">
@@ -167,7 +192,6 @@
             <th scope="col" data-i18n="adad.col.image">Image</th>
             <th scope="col" data-sort="name" aria-sort="ascending"><button type="button" data-sort="name"><span data-i18n="adad.col.weapon">Weapon</span> <span class="sort-ind" aria-hidden="true">▲</span></button></th>
             <th scope="col" data-sort="faction" aria-sort="none"><button type="button" data-sort="faction"><span data-i18n="adad.col.faction">Faction</span> <span class="sort-ind" aria-hidden="true"></span></button></th>
-            <th scope="col" data-sort="category" aria-sort="none"><button type="button" data-sort="category"><span data-i18n="adad.col.category">Category</span> <span class="sort-ind" aria-hidden="true"></span></button></th>
             <th scope="col" data-sort="rpm" aria-sort="none"><button type="button" data-sort="rpm"><span data-i18n="adad.col.rpm">RPM</span> <span class="sort-ind" aria-hidden="true"></span></button></th>
             <th scope="col" data-sort="freeAds" aria-sort="none"><button type="button" data-sort="freeAds"><span data-i18n="adad.col.freeAds">Free ADS</span> <span class="sort-ind" aria-hidden="true"></span></button></th>
             <th scope="col" data-sort="freeHip" aria-sort="none"><button type="button" data-sort="freeHip"><span data-i18n="adad.col.freeHip">Free hip</span> <span class="sort-ind" aria-hidden="true"></span></button></th>
@@ -195,6 +219,6 @@
       <p data-i18n-html="adad.foot">Method paraphrased from Iridar's <i>Weapon Mechanics</i> guide (<a href="https://web.archive.org/web/20230519111303/http://cmdrcyrious.com/planetside2/weapons/weapon-mechanics/" target="_blank" rel="noopener">archived copy</a>). Weapon data extracted from the Stats sheet of <a href="http://cmdrcyrious.com/wp-content/uploads/2016/12/Iridars-Toolbox-v6h.zip" target="_blank" rel="noopener">Iridar's Toolbox v6h</a> (Stats sheet dated 2018-08-19). Current data from the Census API via the site's weapon snapshot. Worked examples verified by hand: TRAC-5 ADS (0.3 − 0.1) ÷ 0.05 = 4 free shots; NSX Naginata ADS (0.4 − 0.15) ÷ 0.06 = 4.17 → 4 free shots.</p>
     </footer>
   </main>
-  <script type="module" src="weapon-adad.mjs?v=20261109-adadux1"></script>
+  <script type="module" src="weapon-adad.mjs?v=20261109-adadux2"></script>
 </body>
 </html>
