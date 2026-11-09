@@ -125,6 +125,11 @@ tbody.open .wc-caret::before { content: "▾"; }
 .wc-simlist { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--wc-gap); }
 .wc-sim { border: 1px solid var(--border); border-top: 3px solid var(--c, var(--border)); background: var(--bg); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .wc-simhead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 12px; min-height: 1.4em; }
+.wc-sim .wc-best { font-size: 0.85rem; }
+/* sage lines: plain words computed from the sim, in the weapon's colour */
+.wc-sage { border-left: 3px solid var(--c, var(--border)); padding-left: 8px; font-size: 0.85rem; }
+.wc-sagehead { font-weight: 700; }
+.wc-sage ul { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 2px; }
 .wc-simbody { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 14px; align-items: start; flex: 1; }
 .wc-barhead { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--dim); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.04em; }
 .wc-bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }

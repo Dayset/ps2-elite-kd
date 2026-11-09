@@ -27,6 +27,7 @@ import {
   simParams, compareBursts, burstAnalysis, deepTimings, sprayPattern, attEffects, SLOTS, slotOf, canon, TARGET, STANCES,
   stylesFor, loadoutEffects, loadoutProfile, loadoutRec,
 } from "./weapon-sim.mjs?v=20261109-deepfollow1";
+import { sageLines, SAGE_TEXT } from "./weapon-sage.mjs?v=20261107-sage1";
 
 export const MAX_WEAPONS = 4;
 export const MAX_RANGE = 500;        // hard cap (the 500 m option); the chart shows 100 / 200 / 500, see viewMax()
@@ -579,6 +580,12 @@ async function boot() {
   const simState = { aim: "ads", stance: "crouchStill", comp: 100, compX: 100, seed: newSeed() };
   const settingsKey = () => [simState.aim, simState.stance, simState.comp, simState.compX, st.acc, st.hsr, st.range, st.hp, st.fpsOn ? st.fps : 0].join("|");
   const simOpts = () => ({ stance: simState.stance, aim: simState.aim, comp: simState.comp / 100, compX: simState.compX / 100, acc: st.acc / 100, hsr: st.hsr / 100 });
+  // the Compensator's description for the sage lines (null when the gun cannot mount one;
+  // Census lists it under two names, Compensator beside Muzzle Brake)
+  const compDescOf = (id) => {
+    const d = descsOf(id);
+    return d["Compensator"] ?? d["Muzzle Brake"] ?? null;
+  };
   const paramsOf = (w, att) => {
     const x = recoilOf(w.id);
     if (!x || !x.fm) return null;
@@ -594,15 +601,17 @@ async function boot() {
   };
 
   // results: weapon key -> compareBursts result; class key -> best median of the class (gold)
-  const simCache = new Map(), classSim = new Map(), deepCache = new Map();   // deep dive: "burst|<key>" and "ranges|<key>"
+  // sageCache: weapon key -> the sage lines for that weapon at those settings (rides the same job)
+  const simCache = new Map(), classSim = new Map(), deepCache = new Map(), sageCache = new Map();   // deep dive: "burst|<key>" and "ranges|<key>"
   const lastShown = new Map();     // weapon id -> last result drawn (kept on screen, dimmed, while a new one is computed)
   let gen = 0, worker = null, posted = new Set();
   try {
-    worker = new Worker(new URL("weapon-sim-worker.mjs?v=20261109-deepfollow1", import.meta.url), { type: "module" });
+    worker = new Worker(new URL("weapon-sim-worker.mjs?v=20261109-sage1", import.meta.url), { type: "module" });
     worker.onmessage = (e) => {
-      const { key, kind, result } = e.data || {};
+      const { key, kind, result, sage } = e.data || {};
       (kind === "class" ? classSim : kind === "burst" || kind === "ranges" ? deepCache : simCache).set(key, result);
-      if (simCache.size > 300) simCache.clear();
+      if (kind === "weapon" && Array.isArray(sage)) sageCache.set(key, sage);
+      if (simCache.size > 300) { simCache.clear(); sageCache.clear(); }
       invalidate("sim");
     };
     worker.onerror = () => { worker = null; posted = new Set(); invalidate("sim"); };
@@ -620,7 +629,11 @@ async function boot() {
     const step = () => {
       if (my !== gen || !queue.length) return;
       const j = queue.shift();
-      if (j.kind === "weapon") simCache.set(j.key, compareBursts(j.P, { distance: j.distance, hp: j.hp, runs: j.runs, seed: 1 }));
+      if (j.kind === "weapon") {
+        const r = compareBursts(j.P, { distance: j.distance, hp: j.hp, runs: j.runs, seed: 1 });
+        simCache.set(j.key, r);
+        try { sageCache.set(j.key, sageLines(j.P, r, { distance: j.distance, hp: j.hp, runs: j.runs, seed: 1, ...(j.sage || {}) })); } catch { sageCache.set(j.key, []); }
+      }
       else if (j.kind === "burst") deepCache.set(j.key, burstAnalysis(j.P, { distance: j.distance, hp: j.hp, runs: j.runs, seed: 1 }));
       else if (j.kind === "ranges") deepCache.set(j.key, j.ranges.map((r) => { const b = compareBursts(j.P, { distance: r, hp: j.hp, runs: j.runs, seed: 1 }).best; return { range: r, best: b ? { median: b.median, burst: b.burst } : null }; }));
       else { let b = null; for (const P of j.Ps) { const r = compareBursts(P, { distance: j.distance, hp: j.hp, runs: j.runs, seed: 1 }).best; if (r && (b == null || r.median < b)) b = r.median; } classSim.set(j.key, b); }
@@ -653,7 +666,7 @@ async function boot() {
       if (simCache.has(key)) { const r = simCache.get(key); lastShown.set(w.id, r); return { r, busy: false }; }
       const P = paramsOf(w, att);
       if (!P) return { r: null, busy: false, none: true };
-      jobs.push({ key, kind: "weapon", P, distance: st.range, hp: st.hp, runs: SIM_RUNS });
+      jobs.push({ key, kind: "weapon", P, distance: st.range, hp: st.hp, runs: SIM_RUNS, sage: { weaponName: w.name, hip: simState.aim === "hip", compDesc: compDescOf(w.id) } });
       return { r: lastShown.get(w.id) || null, busy: true };
     });
     const classKey = (cat) => `${cat}|${sk}`;
@@ -688,7 +701,9 @@ async function boot() {
       const bars = rows.map((r) => `<li class="${best && r.burst === best.burst ? "best" : ""}"><span class="lab">${esc(styleLabel(r.burst, w.p.burstN))}</span><span class="wc-meter"><i style="width:${r.median == null ? 0 : Math.max(2, r.median / worst * 100).toFixed(1)}%;background:${color(i)}"></i></span><span class="v">${r.median == null ? esc(tr("wc.never", "no kill")) : esc(fmtMs(r.median))} · ${nf(r.killRate * 100)}%</span></li>`).join("");
       const att = chosenAtt(w.id);
       const sub = !x.r ? esc(tr("wc.sim.busy", "simulating…")) : !best ? esc(tr("wc.sim.nobest", "Cannot kill reliably at this range with this setup")) : att.length ? esc(att.join(" · ")) : "";
-      return `<article class="wc-sim${x.busy ? " wc-busy" : ""}" style="--c:${color(i)}"><div class="wc-simhead"><b>${esc(w.name)}</b><span class="wc-dim">${sub}</span></div>
+      const sage = sageCache.get(`${w.id}|${chosenAtt(w.id).join("+")}|${sk}`) || [];
+      const sageHtml = sage.length ? `<div class="wc-sage"><div class="wc-sagehead">${esc(tr("wc.sage.title", SAGE_TEXT.title))}</div><ul>${sage.map((line) => `<li>${esc(tr("wc.sage." + line.key, SAGE_TEXT[line.key] || line.key, line))}</li>`).join("")}</ul></div>` : "";
+      return `<article class="wc-sim${x.busy ? " wc-busy" : ""}" style="--c:${color(i)}"><div class="wc-simhead"><b>${esc(w.name)}</b><span class="wc-dim">${sub}</span></div>${sageHtml}
         <div class="wc-simbody"><div><div class="wc-barhead"><span>${esc(tr("wc.sim.style", "Firing style"))}</span><span>${esc(tr("wc.sim.medRate", "median · kills"))}</span></div><ul class="wc-bars">${bars}</ul></div>${sprayFigure(sprays[i], S, i)}</div></article>`;
     }).join("");
     return jobs;

@@ -1,15 +1,19 @@
 // Web worker for the weapon comparison page: runs the recoil simulator (weapon-sim.mjs) off the main thread,
-// so dragging a slider never freezes the page. Pure maths, no DOM, no text.
+// so dragging a slider never freezes the page. Pure maths, no DOM; the sage lines it computes are
+// rendered on the main thread from the English templates in weapon-sage.mjs.
 //
-// Messages in:  { gen, jobs: [{ key, kind: "weapon", P, distance, hp, runs }
+// Messages in:  { gen, jobs: [{ key, kind: "weapon", P, distance, hp, runs, sage? }
 //                             | { key, kind: "class", Ps: [P...], distance, hp, runs }
 //                             | { key, kind: "burst", P, distance, hp, runs }
 //                             | { key, kind: "ranges", P, ranges: [...], hp, runs }] }
-// Messages out: { gen, key, kind, result }   weapon -> compareBursts() result, class -> best median (ms) or null,
-//   burst -> burstAnalysis() rows, ranges -> [{ range, best: { median, burst } | null }]
+// Messages out: { gen, key, kind, result, sage? }   weapon -> compareBursts() result + the sage lines
+//   for that weapon at those settings (sage: { weaponName, hip, compDesc } rides the job);
+//   class -> best median (ms) or null, burst -> burstAnalysis() rows,
+//   ranges -> [{ range, best: { median, burst } | null }]
 //
 // A newer `gen` makes every older job stale: stale jobs are dropped, and a long class/ranges job stops between slices.
 import { compareBursts, burstAnalysis } from "./weapon-sim.mjs?v=20261109-deepfollow1";
+import { sageLines } from "./weapon-sage.mjs?v=20261107-sage1";
 
 let latest = 0;
 const queue = [];
@@ -33,7 +37,11 @@ function step() {
     if (j.gen < latest) { queue.shift(); continue; }
     if (j.kind === "weapon") {
       queue.shift();
-      self.postMessage({ gen: j.gen, key: j.key, kind: j.kind, result: compareBursts(j.P, { distance: j.distance, hp: j.hp, runs: j.runs, seed: 1 }) });
+      const result = compareBursts(j.P, { distance: j.distance, hp: j.hp, runs: j.runs, seed: 1 });
+      // the sage lines ride the same job and the same numbers; if they fail, the sim result still posts
+      let sage = [];
+      try { sage = sageLines(j.P, result, { distance: j.distance, hp: j.hp, runs: j.runs, seed: 1, ...(j.sage || {}) }); } catch { sage = []; }
+      self.postMessage({ gen: j.gen, key: j.key, kind: j.kind, result, sage });
       continue;
     }
     if (j.kind === "burst") {
