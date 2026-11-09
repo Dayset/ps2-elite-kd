@@ -457,7 +457,7 @@
         </table>
 <p class="small">Switch modes with <strong>B</strong> (Switch Fire Group). The mode you are in is the gun you are holding — pick it before the fight, not during it. Bolt mode for still targets past 100 m; semi mode for anything closer or moving.</p>
 
-        <div class="viz" id="burstSim" data-rpm="184.0" data-base-cof="0" data-bloom="0.8" data-distance="50">
+        <div class="viz" id="ownSim" data-rpm="184.0" data-base-cof="0" data-bloom="0.8" data-distance="50">
           <h3>Try it: tap — pause — tap</h3>
           <p class="small" style="margin:0">A target 50 m away, aiming down sights. <strong>Press and hold FIRE</strong> (mouse, touch, or hold Space with the button focused) and watch the holes walk wider the longer you hold — that's firing from an ever-growing cone. Release, let the cone reset, fire again. <strong>Aim for one or two shots per pull; three is tolerable while you're new.</strong> Bolt-action mode fires one shot at a time the same way — tap, don't hold; two bolt shots fill the heat pool. This practice window is shared by the whole Sage series: it's driven by a weapon profile plugged into the window — here the Phaseshift VX-S's (326 ms refire, 0° starting cone, 0.8° bloom per shot, target at 50 m) — and the spread is drawn at true scale from those numbers.</p>
           <div class="sim-stage" id="simStage" aria-hidden="true">
@@ -960,7 +960,7 @@
          Sniper grading: 1-2 shots per pull is ideal (tap / double-tap), 3 is
          tolerable while new, 4+ means the cone has grown past the target. */
       (function () {
-        var box = document.getElementById('burstSim');
+        var box = document.getElementById('ownSim');
         var stage = document.getElementById('simStage');
         var fireBtn = document.getElementById('simFire');
         var resetBtn = document.getElementById('simReset');

@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>Lasher X2 Sage Guide &middot; PS2 Elite</title>
+  <meta name="description" content="A beginner's guide to the Lasher X2 — A 1,000-cert heavy gun for the VS Heavy Assault — it lobs slow plasma orbs that explode on contact, splashing everyone nearby. This page teaches you to win fights with it today." />
+  <meta name="color-scheme" content="light dark" />
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="weapon-sage.css?v=20261109-sageguide3" />
+  <style>
+    /* Faction colours for this guide — overrides the shared NC palette. */
+    :root {
+      --accent-ink: #7fe0d8;
+      --first-bg: #d9c2f5;
+      --hero-bg: #241040;
+      --hero-soft: #c9a8ec;
+      --vs-purple: #a67ee8;
+      --vs-purple-deep: #c9a8ec;
+      --vs-teal: #4fd1c5;
+    }
+    html[data-theme="light"] {
+      --accent-ink: #0f6e68;
+      --first: #3d1a66;
+      --first-bg: #d9c2f5;
+      --hero-bg: #3d1a66;
+      --hero-soft: #c9a8ec;
+      --vs-purple: #7a3fd1;
+      --vs-purple-deep: #3d1a66;
+      --vs-teal: #1fa8a0;
+    }
+    ol.habits { counter-reset: hab; list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+    ol.habits li { counter-increment: hab; background: var(--surface); border: 1px solid var(--line); padding: 14px 16px 14px 58px; position: relative; }
+    ol.habits li::before {
+            content: counter(hab, decimal-leading-zero);
+            position: absolute; left: 14px; top: 12px;
+            font-family: "Rajdhani", sans-serif; font-weight: 700; font-size: 24px; color: var(--vs-purple);
+          }
+    ol.habits h3 { margin: 0 0 3px; font-size: 19px; }
+    ol.habits p { margin: 0; font-size: 15.5px; }
+    ul.drills { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+    ul.drills li { background: var(--surface); border: 1px solid var(--line); padding: 13px 16px; display: grid; gap: 2px; }
+    ul.drills .d-name { font-family: "Rajdhani", sans-serif; font-weight: 700; font-size: 18px; }
+    ul.drills .d-name span { display: block; font-family: "Barlow", sans-serif; font-weight: 400; font-size: 13.5px; color: var(--ink-soft); }
+    .strip { background: var(--surface); border: 1px solid var(--line); padding: 16px 18px; margin-bottom: 14px; }
+    .strip h3 { margin: 0 0 2px; font-size: 21px; }
+    .strip .cap { font-size: 15px; margin: 8px 0 0; }
+    .strip-panels { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: stretch; }
+    .strip-panel { flex: 1 1 150px; border: 1px solid var(--line); background: var(--surface-2); padding: 10px; }
+    .strip-panel svg { width: 100%; height: auto; display: block; }
+    .strip-panel .p-cap { font-size: 14px; margin: 8px 0 0; line-height: 1.4; }
+    .strip-panel .p-cap b { display: block; font-family: "Rajdhani", sans-serif; text-transform: uppercase; letter-spacing: 0.05em; font-size: 13.5px; }
+    .strip-panel.bad .p-cap b { color: var(--skip); }
+    .strip-panel.good .p-cap b { color: var(--good); }
+    .strip-arrow { align-self: center; font-size: 24px; color: var(--ink-soft); flex: none; }
+    .strip-exception { border: 2px solid var(--vs-teal); background: var(--situ-bg); padding: 12px 14px; margin-top: 12px; display: flex; gap: 14px; align-items: center; }
+    .strip-exception svg { flex: none; }
+    .strip-exception p { margin: 0; font-size: 15.5px; }
+    .strip-exception b { font-family: "Rajdhani", sans-serif; text-transform: uppercase; letter-spacing: 0.05em; font-size: 14px; color: var(--accent-ink); display: block; }
+    .orb-target { position: absolute; top: 42%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+  </style>
+</head>
+<body class="site-page">
+    <div class="wrap">
+
+    <p class="sage-back"><a href="weapon-compare.html?w=7540">← Back to the Lasher X2 comparison</a></p>
+
+      <!-- ================= HERO ================= -->
+      <header class="hero">
+        <p class="brandline">Sage Guide · Vanu Sovereignty · Heavy Assault</p>
+        <h1>Lasher X2 <span class="thin">— the doorway denial orb, mastered</span></h1>
+        <p class="sub">A 1,000-cert heavy gun for the VS Heavy Assault — it lobs slow plasma orbs that explode on contact, splashing everyone nearby. This page teaches you to win fights with it today.</p>
+        <p class="verdict"><strong>The one-line verdict:</strong> an area-denial weapon, not a duelling rifle: its orbs fly at just 100 m/s and take 300 ms to cross 30 m, so you win by aiming at the floor by their feet and letting the splash do the work — and you lose every fair 1v1 against a hitscan gun.</p>
+        <img class="hero-gun" src="assets/weapons/4057.png" alt="The Lasher X2 heavy gun, side profile — Vanu Sovereignty's plasma-orb area-denial weapon with its 75-orb magazine" width="256" height="128" />
+        <p class="hero-gun-cap">The Lasher X2 · Vanu Sovereignty · 75-orb magazine</p>
+      </header>
+
+      <div class="stats" role="list" aria-label="Lasher X2 key statistics">
+        <div class="stat" role="listitem"><div class="stat-big">155<small> → 105</small></div><div class="stat-label">Direct damage per orb</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">333</div><div class="stat-label">Rounds per minute</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">75</div><div class="stat-label">Orbs per magazine</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">4.2<small> s</small></div><div class="stat-label">Reload (rounds left)</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">100<small> m/s</small></div><div class="stat-label">Orb velocity</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">×2</div><div class="stat-label">Headshot damage · direct only</div></div>
+        
+      </div>
+      <!-- ================= 01 ================= -->
+      <section aria-labelledby="s-first">
+        <div class="sec-head">
+          <span class="num">01</span>
+          <h2 id="s-first">First lesson: stop, aim, <em>then</em> fire</h2>
+          <span class="tag">The mistake almost<br />every new player makes</span></div>
+                <p class="lede">Picture the scene, because you've probably lived it: you're <strong>sprinting</strong> across a courtyard, an enemy appears, and you do everything at once — hold the trigger down <em>while you're still running</em>, then press aim-down-sights (ADS) a split-second later, finger still down. The sight picture snaps in, it <em>looks</em> precise… and your orbs spray everywhere except the man in your crosshair. He kills you. It feels like the game cheated. It didn't — here's what actually happened.</p>
+
+        <div class="grid2">
+          <div class="card">
+            <h3>✗ What you did — the spray</h3>
+            <p><strong>You started firing from a sprint, from the hip.</strong> Sprinting is the least accurate state in the game: your cone of fire starts at <strong>7.0° — the widest it can ever be on this gun</strong>. Every shot you fire from the hip does <em>not</em> widen it — this gun has zero bloom, so the cone never grows as you fire — but the cone you started with is already 7.0° wide, and the orbs you fired from the hip are still in flight: at 100 m/s, an orb takes 300 ms to cross 30 m, so the fight you think you're aiming at has already moved.</p>
+            <p><strong>Then you pressed ADS mid-hold — and nothing reset.</strong> Aiming down sights does <em>not</em> shrink a cone of fire that is already bloomed. The scope only gives you a precise <em>picture</em>; the bullets keep flying out of the wide cone you built while running and hipfiring. That's the whole mystery: <strong>accurate-looking aim, wildly inaccurate gun.</strong></p>
+            <p>Two timers stack the deck further: your gun needs about <strong>0.3 s to settle after a sprint</strong>, and raising the sight itself takes ~0.15 s. Trigger held through all of it means your first half-second of fire is pure confetti.</p>
+          </div>
+          <div class="card">
+            <h3>✓ The fix — three beats, in order</h3>
+            <p><strong>1 · Feet.</strong> Let go of sprint (and the trigger, if you're already holding it). Stop, or drop into a strafe — anything but a full sprint.</p>
+            <p><strong>2 · Sight.</strong> Press ADS and let the sight come up. This takes a heartbeat — your overshield (F) covers it.</p>
+            <p><strong>3 · Trigger.</strong> <em>Now</em> fire. Starting from the aimed cone of <strong>0.3°</strong>, your first shots land where the dot points. Aim at the floor by his feet, not at his chest: the orb explodes where it lands, and the splash does the work even when the direct hit would have missed.</p>
+            <p><strong>Stop → aim → fire.</strong> If you take one habit from this entire page, take this one. You'll practise exactly this rhythm in the simulator in section 04.</p>
+          </div>
+        </div>
+
+        <div class="strip">
+          <h3>What you did — the spray</h3>
+          <p class="cap" style="margin:0">Four beats, left to right — the same mistake the cards above describe, drawn out.</p>
+          <div class="strip-panels">
+            <div class="strip-panel bad">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A soldier sprinting, with a wide dashed cone fanning out from the gun muzzle, labelled 7.0 degrees.">
+                <line x1="8" y1="122" x2="192" y2="122" stroke="var(--line)" stroke-width="2" />
+                <g stroke="var(--ink-soft)" stroke-width="3" stroke-linecap="round" fill="none">
+                  <line x1="18" y1="70" x2="38" y2="70" /><line x1="14" y1="86" x2="34" y2="86" /><line x1="20" y1="102" x2="40" y2="102" />
+                </g>
+                <g stroke="var(--ink)" stroke-width="3" stroke-linecap="round" fill="none">
+                  <line x1="72" y1="58" x2="86" y2="86" /><line x1="86" y1="86" x2="66" y2="118" /><line x1="86" y1="86" x2="106" y2="112" />
+                  <line x1="74" y1="64" x2="56" y2="80" /><line x1="74" y1="64" x2="94" y2="72" />
+                </g>
+                <circle cx="70" cy="46" r="10" fill="var(--ink)" />
+                <rect x="94" y="66" width="28" height="6" rx="2" fill="var(--ink)" transform="rotate(-8 94 66)" />
+                <g stroke="var(--skip)" stroke-width="2" stroke-dasharray="6 5" fill="none">
+                  <line x1="122" y1="62" x2="192" y2="26" /><line x1="122" y1="62" x2="192" y2="98" />
+                </g>
+                <text x="150" y="58" font-size="13" font-weight="700" fill="var(--skip)">7.0°</text>
+              </svg>
+              <p class="p-cap"><b>1 · Sprinting</b>Your cone starts maxed at 7.0° — the widest it can ever be.</p>
+            </div>
+            <div class="strip-arrow" aria-hidden="true">→</div>
+            <div class="strip-panel bad">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A soldier firing from the hip while running, with bullet holes scattering ever wider from the muzzle.">
+                <line x1="8" y1="122" x2="192" y2="122" stroke="var(--line)" stroke-width="2" />
+                <g fill="var(--ink)">
+                  <circle cx="52" cy="46" r="10" />
+                  <rect x="44" y="56" width="18" height="42" rx="6" />
+                  <rect x="46" y="96" width="8" height="26" /><rect x="56" y="96" width="8" height="26" />
+                </g>
+                <rect x="62" y="72" width="30" height="6" rx="2" fill="var(--ink)" />
+                <g fill="var(--skip)">
+                  <circle cx="118" cy="66" r="4" /><circle cx="142" cy="84" r="4" /><circle cx="162" cy="58" r="4" /><circle cx="182" cy="90" r="4" /><circle cx="196" cy="66" r="4" />
+                </g>
+                <text x="118" y="122" font-size="13" font-weight="700" fill="var(--skip)">spreading…</text>
+              </svg>
+              <p class="p-cap"><b>2 · Trigger held</b>Firing from the hip while running — every shot adds bloom.</p>
+            </div>
+            <div class="strip-arrow" aria-hidden="true">→</div>
+            <div class="strip-panel bad">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A round scope view with the crosshair centred on a small soldier, while red crosses mark bullet holes scattered wide around him.">
+                <circle cx="100" cy="70" r="56" fill="none" stroke="var(--ink)" stroke-width="4" />
+                <line x1="100" y1="20" x2="100" y2="120" stroke="var(--ink)" stroke-width="1.5" />
+                <line x1="50" y1="70" x2="150" y2="70" stroke="var(--ink)" stroke-width="1.5" />
+                <g fill="var(--ink)">
+                  <circle cx="100" cy="58" r="5" /><rect x="94" y="63" width="12" height="18" rx="3" />
+                </g>
+                <g stroke="var(--skip)" stroke-width="3" stroke-linecap="round">
+                  <line x1="52" y1="32" x2="62" y2="42" /><line x1="62" y1="32" x2="52" y2="42" />
+                  <line x1="140" y1="30" x2="150" y2="40" /><line x1="150" y1="30" x2="140" y2="40" />
+                  <line x1="48" y1="100" x2="58" y2="110" /><line x1="58" y1="100" x2="48" y2="110" />
+                  <line x1="142" y1="102" x2="152" y2="112" /><line x1="152" y1="102" x2="142" y2="112" />
+                </g>
+              </svg>
+              <p class="p-cap"><b>3 · ADS, mid-hold</b>The sight looks precise — but aiming down sights does <em>not</em> reset bloom.</p>
+            </div>
+            <div class="strip-arrow" aria-hidden="true">→</div>
+            <div class="strip-panel bad">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A soldier target standing untouched while red crosses mark bullet holes all around him.">
+                <line x1="8" y1="122" x2="192" y2="122" stroke="var(--line)" stroke-width="2" />
+                <g fill="var(--ink)">
+                  <circle cx="100" cy="42" r="11" />
+                  <rect x="88" y="54" width="24" height="44" rx="7" />
+                  <rect x="90" y="96" width="9" height="26" /><rect x="101" y="96" width="9" height="26" />
+                </g>
+                <g stroke="var(--skip)" stroke-width="3.5" stroke-linecap="round">
+                  <line x1="52" y1="28" x2="64" y2="40" /><line x1="64" y1="28" x2="52" y2="40" />
+                  <line x1="140" y1="24" x2="152" y2="36" /><line x1="152" y1="24" x2="140" y2="36" />
+                  <line x1="44" y1="92" x2="56" y2="104" /><line x1="56" y1="92" x2="44" y2="104" />
+                  <line x1="146" y1="94" x2="158" y2="106" /><line x1="158" y1="94" x2="146" y2="106" />
+                  <line x1="96" y1="12" x2="106" y2="22" /><line x1="106" y1="12" x2="96" y2="22" />
+                </g>
+                <text x="100" y="138" font-size="13" font-weight="700" fill="var(--skip)" text-anchor="middle">he walks away</text>
+              </svg>
+              <p class="p-cap"><b>4 · The spray</b>Bullets fly out of the wide cone you built. The enemy walks away.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="strip">
+          <h3>The fix — three beats, in order</h3>
+          <p class="cap" style="margin:0">Same fight, done right. Each beat has a job, and the order is the whole lesson.</p>
+          <div class="strip-panels">
+            <div class="strip-panel good">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A soldier standing still with feet planted, next to a small clock showing about 0.3 seconds.">
+                <line x1="8" y1="122" x2="192" y2="122" stroke="var(--line)" stroke-width="2" />
+                <g fill="var(--ink)">
+                  <circle cx="62" cy="46" r="10" />
+                  <rect x="54" y="56" width="18" height="42" rx="6" />
+                  <rect x="56" y="96" width="8" height="26" /><rect x="66" y="96" width="8" height="26" />
+                </g>
+                <rect x="72" y="70" width="26" height="6" rx="2" fill="var(--ink)" />
+                <g fill="none" stroke="var(--good)" stroke-width="3">
+                  <circle cx="152" cy="52" r="20" />
+                  <line x1="152" y1="52" x2="152" y2="38" stroke-linecap="round" />
+                  <line x1="152" y1="52" x2="162" y2="58" stroke-linecap="round" />
+                </g>
+                <text x="152" y="92" font-size="14" font-weight="700" fill="var(--good)" text-anchor="middle">≈ 0.3 s</text>
+                <text x="62" y="138" font-size="12" fill="var(--ink-soft)" text-anchor="middle">feet planted</text>
+              </svg>
+              <p class="p-cap"><b>1 · Stop</b>Let go of sprint (and the trigger). About 0.3 s for the gun to settle.</p>
+            </div>
+            <div class="strip-arrow" aria-hidden="true">→</div>
+            <div class="strip-panel good">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A round scope view rising onto a soldier target, with an upward arrow and about 0.15 seconds labelled.">
+                <circle cx="100" cy="72" r="52" fill="none" stroke="var(--ink)" stroke-width="4" />
+                <line x1="100" y1="26" x2="100" y2="118" stroke="var(--ink)" stroke-width="1.5" />
+                <line x1="54" y1="72" x2="146" y2="72" stroke="var(--ink)" stroke-width="1.5" />
+                <g fill="var(--ink)">
+                  <circle cx="100" cy="58" r="6" /><rect x="93" y="64" width="14" height="22" rx="4" />
+                  <rect x="95" y="84" width="4" height="14" /><rect x="101" y="84" width="4" height="14" />
+                </g>
+                <g stroke="var(--good)" stroke-width="3" fill="none" stroke-linecap="round">
+                  <line x1="28" y1="118" x2="28" y2="84" /><line x1="22" y1="90" x2="28" y2="82" /><line x1="34" y1="90" x2="28" y2="82" />
+                </g>
+                <text x="100" y="138" font-size="14" font-weight="700" fill="var(--good)" text-anchor="middle">≈ 0.15 s</text>
+              </svg>
+              <p class="p-cap"><b>2 · Aim</b>Press ADS and let the sight come up (~0.15 s).</p>
+            </div>
+            <div class="strip-arrow" aria-hidden="true">→</div>
+            <div class="strip-panel good">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A gun firing through a narrow dashed cone at a soldier target, with three green hits grouped on his chest.">
+                <line x1="8" y1="122" x2="192" y2="122" stroke="var(--line)" stroke-width="2" />
+                <rect x="18" y="66" width="30" height="6" rx="2" fill="var(--ink)" />
+                <g stroke="var(--good)" stroke-width="2" stroke-dasharray="6 5" fill="none">
+                  <line x1="48" y1="68" x2="150" y2="58" /><line x1="48" y1="70" x2="150" y2="80" />
+                </g>
+                <g fill="var(--ink)">
+                  <circle cx="162" cy="44" r="10" />
+                  <rect x="152" y="54" width="20" height="40" rx="6" />
+                  <rect x="154" y="92" width="8" height="30" /><rect x="164" y="92" width="8" height="30" />
+                </g>
+                <g fill="var(--good)">
+                  <circle cx="158" cy="66" r="4" /><circle cx="166" cy="72" r="4" /><circle cx="160" cy="78" r="4" />
+                </g>
+              </svg>
+              <p class="p-cap"><b>3 · Fire</b>Now fire — from the aimed cone. First shots land where the dot points.</p>
+            </div>
+          </div>
+          <div class="strip-exception">
+            <svg viewBox="0 0 90 70" width="90" height="70" role="img" aria-label="A soldier hipfiring at a close target inside a small spread ring.">
+              <g fill="var(--ink)">
+                <circle cx="22" cy="18" r="7" /><rect x="17" y="25" width="11" height="24" rx="4" />
+                <rect x="18" y="47" width="5" height="16" /><rect x="25" y="47" width="5" height="16" />
+              </g>
+              <rect x="28" y="30" width="16" height="4" rx="2" fill="var(--ink)" />
+              <circle cx="70" cy="32" r="15" fill="none" stroke="var(--vs-teal)" stroke-width="2" stroke-dasharray="4 3" />
+              <g fill="var(--ink)">
+                <circle cx="70" cy="22" r="5" /><rect x="65" y="27" width="10" height="16" rx="3" />
+              </g>
+              <g fill="var(--good)"><circle cx="68" cy="32" r="2.5" /><circle cx="73" cy="35" r="2.5" /></g>
+            </svg>
+            <p><b>The exception — under ~8 m, skip the whole dance</b>Hipfire works, no ADS needed, and stopping is optional. Keep moving, strafe, and let the hipfire ring do the work.</p>
+          </div>
+        </div>
+
+        <div class="rule"><strong>The one exception</strong>Inside ~8 metres, don't ADS at all — and don't aim at him either: aim at the floor by his feet and let the splash do the work (section 03). The disaster above is a mid-range problem: close enough that you reached for the sight, far enough that the spray missed. When in doubt: release everything, aim, then shoot.</div>
+
+        </section>
+      <!-- ================= 02 ================= -->
+      <section aria-labelledby="s-damage" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">02</span>
+          <h2 id="s-damage">Know your damage</h2>
+          <span class="tag">Shots to kill, by range</span></div>
+                <p class="lede">Every enemy infantry has 1,000 health (500 shield + 500 health). Your orb deals <strong>155 direct damage up close</strong>, fading to <strong>105 at long range</strong> — and a direct hit deals the splash too, so a close direct hit is really <strong>230 damage</strong>. Headshots double only the direct half; leg shots count less (×0.9) on the direct half. That gives you three numbers worth memorising — and one twist that makes this gun special:</p>
+
+        <div class="rule"><strong>Two clocks, not one — read this first</strong>The Lasher's 180 ms refire is only half the clock. An orb flies at 100 m/s, so the killing orb still has to <em>travel</em> — 100 ms per 10 m — before the target falls. This guide never gives a single-refire time to kill: the table shows the trigger time (how long you hold the trigger) and the impact time (when the target actually dies). At 30 m a 5-orb chest kill takes 0.72 s of trigger time and 1.02 s before the target falls. Headshots are real — 3 up close — but orbs are slow, fat and glowing, so treat the head numbers as a bonus, not the plan.</div>
+
+        <table class="tbl" aria-label="Shots to kill by range">
+          <thead>
+            <tr><th>Range</th><th class="n">Damage per orb (direct + splash)</th><th class="n">Head</th><th class="n">Chest</th><th class="n">Legs</th><th class="n">Chest vs shielded Heavy</th><th class="n">Trigger TTK → impact TTK</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Close</strong> · 0–10 m</td><td class="n big">230</td><td class="n big">3</td><td class="n big">5</td><td class="n">5</td><td class="n">7</td><td class="n big">0.72 s → 0.82 s @10 m</td></tr>
+            <tr><td><strong>Mid</strong> · 10–43 m</td><td class="n big">230→200</td><td class="n big">3 → 4</td><td class="n big">5</td><td class="n">5 → 6</td><td class="n">7 → 8</td><td class="n big">0.72 s → 1.02 s @30 m</td></tr>
+            <tr><td><strong>Far</strong> · 43 m+</td><td class="n big">200→180</td><td class="n big">4</td><td class="n big">6</td><td class="n">6</td><td class="n">8 → 9</td><td class="n big">0.90 s → 1.40 s @50 m</td></tr>
+          </tbody>
+        </table>
+        <p class="small">Perfect-accuracy times to kill, trigger time: 3 headshots ≈ 0.36 s, 5 chest shots ≈ 0.72 s up close; 6 chest shots ≈ 0.90 s far. Add the orb's flight — 100 ms per 10 m — for the time the target actually falls: 0.82 s at 10 m, 1.02 s at 30 m, 1.40 s at 50 m. A direct hit deals both halves at once (155 + 75 = 230 up close); the splash alone is 75 within a metre and 25 at 3 m — 14 splash-only shots to kill up close, 40 at 3 m, so splash finishes the wounded, it never kills the healthy. Direct-hit damage output is 1,278 per second up close, 1,000 far; splash-only is 417 and 139. Magazine: 75 orbs, with 300 in reserve — 15 close kills per magazine.</p>
+
+        <div class="chart-box">
+          <h3>Damage falloff — where your orbs get weaker</h3>
+          <p class="small" style="margin:0 0 6px">Two lines, because one orb deals two kinds of damage. The purple line is the direct hit alone; the teal line is what a direct hit really deals — direct plus the splash that goes off on impact. A near miss only gets the splash, which falls from 75 to 25 between 1 m and 3 m.</p>
+          <svg viewBox="0 0 640 240" width="100%" role="img" aria-label="Line chart of Lasher X2 damage per orb from 0 to 100 metres: a direct hit deals 230 damage flat to 10 metres, falling to 180 at 65 metres; the direct damage alone falls from 155 to 105 over the same stretch.">
+            <g stroke="var(--line)" stroke-width="1">
+              <line x1="56" y1="40" x2="616" y2="40" />
+              <line x1="56" y1="61.6" x2="616" y2="61.6" />
+              <line x1="56" y1="97.6" x2="616" y2="97.6" />
+              <line x1="56" y1="133.6" x2="616" y2="133.6" />
+            </g>
+            <g fill="var(--ink-soft)" font-size="12">
+              <text x="48" y="44" text-anchor="end">230</text>
+              <text x="48" y="65.6" text-anchor="end">200</text>
+              <text x="48" y="101.6" text-anchor="end">150</text>
+              <text x="48" y="137.6" text-anchor="end">100</text>
+              <text x="56" y="222">0 m</text>
+              <text x="168" y="222" text-anchor="middle">20 m</text>
+              <text x="336" y="222" text-anchor="middle">50 m</text>
+              <text x="504" y="222" text-anchor="middle">75 m</text>
+              <text x="616" y="222" text-anchor="end">100 m</text>
+            </g>
+            <polyline points="56,40.0 112,40.0 420,76.0 616,76.0" fill="none" stroke="var(--vs-teal)" stroke-width="3" />
+            <polyline points="56,94.0 112,94.0 420,130.0 616,130.0" fill="none" stroke="var(--vs-purple)" stroke-width="2.5" />
+            <g fill="var(--vs-teal)">
+              <circle cx="112" cy="40.0" r="4" /><circle cx="420" cy="76.0" r="4" />
+            </g>
+            <g fill="var(--vs-purple)">
+              <circle cx="112" cy="94.0" r="4" /><circle cx="420" cy="130.0" r="4" />
+            </g>
+            <g font-size="13" font-weight="600" fill="var(--ink)">
+              <text x="118" y="32">230 direct hit</text>
+              <text x="118" y="88">155 direct</text>
+              <text x="424" y="70">180 @ 65 m</text>
+              <text x="424" y="124">105 @ 65 m</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="rule"><strong>Rule of thumb</strong>Inside 10 m a direct hit is 230 damage — five orbs kill, and the fifth only has to land within a metre of him. Past 43 m every kill takes six orbs and half a second of flight — close the distance, or aim at the ground where he's going, not where he is.</div>
+
+        <h3>Reload — 4.2 s, and 5.2 s on empty</h3>
+        <p>Short reload <strong>4.2 s</strong>, on empty <strong>5.2 s</strong> — the difference is the 1 s chamber time after the last orb. With a 75-orb magazine you reload more often than the chaingun does, and every reload is four seconds of not denying a doorway: reload early, behind cover, and never on empty. The Extended Magazine (section 06) doubles the magazine to 150 orbs.</p>
+
+        </section>
+      <!-- ================= 03 ================= -->
+      <section aria-labelledby="s-aim" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">03</span>
+          <h2 id="s-aim">Aim by distance</h2>
+          <span class="tag">Where the gun is strong,<br />where it isn’t</span></div>
+                <div class="lab">
+          <label for="rng"><strong>Range:</strong> <span id="rngOut">30 m</span></label>
+          <input id="rng" type="range" min="5" max="75" step="1" value="30" />
+          <div class="lab-out">
+            <div class="lab-stat"><span class="lab-num" id="labDmg">230</span><span class="lab-lbl">damage per direct hit</span></div>
+            <div class="lab-stat"><span class="lab-num" id="labStk">5</span><span class="lab-lbl">orbs to kill (chest)</span></div>
+            <div class="lab-stat"><span class="lab-num" id="labTtk">0.72 s → 1.02 s</span><span class="lab-lbl">trigger → impact TTK</span></div>
+          </div>
+          <p id="labMsg" class="small" style="margin:8px 0 0">30 m — your sweet spot: 5 orbs, 0.72 s of trigger time, and the target falls 1.02 s after you start. Lead him by a step — the orb takes 300 ms and a strafing man moves ~0.75 m in that time.</p>
+        </div>
+
+        <div class="range-grid">
+          <div class="range-card"><h3>0–10 m · Point-blank — maximum power</h3><div class="range-bar" style="width:100%"></div><p><strong>5 orbs</strong> · <strong>0.72 s trigger / 0.82 s impact</strong> · orb flight 100 ms. Aim at the floor by his feet — a splash within a metre still deals 75. At this range the Lasher is a shotgun that never has to aim.</p></div>
+          <div class="range-card"><h3>10–30 m · Your sweet spot</h3><div class="range-bar" style="width:85%"></div><p><strong>5 orbs</strong> · <strong>0.72 s trigger / 0.82–1.02 s impact</strong> · Lead him by a step — at 30 m the orb takes 300 ms and a strafing man moves ~0.75 m in that time. Aim where he's going, not where he is.</p></div>
+          <div class="range-card"><h3>30–50 m · Working range</h3><div class="range-bar" style="width:70%"></div><p><strong>5–6 orbs</strong> · <strong>0.72–0.90 s trigger / 1.02–1.40 s impact</strong> · Aim at the doorway, not the man — deny the lane and let the splash punish anyone who crosses it. A man sprinting across the lane moves 1.5 m during your orb's flight.</p></div>
+          <div class="range-card"><h3>50–75 m · Stretching it</h3><div class="range-bar" style="width:40%"></div><p><strong>6 orbs</strong> · <strong>0.90 s trigger / 1.40 s+ impact</strong> · Half a second of flight — the target has moved twice by the time the orb arrives. Close in, or pick another fight.</p></div>
+        </div>
+
+        <p class="callout">The orb travels 100 m in one second and lives for 4 s — its maximum range is 400 m, but it never gets there in a fight. It does not drop: gravity is zero, so the orb flies dead straight. The hard part is never the drop; it is the wait.</p>
+
+        </section>
+      <!-- ================= 04 ================= -->
+      <section aria-labelledby="s-stances" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">04</span>
+          <h2 id="s-stances">Stances and firing modes</h2>
+          <span class="tag">Stances, firing modes,<br />and the trainer</span></div>
+                <p class="lede">Your cone of fire is the spread of your orbs — the full angle of the cone leaving the muzzle. Smaller is tighter. The Lasher's sighted cone is the tightest in the game — <strong>0.3°</strong> — and <strong>it never grows as you fire</strong>, because bloom is 0. The only thing that changes it is your stance.</p>
+
+        <table class="tbl" aria-label="Cone of fire by stance">
+          <thead><tr><th>Stance</th><th class="n">Cone of fire</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Standing still, ADS</strong></td><td class="n big">0.3°</td><td>After ~0.15 s sight-in. Bloom is 0, so the cone never grows.</td></tr>
+            <tr><td><strong>Crouching, ADS</strong></td><td class="n big">0.3°</td><td>Same cone, lower profile.</td></tr>
+            <tr><td><strong>Crouching, moving, ADS</strong></td><td class="n big">0.3°</td><td>Crouch-walking keeps the tight cone.</td></tr>
+            <tr><td><strong>Strafing, ADS</strong></td><td class="n big">0.5°</td><td>One step wider — 0.26 m across at 30 m, still inside the torso.</td></tr>
+            <tr><td><strong>Crouching still, hip</strong></td><td class="n big">1.0°</td><td>Your tightest hipfire cone.</td></tr>
+            <tr><td><strong>Standing still, hip</strong></td><td class="n big">1.5°</td><td>0.21 m across at 8 m.</td></tr>
+            <tr><td><strong>Strafing, hip</strong></td><td class="n big">2.0°</td><td>0.28 m across at 8 m.</td></tr>
+            <tr><td><strong>Sprinting, hip</strong></td><td class="n big">7.0°</td><td>0.98 m across at 8 m. Never fire from a sprint.</td></tr>
+            <tr><td><strong>Falling, ADS</strong></td><td class="n big">3.0°</td><td>Don't fire in the air.</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Firing modes — one mode: hold to fire</h3>
+        <p>Automatic, 333 RPM, 180 ms between orbs. The Lasher has no burst mode either. Your fire discipline is the lead: each orb takes 100 ms per 10 m to arrive, so the question is never how fast you fire — it is where the target will be when the orb gets there.</p>
+
+        <div class="rule"><strong>No bloom — but strafing still costs you a step</strong>The cone never grows as you fire (bloom 0), but strafing ADS widens it in one step: 0.3° standing still, 0.5° moving. At 30 m that's a cone of 0.16 m standing still and 0.26 m moving — both far inside the torso, so the cost is small. The real ADAD cost on the Lasher is the target's: a strafing enemy moves ~0.75 m during your orb's 300 ms flight at 30 m. Your cone doesn't punish you for moving; his movement punishes your aim.</div>
+
+        <div class="sim" id="orbSim">
+          <h3>Orb lead trainer — hit a strafing target at 30 m</h3>
+          <p>The dummy strafes across a 6 m lane at aimed pace (2.5 m/s) — 2.4 s to cross. Your crosshair is fixed at the centre. Click FIRE to launch one orb: it takes 300 ms to cross 30 m, and the dummy keeps moving. Fire when he's 0.75 m short of the centre and the orb meets him there. A direct hit is a kill's worth of damage; a splash within a metre still hurts. Ten orbs — 7 direct hits is good.</p>
+          <div class="sim-stage" id="orbStage">
+            <svg class="sim-bg" viewBox="0 0 600 220" preserveAspectRatio="none" aria-hidden="true">
+              <rect x="0" y="0" width="600" height="220" fill="#2e3440" />
+              <rect x="0" y="150" width="600" height="70" fill="#232830" />
+              <g fill="#3d4654"><rect x="40" y="40" width="90" height="14" /><rect x="120" y="90" width="110" height="12" /><rect x="440" y="30" width="80" height="14" /><rect x="470" y="100" width="90" height="12" /></g>
+              <g stroke="#fff" stroke-width="1.5" opacity="0.85">
+                <line x1="300" y1="76" x2="300" y2="88" /><line x1="300" y1="96" x2="300" y2="108" />
+                <line x1="284" y1="92" x2="296" y2="92" /><line x1="304" y1="92" x2="316" y2="92" />
+              </g>
+            </svg>
+            <div class="orb-target" id="orbTarget" aria-hidden="true">
+              <svg viewBox="-40 -80 80 160" width="48" height="96">
+                <g stroke="#8b95a5" stroke-width="4" fill="none">
+                  <circle cx="0" cy="-66" r="10" />
+                  <path d="M -16 -52 L 16 -52 L 13 6 L -13 6 Z" />
+                  <path d="M -16 -48 L -30 -4 M 16 -48 L 30 -4" />
+                  <path d="M -13 6 L -13 62 M 13 6 L 13 62" />
+                  <path d="M -14 66 L -26 66 M 14 66 L 26 66" />
+                </g>
+              </svg>
+            </div>
+          </div>
+          <div class="sim-row">
+            <button class="sim-fire" id="orbFire" type="button">FIRE ORB</button>
+            <button class="sim-reset" id="orbReset" type="button">Reset</button>
+            <div class="sim-note"><span class="sim-label">Orb flight — 300 ms to 30 m</span>
+              <div class="bloom-track" aria-hidden="true"><div class="bloom-fill" id="orbFlight" style="width:0%"></div></div>
+            </div>
+          </div>
+          <div class="sim-read">
+            <div><span class="sim-num" id="orbShots">0</span><span class="sim-lbl">Orbs fired</span></div>
+            <div><span class="sim-num" id="orbDirect">0</span><span class="sim-lbl">Direct hits</span></div>
+            <div><span class="sim-num" id="orbAcc">—</span><span class="sim-lbl">Direct-hit rate</span></div>
+          </div>
+          <p class="sim-verdict" id="orbVerdict">Click FIRE ORB when the dummy is about 0.75 m short of the crosshair.</p>
+          <div class="burst-log" id="orbLog"></div>
+        </div>
+
+        </section>
+      <!-- ================= 05 ================= -->
+      <section aria-labelledby="s-see" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">05</span>
+          <h2 id="s-see">See it: the pictures</h2>
+          <span class="tag">The pictures: spread, spool,<br />and sights</span></div>
+                <p class="lede">This is the gun's spread, drawn at true scale. The rings are the cone of fire at 8 m, against a torso silhouette. No artist's licence — the diameters come straight from the cone angles in section 04.</p>
+        <div class="chart-box">
+          <h3>Hipfire spread at 8 m — true scale</h3>
+        <svg viewBox="0 0 640 220" width="100%" role="img" aria-label="Diagram of hipfire and ADS spread rings at 8 metres, drawn to scale around a torso silhouette.">
+            <ellipse cx="320" cy="110" rx="35" ry="63" fill="var(--surface)" stroke="var(--ink-soft)" stroke-width="1.5" />
+            <circle cx="320" cy="110" r="68" fill="none" stroke="var(--ink-soft)" stroke-width="2.5" stroke-dasharray="7 5" />
+            <text x="320" y="30" text-anchor="middle">Sprint 7.0° — 0.98 m</text>
+            <circle cx="320" cy="110" r="19" fill="none" stroke="var(--vs-purple)" stroke-width="2.5" />
+            <text x="348" y="128" text-anchor="start">Hip moving 2.0° — 0.28 m</text>
+            <circle cx="320" cy="110" r="15" fill="none" stroke="var(--vs-teal)" stroke-width="2.5" />
+            <text x="348" y="100" text-anchor="start">Hip standing 1.5° — 0.21 m</text>
+            <circle cx="320" cy="110" r="10" fill="none" stroke="var(--vs-teal)" stroke-width="2.5" />
+            <text x="348" y="82" text-anchor="start">Laser 1.005° — 0.14 m</text>
+            <circle cx="320" cy="110" r="3" fill="none" stroke="var(--ink)" stroke-width="2.5" />
+            <text x="348" y="64" text-anchor="start">ADS 0.3° — 0.04 m</text>
+          </svg>
+
+          <p class="small">At 8 m the ADS cone is a dot — 0.3° is 0.04 m across. The Lasher is the most accurate sighted gun in the game, and it barely matters: your orbs are slow, and the fight is won by the splash, not the cone.</p>
+        </div>
+
+        <div class="chart-box">
+          <h3>Orb flight — what 300 ms looks like</h3>
+          <p class="small" style="margin:0 0 6px">The orb leaves at 100 m/s and flies dead straight — no drop, ever. At 30 m it arrives 300 ms after you fire, and a strafing man has moved ~0.75 m in that time. The rings at the impact point are the splash: 75 damage within 1 m, 25 at 3 m.</p>
+          <svg viewBox="0 0 640 260" width="100%%" role="img" aria-label="Diagram of an orb's flight to a target at 30 metres: fired at 0 ms, 10 metres at 100 ms, impact at 300 ms, with splash rings of 1 metre dealing 75 damage and 3 metres dealing 25 damage.">
+            <g stroke="var(--line)" stroke-width="1">
+              <line x1="56" y1="180" x2="616" y2="180" />
+            </g>
+            <g fill="var(--ink-soft)" font-size="12">
+              <text x="56" y="200">0 m · FIRE</text>
+              <text x="168" y="200" text-anchor="middle">10 m · 100 ms</text>
+              <text x="392" y="200" text-anchor="middle">30 m · 300 ms</text>
+              <text x="560" y="200" text-anchor="middle">50 m · 500 ms</text>
+            </g>
+            <circle cx="392" cy="120" r="70" fill="none" stroke="var(--vs-purple)" stroke-width="2" stroke-dasharray="7 5" />
+            <circle cx="392" cy="120" r="23" fill="none" stroke="var(--vs-teal)" stroke-width="2.5" />
+            <g transform="translate(392 120) scale(0.45)" stroke="var(--ink-soft)" stroke-width="3" fill="none">
+              <circle cx="0" cy="-66" r="10" />
+              <path d="M -16 -52 L 16 -52 L 13 6 L -13 6 Z" />
+              <path d="M -16 -48 L -30 -4 M 16 -48 L 30 -4" />
+              <path d="M -13 6 L -13 62 M 13 6 L 13 62" />
+              <path d="M -14 66 L -26 66 M 14 66 L 26 66" />
+            </g>
+            <circle cx="224" cy="120" r="8" fill="var(--vs-purple)" />
+            <polyline points="56,120 224,120" fill="none" stroke="var(--vs-purple)" stroke-width="2" stroke-dasharray="4 4" />
+            <g font-size="13" font-weight="600" fill="var(--ink)">
+              <text x="392" y="28" text-anchor="middle">Impact — orb explodes on contact</text>
+              <text x="392" y="48" text-anchor="middle">75 dmg within 1 m · 25 dmg at 3 m</text>
+              <text x="224" y="96" text-anchor="middle">orb in flight</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="chart-box">
+          <h3>1× HPR Reflex vs 2× VHO Reflex — the only sight choice that matters</h3>
+          <p>The Lasher takes optics, and the choice is simple: the <strong>1× HPR Reflex (30 certs)</strong> for doorway work, the <strong>2× VHO Reflex (30 certs)</strong> if you hold lanes at 30 m. The 3.4× sights (VMS, V3 Holo) and 4× sights (OG-4, CSZ) exist, and so does the 6× TriGon-6 — all 30 certs — but magnifying a slow orb does not make it arrive faster; at 50 m you are leading a man by half a second, and a bigger picture does not help.</p>
+          <svg viewBox="0 0 640 220" width="100%%" role="img" aria-label="Two sight pictures side by side: a 1x reflex sight and a 2x reflex sight, each showing a torso silhouette at 30 metres.">
+            <rect x="0" y="0" width="640" height="220" fill="var(--surface)" />
+            <g transform="translate(170 110) scale(0.45)" stroke="var(--ink-soft)" stroke-width="3" fill="none">
+              <circle cx="0" cy="-66" r="10" />
+              <path d="M -16 -52 L 16 -52 L 13 6 L -13 6 Z" />
+              <path d="M -16 -48 L -30 -4 M 16 -48 L 30 -4" />
+              <path d="M -13 6 L -13 62 M 13 6 L 13 62" />
+              <path d="M -14 66 L -26 66 M 14 66 L 26 66" />
+            </g>
+            <g stroke="var(--ink)" stroke-width="3" fill="none">
+              <circle cx="170" cy="110" r="52" />
+            </g>
+            <circle cx="170" cy="110" r="4" fill="var(--vs-teal)" />
+            <g transform="translate(470 110) scale(0.8)" stroke="var(--ink-soft)" stroke-width="3" fill="none">
+              <circle cx="0" cy="-66" r="10" />
+              <path d="M -16 -52 L 16 -52 L 13 6 L -13 6 Z" />
+              <path d="M -16 -48 L -30 -4 M 16 -48 L 30 -4" />
+              <path d="M -13 6 L -13 62 M 13 6 L 13 62" />
+              <path d="M -14 66 L -26 66 M 14 66 L 26 66" />
+            </g>
+            <g stroke="var(--ink)" stroke-width="3" fill="none">
+              <circle cx="470" cy="110" r="52" />
+            </g>
+            <circle cx="470" cy="110" r="4" fill="var(--vs-teal)" />
+            <g font-size="13" fill="var(--ink-soft)">
+              <text x="170" y="200" text-anchor="middle">1× HPR Reflex — 30 certs</text>
+              <text x="470" y="200" text-anchor="middle">2× VHO Reflex — 30 certs</text>
+            </g>
+          </svg>
+        </div>
+
+        </section>
+      <!-- ================= 06 ================= -->
+      <section aria-labelledby="s-att" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">06</span>
+          <h2 id="s-att">Attachments</h2>
+          <span class="tag">What to buy, and<br />what to skip</span></div>
+                <p class="lede">Optics are cheap and the rail is where the real choice lives — but there is no barrel and no ammo, so the orb itself never changes.</p>
+
+        <h3>Optics — cheap, and only two matter</h3>
+        <table class="tbl" aria-label="Optic attachments">
+          <thead><tr><th>Attachment</th><th class="n">Cost</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><strong>HPR Reflex 1×</strong> <span class="rec">First buy</span></td><td class="n">30 certs</td><td>1× reflex sight. Your doorway sight — wide view, fast target pickup.</td></tr>
+            <tr><td><strong>VHO Reflex 2×</strong></td><td class="n">30 certs</td><td>2× reflex sight. Your lane sight — a bigger picture at 30 m.</td></tr>
+            <tr><td><strong>HS/NV 1×</strong></td><td class="n">30 certs</td><td>Night-vision scope. Situational — night fights only.</td></tr>
+            <tr><td><strong>VMS 3.4× / V3 Holo 3.4×</strong></td><td class="n">30 certs</td><td>3.4× magnification. Skip — magnifying a slow orb does not make it arrive faster.</td></tr>
+            <tr><td><strong>OG-4 4× / CSZ 4×</strong></td><td class="n">30 certs</td><td>4× magnification. Skip.</td></tr>
+            <tr><td><strong>TriGon-6 6×</strong></td><td class="n">30 certs</td><td>6× magnification. Skip — at 50 m you are leading a man by half a second, and a bigger picture does not help.</td></tr>
+            <tr><td><strong>Iron sights</strong></td><td class="n">Free</td><td>Nothing on the optic slot — the iron sight works; buy the HPR first.</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Rail — pick one</h3>
+        <table class="tbl" aria-label="Rail attachments">
+          <thead><tr><th>Attachment</th><th class="n">Cost</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Forward Grip</strong> <span class="rec">First buy</span></td><td class="n">100 certs</td><td>Horizontal recoil −25%; equip +0.15 s (0.9 s → 1.05 s). Keeps the orb stream on line during long holds.</td></tr>
+            <tr><td><strong>Laser Sight</strong></td><td class="n">100 certs</td><td>Hipfire cone −33% — standing 1.5° → 1.005° (0.21 m → 0.14 m at 8 m). For hipfire rooms.</td></tr>
+            <tr><td><strong>Extended Magazine</strong></td><td class="n">100 certs</td><td>Magazine 75 → 150 orbs; equip/unequip +20% (0.9 s → 1.08 s, 0.25 s → 0.30 s). 150 orbs of doorway denial without a reload.</td></tr>
+            <tr><td><strong>Darklight Flashlight</strong></td><td class="n">100 certs</td><td>Reveals infiltrators in the dark. Situational — take it when the fight is a night base, not as a default.</td></tr>
+            <tr><td><strong>None</strong></td><td class="n">Free</td><td>Nothing on the rail keeps the gun as-is — fine while you save for the Grip.</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Barrel — none. Ammo — none.</h3>
+        <p>No barrel attachments exist for this gun, and no ammo attachments exist either. There is no way to make the orb faster or the splash bigger — the chart in section 02 is final.</p>
+
+        <div class="rule"><strong>One rail slot, one optic slot</strong>The Forward Grip is the default; the Laser is for hipfire rooms; the Extended Magazine is for doorway denial. Optics are cheap (30 certs each) — own both reflexes and swap per fight.</div>
+
+        </section>
+      <!-- ================= 07 ================= -->
+      <section aria-labelledby="s-loadouts" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">07</span>
+          <h2 id="s-loadouts">Four ready-made setups</h2>
+          <span class="tag">Four loadouts,<br />one recommended</span></div>
+                <div class="loadouts">
+          <div class="loadout"><h3>Standard Issue</h3><p class="cost">1,000 certs · the gun, bare</p><p><strong>Optic:</strong> iron sights · <strong>Rail:</strong> none</p><p>Everything in this guide works with this setup. Buy the gun, learn the lead, add attachments later.</p></div>
+          <div class="loadout"><h3>All-Rounder <span class="rec">Recommended</span></h3><p class="cost">1,130 certs</p><p><strong>Optic:</strong> VHO Reflex 2× (30) · <strong>Rail:</strong> Forward Grip (100)</p><p>The lane-holder: a 2× picture at 30 m and a quarter less horizontal recoil. This is the setup the rest of the guide assumes.</p></div>
+          <div class="loadout"><h3>Doorway Denial</h3><p class="cost">1,130 certs</p><p><strong>Optic:</strong> HPR Reflex 1× (30) · <strong>Rail:</strong> Extended Magazine (100)</p><p>150 orbs of doorway denial without a reload. Stand off, hold the lane, let the splash punish anyone who crosses it.</p></div>
+          <div class="loadout"><h3>Hipfire Skirmish</h3><p class="cost">1,130 certs</p><p><strong>Optic:</strong> HPR Reflex 1× (30) · <strong>Rail:</strong> Laser Sight (100)</p><p>Hipfire rooms: the standing hip cone shrinks to 1.005°, and you aim at the floor anyway.</p></div>
+        </div>
+
+        </section>
+      <!-- ================= 08 ================= -->
+      <section aria-labelledby="s-kill" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">08</span>
+          <h2 id="s-kill">Kill efficiently: six habits</h2>
+          <span class="tag">Six habits<br />that win fights</span></div>
+                <ol class="habits">
+          <li><strong>Aim at the floor by his feet.</strong> The orb explodes where it lands. A direct hit is 230; a 1 m splash is 75. The floor never dodges.</li>
+          <li><strong>Lead him by a step.</strong> At 30 m the orb takes 300 ms and he moves 0.75 m. Aim where he's going.</li>
+          <li><strong>Deny the doorway, don't duel the man.</strong> Your orbs are slow; his bullets are not. Make him cross your lane, don't chase him down his.</li>
+          <li><strong>Fire in pairs at moving targets.</strong> Two orbs, half a step apart — one catches where he is, the other where he's going.</li>
+          <li><strong>Reload early, never on empty.</strong> 4.2 s is bad; 5.2 s is worse. Reload after the kill, behind cover.</li>
+          <li><strong>Overshield before you step out.</strong> The orb's flight is 300 ms of him shooting back. Press F before the lane, not in it.</li>
+          
+        </ol>
+
+        </section>
+      <!-- ================= 09 ================= -->
+      <section aria-labelledby="s-weak" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">09</span>
+          <h2 id="s-weak">The honest weak spots</h2>
+          <span class="tag">Five ways<br />this gun loses</span></div>
+                <ol class="weak">
+          %s
+        </ol>
+
+        </section>
+      <!-- ================= 10 ================= -->
+      <section aria-labelledby="s-drills" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">10</span>
+          <h2 id="s-drills">Training: five VR drills</h2>
+          <span class="tag">Five VR drills,<br />then go play</span></div>
+                <ol class="drills">
+          <li><strong>The lead.</strong> Dummy strafing at 30 m: fire when he's 0.75 m short of the crosshair. Ten orbs — 7 direct hits is good. (Use the trainer in section 04.)</li>
+          <li><strong>The floor.</strong> Aim at the floor by a dummy's feet at 10 m. Five orbs, all splash, dead dummy. Now aim at his chest — same five orbs. The floor never dodges.</li>
+          <li><strong>The doorway.</strong> Stand 20 m from a doorway and fire orbs through it every 180 ms for a full magazine. Count the orbs that would have caught anyone crossing: that's denial.</li>
+          <li><strong>The 1 m ring.</strong> Fire at a wall 1 m from a dummy, then 3 m from a dummy. 75 damage vs 25 — feel how fast the splash falls off.</li>
+          <li><strong>The reload.</strong> Empty the magazine, reload on empty (5.2 s), then reload with orbs left (4.2 s). Time both. Never reload on empty in a fight.</li>
+          
+        </ol>
+        <div class="rule"><strong>Pocket summary — screenshot this</strong>Stop → aim → fire at the floor. 5 orbs up close, 0.72 s trigger / 0.82 s impact. Orb 100 m/s — 300 ms to 30 m. ADS cone 0.3°, hip 1.5°, sprint 7.0°. Reload 4.2 s. First buys: HPR Reflex 1× (30) + Forward Grip (100).</div>
+
+        </section>
+
+            <footer>
+        <p><strong>About this guide.</strong> An entry in the Sage tutorial series — one weapon, one page, written for a brand-new player. Stats are the Lasher X2's live game values (Vanu Sovereignty) as listed by the community wiki and the Census API data feed.</p>
+        <p>Sources: <a href="https://planetside.fandom.com/wiki/Lasher_X2">Lasher X2 — PlanetSide 2 Wiki</a> · <a href="https://liquidwarp.honu.pw/stats/weapons/infantry/lasher-x2-7540.html">Lasher X2 weapon data — PS2 LiquidWarp (Honu)</a>. Weapon render via the Census API; spread rings and sight views are scale diagrams drawn from the gun's published cone-of-fire and magnification values. PlanetSide 2 is a Daybreak Game Company title; this is a fan-made tutorial, not affiliated with Daybreak.</p>
+      </footer>
+    </div>
+
+  <script type="module" src="weapon-sage-guide.mjs?v=20261109-sageguide3"></script>
+  <script>
+
+      (function () {
+        var slider = document.getElementById('rng');
+        var out = document.getElementById('rngOut');
+        var dmgEl = document.getElementById('labDmg');
+        var stkEl = document.getElementById('labStk');
+        var ttkEl = document.getElementById('labTtk');
+        var msg = document.getElementById('labMsg');
+        function dmgAt(d) {
+          if (d <= 10) return 230;
+          if (d >= 65) return 180;
+          return 230 - 50 * (d - 10) / 55;
+        }
+        function update() {
+          var d = +slider.value;
+          var dmg = dmgAt(d);
+          var stk = dmg >= 200 ? 5 : 6;
+          var trig = (stk - 1) * 0.18;
+          var imp = trig + d / 100;
+          out.textContent = d + ' m';
+          dmgEl.textContent = Math.round(dmg);
+          stkEl.textContent = stk;
+          ttkEl.textContent = trig.toFixed(2) + ' s \u2192 ' + imp.toFixed(2) + ' s';
+          var band = d <= 10 ? 'point-blank' : d <= 30 ? 'your sweet spot' : d <= 50 ? 'working range' : 'stretching it';
+          msg.textContent = d + ' m \u2014 ' + band + ': ' + stk + ' orbs, ' + trig.toFixed(2) +
+            ' s of trigger time, and the target falls ' + imp.toFixed(2) + ' s after you start. Lead him by ' +
+            (d / 100 * 2.5).toFixed(2) + ' m \u2014 the orb takes ' + Math.round(d * 10) + ' ms and a strafing man moves that far in that time.';
+        }
+        slider.addEventListener('input', update);
+        update();
+      })();
+
+      /* ---------- orb lead trainer ---------- */
+      (function () {
+        var stage = document.getElementById('orbStage');
+        var target = document.getElementById('orbTarget');
+        var fireBtn = document.getElementById('orbFire');
+        var resetBtn = document.getElementById('orbReset');
+        var flight = document.getElementById('orbFlight');
+        var shotsEl = document.getElementById('orbShots');
+        var directEl = document.getElementById('orbDirect');
+        var accEl = document.getElementById('orbAcc');
+        var verdict = document.getElementById('orbVerdict');
+        var log = document.getElementById('orbLog');
+        var pos = 0, dir = 1, speed = 2.5, last = null, raf = null;
+        var shots = 0, direct = 0, splash = 0, flying = false;
+        function px(m) { return m / 6 * stage.getBoundingClientRect().width; }
+        function tick(ts) {
+          if (last === null) last = ts;
+          var dt = (ts - last) / 1000;
+          last = ts;
+          pos += dir * speed * dt;
+          if (pos >= 6) { pos = 6; dir = -1; }
+          if (pos <= 0) { pos = 0; dir = 1; }
+          target.style.left = px(pos) + 'px';
+          raf = requestAnimationFrame(tick);
+        }
+        raf = requestAnimationFrame(tick);
+        fireBtn.addEventListener('click', function () {
+          if (flying || shots >= 10) return;
+          flying = true;
+          shots++;
+          var firePos = pos, fireDir = dir;
+          var orb = document.createElement('div');
+          orb.className = 'orb-dot';
+          orb.style.left = '50%';
+          orb.style.top = '42%';
+          stage.appendChild(orb);
+          flight.style.transition = 'none';
+          flight.style.width = '0%';
+          void flight.offsetWidth;
+          flight.style.transition = 'width 300ms linear';
+          flight.style.width = '100%';
+          setTimeout(function () {
+            var impactPos = firePos + fireDir * speed * 0.3;
+            var dx = Math.abs(impactPos - 3);
+            var ring = document.createElement('div');
+            ring.className = 'orb-splash';
+            ring.style.left = '50%';
+            ring.style.top = '42%';
+            ring.style.width = px(2) + 'px';
+            ring.style.height = px(2) + 'px';
+            stage.appendChild(ring);
+            setTimeout(function () { orb.remove(); ring.remove(); }, 600);
+            var cls, txt;
+            if (dx <= 0.25) { direct++; cls = 'good'; txt = 'Direct hit'; }
+            else if (dx <= 1.0) { splash++; cls = 'warn'; txt = 'Splash \u2014 75 dmg'; }
+            else { cls = 'bad'; txt = 'Miss'; }
+            shotsEl.textContent = shots;
+            directEl.textContent = direct;
+            accEl.textContent = Math.round(direct / shots * 100) + '%';
+            var pip = document.createElement('span');
+            pip.className = 'burst-pip ' + cls;
+            pip.textContent = txt + ' \u00b7 ' + dx.toFixed(2) + ' m off';
+            log.appendChild(pip);
+            if (shots >= 10) {
+              verdict.textContent = direct >= 7 ? 'Good \u2014 ' + direct + ' direct hits out of 10. You lead the orb, not the man.' :
+                direct >= 4 ? 'Getting there \u2014 ' + direct + ' direct hits. Fire when he is 0.75 m short of the centre.' :
+                'Only ' + direct + ' direct hits \u2014 fire earlier, when he is 0.75 m short of the centre.';
+            } else {
+              verdict.textContent = txt + ' \u2014 orb ' + shots + ' of 10.' +
+                (splash ? ' Splashes hurt (' + splash + ' so far), but only direct hits kill fast.' : '');
+            }
+            flying = false;
+            flight.style.transition = 'none';
+            flight.style.width = '0%';
+          }, 300);
+        });
+        resetBtn.addEventListener('click', function () {
+          shots = 0; direct = 0; splash = 0; flying = false;
+          stage.querySelectorAll('.orb-dot, .orb-splash').forEach(function (d) { d.remove(); });
+          shotsEl.textContent = '0'; directEl.textContent = '0'; accEl.textContent = '\u2014';
+          verdict.textContent = 'Click FIRE ORB when the dummy is about 0.75 m short of the crosshair.';
+          log.textContent = '';
+          flight.style.transition = 'none';
+          flight.style.width = '0%';
+        });
+      })();
+
+
+        
+  </script>
+</body>
+</html>

@@ -429,7 +429,7 @@
           </tbody>
         </table>
 
-        <div class="viz" id="burstSim" data-rpm="600" data-base-cof="0" data-bloom="0" data-distance="30">
+        <div class="viz" id="ownSim" data-rpm="600" data-base-cof="0" data-bloom="0" data-distance="30">
           <h3>Try it: the hold-and-release window</h3>
           <p class="small" style="margin:0">A target 30 m away, aiming down sights. <strong>Press and hold FIRE</strong> (mouse, touch, or hold Space with the button focused) and watch the holes climb the longer you hold — that's recoil, not bloom: on this gun the aimed cone is 0° and never grows, so the drift you see is the muzzle kicking up and right with every pull. Release, let your aim reset, fire again. <strong>Aim for bursts of 5; 6–8 is tolerable while you're new.</strong> This practice window is shared by the whole Sage series: it's driven by a weapon profile plugged into the window — here the Horizon's (600 RPM, 0° starting cone, 0° bloom per shot, target at 30 m) — and the only spread is the recoil climb, exactly as the numbers say.</p>
           <div class="sim-stage" id="simStage" aria-hidden="true">
@@ -964,7 +964,7 @@
          data-rpm, data-base-cof (degrees), data-bloom (degrees per shot),
          data-distance (metres to target). Each gun page plugs in its own. */
       (function () {
-        var box = document.getElementById('burstSim');
+        var box = document.getElementById('ownSim');
         var stage = document.getElementById('simStage');
         var fireBtn = document.getElementById('simFire');
         var resetBtn = document.getElementById('simReset');

@@ -431,7 +431,7 @@
 
         <p style="margin-top:14px">One more number worth knowing: the strafe window. While you're aiming and strafing, your cone starts at 0.25°; standing still it starts at 0.10°. The gap is 0.15°, and each aimed shot adds 0.05° of bloom — so you can fire <strong>3 rounds from still</strong> before your cone is any wider than it would be strafing. From the hip the same window is <strong>5 rounds</strong> (2.0° moving, 1.5° still, 0.10° per shot). The cone still grows from the very first shot — the window only says strafing costs you nothing inside it. So strafe <em>between</em> bursts, plant your feet <em>during</em> them.</p>
 
-        <div class="viz" id="burstSim" data-rpm="652" data-base-cof="0.10" data-bloom="0.05" data-distance="30">
+        <div class="viz" id="ownSim" data-rpm="652" data-base-cof="0.10" data-bloom="0.05" data-distance="30">
           <h3>Try it: the hold-and-release window</h3>
           <p class="small" style="margin:0">A target 30 m away, aiming down sights. <strong>Press and hold FIRE</strong> (mouse, touch, or hold Space with the button focused) and watch the holes walk wider the longer you hold — that's firing from an ever-growing cone. Release, let the cone reset, fire again. <strong>Aim for bursts of 5; 6–8 is tolerable while you're new.</strong> This practice window is shared by the whole Sage series: it's driven by a weapon profile plugged into the window — here the Charger's (652 RPM, 0.10° starting cone, 0.05° bloom per shot, target at 30 m) — and the spread is drawn at true scale from those numbers.</p>
           <div class="sim-stage" id="simStage" aria-hidden="true">
@@ -944,7 +944,7 @@
          data-rpm, data-base-cof (degrees), data-bloom (degrees per shot),
          data-distance (metres to target). Each gun page plugs in its own. */
       (function () {
-        var box = document.getElementById('burstSim');
+        var box = document.getElementById('ownSim');
         var stage = document.getElementById('simStage');
         var fireBtn = document.getElementById('simFire');
         var resetBtn = document.getElementById('simReset');

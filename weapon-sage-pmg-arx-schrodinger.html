@@ -230,7 +230,7 @@
 
         <p class="small">One more thing worth knowing: the two pellets in each pull spread apart as they fly — about 5 cm apart at 8 m, 9 cm at 15 m, 17 cm at 30 m — so a pull aimed at the edge of the target can lose one pellet and do half damage. Aim centre-mass. The cone still grows 0.05° with every pull, so there are no free pulls with no cone growth on this gun. And the first pull of each hold kicks double — the first-shot recoil multiplier is 2×, so your first pull climbs twice as hard as the rest; start low and let it climb.</p>
 
-        <div class="viz" id="burstSim" data-rpm="896" data-base-cof="0.30" data-bloom="0.05" data-distance="30">
+        <div class="viz" id="ownSim" data-rpm="896" data-base-cof="0.30" data-bloom="0.05" data-distance="30">
           <h3>Try it: the hold-and-release window</h3>
           <p class="small" style="margin:0">A target 30 m away, aiming down sights. <strong>Press and hold FIRE</strong> (mouse, touch, or hold Space with the button focused) and watch the holes walk wider the longer you hold — that's firing from an ever-growing cone. Release, let the cone reset, fire again. <strong>Aim for holds of 5 pulls; 6–8 is tolerable while you're new.</strong> On this gun each "shot" in the window is one trigger pull — two pellets, two rounds — so a hold of 5 pulls is 10 rounds, and your 66-round magazine holds 33 pulls. This practice window is shared by the whole Sage series: it's driven by a weapon profile plugged into the window — here the PMG-ARX Schrodinger's (896 RPM, 0.30° starting cone, 0.05° bloom per pull, target at 30 m) — and the spread is drawn at true scale from those numbers.</p>
           <div class="sim-stage" id="simStage" aria-hidden="true">
@@ -596,7 +596,7 @@
          data-distance (metres to target). Each gun page plugs in its own.
          On this gun one "shot" is one trigger pull — two pellets, two rounds. */
       (function () {
-        var box = document.getElementById('burstSim');
+        var box = document.getElementById('ownSim');
         var stage = document.getElementById('simStage');
         var fireBtn = document.getElementById('simFire');
         var resetBtn = document.getElementById('simReset');

@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>T7 Mini-Chaingun Sage Guide &middot; PS2 Elite</title>
+  <meta name="description" content="A beginner's guide to the T7 Mini-Chaingun — A 1,000-cert heavy gun for the TR Heavy Assault — a chaingun that starts slow and ends at 845 RPM, with a 125-round magazine behind it. This page teaches you to win fights with it today." />
+  <meta name="color-scheme" content="light dark" />
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="weapon-sage.css?v=20261109-sageguide3" />
+  <style>
+    /* Faction colours for this guide — overrides the shared NC palette. */
+    :root {
+      --hero-bg: #4a0d10;
+      --hero-soft: #e8b4b4;
+      --tr-red: #e05a5a;
+      --tr-red-deep: #f08a8a;
+    }
+    html[data-theme="light"] {
+      --first: #6d1216;
+      --hero-bg: #6d1216;
+      --hero-soft: #e3a9a9;
+      --tr-gold: #e8a812;
+      --tr-red: #a91f26;
+      --tr-red-deep: #6d1216;
+    }
+    ol.habits { counter-reset: hab; list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+    ol.habits li { counter-increment: hab; background: var(--surface); border: 1px solid var(--line); padding: 14px 16px 14px 58px; position: relative; }
+    ol.habits li::before {
+            content: counter(hab, decimal-leading-zero);
+            position: absolute; left: 14px; top: 12px;
+            font-family: "Rajdhani", sans-serif; font-weight: 700; font-size: 24px; color: var(--tr-red);
+          }
+    ol.habits h3 { margin: 0 0 3px; font-size: 19px; }
+    ol.habits p { margin: 0; font-size: 15.5px; }
+    ul.drills { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+    ul.drills li { background: var(--surface); border: 1px solid var(--line); padding: 13px 16px; display: grid; gap: 2px; }
+    ul.drills .d-name { font-family: "Rajdhani", sans-serif; font-weight: 700; font-size: 18px; }
+    ul.drills .d-name span { display: block; font-family: "Barlow", sans-serif; font-weight: 400; font-size: 13.5px; color: var(--ink-soft); }
+    .strip { background: var(--surface); border: 1px solid var(--line); padding: 16px 18px; margin-bottom: 14px; }
+    .strip h3 { margin: 0 0 2px; font-size: 21px; }
+    .strip .cap { font-size: 15px; margin: 8px 0 0; }
+    .strip-panels { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: stretch; }
+    .strip-panel { flex: 1 1 150px; border: 1px solid var(--line); background: var(--surface-2); padding: 10px; }
+    .strip-panel svg { width: 100%; height: auto; display: block; }
+    .strip-panel .p-cap { font-size: 14px; margin: 8px 0 0; line-height: 1.4; }
+    .strip-panel .p-cap b { display: block; font-family: "Rajdhani", sans-serif; text-transform: uppercase; letter-spacing: 0.05em; font-size: 13.5px; }
+    .strip-panel.bad .p-cap b { color: var(--skip); }
+    .strip-panel.good .p-cap b { color: var(--good); }
+    .strip-arrow { align-self: center; font-size: 24px; color: var(--ink-soft); flex: none; }
+    .strip-exception { border: 2px solid var(--tr-gold); background: var(--situ-bg); padding: 12px 14px; margin-top: 12px; display: flex; gap: 14px; align-items: center; }
+    .strip-exception svg { flex: none; }
+    .strip-exception p { margin: 0; font-size: 15.5px; }
+    .strip-exception b { font-family: "Rajdhani", sans-serif; text-transform: uppercase; letter-spacing: 0.05em; font-size: 14px; color: var(--accent-ink); display: block; }
+  </style>
+</head>
+<body class="site-page">
+    <div class="wrap">
+
+    <p class="sage-back"><a href="weapon-compare.html?w=7533">← Back to the T7 Mini-Chaingun comparison</a></p>
+
+      <!-- ================= HERO ================= -->
+      <header class="hero">
+        <p class="brandline">Sage Guide · Terran Republic · Heavy Assault</p>
+        <h1>T7 Mini-Chaingun <span class="thin">— the spool-up room-broom, mastered</span></h1>
+        <p class="sub">A 1,000-cert heavy gun for the TR Heavy Assault — a chaingun that starts slow and ends at 845 RPM, with a 125-round magazine behind it. This page teaches you to win fights with it today.</p>
+        <p class="verdict"><strong>The one-line verdict:</strong> a crowd-control hose that wins fights you start on your terms: hold the trigger for a full second and it becomes the fastest-firing infantry gun in the game — but every duel you start cold begins at 750 RPM with a 1.5° aimed cone, so pre-spool, hold, and fight inside 20 metres.</p>
+        <img class="hero-gun" src="assets/weapons/6857.png" alt="The T7 Mini-Chaingun heavy gun, side profile — Terran Republic's spool-up room-broom with its 125-round belt" width="256" height="128" />
+        <p class="hero-gun-cap">The T7 Mini-Chaingun · Terran Republic · 125-round magazine</p>
+      </header>
+
+      <div class="stats" role="list" aria-label="T7 Mini-Chaingun key statistics">
+        <div class="stat" role="listitem"><div class="stat-big">143<small> → 112</small></div><div class="stat-label">Damage per bullet</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">750<small> → 845</small></div><div class="stat-label">Rounds per minute · spool-up → settled</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">125</div><div class="stat-label">Rounds per magazine</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">4.39<small> s</small></div><div class="stat-label">Reload (rounds left)</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">500<small> m/s</small></div><div class="stat-label">Bullet velocity</div></div>
+        <div class="stat" role="listitem"><div class="stat-big">×2</div><div class="stat-label">Headshot damage</div></div>
+        
+      </div>
+      <!-- ================= 01 ================= -->
+      <section aria-labelledby="s-first">
+        <div class="sec-head">
+          <span class="num">01</span>
+          <h2 id="s-first">First lesson: stop, aim, <em>then</em> fire</h2>
+          <span class="tag">The mistake almost<br />every new player makes</span></div>
+                <p class="lede">Picture the scene, because you've probably lived it: you're <strong>sprinting</strong> across a courtyard, an enemy appears, and you do everything at once — hold the trigger down <em>while you're still running</em>, then press aim-down-sights (ADS) a split-second later, finger still down. The sight picture snaps in, it <em>looks</em> precise… and your bullets spray everywhere except the man in your crosshair. He kills you. It feels like the game cheated. It didn't — here's what actually happened.</p>
+
+        <div class="grid2">
+          <div class="card">
+            <h3>✗ What you did — the spray</h3>
+            <p><strong>You started firing from a sprint, from the hip.</strong> Sprinting is the least accurate state in the game: your cone of fire starts at <strong>5.0° — the widest it can ever be on this gun</strong>. Every shot you fire from the hip does <em>not</em> widen it — this gun has zero bloom, so the cone never grows as you fire — but the cone you started with is already wide, and your first shots leave the barrel at just 750 RPM while the gun spools up.</p>
+            <p><strong>Then you pressed ADS mid-hold — and nothing reset.</strong> Aiming down sights does <em>not</em> shrink a cone of fire that is already bloomed. The scope only gives you a precise <em>picture</em>; the bullets keep flying out of the wide cone you built while running and hipfiring. That's the whole mystery: <strong>accurate-looking aim, wildly inaccurate gun.</strong></p>
+            <p>Two timers stack the deck further: your gun needs about <strong>0.3 s to settle after a sprint</strong>, and raising the sight itself takes ~0.15 s. Trigger held through all of it means your first half-second of fire is pure confetti.</p>
+          </div>
+          <div class="card">
+            <h3>✓ The fix — three beats, in order</h3>
+            <p><strong>1 · Feet.</strong> Let go of sprint (and the trigger, if you're already holding it). Stop, or drop into a strafe — anything but a full sprint.</p>
+            <p><strong>2 · Sight.</strong> Press ADS and let the sight come up. This takes a heartbeat — your overshield (F) covers it.</p>
+            <p><strong>3 · Trigger.</strong> <em>Now</em> fire. Starting from the aimed cone of <strong>1.5°</strong>, your first shots land where the dot points. Keep holding for a full second and the gun reaches its 845 RPM top speed; let go early and the spool resets to 750 RPM instantly. On this gun the third beat is a hold, not a tap.</p>
+            <p><strong>Stop → aim → fire.</strong> If you take one habit from this entire page, take this one. You'll practise exactly this rhythm in the simulator in section 04.</p>
+          </div>
+        </div>
+
+        <div class="strip">
+          <h3>What you did — the spray</h3>
+          <p class="cap" style="margin:0">Four beats, left to right — the same mistake the cards above describe, drawn out.</p>
+          <div class="strip-panels">
+            <div class="strip-panel bad">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A soldier sprinting, with a wide dashed cone fanning out from the gun muzzle, labelled 7.0 degrees.">
+                <line x1="8" y1="122" x2="192" y2="122" stroke="var(--line)" stroke-width="2" />
+                <g stroke="var(--ink-soft)" stroke-width="3" stroke-linecap="round" fill="none">
+                  <line x1="18" y1="70" x2="38" y2="70" /><line x1="14" y1="86" x2="34" y2="86" /><line x1="20" y1="102" x2="40" y2="102" />
+                </g>
+                <g stroke="var(--ink)" stroke-width="3" stroke-linecap="round" fill="none">
+                  <line x1="72" y1="58" x2="86" y2="86" /><line x1="86" y1="86" x2="66" y2="118" /><line x1="86" y1="86" x2="106" y2="112" />
+                  <line x1="74" y1="64" x2="56" y2="80" /><line x1="74" y1="64" x2="94" y2="72" />
+                </g>
+                <circle cx="70" cy="46" r="10" fill="var(--ink)" />
+                <rect x="94" y="66" width="28" height="6" rx="2" fill="var(--ink)" transform="rotate(-8 94 66)" />
+                <g stroke="var(--skip)" stroke-width="2" stroke-dasharray="6 5" fill="none">
+                  <line x1="122" y1="62" x2="192" y2="26" /><line x1="122" y1="62" x2="192" y2="98" />
+                </g>
+                <text x="150" y="58" font-size="13" font-weight="700" fill="var(--skip)">7.0°</text>
+              </svg>
+              <p class="p-cap"><b>1 · Sprinting</b>Your cone starts maxed at 7.0° — the widest it can ever be.</p>
+            </div>
+            <div class="strip-arrow" aria-hidden="true">→</div>
+            <div class="strip-panel bad">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A soldier firing from the hip while running, with bullet holes scattering ever wider from the muzzle.">
+                <line x1="8" y1="122" x2="192" y2="122" stroke="var(--line)" stroke-width="2" />
+                <g fill="var(--ink)">
+                  <circle cx="52" cy="46" r="10" />
+                  <rect x="44" y="56" width="18" height="42" rx="6" />
+                  <rect x="46" y="96" width="8" height="26" /><rect x="56" y="96" width="8" height="26" />
+                </g>
+                <rect x="62" y="72" width="30" height="6" rx="2" fill="var(--ink)" />
+                <g fill="var(--skip)">
+                  <circle cx="118" cy="66" r="4" /><circle cx="142" cy="84" r="4" /><circle cx="162" cy="58" r="4" /><circle cx="182" cy="90" r="4" /><circle cx="196" cy="66" r="4" />
+                </g>
+                <text x="118" y="122" font-size="13" font-weight="700" fill="var(--skip)">spreading…</text>
+              </svg>
+              <p class="p-cap"><b>2 · Trigger held</b>Firing from the hip while running — every shot adds bloom.</p>
+            </div>
+            <div class="strip-arrow" aria-hidden="true">→</div>
+            <div class="strip-panel bad">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A round scope view with the crosshair centred on a small soldier, while red crosses mark bullet holes scattered wide around him.">
+                <circle cx="100" cy="70" r="56" fill="none" stroke="var(--ink)" stroke-width="4" />
+                <line x1="100" y1="20" x2="100" y2="120" stroke="var(--ink)" stroke-width="1.5" />
+                <line x1="50" y1="70" x2="150" y2="70" stroke="var(--ink)" stroke-width="1.5" />
+                <g fill="var(--ink)">
+                  <circle cx="100" cy="58" r="5" /><rect x="94" y="63" width="12" height="18" rx="3" />
+                </g>
+                <g stroke="var(--skip)" stroke-width="3" stroke-linecap="round">
+                  <line x1="52" y1="32" x2="62" y2="42" /><line x1="62" y1="32" x2="52" y2="42" />
+                  <line x1="140" y1="30" x2="150" y2="40" /><line x1="150" y1="30" x2="140" y2="40" />
+                  <line x1="48" y1="100" x2="58" y2="110" /><line x1="58" y1="100" x2="48" y2="110" />
+                  <line x1="142" y1="102" x2="152" y2="112" /><line x1="152" y1="102" x2="142" y2="112" />
+                </g>
+              </svg>
+              <p class="p-cap"><b>3 · ADS, mid-hold</b>The sight looks precise — but aiming down sights does <em>not</em> reset bloom.</p>
+            </div>
+            <div class="strip-arrow" aria-hidden="true">→</div>
+            <div class="strip-panel bad">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A soldier target standing untouched while red crosses mark bullet holes all around him.">
+                <line x1="8" y1="122" x2="192" y2="122" stroke="var(--line)" stroke-width="2" />
+                <g fill="var(--ink)">
+                  <circle cx="100" cy="42" r="11" />
+                  <rect x="88" y="54" width="24" height="44" rx="7" />
+                  <rect x="90" y="96" width="9" height="26" /><rect x="101" y="96" width="9" height="26" />
+                </g>
+                <g stroke="var(--skip)" stroke-width="3.5" stroke-linecap="round">
+                  <line x1="52" y1="28" x2="64" y2="40" /><line x1="64" y1="28" x2="52" y2="40" />
+                  <line x1="140" y1="24" x2="152" y2="36" /><line x1="152" y1="24" x2="140" y2="36" />
+                  <line x1="44" y1="92" x2="56" y2="104" /><line x1="56" y1="92" x2="44" y2="104" />
+                  <line x1="146" y1="94" x2="158" y2="106" /><line x1="158" y1="94" x2="146" y2="106" />
+                  <line x1="96" y1="12" x2="106" y2="22" /><line x1="106" y1="12" x2="96" y2="22" />
+                </g>
+                <text x="100" y="138" font-size="13" font-weight="700" fill="var(--skip)" text-anchor="middle">he walks away</text>
+              </svg>
+              <p class="p-cap"><b>4 · The spray</b>Bullets fly out of the wide cone you built. The enemy walks away.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="strip">
+          <h3>The fix — three beats, in order</h3>
+          <p class="cap" style="margin:0">Same fight, done right. Each beat has a job, and the order is the whole lesson.</p>
+          <div class="strip-panels">
+            <div class="strip-panel good">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A soldier standing still with feet planted, next to a small clock showing about 0.3 seconds.">
+                <line x1="8" y1="122" x2="192" y2="122" stroke="var(--line)" stroke-width="2" />
+                <g fill="var(--ink)">
+                  <circle cx="62" cy="46" r="10" />
+                  <rect x="54" y="56" width="18" height="42" rx="6" />
+                  <rect x="56" y="96" width="8" height="26" /><rect x="66" y="96" width="8" height="26" />
+                </g>
+                <rect x="72" y="70" width="26" height="6" rx="2" fill="var(--ink)" />
+                <g fill="none" stroke="var(--good)" stroke-width="3">
+                  <circle cx="152" cy="52" r="20" />
+                  <line x1="152" y1="52" x2="152" y2="38" stroke-linecap="round" />
+                  <line x1="152" y1="52" x2="162" y2="58" stroke-linecap="round" />
+                </g>
+                <text x="152" y="92" font-size="14" font-weight="700" fill="var(--good)" text-anchor="middle">≈ 0.3 s</text>
+                <text x="62" y="138" font-size="12" fill="var(--ink-soft)" text-anchor="middle">feet planted</text>
+              </svg>
+              <p class="p-cap"><b>1 · Stop</b>Let go of sprint (and the trigger). About 0.3 s for the gun to settle.</p>
+            </div>
+            <div class="strip-arrow" aria-hidden="true">→</div>
+            <div class="strip-panel good">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A round scope view rising onto a soldier target, with an upward arrow and about 0.15 seconds labelled.">
+                <circle cx="100" cy="72" r="52" fill="none" stroke="var(--ink)" stroke-width="4" />
+                <line x1="100" y1="26" x2="100" y2="118" stroke="var(--ink)" stroke-width="1.5" />
+                <line x1="54" y1="72" x2="146" y2="72" stroke="var(--ink)" stroke-width="1.5" />
+                <g fill="var(--ink)">
+                  <circle cx="100" cy="58" r="6" /><rect x="93" y="64" width="14" height="22" rx="4" />
+                  <rect x="95" y="84" width="4" height="14" /><rect x="101" y="84" width="4" height="14" />
+                </g>
+                <g stroke="var(--good)" stroke-width="3" fill="none" stroke-linecap="round">
+                  <line x1="28" y1="118" x2="28" y2="84" /><line x1="22" y1="90" x2="28" y2="82" /><line x1="34" y1="90" x2="28" y2="82" />
+                </g>
+                <text x="100" y="138" font-size="14" font-weight="700" fill="var(--good)" text-anchor="middle">≈ 0.15 s</text>
+              </svg>
+              <p class="p-cap"><b>2 · Aim</b>Press ADS and let the sight come up (~0.15 s).</p>
+            </div>
+            <div class="strip-arrow" aria-hidden="true">→</div>
+            <div class="strip-panel good">
+              <svg viewBox="0 0 200 140" role="img" aria-label="A gun firing through a narrow dashed cone at a soldier target, with three green hits grouped on his chest.">
+                <line x1="8" y1="122" x2="192" y2="122" stroke="var(--line)" stroke-width="2" />
+                <rect x="18" y="66" width="30" height="6" rx="2" fill="var(--ink)" />
+                <g stroke="var(--good)" stroke-width="2" stroke-dasharray="6 5" fill="none">
+                  <line x1="48" y1="68" x2="150" y2="58" /><line x1="48" y1="70" x2="150" y2="80" />
+                </g>
+                <g fill="var(--ink)">
+                  <circle cx="162" cy="44" r="10" />
+                  <rect x="152" y="54" width="20" height="40" rx="6" />
+                  <rect x="154" y="92" width="8" height="30" /><rect x="164" y="92" width="8" height="30" />
+                </g>
+                <g fill="var(--good)">
+                  <circle cx="158" cy="66" r="4" /><circle cx="166" cy="72" r="4" /><circle cx="160" cy="78" r="4" />
+                </g>
+              </svg>
+              <p class="p-cap"><b>3 · Fire</b>Now fire — from the aimed cone. First shots land where the dot points.</p>
+            </div>
+          </div>
+          <div class="strip-exception">
+            <svg viewBox="0 0 90 70" width="90" height="70" role="img" aria-label="A soldier hipfiring at a close target inside a small spread ring.">
+              <g fill="var(--ink)">
+                <circle cx="22" cy="18" r="7" /><rect x="17" y="25" width="11" height="24" rx="4" />
+                <rect x="18" y="47" width="5" height="16" /><rect x="25" y="47" width="5" height="16" />
+              </g>
+              <rect x="28" y="30" width="16" height="4" rx="2" fill="var(--ink)" />
+              <circle cx="70" cy="32" r="15" fill="none" stroke="var(--tr-gold)" stroke-width="2" stroke-dasharray="4 3" />
+              <g fill="var(--ink)">
+                <circle cx="70" cy="22" r="5" /><rect x="65" y="27" width="10" height="16" rx="3" />
+              </g>
+              <g fill="var(--good)"><circle cx="68" cy="32" r="2.5" /><circle cx="73" cy="35" r="2.5" /></g>
+            </svg>
+            <p><b>The exception — under ~8 m, skip the whole dance</b>Hipfire works, no ADS needed, and stopping is optional. Keep moving, strafe, and let the hipfire ring do the work.</p>
+          </div>
+        </div>
+
+        <div class="rule"><strong>The one exception</strong>Inside ~8 metres, don't ADS at all — hipfire and keep moving (section 03). The disaster above is a mid-range problem: close enough that you reached for the sight, far enough that the spray missed. When in doubt: release everything, aim, then shoot — and hold.</div>
+
+        </section>
+      <!-- ================= 02 ================= -->
+      <section aria-labelledby="s-damage" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">02</span>
+          <h2 id="s-damage">Know your damage</h2>
+          <span class="tag">Shots to kill, by range</span></div>
+                <p class="lede">Every enemy infantry has 1,000 health (500 shield + 500 health). Your bullet does <strong>143 damage up close</strong>, fading to <strong>112 at long range</strong>. Headshots count double, leg shots count less (×0.9). That gives you three numbers worth memorising — and one twist that makes this gun special:</p>
+
+        <div class="rule"><strong>The spool-up — read this first</strong>The T7 Mini-Chaingun does not fire at one speed. Census records it in the gun's own fire group: <strong>spool-up 1,000 ms, starting refire 80 ms</strong> — the first shots leave at <strong>750 RPM</strong> and the gun only reaches its settled <strong>845 RPM</strong> (71 ms between shots) after a full second of holding the trigger. Let go and the rate resets instantly. Every time to kill in the table below is computed from that ramp, not from a single refire — this guide breaks the single-refire rule on purpose, and says so wherever the numbers come from. The Ballistic Rapid Refire Toggle (section 06) halves the spool-up to 500 ms.</div>
+
+        <table class="tbl" aria-label="Shots to kill by range">
+          <thead>
+            <tr><th>Range</th><th class="n">Damage</th><th class="n">Head</th><th class="n">Chest</th><th class="n">Legs</th><th class="n">Chest vs shielded Heavy</th><th class="n">Best-case TTK (ramp)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Close</strong> · 0–10 m</td><td class="n big">143</td><td class="n big">4</td><td class="n big">7</td><td class="n">8</td><td class="n">11</td><td class="n big">0.47 s</td></tr>
+            <tr><td><strong>Mid</strong> · 10–39 m</td><td class="n big">143→125</td><td class="n big">4</td><td class="n big">7 → 8</td><td class="n">8 → 9</td><td class="n">11 → 12</td><td class="n big">0.47 → 0.54 s</td></tr>
+            <tr><td><strong>Far</strong> · 39 m+</td><td class="n big">125→112</td><td class="n big">5</td><td class="n big">9</td><td class="n">10</td><td class="n">13</td><td class="n big">0.62 s</td></tr>
+          </tbody>
+        </table>
+        <p class="small">Perfect-accuracy times to kill, ramp-aware: 4 headshots ≈ 0.24 s, 7 chest shots ≈ 0.47 s up close; 8 chest shots ≈ 0.54 s at mid range, 9 ≈ 0.62 s far. With the Ballistic Rapid Refire Toggle the same kills take 0.45 s / 0.53 s / 0.60 s. At the settled 845 RPM the gun puts out 2,014 damage per second up close — but the first second of a hold lands 14 rounds (2,002 damage) instead of 15, because the spool-up eats the opening. A single-refire calculation (71 ms × intervals) would claim 0.43 s for the close kill — 40 ms faster than the ramp really delivers. This guide uses the ramp everywhere; 71 ms is the settled rate, not the fight rate. Magazine: 125 rounds, with 500 in reserve — 17 close kills per magazine.</p>
+
+        <div class="chart-box">
+          <h3>Damage falloff — where your bullets get weaker</h3>
+          <p class="small" style="margin:0 0 6px">Full power to 10 m, then a steady slide to minimum at 60 m. There is no ammo attachment to stretch it — this is the whole chart.</p>
+          <svg viewBox="0 0 640 240" width="100%" role="img" aria-label="Line chart of T7 Mini-Chaingun damage per bullet from 0 to 100 metres: 143 damage flat to 10 metres, falling to 112 at 60 metres, then flat.">
+            <g stroke="var(--line)" stroke-width="1">
+              <line x1="56" y1="142" x2="616" y2="142" />
+              <line x1="56" y1="159" x2="616" y2="159" />
+              <line x1="56" y1="184.5" x2="616" y2="184.5" />
+            </g>
+            <g fill="var(--ink-soft)" font-size="12">
+              <text x="48" y="146" text-anchor="end">150</text>
+              <text x="48" y="163" text-anchor="end">140</text>
+              <text x="48" y="188" text-anchor="end">125</text>
+              <text x="56" y="222">0 m</text>
+              <text x="168" y="222" text-anchor="middle">20 m</text>
+              <text x="336" y="222" text-anchor="middle">50 m</text>
+              <text x="504" y="222" text-anchor="middle">75 m</text>
+              <text x="616" y="222" text-anchor="end">100 m</text>
+            </g>
+            <polyline points="56,153.9 112,153.9 392,206.6 616,206.6" fill="none" stroke="var(--tr-red)" stroke-width="3" />
+            <g fill="var(--tr-red)">
+              <circle cx="112" cy="153.9" r="4" /><circle cx="392" cy="206.6" r="4" />
+            </g>
+            <g font-size="13" font-weight="600" fill="var(--ink)">
+              <text x="118" y="146">143</text>
+              <text x="368" y="226">112 @ 60 m</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="rule"><strong>Rule of thumb</strong>Inside 10 m you are at maximum power, and every kill there fits inside the first second of a hold — the spool-up is still running, but 7 shots land in 0.47 s. Past 39 m every kill takes 9 chest shots — close the distance or accept the spray.</div>
+
+        <h3>Reload — 4.39 s, and 5.39 s on empty</h3>
+        <p>Short reload <strong>4.39 s</strong>, on empty <strong>5.39 s</strong> — the difference is the 1 s chamber time after the last round. With a 125-round magazine you reload rarely, which makes each reload hurt more when it comes: reload early, behind cover, and never on empty. The Extended Magazine (section 06) doubles the belt to 250 rounds, so a careful player can go whole fights without touching the reload key at all.</p>
+
+        </section>
+      <!-- ================= 03 ================= -->
+      <section aria-labelledby="s-aim" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">03</span>
+          <h2 id="s-aim">Aim by distance</h2>
+          <span class="tag">Where the gun is strong,<br />where it isn’t</span></div>
+                <div class="lab">
+          <label for="rng"><strong>Range:</strong> <span id="rngOut">15 m</span></label>
+          <input id="rng" type="range" min="5" max="75" step="1" value="15" />
+          <div class="lab-out">
+            <div class="lab-stat"><span class="lab-num" id="labDmg">143</span><span class="lab-lbl">damage per bullet</span></div>
+            <div class="lab-stat"><span class="lab-num" id="labStk">7</span><span class="lab-lbl">chest shots to kill</span></div>
+            <div class="lab-stat"><span class="lab-num" id="labTtk">0.47 s</span><span class="lab-lbl">ramp time to kill</span></div>
+          </div>
+          <p id="labMsg" class="small" style="margin:8px 0 0">15 m — your sweet spot: 8 shots, 0.54 s, and the ADS cone is 0.39 m wide — still inside the torso. The first shot leaves at 750 RPM; the first second of the hold lands 14 rounds.</p>
+        </div>
+
+        <div class="range-grid">
+          <div class="range-card"><h3>0–10 m · Point-blank — maximum power</h3><div class="range-bar" style="width:100%"></div><p><strong>7 shots</strong> · <strong>0.47 s</strong> ramp TTK · ADS cone 0.26 m wide at 10 m, hipfire 0.44 m. Hipfire or ADS — either hits. Hold the trigger and walk him down; the fight is over before the spool finishes.</p></div>
+          <div class="range-card"><h3>10–25 m · Your sweet spot</h3><div class="range-bar" style="width:85%"></div><p><strong>8 shots</strong> · <strong>0.54 s</strong> ramp TTK · ADS cone 0.39 m at 15 m, still inside the torso; hipfire cone 0.65 m at 15 m — wider than the torso, so ADS here. Pre-spool behind the corner, then step out already at full speed.</p></div>
+          <div class="range-card"><h3>25–40 m · Working range</h3><div class="range-bar" style="width:70%"></div><p><strong>8–9 shots</strong> · <strong>0.54–0.62 s</strong> ramp TTK · ADS cone 0.65 m at 25 m, 1.05 m at 40 m. ADS is mandatory; hold in short bursts and re-aim between them. You are still dangerous — but so is everyone else.</p></div>
+          <div class="range-card"><h3>40–75 m · Stretching it</h3><div class="range-bar" style="width:40%"></div><p><strong>9 shots</strong> · <strong>0.62 s</strong> ramp TTK · ADS cone past 1 m wide at 40 m — wider than the man twice over. You are spraying at a dot. Close in, or pick another fight.</p></div>
+        </div>
+
+        <p class="callout">The 1.5° ADS cone is 0.26 m across at 10 m, 0.39 m at 15 m, 0.79 m at 30 m — it passes the torso's ~0.5 m width at about 19 m. Past that, even a perfect cone is wider than your target, and the extra rounds are doing the aiming for you.</p>
+
+        </section>
+      <!-- ================= 04 ================= -->
+      <section aria-labelledby="s-stances" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">04</span>
+          <h2 id="s-stances">Stances and firing modes</h2>
+          <span class="tag">Stances, firing modes,<br />and the trainer</span></div>
+                <p class="lede">Your cone of fire is the spread of your bullets — the full angle of the cone leaving the muzzle. Smaller is tighter. The chaingun's cone is unusually honest: <strong>it never grows as you fire</strong>, and <strong>moving does not widen it</strong>. The only thing that changes it is your stance.</p>
+
+        <table class="tbl" aria-label="Cone of fire by stance">
+          <thead><tr><th>Stance</th><th class="n">Cone of fire</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Standing still, ADS</strong></td><td class="n big">1.5°</td><td>After ~0.15 s sight-in. Bloom is 0, so the cone never grows.</td></tr>
+            <tr><td><strong>Crouching, ADS</strong></td><td class="n big">1.5°</td><td>Same cone, lower profile.</td></tr>
+            <tr><td><strong>Strafing, ADS</strong></td><td class="n big">1.5°</td><td>Moving equals still — strafe freely while holding the trigger.</td></tr>
+            <tr><td><strong>Standing still, hip</strong></td><td class="n big">2.5°</td><td>0.35 m across at 8 m.</td></tr>
+            <tr><td><strong>Strafing, hip</strong></td><td class="n big">2.5°</td><td>Same cone — hipfire does not punish movement either.</td></tr>
+            <tr><td><strong>Sprinting</strong></td><td class="n big">5.0°</td><td>0.70 m across at 8 m. Never fire from a sprint.</td></tr>
+            <tr><td><strong>Falling, hip</strong></td><td class="n big">up to 3.0°</td><td>Don't fire in the air.</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Firing modes — one mode: hold to fire</h3>
+        <p>Automatic, 750 → 845 RPM. There is no burst mode and no single-shot mode. Your fire discipline is the length of the hold: hold through the spool, release to reset. A tap fires one or two rounds at 750 RPM and resets the spool — the worst of both worlds. If you are going to shoot, commit to at least a full second.</p>
+
+        <div class="rule"><strong>No bloom, no ADAD window — moving costs you nothing here</strong>The cone of fire is 1.5° whether you stand still or strafe, because bloom is 0 and moving ADS equals still ADS. Strafe freely while holding the trigger — your cone does not care. What strafing <em>does</em> cost you is aim: your crosshair is moving, and at 15 m the cone is already 0.39 m wide. The ADAD window that matters on rifles — the shots before the cone grows past the torso — does not exist here: the cone starts at 1.5° and stays there.</div>
+
+        <div class="sim" id="ownSim">
+          <h3>Spool-up trainer — hold the trigger, reach full speed</h3>
+          <p>The chaingun has no burst discipline — it has a spool. Hold the trigger and watch the meter: the gun starts at 750 RPM and only reaches 845 RPM after a full second. Short taps never get there. The target is at 15 m, ADS cone 1.5°. Try a tap, then a full hold, and compare.</p>
+          <div class="sim-stage" id="simStage">
+            <svg class="sim-bg" viewBox="0 0 600 220" preserveAspectRatio="none" aria-hidden="true">
+              <rect x="0" y="0" width="600" height="220" fill="#2e3440" />
+              <rect x="0" y="150" width="600" height="70" fill="#232830" />
+              <g fill="#3d4654"><rect x="40" y="40" width="90" height="14" /><rect x="120" y="90" width="110" height="12" /><rect x="440" y="30" width="80" height="14" /><rect x="470" y="100" width="90" height="12" /></g>
+              <g fill="#232830"><rect x="300" y="60" width="70" height="90" /></g>
+              <g transform="translate(300 92) scale(0.62)" stroke="#8b95a5" stroke-width="3" fill="none">
+                <circle cx="0" cy="-66" r="10" />
+                <path d="M -16 -52 L 16 -52 L 13 6 L -13 6 Z" />
+                <path d="M -16 -48 L -30 -4 M 16 -48 L 30 -4" />
+                <path d="M -13 6 L -13 62 M 13 6 L 13 62" />
+                <path d="M -14 66 L -26 66 M 14 66 L 26 66" />
+              </g>
+              <g stroke="#fff" stroke-width="1.5" opacity="0.85">
+                <line x1="300" y1="76" x2="300" y2="88" /><line x1="300" y1="96" x2="300" y2="108" />
+                <line x1="284" y1="92" x2="296" y2="92" /><line x1="304" y1="92" x2="316" y2="92" />
+              </g>
+            </svg>
+          </div>
+          <div class="sim-row">
+            <button class="sim-fire" id="simFire" type="button">HOLD TO FIRE</button>
+            <button class="sim-reset" id="simReset" type="button">Reset</button>
+            <div class="sim-note"><span class="sim-label">Spool — 750 → 845 RPM</span>
+              <div class="bloom-track" aria-hidden="true"><div class="bloom-fill" id="simBloom" style="width:0%"></div></div>
+            </div>
+          </div>
+          <div class="sim-read">
+            <div><span class="sim-num" id="simShots">0</span><span class="sim-lbl">Rounds fired</span></div>
+            <div><span class="sim-num" id="simHits">0</span><span class="sim-lbl">Hits on target</span></div>
+            <div><span class="sim-num" id="simAcc">—</span><span class="sim-lbl">Accuracy</span></div>
+          </div>
+          <p class="sim-verdict" id="simVerdict">Hold the trigger to start the spool.</p>
+          <div class="burst-log" id="simLog"></div>
+        </div>
+
+        </section>
+      <!-- ================= 05 ================= -->
+      <section aria-labelledby="s-see" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">05</span>
+          <h2 id="s-see">See it: the pictures</h2>
+          <span class="tag">The pictures: spread, spool,<br />and sights</span></div>
+                <p class="lede">This is the gun's spread, drawn at true scale. The rings are the cone of fire at 8 m, against a torso silhouette. No artist's licence — the diameters come straight from the cone angles in section 04.</p>
+        <div class="chart-box">
+          <h3>Hipfire spread at 8 m — true scale</h3>
+        <svg viewBox="0 0 640 220" width="100%" role="img" aria-label="Diagram of hipfire and ADS spread rings at 8 metres, drawn to scale around a torso silhouette.">
+            <ellipse cx="320" cy="110" rx="35" ry="63" fill="var(--surface)" stroke="var(--ink-soft)" stroke-width="1.5" />
+            <circle cx="320" cy="110" r="49" fill="none" stroke="var(--ink-soft)" stroke-width="2.5" stroke-dasharray="7 5" />
+            <text x="320" y="52" text-anchor="middle">Sprint 5.0° — 0.70 m</text>
+            <circle cx="320" cy="110" r="24" fill="none" stroke="var(--tr-red)" stroke-width="2.5" />
+            <text x="352" y="128" text-anchor="start">Hip 2.5° — 0.35 m</text>
+            <circle cx="320" cy="110" r="16" fill="none" stroke="var(--tr-gold)" stroke-width="2.5" />
+            <text x="352" y="100" text-anchor="start">Laser 1.675° — 0.23 m</text>
+            <circle cx="320" cy="110" r="15" fill="none" stroke="var(--ink)" stroke-width="2.5" />
+            <text x="352" y="82" text-anchor="start">ADS 1.5° — 0.21 m</text>
+          </svg>
+
+          <p class="small">At 8 m the ADS ring is a small circle around the torso — a ring, not a dot — because 1.5° is a wide cone for a sighted gun. At 15 m it is 0.39 m across; at 30 m, 0.79 m. The laser sight shrinks the hipfire ring from 0.35 m to 0.23 m.</p>
+        </div>
+
+        <div class="chart-box">
+          <h3>Spin-up — RPM against hold time</h3>
+          <p class="small" style="margin:0 0 6px">The gun starts at 750 RPM the moment you pull the trigger and climbs to 845 RPM over one second. The dashed line is the Ballistic Rapid Refire Toggle (section 06): full speed in half a second.</p>
+          <svg viewBox="0 0 640 260" width="100%%" role="img" aria-label="Line chart of RPM against hold time: 750 RPM at the trigger, climbing to 845 RPM after one second of holding, then flat. With the Ballistic Rapid Refire Toggle the climb takes half a second.">
+            <g stroke="var(--line)" stroke-width="1">
+              <line x1="56" y1="240" x2="616" y2="240" />
+              <line x1="56" y1="190" x2="616" y2="190" />
+              <line x1="56" y1="140" x2="616" y2="140" />
+              <line x1="56" y1="90" x2="616" y2="90" />
+              <line x1="56" y1="40" x2="616" y2="40" />
+            </g>
+            <g fill="var(--ink-soft)" font-size="12">
+              <text x="48" y="244" text-anchor="end">700</text>
+              <text x="48" y="194" text-anchor="end">750</text>
+              <text x="48" y="144" text-anchor="end">800</text>
+              <text x="48" y="94" text-anchor="end">850</text>
+              <text x="48" y="44" text-anchor="end">900</text>
+              <text x="56" y="254">0 s</text>
+              <text x="289" y="254" text-anchor="middle">0.5 s</text>
+              <text x="523" y="254" text-anchor="middle">1.0 s</text>
+              <text x="616" y="254" text-anchor="end">1.2 s</text>
+            </g>
+            <polyline points="56,190 523,95 616,95" fill="none" stroke="var(--tr-red)" stroke-width="3" />
+            <polyline points="56,190 289,95 616,95" fill="none" stroke="var(--tr-gold)" stroke-width="2.5" stroke-dasharray="7 5" />
+            <g font-size="13" font-weight="600" fill="var(--ink)">
+              <text x="60" y="208">750 RPM at the trigger</text>
+              <text x="530" y="88">845 RPM settled</text>
+              <text x="300" y="118">BRRT: full speed at 0.5 s</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="chart-box">
+          <h3>Iron sights only — there is no optic to buy</h3>
+          <p>The T7 Mini-Chaingun takes no optics at all — no 1× reflex, no 2×, nothing. What you see is the iron sight: a simple post in a ring, zero magnification. At 15 m the iron post covers roughly the torso; at 30 m it covers the man. There is nothing to buy and nothing to compare — the sight picture is the same at 1,000 certs as it is at 1,100. Spend the certs on the rail instead (section 06).</p>
+          <svg viewBox="0 0 640 220" width="100%%" role="img" aria-label="Diagram of the T7 Mini-Chaingun iron sight: a post in a ring, with a torso silhouette at 15 metres behind it.">
+            <rect x="0" y="0" width="640" height="220" fill="var(--surface)" />
+            <g transform="translate(320 110) scale(0.62)" stroke="var(--ink-soft)" stroke-width="3" fill="none">
+              <circle cx="0" cy="-66" r="10" />
+              <path d="M -16 -52 L 16 -52 L 13 6 L -13 6 Z" />
+              <path d="M -16 -48 L -30 -4 M 16 -48 L 30 -4" />
+              <path d="M -13 6 L -13 62 M 13 6 L 13 62" />
+              <path d="M -14 66 L -26 66 M 14 66 L 26 66" />
+            </g>
+            <g stroke="var(--ink)" stroke-width="3" fill="none">
+              <circle cx="320" cy="110" r="52" />
+              <line x1="320" y1="110" x2="320" y2="58" />
+              <line x1="296" y1="110" x2="344" y2="110" />
+            </g>
+            <g font-size="13" fill="var(--ink-soft)">
+              <text x="320" y="200" text-anchor="middle">Iron sight, 0× — the post at 15 m</text>
+            </g>
+          </svg>
+        </div>
+
+        </section>
+      <!-- ================= 06 ================= -->
+      <section aria-labelledby="s-att" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">06</span>
+          <h2 id="s-att">Attachments</h2>
+          <span class="tag">What to buy, and<br />what to skip</span></div>
+                <p class="lede">One rail slot, no optics, no barrel, no ammo — the chaingun's attachment list is short, and every choice on it matters.</p>
+
+        <h3>Optics — none. Iron sights only.</h3>
+        <p>There are no optics for this gun. Nothing to buy, nothing to compare — the iron sight in section 05 is the whole sight picture.</p>
+
+        <h3>Rail — pick one</h3>
+        <table class="tbl" aria-label="Rail attachments">
+          <thead><tr><th>Attachment</th><th class="n">Cost</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Ballistic Rapid Refire Toggle</strong> <span class="rec">First buy</span></td><td class="n">100 certs / 49 DBC</td><td>Spool-up 50% faster — 1,000 ms → 500 ms. Full speed in half a second. This is the attachment the gun was designed around.</td></tr>
+            <tr><td><strong>Laser Sight</strong></td><td class="n">100 certs</td><td>Hipfire cone −33% — 2.5° → 1.675° (0.35 m → 0.23 m at 8 m). For hipfire rooms and point holds.</td></tr>
+            <tr><td><strong>Extended Magazine</strong></td><td class="n">100 certs</td><td>Magazine 125 → 250 rounds; equip/unequip +20% (1.1 s → 1.32 s, 0.25 s → 0.30 s). Whole fights without a reload.</td></tr>
+            <tr><td><strong>Darklight Flashlight</strong></td><td class="n">100 certs</td><td>Reveals infiltrators in the dark. Situational — take it when the fight is a night base, not as a default.</td></tr>
+            <tr><td><strong>None</strong></td><td class="n">Free</td><td>Nothing on the rail keeps the gun as-is — fine while you save for the Toggle.</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Barrel — none. Ammo — none.</h3>
+        <p>No barrel attachments exist for this gun, and no ammo attachments exist either. There is no way to stretch the range or change the damage — the chart in section 02 is final.</p>
+
+        <div class="rule"><strong>One rail slot — pick per fight</strong>You get one rail attachment. The Toggle is the default (it fixes the gun's one weakness); the Laser is for hipfire rooms; the Extended Magazine is for sustained fire. Swap at a terminal — 30 seconds of certs, not a permanent choice.</div>
+
+        </section>
+      <!-- ================= 07 ================= -->
+      <section aria-labelledby="s-loadouts" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">07</span>
+          <h2 id="s-loadouts">Four ready-made setups</h2>
+          <span class="tag">Four loadouts,<br />one recommended</span></div>
+                <div class="loadouts">
+          <div class="loadout"><h3>Standard Issue</h3><p class="cost">1,000 certs · the gun, bare</p><p><strong>Optic:</strong> iron sights · <strong>Rail:</strong> none</p><p>Everything in this guide works with this setup. Buy the gun, learn the spool, add attachments later.</p></div>
+          <div class="loadout"><h3>All-Rounder <span class="rec">Recommended</span></h3><p class="cost">1,100 certs</p><p><strong>Optic:</strong> iron sights · <strong>Rail:</strong> Ballistic Rapid Refire Toggle (100)</p><p>Full speed in half a second — the gun's one weakness, halved. This is the setup the rest of the guide assumes.</p></div>
+          <div class="loadout"><h3>Room Broom</h3><p class="cost">1,100 certs</p><p><strong>Optic:</strong> iron sights · <strong>Rail:</strong> Laser Sight (100)</p><p>Hipfire rooms and point holds: the hipfire cone shrinks to 1.675°, and you never ADS inside 8 m anyway.</p></div>
+          <div class="loadout"><h3>Sustained Fire</h3><p class="cost">1,100 certs</p><p><strong>Optic:</strong> iron sights · <strong>Rail:</strong> Extended Magazine (100)</p><p>250 rounds, no reload for whole fights. The spool never resets for a reload, so a long hold stays a long hold.</p></div>
+        </div>
+
+        </section>
+      <!-- ================= 08 ================= -->
+      <section aria-labelledby="s-kill" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">08</span>
+          <h2 id="s-kill">Kill efficiently: six habits</h2>
+          <span class="tag">Six habits<br />that win fights</span></div>
+                <ol class="habits">
+          <li><strong>Pre-spool behind cover.</strong> Start the trigger a beat before you step out — the first second of a hold is the slow half, and a corner gives it to you for free.</li>
+          <li><strong>Hold, don't tap.</strong> A tap fires at 750 RPM and resets the spool. Commit to a full second or don't shoot.</li>
+          <li><strong>Fight inside 20 m.</strong> The ADS cone passes the torso's width at ~19 m. Inside it, you hit; outside it, you spray.</li>
+          <li><strong>Reload early, never on empty.</strong> 4.39 s is bad; 5.39 s is worse. Reload after the kill, behind cover.</li>
+          <li><strong>Strafe while holding.</strong> Moving costs you nothing — the cone is 1.5° standing or strafing. Make him track a moving target while your cone stays put.</li>
+          <li><strong>Overshield before the spool, not during.</strong> Press F while you're still behind cover; the spool-up second is the one where you're most exposed.</li>
+          
+        </ol>
+
+        </section>
+      <!-- ================= 09 ================= -->
+      <section aria-labelledby="s-weak" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">09</span>
+          <h2 id="s-weak">The honest weak spots</h2>
+          <span class="tag">Five ways<br />this gun loses</span></div>
+                <ol class="weak">
+          %s
+        </ol>
+
+        </section>
+      <!-- ================= 10 ================= -->
+      <section aria-labelledby="s-drills" class="is-collapsed">
+        <div class="sec-head">
+          <span class="num">10</span>
+          <h2 id="s-drills">Training: five VR drills</h2>
+          <span class="tag">Five VR drills,<br />then go play</span></div>
+                <ol class="drills">
+          <li><strong>The spool.</strong> Hold the trigger for a full second on a dummy at 15 m, ADS. Count the rounds: 14 in the first second. Then try a tap: 2 rounds at 750 RPM. Feel the difference.</li>
+          <li><strong>The corner.</strong> Stand behind a corner, pre-spool for half a second, step out already firing. The dummy dies in 0.47 s — before the spool would have finished from cold.</li>
+          <li><strong>The strafe.</strong> Strafe left-right while holding the trigger on a dummy at 15 m. The cone doesn't care — check the hits. Now try it standing still. Same hits.</li>
+          <li><strong>The 8 m line.</strong> Walk toward a dummy from 20 m, hipfiring. Note the distance where the hits start landing — about 8 m. That's your no-ADS line.</li>
+          <li><strong>The reload.</strong> Empty the magazine, reload on empty (5.39 s), then reload with rounds left (4.39 s). Time both. Never reload on empty in a fight.</li>
+          
+        </ol>
+        <div class="rule"><strong>Pocket summary — screenshot this</strong>Stop → aim → fire → HOLD. 7 chest shots up close, 0.47 s. Spool: 750 → 845 RPM over 1 s. ADS cone 1.5°, hip 2.5°, sprint 5.0°. Reload 4.39 s. First buy: Ballistic Rapid Refire Toggle (100).</div>
+
+        </section>
+
+            <footer>
+        <p><strong>About this guide.</strong> An entry in the Sage tutorial series — one weapon, one page, written for a brand-new player. Stats are the T7 Mini-Chaingun's live game values (Terran Republic) as listed by the community wiki and the Census API data feed.</p>
+        <p>Sources: <a href="https://planetside.fandom.com/wiki/T7_Mini-Chaingun">T7 Mini-Chaingun — PlanetSide 2 Wiki</a> · <a href="https://liquidwarp.honu.pw/stats/weapons/infantry/t7-mini-chaingun-7533.html">T7 Mini-Chaingun weapon data — PS2 LiquidWarp (Honu)</a>. Weapon render via the Census API; spread rings and sight views are scale diagrams drawn from the gun's published cone-of-fire and magnification values. PlanetSide 2 is a Daybreak Game Company title; this is a fan-made tutorial, not affiliated with Daybreak.</p>
+      </footer>
+    </div>
+
+  <script type="module" src="weapon-sage-guide.mjs?v=20261109-sageguide3"></script>
+  <script>
+
+      (function () {
+        var slider = document.getElementById('rng');
+        var out = document.getElementById('rngOut');
+        var dmgEl = document.getElementById('labDmg');
+        var stkEl = document.getElementById('labStk');
+        var ttkEl = document.getElementById('labTtk');
+        var msg = document.getElementById('labMsg');
+        function dmgAt(d) {
+          if (d <= 10) return 143;
+          if (d >= 60) return 112;
+          return 143 - (143 - 112) * (d - 10) / 50;
+        }
+        function rampTTK(n, T) {
+          if (n <= 1) return 0;
+          var k = n - 1;
+          var a = 95 / (2 * T), b = 750, c = -60000 * k;
+          return (-b + Math.sqrt(b * b - 4 * a * c)) / (2 * a);
+        }
+        function fmt(ms) { return (Math.round(ms) / 1000).toFixed(2) + ' s'; }
+        function update() {
+          var d = +slider.value;
+          var dmg = dmgAt(d);
+          var stk = dmg >= 142.857 ? 7 : dmg >= 125 ? 8 : 9;
+          var cone = (2 * d * Math.tan(1.5 * Math.PI / 360)).toFixed(2);
+          out.textContent = d + ' m';
+          dmgEl.textContent = Math.round(dmg);
+          stkEl.textContent = stk;
+          ttkEl.textContent = fmt(rampTTK(stk, 1000));
+          var band = d <= 10 ? 'point-blank' : d <= 25 ? 'your sweet spot' : d <= 40 ? 'working range' : 'stretching it';
+          msg.textContent = d + ' m \u2014 ' + band + ': ' + stk + ' shots, ' + fmt(rampTTK(stk, 1000)) +
+            ', and the ADS cone is ' + cone + ' m wide. The first shot leaves at 750 RPM; the first second of the hold lands 14 rounds.';
+        }
+        slider.addEventListener('input', update);
+        update();
+      })();
+
+      /* ---------- spool-up trainer ---------- */
+      (function () {
+        var stage = document.getElementById('simStage');
+        var fireBtn = document.getElementById('simFire');
+        var resetBtn = document.getElementById('simReset');
+        var bloom = document.getElementById('simBloom');
+        var shotsEl = document.getElementById('simShots');
+        var hitsEl = document.getElementById('simHits');
+        var accEl = document.getElementById('simAcc');
+        var verdict = document.getElementById('simVerdict');
+        var log = document.getElementById('simLog');
+        var firing = false, timer = null, startT = 0, holdStart = 0, shots = 0, hits = 0;
+        function aimPoint() {
+          var r = stage.getBoundingClientRect();
+          return { x: r.width / 2, y: r.height * 0.42, w: r.width };
+        }
+        function refireAt(t) { return t >= 1000 ? 71 : 80 - 9 * t / 1000; }
+        function fireOne() {
+          if (!firing) return;
+          var t = Date.now() - startT;
+          var a = aimPoint();
+          var ppm = a.w / 3;
+          shots++;
+          var radiusM = 15 * Math.tan(1.5 * Math.PI / 360);
+          var ang = Math.random() * 2 * Math.PI;
+          var rr = Math.sqrt(Math.random()) * radiusM * ppm;
+          var dx = Math.cos(ang) * rr;
+          var dy = Math.sin(ang) * rr - shots * 0.9;
+          var dot = document.createElement('div');
+          dot.className = 'sim-shot';
+          dot.style.left = (a.x + dx) + 'px';
+          dot.style.top = (a.y + dy) + 'px';
+          stage.appendChild(dot);
+          var hit = Math.abs(dx) <= 56 && Math.abs(dy) <= 98;
+          if (hit) { hits++; dot.style.background = 'var(--tr-gold)'; }
+          bloom.style.width = Math.min(100, t / 10) + '%';
+          shotsEl.textContent = shots;
+          hitsEl.textContent = hits;
+          accEl.textContent = Math.round(hits / shots * 100) + '%';
+          timer = setTimeout(fireOne, refireAt(t));
+        }
+        function stopHold() {
+          if (!firing) return;
+          firing = false;
+          clearTimeout(timer);
+          var holdMs = Date.now() - holdStart;
+          var cls = holdMs >= 1000 ? 'good' : (holdMs >= 500 ? 'warn' : 'bad');
+          var lead = holdMs >= 1000 ? 'Full spool \u2014 ' : (holdMs >= 500 ? 'Half-spun \u2014 ' : 'Barely started \u2014 ');
+          verdict.textContent = lead + shots + ' rounds, ' + hits + ' hits (' + Math.round(hits / Math.max(1, shots) * 100) + '%). ' +
+            (holdMs >= 1000 ? '845 RPM reached: this is the gun at full speed.' :
+             holdMs >= 500 ? 'The gun was still climbing \u2014 hold a full second for 845 RPM.' :
+             'A tap never leaves 750 RPM \u2014 commit to a full second.');
+          var pip = document.createElement('span');
+          pip.className = 'burst-pip ' + cls;
+          pip.textContent = '\u00d7' + shots + ' \u00b7 ' + (holdMs / 1000).toFixed(1) + 's';
+          log.appendChild(pip);
+        }
+        fireBtn.addEventListener('pointerdown', function (e) {
+          e.preventDefault();
+          if (firing) return;
+          firing = true;
+          startT = Date.now();
+          holdStart = startT;
+          verdict.textContent = 'Spooling\u2026';
+          fireOne();
+        });
+        ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) {
+          fireBtn.addEventListener(ev, stopHold);
+        });
+        resetBtn.addEventListener('click', function () {
+          firing = false;
+          clearTimeout(timer);
+          shots = 0; hits = 0;
+          stage.querySelectorAll('.sim-shot').forEach(function (d) { d.remove(); });
+          bloom.style.width = '0%';
+          shotsEl.textContent = '0'; hitsEl.textContent = '0'; accEl.textContent = '\u2014';
+          verdict.textContent = 'Hold the trigger to start the spool.';
+          log.textContent = '';
+        });
+      })();
+
+
+        
+  </script>
+</body>
+</html>

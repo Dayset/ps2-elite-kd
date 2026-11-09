@@ -439,7 +439,7 @@
 
         <p class="small">One more thing worth knowing: one trigger pull is a 3-round burst — shots 70 ms apart inside the burst, 140 ms between bursts — so a held trigger delivers 3 rounds every 280 ms, about 643 RPM sustained, even though the stat card says 857 RPM. The cone still grows 0.05° with every shot, so there are no free shots with no cone growth on this gun. And the first shot of each burst kicks nothing extra — the first-shot recoil multiplier is 0×, so every burst starts as clean as the last one ended.</p>
 
-        <div class="viz" id="burstSim" data-rpm="857" data-refire-ms="70" data-burst="3" data-post-ms="140" data-base-cof="0.30" data-bloom="0.05" data-distance="30">
+        <div class="viz" id="ownSim" data-rpm="857" data-refire-ms="70" data-burst="3" data-post-ms="140" data-base-cof="0.30" data-bloom="0.05" data-distance="30">
           <h3>Try it: the hold-and-release window</h3>
           <p class="small" style="margin:0">A target 30 m away, aiming down sights. <strong>Press and hold FIRE</strong> (mouse, touch, or hold Space with the button focused) and watch the holes walk wider the longer you hold — that's firing from an ever-growing cone. Release, let the cone reset, fire again. <strong>Aim for holds of 5 rounds; 6–8 is tolerable while you're new.</strong> On this gun a hold of 6 is exactly two trigger pulls — the natural rhythm. This practice window is shared by the whole Sage series: it's driven by a weapon profile plugged into the window — here the PMG-3XB's (857 RPM inside a burst, 0.30° starting cone, 0.05° bloom per shot, target at 30 m) — and the spread is drawn at true scale from those numbers. Holding the trigger fires 3-round bursts: three shots 70 ms apart, a 140 ms pause, then the next burst.</p>
           <div class="sim-stage" id="simStage" aria-hidden="true">
@@ -810,7 +810,7 @@
          burst), data-burst (rounds per burst) and data-post-ms (pause between bursts).
          Each gun page plugs in its own. */
       (function () {
-        var box = document.getElementById('burstSim');
+        var box = document.getElementById('ownSim');
         var stage = document.getElementById('simStage');
         var fireBtn = document.getElementById('simFire');
         var resetBtn = document.getElementById('simReset');

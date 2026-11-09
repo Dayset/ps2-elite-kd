@@ -435,7 +435,7 @@
           </tbody>
         </table>
 
-        <div class="viz" id="burstSim" data-kind="semi" data-rpm="231" data-base-cof="0.0" data-bloom="0.15" data-distance="50">
+        <div class="viz" id="ownSim" data-kind="semi" data-rpm="231" data-base-cof="0.0" data-bloom="0.15" data-distance="50">
           <h3>Try it: the one-shot-at-a-time window</h3>
           <p class="small" style="margin:0">A target 50 m away, aiming down sights. <strong>Press and hold FIRE</strong> (mouse, touch, or hold Space with the button focused) and watch the holes walk wider the longer you hold — that's firing from an ever-growing cone. Release, let the cone settle (~0.27 s), fire again. <strong>Aim for one shot at a time; two is tolerable while you're new.</strong> This practice window is shared by the whole Sage series: it's driven by a weapon profile plugged into the window — here the 99SV's (260 ms refire, 0.0° starting cone, 0.15° bloom per shot, target at 50 m) — and the spread is drawn at true scale from those numbers.</p>
           <div class="sim-stage" id="simStage" aria-hidden="true">
@@ -899,7 +899,7 @@
          shot (n_still = 1), two is tolerable while you're new, three or more means
          you fired into a blooming cone. */
       (function () {
-        var box = document.getElementById('burstSim');
+        var box = document.getElementById('ownSim');
         var stage = document.getElementById('simStage');
         var fireBtn = document.getElementById('simFire');
         var resetBtn = document.getElementById('simReset');

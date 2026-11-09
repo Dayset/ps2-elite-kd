@@ -438,7 +438,7 @@
           </tbody>
         </table>
 
-        <div class="viz" id="burstSim" data-rpm="133" data-base-cof="0.00" data-bloom="0.1" data-distance="30" data-ideal="2" data-tolerable="3">
+        <div class="viz" id="ownSim" data-rpm="133" data-base-cof="0.00" data-bloom="0.1" data-distance="30" data-ideal="2" data-tolerable="3">
           <h3>Try it: the hold-and-release window</h3>
           <p class="small" style="margin:0">A target 30 m away, aiming down sights. <strong>Press and hold FIRE</strong> (mouse, touch, or hold Space with the button focused) and the practice window fires at the fastest pace this gun allows — one round per click in the real game, 451 ms apart — and watch the holes walk wider the longer you hold. Release, let the cone reset, fire again. <strong>Two aimed shots is perfect discipline here — the pair stays inside the moving cone.</strong> This practice window is shared by the whole Sage series: it is driven by a weapon profile plugged into the window — here the SR-150's (133 RPM, 0.00° starting cone, 0.10° bloom per shot, target at 30 m) — and the spread is drawn at true scale from those numbers. Note the cone grows from the very first shot: there is no free window where the bullets stay perfectly grouped.</p>
           <div class="sim-stage" id="simStage" aria-hidden="true">
@@ -943,7 +943,7 @@ SR-150 · 1,000 certs — NOT a starter (your NSO starter sniper is the SR-100) 
          data-rpm, data-base-cof (degrees), data-bloom (degrees per shot),
          data-distance (metres to target), data-ideal / data-tolerable (shots). */
       (function () {
-        var box = document.getElementById('burstSim');
+        var box = document.getElementById('ownSim');
         var stage = document.getElementById('simStage');
         var fireBtn = document.getElementById('simFire');
         var resetBtn = document.getElementById('simReset');
