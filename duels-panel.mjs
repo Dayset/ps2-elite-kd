@@ -5,7 +5,9 @@
  * Three to five players → 1-vs-many (#113): one row per opponent with the 🌐 ladder win% and
  * the 📈 pairwise Glicko win% side by side; the first name is the subject, the rest are opponents.
  * Logic in duels.mjs. Head-to-head data on first open: up to 5 Census pages of one player's
- * kills & deaths (the whole history on "Read further back"), plus 2 calls for the weapons' lifetime shots / hits.
+ * kills & deaths — or the whole history at once when the killboard says the pair has a verdict's
+ * worth of kills (DUEL_FIT_MIN); "Read further back" reads the rest — plus 2 calls for the
+ * weapons' lifetime shots / hits.
  * A small spinner sits in the status line while a load runs.
  * Each Census page re-renders the table as it arrives, and a ticking page/elapsed line
  * proves the load is alive between pages (the spinner alone does not rotate on
@@ -19,7 +21,7 @@ import { mergeEvents } from "./scrims.mjs?v=20261028-os2";
 import {
   AUTO_PAGES, FIRST_FIGHTS, nsOfBase, pairFloor, DUEL_GAP, ONE_V_ONE, classOf, bareName, crowdRows, crowdSummary, expectedCount, pagerOf,
   readPairPages, readPairNewer, pairEvents, fightsOf, fightResult, weaponShotUrls, parseShotStats, perKill, pairSummary,
-  charInfoUrl, parseCharInfo, pairWarnings, WORLD_NAME, iviLuck, duelFitKind, DUEL_FIT_V1,
+  charInfoUrl, parseCharInfo, pairWarnings, WORLD_NAME, iviLuck, duelFitKind, DUEL_FIT_V1, DUEL_FIT_MIN, killboardSplit,
   DUEL_CACHE_KEY, duelCacheEntry, duelCacheRestore, duelCachePrune,
 } from "./duels.mjs?v=20261102-luck5";
 import { duelGlickoFromIvi, pairChance, rating } from "./glicko2.mjs?v=20261106-glk3";
@@ -83,7 +85,8 @@ function crowdColumns() {
  *   GET /duels/pair, worker/src/duel-store.js). reply = { v: 1, events (p's compact events: every kill
  *   with q plus p's other kills & deaths within 10 min), rev, lo, hi, done, fights, kills, pages,
  *   blocks, error? }. Each call reads a few Census pages on the server and keeps them for every
- *   device; the panel calls again until FIRST_FIGHTS fights (first open) or the whole history ("Read
+ *   device; the panel calls again until FIRST_FIGHTS fights (first open), the whole history when the
+ *   killboard says the pair has a verdict's worth of kills (DUEL_FIT_MIN), or the whole history ("Read
  *   further back"), re-drawing after every call. A throw before anything came → the Census path.
  */
 export function mountDuels(section, o = {}) {
@@ -373,12 +376,17 @@ export function mountDuels(section, o = {}) {
       const x = info && info.get(String(p.cid)), y = info && info.get(String(q.cid));
       if (x && y && x.world && y.world && x.world !== y.world) { job.servers = true; return job; }
     }
+    // Owner 2026-11-09: when the killboard says this pair has a verdict's worth of kills
+    // (DUEL_FIT_MIN), the first open reads the whole history instead of stopping at the
+    // newest 5 pages / FIRST_FIGHTS fights — otherwise 🎲 and 📈 sit at "too few kills"
+    // while the kills exist. Pairs under the floor keep the cheap first open.
+    const deep = !more && job.need != null && job.need >= DUEL_FIT_MIN;
     let fromApi = false;
     if (pairApi && !job.census && nsOfBase(job.base)) {
       // #83 pair cache: a few Census pages per call on the server, saved there for every device.
       // The history player stays the one the panel picked (pagerOf), so every device asks the same store.
       job.api = job.api || { seen: 0 };
-      const want = more ? 1e6 : FIRST_FIGHTS;
+      const want = more || deep ? 1e6 : FIRST_FIGHTS;
       try {
         for (let call = 0; call < 400 && !stopAsked; call++) {
           const r = await pairApi({ ns: nsOfBase(job.base), p: job.st.pid, q: job.st.qid, want, seen: job.api.seen });
@@ -400,7 +408,7 @@ export function mountDuels(section, o = {}) {
             job.fl = { floor: Math.max(ca, cb) - DUEL_GAP, created: Math.max(ca, cb), newer: ca >= cb ? p : q };
           }
           if (onProgress) onProgress(job);
-          if (r.done || (!more && r.fights >= FIRST_FIGHTS)) break;
+          if (r.done || (!more && !deep && r.fights >= FIRST_FIGHTS)) break;
           if (r.error) await new Promise((res) => setTimeout(res, 3000)); // Census busy on the server: short pause
         }
       } catch (_) { /* the Census path below */ }
@@ -409,7 +417,11 @@ export function mountDuels(section, o = {}) {
     if (!fromApi) {
       const onPage = onProgress ? () => onProgress(job) : undefined;
       if (restored && !more) await readPairNewer(job.st, { base: job.base, get: getJson, onPage });
-      else await readPairPages(job.st, { base: job.base, get: getJson, pages: more ? Infinity : AUTO_PAGES, need: more ? null : job.need, onPage, stop: () => stopAsked, floor: job.fl ? job.fl.floor : 0 });
+      // A restored pair that stopped short reads back from its saved cursor, so a pair
+      // first opened before this change still completes on reopen.
+      const found = pairEvents(job.st.all, job.st.qid, job.pIsA).length;
+      const stillShort = deep && found < job.need && !job.st.done;
+      if (!restored || more || stillShort) await readPairPages(job.st, { base: job.base, get: getJson, pages: more || stillShort ? Infinity : AUTO_PAGES, need: more ? null : job.need, onPage, stop: () => stopAsked, floor: job.fl ? job.fl.floor : 0 });
     }
     // Lifetime shots / hits of the weapons used in kills between them (asked once per weapon).
     const pe = pairEvents(job.st.all, job.st.qid, job.pIsA);
@@ -440,7 +452,19 @@ export function mountDuels(section, o = {}) {
     const shareTxt = (k) => (nk ? ` <span class="duel-sub">${pct0(k / nk)}</span>` : "");
     const more = (x, y) => (x > y && y > 0 ? ` <span class="duel-more-pct">+${int(((x / y) - 1) * 100)}%</span>` : "");
     const ia = iviOf(a), ib = iviOf(b);
-    const luck = ia && ib && duelFit ? iviLuck(s.a.kills, s.b.kills, ia, ib, duelFit, vehOf(a), vehOf(b)) : null;
+    // Owner 2026-11-09: luck from the killboard totals right away — while the loaded kills
+    // are still under the floor, the killboard split (the full history) is the verdict's
+    // source, so the row shows instead of "too few kills". Once the loaded kills reach the
+    // floor, luck uses them, so the row never disagrees with the table below.
+    const kb = (() => {
+      const s1 = killboardSplit(a, b);
+      if (s1) return s1;
+      const s2 = killboardSplit(b, a);
+      return s2 ? { kills: s2.deaths, deaths: s2.kills } : null;
+    })();
+    const evN = s.a.kills + s.b.kills;
+    const useKb = !!kb && evN < (duelFit ? (duelFit.min || DUEL_FIT_MIN) : DUEL_FIT_MIN);
+    const luck = ia && ib && duelFit ? iviLuck(useKb ? kb.kills : s.a.kills, useKb ? kb.deaths : s.b.kills, ia, ib, duelFit, vehOf(a), vehOf(b)) : null;
     let luckRow = "";
     if (luck) {
       // Plain verdict per side; every number lives in the hover (owner t847u: easy to read).
@@ -458,7 +482,8 @@ export function mountDuels(section, o = {}) {
         ? tr("duel.m.luckHow2", "Learned from {pairs} real player pairs: higher iVi wins more of the kills, and kills from vehicles count in.", { pairs: int(duelFit.pairs) })
         : tr("duel.m.luckHow1", "Learned from {pairs} real player pairs: higher iVi wins more of the kills.", { pairs: int(duelFit.pairs) });
       const tip = tr("duel.m.luckTip", "Kills each one got, compared with what their iVi predicts.\nExpected: {ea} – {eb}. Got: {aa} – {ab}.\nMore one-sided than {rarer} of player pairs.\n{how}\n“As expected” = like 9 in 10 pairs. “Much” = rarer than 1 in 100.\nNot clean 1v1s: “much better” is only a hint to look closer.", {
-        ea: pct0(luck.exp), eb: pct0(1 - luck.exp), aa: pct0(luck.act), ab: pct0(1 - luck.act), rarer: luck.rarer == null ? "–" : `${luck.rarer}%`, how });
+        ea: pct0(luck.exp), eb: pct0(1 - luck.exp), aa: pct0(luck.act), ab: pct0(1 - luck.act), rarer: luck.rarer == null ? "–" : `${luck.rarer}%`, how })
+        + (useKb ? "\n" + tr("duel.m.luckKb", "From the killboard totals — the table below shows only the kills loaded so far.") : "");
       const sideTip = (e, x, g) => tr("duel.m.luckSide", "Expected {e}, got {a} ({gap} pts).", { e: pct0(e), a: pct0(x), gap: pts(g) });
       luckRow = row(tr("duel.m.luck", "🎲 vs expected"), tip, side(luck.gap), side(-luck.gap), "duel-luck",
         sideTip(luck.exp, luck.act, luck.gap), sideTip(1 - luck.exp, 1 - luck.act, -luck.gap));

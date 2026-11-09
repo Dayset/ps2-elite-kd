@@ -72,7 +72,7 @@ export function iviLuck(ka, kb, ia, ib, fit, va = null, vb = null) {
 export const DUEL_GAP = 600;
 /** A fight is "1v1" when it has min+ kills and focus+ of the history player's kills & deaths in that time were with the other one. */
 export const ONE_V_ONE = Object.freeze({ min: 3, focus: 0.75 });
-/** Census pages (1,000 events) read on first open; "Read further back" reads to the end of the history. */
+/** Census pages (1,000 events) read on first open — the whole history at once when the killboard says the pair has DUEL_FIT_MIN+ kills (panel deep read); "Read further back" reads to the end of the history. */
 export const AUTO_PAGES = 5;
 /** #83: a first open shows the newest FIRST_FIGHTS fights (pair cache), "Read further back" the rest. */
 export const FIRST_FIGHTS = 3;
@@ -152,12 +152,18 @@ export function crowdSummary(rows, leaveOut = "") {
   return { kills: k, deaths: d, kd: d ? k / d : null, n: (rows || []).length, nemesis: nem, target: tgt };
 }
 
-/** This player's killboard row for the other one (kills + deaths between them), or null. */
-export function expectedCount(p, other) {
+/** This player's killboard row for the other one ({ kills, deaths } between them), or null. */
+export function killboardSplit(p, other) {
   const want = lc(other && other.display);
   if (!want) return null;
   const r = ((p && (p.rawRows || p.rows)) || []).find((x) => x && lc(x.name) === want);
-  return r ? (+r.kills || 0) + (+r.deaths || 0) : null;
+  return r ? { kills: +r.kills || 0, deaths: +r.deaths || 0 } : null;
+}
+
+/** This player's killboard row for the other one (kills + deaths between them), or null. */
+export function expectedCount(p, other) {
+  const s = killboardSplit(p, other);
+  return s ? s.kills + s.deaths : null;
 }
 
 /** Whose history to read: the one with fewer kills + deaths per minute reaches further back per page. */

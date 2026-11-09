@@ -587,3 +587,239 @@ describe("🤺 duels panel: 1-vs-many Glicko table (#113)", () => {
     });
   });
 });
+
+describe("🤺 duels panel: first open reads the whole history when the killboard says 20+ kills (owner 2026-11-09)", () => {
+  it("67 kills on the killboard, 6 in the first 5 pages: first open fetches all 67, luck and Glicko show", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
+    await withPage(async ({ ev, nav }) => {
+      await nav("index.html");
+      const r = await ev(`(async () => {
+        ${fixture}
+        const { mountDuels } = await import("/duels-panel.mjs");
+        const t0 = Math.floor(Date.now() / 1000) - 100;
+        const pid = "1", qid = "2";
+        // 40 kills by botWaz, 27 by Sabin3r; 6 of them in the first 5 pages, the rest past page 5.
+        const pairAt = new Map([[100, 1], [900, 1], [1500, 0], [2400, 1], [3300, 1], [4900, 0]]);
+        for (let j = 0; j < 61; j++) pairAt.set(5030 + j * 32, j < 36 ? 1 : 0);
+        const rows = [];
+        for (let i = 0; i < 7000; i++) {
+          const ts = t0 - i, pk = pairAt.get(i);
+          if (pk === undefined) {
+            const kill = i % 2 === 0;
+            rows.push(kill
+              ? { timestamp: ts, table_type: "kills", character_id: "9", attacker_character_id: pid, attacker_weapon_id: "1", is_headshot: "0", zone_id: "2", attacker_loadout_id: "10", character_loadout_id: "17", attacker_vehicle_id: "0" }
+              : { timestamp: ts, table_type: "deaths", character_id: pid, attacker_character_id: "9", attacker_weapon_id: "1", is_headshot: "0", zone_id: "2", attacker_loadout_id: "10", character_loadout_id: "17", attacker_vehicle_id: "0" });
+          } else if (pk) {
+            rows.push({ timestamp: ts, table_type: "kills", character_id: qid, attacker_character_id: pid, attacker_weapon_id: "1", is_headshot: "0", zone_id: "2", attacker_loadout_id: "10", character_loadout_id: "17", attacker_vehicle_id: "0" });
+          } else {
+            rows.push({ timestamp: ts, table_type: "deaths", character_id: pid, attacker_character_id: qid, attacker_weapon_id: "1", is_headshot: "0", zone_id: "2", attacker_loadout_id: "17", character_loadout_id: "10", attacker_vehicle_id: "0" });
+          }
+        }
+        let eventCalls = 0;
+        const getJson = async (u) => {
+          if (u.includes("character/?character_id=")) return { character_list: [
+            { character_id: "1", faction_id: "1", w: { world_id: "1" } },
+            { character_id: "2", faction_id: "3", w: { world_id: "1" } } ] };
+          if (u.includes("characters_event/")) {
+            eventCalls++;
+            const m = /[?&]before=([0-9]+)/.exec(u);
+            const before = m ? Number(m[1]) : Infinity;
+            return { characters_event_list: rows.filter((e) => e.timestamp < before).slice(0, 1000) };
+          }
+          return { error: "stub" };
+        };
+        const panel = mountDuels(s, { getJson, baseOf: () => "https://x/get/ps2:v2/", catalog: async () => null });
+        panel.setPlayers([{ cid: "1", display: "botWaz", rows: [{ name: "Sabin3r", kills: 40, deaths: 27, kpm: 1 }] }, { cid: "2", display: "Sabin3r" }]);
+        let done = null;
+        for (let i = 0; i < 120 && !done; i++) {
+          await sleep(100);
+          if (summary().includes("40 – 27") && s.querySelector(".duel-cmp").textContent.includes("vs expected")) done = {
+            sum: summary(), st: status(), count: s.querySelector(".duel-count").textContent,
+            cmp: s.querySelector(".duel-cmp").textContent,
+            luckTitle: (s.querySelector("tr.duel-luck th") || {}).title || "", eventCalls,
+          };
+        }
+        return done;
+      })()`);
+      assert.ok(r, "pair settles with the full split and the luck row");
+      assert.equal(r.eventCalls, 7, "first open reads past page 5: 7 event pages for all 67 kills");
+      assert.match(r.sum, /botWaz 40 – 27 Sabin3r/, "summary is the full killboard split, not the first 5 pages");
+      assert.equal(r.count, "(67)", "count is all 67 kills");
+      assert.match(r.st, /History read back to/, "status no longer reports a partial read");
+      assert.doesNotMatch(r.st, /of the 67 kills/, "no 'N of the 67 kills found' anymore");
+      assert.match(r.cmp, /🎲 vs expected/, "luck row shows");
+      assert.match(r.cmp, /📈 Glicko/, "Glicko row shows");
+      assert.doesNotMatch(r.cmp, /too few kills/, "no 'too few kills' with 67 loaded");
+      assert.doesNotMatch(r.cmp, /too few infantry kills/, "no 'too few infantry kills' with 67 infantry kills");
+      assert.doesNotMatch(r.luckTitle, /killboard/i, "luck comes from the loaded kills once they are in, not the killboard");
+    });
+  });
+
+  it("under 20 kills on the killboard: first open still stops at 5 pages", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
+    await withPage(async ({ ev, nav }) => {
+      await nav("index.html");
+      const r = await ev(`(async () => {
+        ${fixture}
+        const { mountDuels } = await import("/duels-panel.mjs");
+        const t0 = Math.floor(Date.now() / 1000) - 100;
+        const pid = "1", qid = "2";
+        const pairAt = new Map([[100, 1], [1500, 0], [3000, 1]]);
+        const rows = [];
+        for (let i = 0; i < 7000; i++) {
+          const ts = t0 - i, pk = pairAt.get(i);
+          if (pk === undefined) {
+            const kill = i % 2 === 0;
+            rows.push(kill
+              ? { timestamp: ts, table_type: "kills", character_id: "9", attacker_character_id: pid, attacker_weapon_id: "1", is_headshot: "0", zone_id: "2", attacker_loadout_id: "10", character_loadout_id: "17", attacker_vehicle_id: "0" }
+              : { timestamp: ts, table_type: "deaths", character_id: pid, attacker_character_id: "9", attacker_weapon_id: "1", is_headshot: "0", zone_id: "2", attacker_loadout_id: "10", character_loadout_id: "17", attacker_vehicle_id: "0" });
+          } else if (pk) {
+            rows.push({ timestamp: ts, table_type: "kills", character_id: qid, attacker_character_id: pid, attacker_weapon_id: "1", is_headshot: "0", zone_id: "2", attacker_loadout_id: "10", character_loadout_id: "17", attacker_vehicle_id: "0" });
+          } else {
+            rows.push({ timestamp: ts, table_type: "deaths", character_id: pid, attacker_character_id: qid, attacker_weapon_id: "1", is_headshot: "0", zone_id: "2", attacker_loadout_id: "17", character_loadout_id: "10", attacker_vehicle_id: "0" });
+          }
+        }
+        let eventCalls = 0;
+        const getJson = async (u) => {
+          if (u.includes("character/?character_id=")) return { character_list: [
+            { character_id: "1", faction_id: "1", w: { world_id: "1" } },
+            { character_id: "2", faction_id: "3", w: { world_id: "1" } } ] };
+          if (u.includes("characters_event/")) {
+            eventCalls++;
+            const m = /[?&]before=([0-9]+)/.exec(u);
+            const before = m ? Number(m[1]) : Infinity;
+            return { characters_event_list: rows.filter((e) => e.timestamp < before).slice(0, 1000) };
+          }
+          return { error: "stub" };
+        };
+        const panel = mountDuels(s, { getJson, baseOf: () => "https://x/get/ps2:v2/", catalog: async () => null });
+        panel.setPlayers([{ cid: "1", display: "botWaz", rows: [{ name: "Sabin3r", kills: 5, deaths: 3, kpm: 1 }] }, { cid: "2", display: "Sabin3r" }]);
+        let done = null;
+        for (let i = 0; i < 60 && !done; i++) {
+          await sleep(100);
+          if (summary().includes("2 – 1")) done = { sum: summary(), st: status(), eventCalls };
+        }
+        return done;
+      })()`);
+      assert.ok(r, "pair settles with the 5-page window");
+      assert.equal(r.eventCalls, 5, "first open stops at 5 pages under the floor");
+      assert.match(r.sum, /botWaz 2 – 1 Sabin3r/, "summary is the loaded window only");
+      assert.match(r.st, /3 of the 8 kills/, "status still reports the partial read honestly");
+    });
+  });
+
+  it("restored short cache: reopening a pair stopped at 6 of 67 reads back from its saved cursor", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
+    await withPage(async ({ ev, nav }) => {
+      await nav("index.html");
+      const r = await ev(`(async () => {
+        ${fixture}
+        const { mountDuels } = await import("/duels-panel.mjs");
+        const t0 = Math.floor(Date.now() / 1000) - 100;
+        const pid = "3", qid = "4";
+        const pairAt = new Map([[100, 1], [900, 1], [1500, 0], [2400, 1], [3300, 1], [4900, 0]]);
+        for (let j = 0; j < 61; j++) pairAt.set(5030 + j * 32, j < 36 ? 1 : 0);
+        const rows = [];
+        for (let i = 0; i < 7000; i++) {
+          const ts = t0 - i, pk = pairAt.get(i);
+          if (pk === undefined) {
+            const kill = i % 2 === 0;
+            rows.push(kill
+              ? { timestamp: ts, table_type: "kills", character_id: "9", attacker_character_id: pid, attacker_weapon_id: "1", is_headshot: "0", zone_id: "2", attacker_loadout_id: "10", character_loadout_id: "17", attacker_vehicle_id: "0" }
+              : { timestamp: ts, table_type: "deaths", character_id: pid, attacker_character_id: "9", attacker_weapon_id: "1", is_headshot: "0", zone_id: "2", attacker_loadout_id: "10", character_loadout_id: "17", attacker_vehicle_id: "0" });
+          } else if (pk) {
+            rows.push({ timestamp: ts, table_type: "kills", character_id: qid, attacker_character_id: pid, attacker_weapon_id: "1", is_headshot: "0", zone_id: "2", attacker_loadout_id: "10", character_loadout_id: "17", attacker_vehicle_id: "0" });
+          } else {
+            rows.push({ timestamp: ts, table_type: "deaths", character_id: pid, attacker_character_id: qid, attacker_weapon_id: "1", is_headshot: "0", zone_id: "2", attacker_loadout_id: "17", character_loadout_id: "10", attacker_vehicle_id: "0" });
+          }
+        }
+        // The cache entry a 5-page first open would have saved: every event of pages 1-5.
+        const toCompact = (e) => {
+          const kill = e.table_type === "kills" ? 1 : 0;
+          const other = kill ? e.character_id : e.attacker_character_id;
+          return [e.timestamp, kill, String(other), Number(e.attacker_weapon_id) || 0, e.is_headshot === "1" ? 1 : 0, Number(e.zone_id) || 0,
+            Number(kill ? e.attacker_loadout_id : e.character_loadout_id) || 0,
+            Number(kill ? e.character_loadout_id : e.attacker_loadout_id) || 0,
+            Number(e.attacker_vehicle_id) || 0];
+        };
+        localStorage.removeItem("ps2_duels_cache");
+        localStorage.setItem("ps2_duels_cache", JSON.stringify({ "3|4": { v: 1, pid: "3", qid: "4", base: "https://x/get/ps2:v2/",
+          all: rows.slice(0, 5000).map(toCompact), cursor: t0 - 4998, done: false, pages: 5, oldest: t0 - 4999, stats: [], savedAt: Date.now() } }));
+        let eventCalls = 0;
+        const getJson = async (u) => {
+          if (u.includes("character/?character_id=")) return { character_list: [
+            { character_id: "3", faction_id: "1", w: { world_id: "1" } },
+            { character_id: "4", faction_id: "3", w: { world_id: "1" } } ] };
+          if (u.includes("characters_event/")) {
+            eventCalls++;
+            const m = /[?&]before=([0-9]+)/.exec(u);
+            const before = m ? Number(m[1]) : Infinity;
+            return { characters_event_list: rows.filter((e) => e.timestamp < before).slice(0, 1000) };
+          }
+          return { error: "stub" };
+        };
+        const panel = mountDuels(s, { getJson, baseOf: () => "https://x/get/ps2:v2/", catalog: async () => null });
+        panel.setPlayers([{ cid: "3", display: "botWaz", rows: [{ name: "Sabin3r", kills: 40, deaths: 27, kpm: 1 }] }, { cid: "4", display: "Sabin3r" }]);
+        let done = null;
+        for (let i = 0; i < 60 && !done; i++) {
+          await sleep(100);
+          if (summary().includes("40 – 27")) done = { sum: summary(), count: s.querySelector(".duel-count").textContent, eventCalls };
+        }
+        return done;
+      })()`);
+      assert.ok(r, "reopened pair completes to the full split");
+      assert.equal(r.eventCalls, 3, "one newer check plus two pages back from the saved cursor");
+      assert.match(r.sum, /botWaz 40 – 27 Sabin3r/, "summary is the full killboard split");
+      assert.equal(r.count, "(67)", "count is all 67 kills");
+    });
+  });
+});
+
+describe("🤺 duels panel: luck from the killboard totals while the kills are still loading (owner 2026-11-09)", () => {
+  it("history ends at 6 kills, killboard says 67: luck shows from the killboard, Glicko still waits", { skip: !chrome && "no Chrome", timeout: 120000 }, async () => {
+    await withPage(async ({ ev, nav }) => {
+      await nav("index.html");
+      const r = await ev(`(async () => {
+        ${fixture}
+        const { mountDuels } = await import("/duels-panel.mjs");
+        const t0 = Math.floor(Date.now() / 1000) - 100;
+        const pid = "1", qid = "2";
+        // One short page, always: 4 kills by botWaz, 2 by Sabin3r, plus filler. That is the whole history.
+        const page = [];
+        for (let i = 0; i < 10; i++) {
+          const ts = t0 - i;
+          if (i < 4) page.push({ timestamp: ts, table_type: "kills", character_id: qid, attacker_character_id: pid, attacker_weapon_id: "1", is_headshot: "0", zone_id: "2", attacker_loadout_id: "10", character_loadout_id: "17", attacker_vehicle_id: "0" });
+          else if (i < 6) page.push({ timestamp: ts, table_type: "deaths", character_id: pid, attacker_character_id: qid, attacker_weapon_id: "1", is_headshot: "0", zone_id: "2", attacker_loadout_id: "17", character_loadout_id: "10", attacker_vehicle_id: "0" });
+          else page.push({ timestamp: ts, table_type: "kills", character_id: "9", attacker_character_id: pid, attacker_weapon_id: "1", is_headshot: "0", zone_id: "2", attacker_loadout_id: "10", character_loadout_id: "17", attacker_vehicle_id: "0" });
+        }
+        let eventCalls = 0;
+        const getJson = async (u) => {
+          if (u.includes("character/?character_id=")) return { character_list: [
+            { character_id: "1", faction_id: "1", w: { world_id: "1" } },
+            { character_id: "2", faction_id: "3", w: { world_id: "1" } } ] };
+          if (u.includes("characters_event/")) { eventCalls++; return { characters_event_list: page }; }
+          return { error: "stub" };
+        };
+        const panel = mountDuels(s, { getJson, baseOf: () => "https://x/get/ps2:v2/", catalog: async () => null });
+        panel.setPlayers([{ cid: "1", display: "botWaz", rows: [{ name: "Sabin3r", kills: 40, deaths: 27, kpm: 1 }] }, { cid: "2", display: "Sabin3r" }]);
+        let done = null;
+        for (let i = 0; i < 120 && !done; i++) {
+          await sleep(100);
+          if (summary().includes("4 – 2") && s.querySelector(".duel-cmp").textContent.includes("vs expected")) done = {
+            sum: summary(), st: status(), count: s.querySelector(".duel-count").textContent,
+            cmp: s.querySelector(".duel-cmp").textContent,
+            luckTitle: (s.querySelector("tr.duel-luck th") || {}).title || "", eventCalls,
+          };
+        }
+        return done;
+      })()`);
+      assert.ok(r, "pair settles with 6 loaded kills and the luck row");
+      assert.equal(r.eventCalls, 2, "short page plus its corroborating retry, then history is done");
+      assert.match(r.sum, /botWaz 4 – 2 Sabin3r/, "table shows only the 6 loaded kills");
+      assert.equal(r.count, "(6)", "count is the loaded kills");
+      assert.match(r.st, /Whole history read/, "history is done, nothing more to fetch");
+      assert.match(r.cmp, /🎲 vs expected/, "luck row shows");
+      assert.match(r.cmp, /as expected/, "killboard 40–27 reads as expected against the near-even iVi");
+      assert.doesNotMatch(r.cmp, /too few kills/, "no 'too few kills' — the killboard totals carry the verdict");
+      assert.match(r.cmp, /too few infantry kills/, "Glicko still waits: it cannot run on totals, only on loaded kills");
+      assert.match(r.luckTitle, /killboard totals/, "luck hover says the verdict comes from the killboard totals");
+    });
+  });
+});

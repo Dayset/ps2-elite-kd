@@ -3,7 +3,7 @@ import test, { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
-  classOf, crowdRows, crowdSummary, expectedCount, pagerOf, readPairPages, readPairNewer, pairEvents, fightsOf, fightResult,
+  classOf, crowdRows, crowdSummary, expectedCount, killboardSplit, pagerOf, readPairPages, readPairNewer, pairEvents, fightsOf, fightResult,
   weaponShotUrls, parseShotStats, perKill, pairSummary, ONE_V_ONE,
   duelCacheEntry, duelCacheRestore, duelCachePrune,
   iviLuck, duelExpected, duelFitKind, DUEL_FIT_V1,
@@ -36,6 +36,18 @@ test("vs the crowd: K/D, share, nemesis and favourite target from the loaded kil
   assert.equal(crowdSummary(rows, "[ZZ] bravo").kd, 14 / 6, "the head-to-head opponent is left out (tag and case ignored)");
   assert.equal(expectedCount(p, { display: "[NEW] alpha" }), 12);
   assert.equal(expectedCount(p, { display: "Nobody" }), null);
+});
+
+test("killboard split: the row's kills/deaths for the other player (expectedCount uses it)", () => {
+  const p = { display: "[X] Me", rows: [
+    { name: "[A] Alpha", kills: 10, deaths: 2, kpm: 1.2 },
+    { name: "Bravo", kills: 1, deaths: 9 },
+  ] };
+  assert.deepEqual(killboardSplit(p, { display: "[NEW] alpha" }), { kills: 10, deaths: 2 });
+  assert.deepEqual(killboardSplit(p, { display: "bravo" }), { kills: 1, deaths: 9 });
+  assert.equal(killboardSplit(p, { display: "Nobody" }), null);
+  assert.equal(killboardSplit(p, { display: "" }), null);
+  assert.equal(killboardSplit({ display: "NoRows" }, { display: "Alpha" }), null);
 });
 
 test("history is read from the less active player (reaches further back per page)", () => {
@@ -218,7 +230,11 @@ test("tab wiring: both rooms, one, two or 3–5 players, translated, shared tabl
   assert.match(panel, /function renderMulti\(run\)/, "1-vs-many table (#113) renders one row per opponent");
   assert.match(panel, /loadPairFor\(a, opp, false,/, "each opponent loads through the same pair path as the pair view");
   assert.match(panel, /ladderPair\(ladder, a, opp\)/, "ladder column reads the same lookup as the pair view's ladder line");
-  assert.match(panel, /pages: more \? Infinity : AUTO_PAGES/, "\"Read further back\" reads to the end of the history in one press");
+  assert.match(panel, /pages: more \|\| stillShort \? Infinity : AUTO_PAGES/, "\"Read further back\" reads to the end of the history in one press");
+  assert.match(panel, /const deep = !more && job\.need != null && job\.need >= DUEL_FIT_MIN/, "first open reads the whole history when the killboard says 20+ kills");
+  assert.match(panel, /const want = more \|\| deep \? 1e6 : FIRST_FIGHTS/, "pair cache asks for the whole history on a deep first open");
+  assert.match(panel, /stillShort = deep && found < job\.need && !job\.st\.done/, "a restored short pair reads back from its saved cursor");
+  assert.match(panel, /killboardSplit\(a, b\)/, "luck can come from the killboard totals while the kills load");
   assert.doesNotMatch(panel, /MORE_PAGES/, "no per-click page chunk left");
   assert.match(panel, /className = "spinner"/, "small spinner while the history loads");
   assert.match(panel, /spin\.remove\(\)/, "spinner removed when the load settles");
