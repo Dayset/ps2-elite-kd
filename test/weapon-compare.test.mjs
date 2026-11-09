@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { parseState, stateToSearch, niceTicks, viewMax, rangeStep, MAX_WEAPONS, MAX_RANGE, attList, burstRowsShown } from "../weapon-compare.mjs";
+import { parseState, stateToSearch, niceTicks, viewMax, rangeStep, MAX_WEAPONS, MAX_RANGE, attList, burstRowsShown, resPresetFor } from "../weapon-compare.mjs";
 
 const read = (p) => readFileSync(new URL("../" + p, import.meta.url), "utf8");
 
@@ -99,4 +99,18 @@ test("burst analysis keeps only the shots that still hit, plus two", () => {
   assert.equal(burstRowsShown(rows), 7);
   assert.equal(burstRowsShown(rows.map(() => ({ total: 0 }))), 6);
   assert.equal(burstRowsShown(rows.map(() => ({ total: 1 }))), rows.length);
+});
+
+test("recoil compensation defaults to 100% (full pulldown), both directions", () => {
+  const html = read("weapon-compare.html");
+  assert.match(html, /id="wcSimComp"[^>]*value="100"/);
+  assert.match(html, /id="wcSimCompX"[^>]*value="100"/);
+  assert.match(html, /id="wcSimCompV">100%</);
+  assert.match(html, /id="wcSimCompXV">100%</);
+});
+
+test("screen-height presets: 1080p, 1440p, 2160p (4K); anything else is custom", () => {
+  assert.deepEqual([1080, 1440, 2160].map(resPresetFor), ["1080", "1440", "2160"]);
+  assert.equal(resPresetFor(900), "custom");
+  assert.equal(resPresetFor(4320), "custom");
 });

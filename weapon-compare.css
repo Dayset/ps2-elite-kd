@@ -172,6 +172,12 @@ tbody.open .wc-caret::before { content: "▾"; }
 .wc-deepgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 14px 16px; }
 .wc-deepgrid2 { grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); }
 .wc-deepin { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 8px 12px; margin: 8px 0 12px; }
+/* the timings block is its own fold inside the deep dive (closed by default); the screen-height
+   preset sits beside the hand-typed number */
+.wc-deep-timings { margin-top: 18px; }
+.wc-resrow { display: flex; gap: 6px; }
+.wc-resrow input { min-width: 0; flex: 1 1 auto; }
+.wc-resrow select { flex: 0 0 auto; max-width: 8rem; }
 .wc-deep-t { table-layout: auto; font-size: 0.82rem; }
 .wc-deep-t thead th { white-space: normal; vertical-align: bottom; }
 .wc-deep-t th:first-child, .wc-deep-t td:first-child { text-align: left; }
