@@ -454,15 +454,16 @@ export function deepTimings(P, { fps = 150, resY = 2160, fov = 74, zoom = 1.35 }
 
 /**
  * Per-shot hit chances over a burst fired in quick succession — Dorf's Burst Analysis, but from our
- * simulator: `runs` bursts of 20 shots, geometry only (acc 1, hsr 0, so the cone and the recoil decide
- * every hit), at `distance`, with the health so high no burst kills early. Each row is one shot in the
- * burst: the share of bursts that hit body / head / leg, the share that hit at all, the expected damage
- * of that shot (float hitDamage at the distance) and the cumulative expected damage. As the burst goes
- * on, the kick and the bloom push the chances down and sideways — that decay is the table.
+ * simulator: `runs` bursts of 20 shots, geometry only (acc 1, so the cone and the recoil decide
+ * every hit), at `distance`, with the health so high no burst kills early. The headshot share comes
+ * from P.hsr: the deep dive passes 0 for the chest table, the page rate when following it. Each row
+ * is one shot in the burst: the share of bursts that hit body / head / leg, the share that hit at all,
+ * the expected damage of that shot (float hitDamage at the distance) and the cumulative expected
+ * damage. As the burst goes on, the kick and the bloom push the chances down and sideways — that decay is the table.
  */
 export function burstAnalysis(P, { distance = 20, hp = 1e9, runs = 300, seed = 1, shots = 20 } = {}) {
   const { body, head, leg } = hitDamage(P.profile, distance);
-  const geo = { ...P, acc: 1, hsr: 0 };
+  const geo = { ...P, acc: 1, hsr: P.hsr ?? 0 };
   const counts = Array.from({ length: shots }, () => ({ body: 0, head: 0, leg: 0 }));
   const r = rng(seed * 7919 + 7);
   for (let b = 0; b < runs; b++) {

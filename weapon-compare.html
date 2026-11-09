@@ -20,7 +20,7 @@
   <link rel="preload" href="assets/weapons/catalog.json" as="fetch" crossorigin />
   <link rel="preload" href="assets/weapons/profiles.json" as="fetch" crossorigin />
   <link rel="stylesheet" href="styles.css?v=20261031-fr1" />
-  <link rel="stylesheet" href="weapon-compare.css?v=20261109-screenh1" />
+  <link rel="stylesheet" href="weapon-compare.css?v=20261108-tidy1" />
 </head>
 <body class="site-page">
   <main class="wc-wrap">
@@ -102,10 +102,10 @@
       <div class="wc-simctl">
         <div class="wc-segwrap"><span data-i18n="wc.sim.aim">Aim</span> <div class="wc-seg" id="wcSimAim" role="radiogroup" aria-label="Aim" data-i18n-aria-label="wc.sim.aim"></div></div>
         <div class="wc-segwrap"><span data-i18n="wc.sim.stance">Stance</span> <div class="wc-seg" id="wcSimStance" role="radiogroup" aria-label="Stance" data-i18n-aria-label="wc.sim.stance"></div></div>
-        <label class="wc-ctl wc-comp"><span class="wc-ctl-h"><span data-i18n="wc.sim.comp">Vertical recoil compensation</span> <b id="wcSimCompV">100%</b></span>
-          <input id="wcSimComp" type="range" min="0" max="100" step="5" value="100" data-i18n-title="wc.sim.compTip" title="Simple pulldown: the share of each shot's vertical kick that you pull back. Real recoil jumps up fast and settles a little between shots; that is not modelled." /></label>
-        <label class="wc-ctl wc-comp"><span class="wc-ctl-h"><span data-i18n="wc.sim.compX">Horizontal recoil compensation</span> <b id="wcSimCompXV">100%</b></span>
-          <input id="wcSimCompX" type="range" min="0" max="100" step="5" value="100" data-i18n-title="wc.sim.compXTip" title="Pull back the sideways part of each shot's kick: the lean from the weapon's recoil angle and its random drift." /></label>
+        <label class="wc-ctl wc-comp"><span class="wc-ctl-h"><span data-i18n="wc.sim.comp">Vertical recoil compensation</span> <b id="wcSimCompV">0%</b></span>
+          <input id="wcSimComp" type="range" min="0" max="100" step="5" value="0" data-i18n-title="wc.sim.compTip" title="Simple pulldown: the share of each shot's vertical kick that you pull back. Real recoil jumps up fast and settles a little between shots; that is not modelled." /></label>
+        <label class="wc-ctl wc-comp"><span class="wc-ctl-h"><span data-i18n="wc.sim.compX">Horizontal recoil compensation</span> <b id="wcSimCompXV">0%</b></span>
+          <input id="wcSimCompX" type="range" min="0" max="100" step="5" value="0" data-i18n-title="wc.sim.compXTip" title="Pull back the sideways part of each shot's kick: the lean from the weapon's recoil angle and its random drift." /></label>
         <button type="button" id="wcReroll" class="wc-btn" data-i18n-title="wc.sim.rerollTip" title="Draw the sprays again with new random numbers (cone, vertical and horizontal kick each have their own)."><span aria-hidden="true">🎲</span> <span data-i18n="wc.sim.reroll">New random sprays</span></button>
       </div>
       <p id="wcSimLegend" class="wc-simlegend"></p>
@@ -145,6 +145,6 @@
     <div class="wc-zoomhead"><b id="wcZoomH"></b><button type="button" class="wc-btn" id="wcZoomClose" data-i18n="wc.sim.zoomClose">Close</button></div>
     <div id="wcZoomBody"></div>
   </dialog>
-  <script type="module" src="weapon-compare.mjs?v=20261109-screenh1"></script>
+  <script type="module" src="weapon-compare.mjs?v=20261109-deepfollow1"></script>
 </body>
 </html>

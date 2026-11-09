@@ -280,6 +280,16 @@ test("burst analysis: 20 shots, zones sum to the total, expected damage adds up,
   assert.deepEqual(burstAnalysis(P, { distance: 10, runs: 300, seed: 1 }), rows, "same seed, same table");
 });
 
+test("burst analysis: the headshot share comes from P.hsr, chest when it is missing", () => {
+  const chest = simParams(AR, FM, STATES, { aim: "ads", stance: "standMove" });
+  const rows0 = burstAnalysis(chest, { distance: 10, runs: 300, seed: 1 });
+  assert.equal(rows0[0].head, 0, "no hsr means every shot aims at the chest");
+  const mixed = simParams(AR, FM, STATES, { aim: "ads", stance: "standMove", acc: 1, hsr: 0.2 });
+  const rows = burstAnalysis(mixed, { distance: 10, runs: 300, seed: 1 });
+  assert.ok(rows[0].head > 0.1 && rows[0].head < 0.3, `first shot head share ${rows[0].head}`);
+  assert.ok(rows[0].expDmg > rows0[0].expDmg, "headshots pay double, so the first shot is worth more");
+});
+
 test("burst stats carry the median shots to kill", () => {
   const P = simParams(AR, FM, STATES, { aim: "ads", stance: "standMove", acc: 1, hsr: 0 });
   const s = burstStats(P, { burst: 1, distance: 10, hp: 1000, runs: 60, seed: 1 });

@@ -20,13 +20,13 @@ import { paletteColor } from "./palette.mjs";
 import { toProfile } from "./replay/weapons.mjs";
 import {
   HP_PRESETS, ttkDistribution, quantileMs, rangeAxis, ttkCurve, winnerStrip, slowerPct, withCadence,
-  FPS_LIMIT, fpsFireRateDrop, withFpsLimit, deepBands, minShots,
+  FPS_LIMIT, fpsFireRateDrop, withFpsLimit, deepBands, minShots, hitDamage,
 } from "./weapons-model.mjs?v=20261107-merge1";
 import { METRICS, GROUPS, GROUP_EN, statValues, bestOf, rank, classBests, rowAllSame } from "./weapon-stats.mjs?v=20261108-tidy1";
 import {
   simParams, compareBursts, burstAnalysis, deepTimings, sprayPattern, attEffects, SLOTS, slotOf, canon, TARGET, STANCES,
   stylesFor, loadoutEffects, loadoutProfile, loadoutRec,
-} from "./weapon-sim.mjs?v=20261108-tidy1";
+} from "./weapon-sim.mjs?v=20261109-deepfollow1";
 
 export const MAX_WEAPONS = 4;
 export const MAX_RANGE = 500;        // hard cap (the 500 m option); the chart shows 100 / 200 / 500, see viewMax()
@@ -38,6 +38,7 @@ const MODE_EN = { auto: "Automatic", semi: "Semi-auto", burst: "Burst", bolt: "B
 const FACTION = { 0: "NS", 1: "VS", 2: "NC", 3: "TR" };
 const OPEN_KEY = "ps2-elite-kd-wc-open";
 const DIFF_KEY = "ps2-elite-kd-wc-diff";   // "0" = show the rows that are the same for every chosen weapon
+const FOLLOW_KEY = "ps2-elite-kd-wc-deep-follow";   // "1" = the deep dive follows the page headshot rate instead of chest aim
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const nf = (v, d = 0) => Number(v).toLocaleString(currentLang(), { maximumFractionDigits: d, minimumFractionDigits: d });
@@ -128,9 +129,6 @@ export function burstRowsShown(rows, floor = 0.01, min = 6) {
   rows.forEach((r, i) => { if (r.total >= floor) last = i; });
   return Math.min(rows.length, Math.max(min, last + 3));
 }
-
-/** Which screen-height preset a resY value matches, or "custom" for a hand-typed height (pure, tested). */
-export const resPresetFor = (resY) => [1080, 1440, 2160].includes(resY) ? String(resY) : "custom";
 
 /** Fresh random seed for the spray pictures (each draw shows new sprays, owner 2026-11-06). */
 export const newSeed = () => 1 + Math.floor(Math.random() * 2 ** 30);
@@ -575,7 +573,7 @@ async function boot() {
   // ------------------------------------------------------ recoil simulator --
   // One aim rule (owner 2026-11-08): each shot is aimed at the head with the headshot rate, else at the chest; it
   // lands on that point with the accuracy, else it misses clearly; cone, bloom and recoil come on top.
-  const simState = { aim: "ads", stance: "crouchStill", comp: 100, compX: 100, seed: newSeed() };
+  const simState = { aim: "ads", stance: "crouchStill", comp: 0, compX: 0, seed: newSeed() };
   const settingsKey = () => [simState.aim, simState.stance, simState.comp, simState.compX, st.acc, st.hsr, st.range, st.hp, st.fpsOn ? st.fps : 0].join("|");
   const simOpts = () => ({ stance: simState.stance, aim: simState.aim, comp: simState.comp / 100, compX: simState.compX / 100, acc: st.acc / 100, hsr: st.hsr / 100 });
   const paramsOf = (w, att) => {
@@ -597,7 +595,7 @@ async function boot() {
   const lastShown = new Map();     // weapon id -> last result drawn (kept on screen, dimmed, while a new one is computed)
   let gen = 0, worker = null, posted = new Set();
   try {
-    worker = new Worker(new URL("weapon-sim-worker.mjs?v=20261108-tidy1", import.meta.url), { type: "module" });
+    worker = new Worker(new URL("weapon-sim-worker.mjs?v=20261109-deepfollow1", import.meta.url), { type: "module" });
     worker.onmessage = (e) => {
       const { key, kind, result } = e.data || {};
       (kind === "class" ? classSim : kind === "burst" || kind === "ranges" ? deepCache : simCache).set(key, result);
@@ -696,16 +694,14 @@ async function boot() {
   // ------------------------------------------------------------ deep dive --
   // Dorf's workbook tables, rebuilt from our own numbers, for one weapon (the first chosen, or the one picked here):
   // the Burst Analysis (per-shot hit chances), time to kill / best burst / kills per magazine over distance (log
-  // axis, with his reference bands) and the Advanced Timings. Perfect aim at the chest throughout, so the weapon's
-  // own cone, recoil and falloff are what shows. Folded by default; nothing is computed while it is closed.
-  let deepId = null, deepTimingsOpen = false;   // the timings block is folded; its open state survives redraws
-  const DEEP_KEY = "ps2-elite-kd-wc-deep";   // deep dive timings inputs, kept between visits like the other settings
+  // axis, with his reference bands) and the Advanced Timings. Perfect aim throughout, so the weapon's
+  // own cone, recoil and falloff are what shows: at the chest by default, at the page headshot rate
+  // when the "follow" box is ticked (the reference bands are chest-aimed, so they hide in that case).
+  // Folded by default; nothing is computed while it is closed.
+  let deepId = null;
+  let deepFollow = false;
+  try { deepFollow = localStorage.getItem(FOLLOW_KEY) === "1"; } catch {}
   const deepInputs = { fps: 150, resY: 2160, fov: 74, zoom: 1.35 };   // timings inputs, Dorf's saved values
-  try {
-    const j = JSON.parse(localStorage.getItem(DEEP_KEY) || "null");
-    if (j && typeof j === "object") for (const k of ["fps", "resY", "fov", "zoom"]) if (Number.isFinite(+j[k]) && +j[k] > 0) deepInputs[k] = +j[k];
-  } catch {}
-  const saveDeep = () => { try { localStorage.setItem(DEEP_KEY, JSON.stringify(deepInputs)); } catch {} };
   const DEEP_GRID = [1, 2, 5, 10, 15, 20, 30, 40, 50, 75, 100, 150, 200];
   const deepGrid = (maxR) => { const g = DEEP_GRID.filter((r) => r <= maxR); if (g[g.length - 1] !== maxR) g.push(maxR); return g; };
   const DEEP_RUNS = 150;   // the best-burst-vs-distance chart: fewer trials, it is a trend, not a verdict
@@ -763,18 +759,23 @@ async function boot() {
     if (!deepId || !calc.ws.some((w) => w.id === deepId)) deepId = calc.ws[0].id;
     const w = calc.ws.find((x) => x.id === deepId);
     const att = chosenAtt(w.id), sk = settingsKey();
-    const key = `${w.id}|${att.join("+")}|${sk}`;
+    const key = `${w.id}|${att.join("+")}|${sk}|${deepFollow ? "f1" : "f0"}`;
     const P = paramsOf(w, att);
     const jobs = [];
-    if (P && !deepCache.has("burst|" + key)) jobs.push({ key: "burst|" + key, kind: "burst", P, distance: st.range, hp: st.hp, runs: SIM_RUNS });
-    if (P && !deepCache.has("ranges|" + key)) jobs.push({ key: "ranges|" + key, kind: "ranges", P: { ...P, acc: 1, hsr: 0 }, ranges: deepGrid(calc.maxR), hp: st.hp, runs: DEEP_RUNS });
+    if (P && !deepCache.has("burst|" + key)) jobs.push({ key: "burst|" + key, kind: "burst", P: { ...P, hsr: deepFollow ? P.hsr : 0 }, distance: st.range, hp: st.hp, runs: SIM_RUNS });
+    if (P && !deepCache.has("ranges|" + key)) jobs.push({ key: "ranges|" + key, kind: "ranges", P: { ...P, acc: 1, hsr: deepFollow ? P.hsr : 0 }, ranges: deepGrid(calc.maxR), hp: st.hp, runs: DEEP_RUNS });
     if (!P) { el.innerHTML = `<p class="wc-dim">${esc(tr("wc.sim.none", "No recoil data for this weapon."))}</p>`; return jobs; }
 
     const burst = deepCache.get("burst|" + key), ranges = deepCache.get("ranges|" + key);
     const busy = `<p class="wc-dim">${esc(tr("wc.sim.busy", "simulating…"))}</p>`;
     const fig = (cap, body, extra = "") => `<figure><figcaption>${esc(cap)}</figcaption><div class="wc-chart">${body}</div>${extra}</figure>`;
     const sel = `<label class="wc-field wc-deeppick"><span>${esc(tr("wc.deep.weapon", "Weapon"))}</span><select id="wcDeepW">${calc.ws.map((x) => `<option value="${x.id}" ${x.id === deepId ? "selected" : ""}>${esc(x.name)}</option>`).join("")}</select></label>`;
-    let h = `<div class="wc-deephead">${sel}<p class="wc-note">${esc(tr("wc.deep.note", "Perfect aim at the chest: only the weapon's cone, recoil and damage falloff count here. {m} m, {hp} health.", { m: nf(st.range), hp: nf(st.hp) }))}</p></div><div class="wc-deepgrid">`;
+    const DORF_WORKBOOK = "https://drive.google.com/drive/folders/1ZCGUPWa530d2T0KvJrBpdesUGlmvYwB2";   // folder: the single-file link is dead
+    const DORF_REDDIT = "https://www.reddit.com/user/EmperorDorf/";
+    const deepNote = deepFollow
+      ? tr("wc.deep.noteFollow", "Perfect aim: {hsr}% of shots at the head, the rest at the chest: only the weapon's cone, recoil and damage falloff count here. {m} m, {hp} health.", { hsr: nf(st.hsr), m: nf(st.range), hp: nf(st.hp) })
+      : tr("wc.deep.note", "Perfect aim at the chest: only the weapon's cone, recoil and damage falloff count here. {m} m, {hp} health.", { m: nf(st.range), hp: nf(st.hp) });
+    let h = `<div class="wc-deephead">${sel}<p class="wc-note">${esc(deepNote)}</p><label class="wc-check"><input type="checkbox" id="wcDeepFollow" ${deepFollow ? "checked" : ""} title="${esc(tr("wc.deep.followTip", "Use your headshot-rate slider in the tables below, instead of aiming everything at the chest."))}" /> <span>${esc(tr("wc.deep.follow", "Follow my headshot rate"))}</span></label><p class="wc-note">${esc(tr("wc.deep.source", "Source:"))} <a href="${DORF_WORKBOOK}" target="_blank" rel="noopener noreferrer">${esc(tr("wc.deep.workbook", "Weapon Surgeon workbook"))}</a> · <a href="${DORF_REDDIT}" target="_blank" rel="noopener noreferrer">${esc(tr("wc.deep.reddit", "u/EmperorDorf on Reddit"))}</a></p></div><div class="wc-deepgrid">`;
 
     // 1) hit chance by shot in a long burst, shots that never hit cut off
     const sw = (c, t) => `<span><span class="sw" style="background:${c}"></span>${esc(t)}</span>`;
@@ -783,14 +784,19 @@ async function boot() {
     // 2) over distance
     const ttkPts = (ranges || []).filter((r) => r.best).map((r) => ({ x: r.range, y: r.best.median }));
     const burstPts = (ranges || []).filter((r) => r.best).map((r) => ({ x: r.range, y: r.best.burst }));
-    const stkPts = deepGrid(calc.maxR).map((r) => ({ x: r, y: minShots(w.p, { hp: st.hp, range: r }) })).filter((p) => p.y != null);
+    const stkPts = deepGrid(calc.maxR).map((r) => {
+      if (!deepFollow) return { x: r, y: minShots(w.p, { hp: st.hp, range: r }) };
+      const hd = hitDamage(w.p, r), d = (1 - st.hsr / 100) * hd.body + (st.hsr / 100) * hd.head;
+      return { x: r, y: d > 0 ? Math.ceil(st.hp / (d * w.p.pellets)) : null };
+    }).filter((p) => p.y != null);
     const kpmPts = stkPts.map((p) => ({ x: p.x, y: w.p.mag / p.y }));
-    const bands = [{ upto: (r) => deepBands(r).green, fill: "var(--wc-band-g)" }, { upto: (r) => deepBands(r).yellow, fill: "var(--wc-band-y)" }, { upto: () => Math.max(...ttkPts.map((p) => p.y), 1) * 1.1, fill: "var(--wc-band-r)" }];
+    // the bands are EmperorDorf's chest-aimed reference times: they only mean anything next to the chest table
+    const bands = deepFollow ? null : [{ upto: (r) => deepBands(r).green, fill: "var(--wc-band-g)" }, { upto: (r) => deepBands(r).yellow, fill: "var(--wc-band-y)" }, { upto: () => Math.max(...ttkPts.map((p) => p.y), 1) * 1.1, fill: "var(--wc-band-r)" }];
     h += fig(tr("wc.deep.ttk", "Time to kill"), ranges && ttkPts.length ? deepLine(ttkPts, { xMax: calc.maxR, bands, aria: tr("wc.deep.ttk", "Time to kill") }) : busy,
-      `<div class="wc-legend">${sw("var(--wc-band-g)", tr("wc.deep.bandG", "fastest 15%"))}${sw("var(--wc-band-y)", tr("wc.deep.bandY", "average"))}${sw("var(--wc-band-r)", tr("wc.deep.bandR", "slower"))}</div>`);
+      deepFollow ? "" : `<div class="wc-legend">${sw("var(--wc-band-g)", tr("wc.deep.bandG", "fastest 15%"))}${sw("var(--wc-band-y)", tr("wc.deep.bandY", "average"))}${sw("var(--wc-band-r)", tr("wc.deep.bandR", "slower"))}</div>`);
     h += fig(tr("wc.deep.bestBurst", "Best burst length"), ranges && burstPts.length ? deepLine(burstPts, { xMax: calc.maxR, ymax: Math.max(4, ...burstPts.map((p) => p.y)), step: true, aria: tr("wc.deep.bestBurst", "Best burst length") }) : busy);
     h += fig(tr("wc.deep.kpm", "Kills per magazine"), deepLine(kpmPts, { xMax: calc.maxR, yfmt: (v) => nf(v, 1), aria: tr("wc.deep.kpm", "Kills per magazine") }));
-    h += `</div><p class="wc-dim">${esc(tr("wc.deep.bands2", "Bands: EmperorDorf's 40 reference weapons at the same range."))}</p>`;
+    h += `</div><p class="wc-dim">${esc(deepFollow ? tr("wc.deep.bandsFollow", "Reference bands hidden while following your headshot rate: EmperorDorf's bands are chest-aimed.") : tr("wc.deep.bands2", "Bands: EmperorDorf's 40 reference weapons at the same range."))}</p>`;
 
     // 3) Advanced Timings: one row per firing style the simulator tries, the pulldown as first shot + every next one
     const T = deepTimings(P, deepInputs);
@@ -798,29 +804,22 @@ async function boot() {
     const rec = T.recoil.filter((r) => styles.has(r.n)), cof = new Map(T.cof.map((r) => [r.n, r]));
     const numIn = (id, label, v, min, max, step) => `<label class="wc-field"><span>${esc(label)}</span><input id="${id}" type="number" value="${v}" min="${min}" max="${max}" step="${step}"></label>`;
     const th = (t) => `<th>${esc(t)}</th>`;
-    const resPreset = resPresetFor(deepInputs.resY);
-    const resField = `<label class="wc-field"><span>${esc(tr("wc.deep.resY", "Screen height (px)"))}</span><span class="wc-resrow"><input id="wcDeepResY" type="number" value="${deepInputs.resY}" min="720" max="4320" step="1"><select id="wcDeepResYPreset" aria-label="${esc(tr("wc.deep.resPreset", "Screen height preset"))}"><option value="1080"${resPreset === "1080" ? " selected" : ""}>1080p</option><option value="1440"${resPreset === "1440" ? " selected" : ""}>1440p</option><option value="2160"${resPreset === "2160" ? " selected" : ""}>2160p (4K)</option><option value="custom"${resPreset === "custom" ? " selected" : ""}>${esc(tr("wc.deep.resCustom", "Custom"))}</option></select></span></label>`;
-    h += `<details class="wc-fold wc-deep-timings" id="wcDeepTimings"${deepTimingsOpen ? " open" : ""}><summary>${esc(tr("wc.deep.timings", "Advanced timings and recoil control"))}</summary><p class="wc-note">${esc(tr("wc.deep.timingsNote", "Perfect bursting: how long to hold the trigger, how long to let go, and how far to pull down. His formulas, our numbers."))}</p>`
-      + `<div class="wc-deepin">${numIn("wcDeepFps", tr("wc.deep.fps", "Frame rate (1% lows)"), deepInputs.fps, 30, 500, 1)}${resField}${numIn("wcDeepFov", tr("wc.deep.fov", "Field of view"), deepInputs.fov, 40, 120, 1)}${numIn("wcDeepZoom", tr("wc.deep.zoom", "Optical zoom"), deepInputs.zoom, 1, 4, 0.05)}</div>`
+    h += `<h3>${esc(tr("wc.deep.timings", "Advanced timings and recoil control"))}</h3><p class="wc-note">${esc(tr("wc.deep.timingsNote", "Perfect bursting: how long to hold the trigger, how long to let go, and how far to pull down. His formulas, our numbers."))}</p>`
+      + `<div class="wc-deepin">${numIn("wcDeepFps", tr("wc.deep.fps", "Frame rate (1% lows)"), deepInputs.fps, 30, 500, 1)}${numIn("wcDeepResY", tr("wc.deep.resY", "Screen height (px)"), deepInputs.resY, 720, 4320, 1)}${numIn("wcDeepFov", tr("wc.deep.fov", "Field of view"), deepInputs.fov, 40, 120, 1)}${numIn("wcDeepZoom", tr("wc.deep.zoom", "Optical zoom"), deepInputs.zoom, 1, 4, 0.05)}</div>`
       + `<div class="wc-deepgrid wc-deepgrid2"><figure><figcaption>${esc(tr("wc.deep.msCap", "Times in ms"))}</figcaption><div class="ranks-table-wrap wc-table-wrap"><table class="ranks-table wc-deep-t"><thead><tr>${th(tr("wc.sim.style", "Firing style"))}${th(tr("wc.deep.down", "Hold"))}${th(tr("wc.deep.relRecoil", "Let go: recoil"))}${th(tr("wc.deep.relCof", "Let go: cone"))}</tr></thead><tbody>`
       + rec.map((r) => `<tr><td>${esc(styleLabel(r.n, P.burstN))}</td><td>${nf(r.down)}</td><td>${nf(r.release)}</td><td>${nf(cof.get(r.n).release)}</td></tr>`).join("") + `</tbody></table></div></figure>`
       + `<figure><figcaption>${esc(tr("wc.deep.pull", "Vertical recoil counteraction"))} · ${esc(tr("wc.deep.angle", "Pull angle {deg}°", { deg: nf(T.pull[0].angle, 1) }))}</figcaption><div class="ranks-table-wrap wc-table-wrap"><table class="ranks-table wc-deep-t"><thead><tr>${th(tr("wc.deep.shot", "Shot"))}${th(tr("wc.deep.deg", "Degrees"))}${th(tr("wc.deep.px", "Pixels"))}${th(tr("wc.deep.speed", "Speed"))}</tr></thead><tbody>`
-      + [[tr("wc.deep.first", "First shot"), T.pull[0]], [tr("wc.deep.next", "Each next shot"), T.pull[1]]].filter(([, p]) => p).map(([t, p]) => `<tr><td>${esc(t)}</td><td>${nf(p.deg, 2)}</td><td>${nf(p.px, 1)}</td><td>${nf(p.speed)}</td></tr>`).join("") + `</tbody></table></div></figure></div></details>`;
+      + [[tr("wc.deep.first", "First shot"), T.pull[0]], [tr("wc.deep.next", "Each next shot"), T.pull[1]]].filter(([, p]) => p).map(([t, p]) => `<tr><td>${esc(t)}</td><td>${nf(p.deg, 2)}</td><td>${nf(p.px, 1)}</td><td>${nf(p.speed)}</td></tr>`).join("") + `</tbody></table></div></figure></div>`;
     el.innerHTML = `<div class="wc-deep">${h}</div>`;
-    const dt = el.querySelector("#wcDeepTimings");
-    if (dt) dt.addEventListener("toggle", () => { deepTimingsOpen = dt.open; });
     return jobs;
   }
   $("wcDeepBox").addEventListener("toggle", () => invalidate("sim"));
   $("wcDeep").addEventListener("change", (e) => {
     if (e.target.id === "wcDeepW") { deepId = Number(e.target.value); invalidate("sim"); return; }
-    if (e.target.id === "wcDeepResYPreset") {
-      if (e.target.value === "custom") { $("wcDeepResY").focus(); return; }
-      deepInputs.resY = Number(e.target.value); saveDeep(); invalidate("sim"); return;
-    }
+    if (e.target.id === "wcDeepFollow") { deepFollow = e.target.checked; try { localStorage.setItem(FOLLOW_KEY, deepFollow ? "1" : "0"); } catch {} invalidate("sim"); return; }
     const map = { wcDeepFps: "fps", wcDeepResY: "resY", wcDeepFov: "fov", wcDeepZoom: "zoom" };
     const k = map[e.target.id];
-    if (k) { const v = Number(e.target.value); if (Number.isFinite(v) && v > 0) { deepInputs[k] = v; saveDeep(); invalidate("sim"); } }
+    if (k) { const v = Number(e.target.value); if (Number.isFinite(v) && v > 0) { deepInputs[k] = v; invalidate("sim"); } }
   });
   let lastSprays = null;
 
