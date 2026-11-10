@@ -24,7 +24,7 @@ import { t as tr } from "./i18n.mjs";
 import { AIMGAP_HINT, ZERG_HINT, ZERG_MISSING, zergCellTip, zergEstHtml, AIMGAP_MISSING, fmtSigned, aimGapCellTip, diffValueHtml } from "./trait-tips.mjs?v=20261024-crowd1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261023-short1";
 import { gScores } from "./g-score.mjs?v=20261108-g2f1";
-import { cleanIvIStrong } from "./clean-ivi.mjs?v=20261110-cln2";
+import { cleanIvIStrong, combinedIvI } from "./clean-ivi.mjs?v=20261110-cln3";
 import { THIN_MARK, THIN_NOTE_HEAD, playerMetrics, shownValue, THIN_METRICS, thinPlayerLine, isLegacySample, LEGACY_SAMPLE_TIP, LEGACY_SAMPLE_MARK } from "./player-metrics.mjs?v=20261027-z79";
 import { compareByCharName, columnRef, honuProfileUrl, pctFromRef, pctTitle, fmtPctFromRef } from "./analyze-run.mjs?v=20261101-bg1";
 import { dotSlot } from "./online-status.mjs?v=20261018-onl1";
@@ -473,6 +473,11 @@ export function createStatsTable($) {
     ];
     // Older debug columns: appended only when "show older debug stats" (footer) is ticked.
     const adjDebugCols = [
+      // 🧘🧼 Combined (owner 2026-11-10): 🧘 Pure iVi × (1 − 🌈 G), debug-only, just for
+      // testing — both discounts at once. Same Pure value as the 🧘 Pure iVi column
+      // (plain adjs + uncentered 🪳 charge), never the displayed (🪳-evened) ⚔️ iVi,
+      // or 🪳 gets charged twice. Eyfia: Pure 921, Clean 1372, combined 838.
+      { id: "combinedivi", label: "🧘🧼 Pure ×(1−G)", hint: "🧘 Pure iVi × (1 − 🌈 G) (debug-only, just for testing): both discounts at once — the 🪳 crowd charge and the G cheese charge. 🪳 and G are near-independent (r ≈ −0.06), so each sin is docked once. Eyfia: Pure 921, Clean 1372, combined 838.", fn: (r) => { if ($.IS_PS) return NaN; const a = shownValue(r, "adjs"); if (!isFiniteNum(a)) return NaN; const z = traitP && r.p ? zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display)), rvpOf(r.p.display), crpOf(r.p.display)) : null; const v = z ? pureIvI(a, z.score) : null; const c = combinedIvI(v, gBySlug && r.p ? gBySlug.get(slugKey(r.p.display)) : undefined); return c == null ? NaN : c; }, digits: 0 },
       // 🧼 Clean iVi (owner 2026-11-10): ⚔️ iVi discounted by 🌈 G, debug-only — the strong
       // strength, kept by the owner's pick (the medium adjs − 10 × G column was removed the
       // same day). High iVi and high G can't both survive. Same formula as the Rankings

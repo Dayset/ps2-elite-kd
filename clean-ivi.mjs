@@ -18,3 +18,17 @@ export function cleanIvIStrong(adjs, g) {
   if (!fin(adjs) || !fin(g)) return null;
   return Math.max(0, adjs * (1 - g / 100));
 }
+
+// 🧘🧼 Combined (owner 2026-11-10): 🧘 Pure iVi × (1 − 🌈 G), debug-only, just for
+// testing. Both discounts at once — the 🪳 crowd charge AND the G cheese charge.
+// 🪳 and G are near-independent (Pearson −0.06 on the 2026-11-10 snapshot; only
+// 18 players are both 🪳 ≥ 70 and G ≥ 50), so stacking them docks each sin
+// once, not the same sin twice. The base MUST be the Pure value (plain adjs,
+// uncentered 🪳 charge) — never the displayed (🪳-evened) ⚔️ iVi, or 🪳 gets
+// charged twice. Eyfia is the case it catches: Pure 921, Clean 1372,
+// combined 838. PC only (Pure is null on PS) and null when either input is
+// missing. Floored at 0 like the ⚔️ iVi display.
+/** Keep (1 − G) of the 🧘 Pure iVi. */
+export function combinedIvI(pure, g) {
+  return cleanIvIStrong(pure, g);
+}
