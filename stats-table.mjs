@@ -24,6 +24,7 @@ import { t as tr } from "./i18n.mjs";
 import { AIMGAP_HINT, ZERG_HINT, ZERG_MISSING, zergCellTip, zergEstHtml, AIMGAP_MISSING, fmtSigned, aimGapCellTip, diffValueHtml } from "./trait-tips.mjs?v=20261024-crowd1";
 import { INF_HINT, INF_PENDING_TIP, infTip } from "./infantry.mjs?v=20261023-short1";
 import { gScores } from "./g-score.mjs?v=20261108-g2f1";
+import { cleanIvIMedium, cleanIvIStrong } from "./clean-ivi.mjs?v=20261110-cln1";
 import { THIN_MARK, THIN_NOTE_HEAD, playerMetrics, shownValue, THIN_METRICS, thinPlayerLine, isLegacySample, LEGACY_SAMPLE_TIP, LEGACY_SAMPLE_MARK } from "./player-metrics.mjs?v=20261027-z79";
 import { compareByCharName, columnRef, honuProfileUrl, pctFromRef, pctTitle, fmtPctFromRef } from "./analyze-run.mjs?v=20261101-bg1";
 import { dotSlot } from "./online-status.mjs?v=20261018-onl1";
@@ -472,6 +473,11 @@ export function createStatsTable($) {
     ];
     // Older debug columns: appended only when "show older debug stats" (footer) is ticked.
     const adjDebugCols = [
+      // 🧼 Clean iVi (owner 2026-11-10): ⚔️ iVi discounted by 🌈 G, debug-only — two strengths side by
+      // side so the owner can look at both and keep one. High iVi and high G can't both survive.
+      // Same formulas as the Rankings debug columns, off the displayed (🪳-evened) ⚔️ iVi.
+      { id: "cleanivi", label: "🧼 iVi −10G", hint: "⚔️ iVi minus 10 points per 🌈 G point (debug-only): 2000 / 50% → 1500, 2005 / 51% → 1495.", fn: (r) => cleanIvIMedium(zAdjs(r), gBySlug && r.p ? gBySlug.get(slugKey(r.p.display)) : undefined), digits: 0 },
+      { id: "cleanivis", label: "🧼 iVi ×(1−G)", hint: "⚔️ iVi × (1 − 🌈 G) (debug-only): 2000 / 50% → 1000, 2005 / 51% → 982. G is a rank share, not a cheating probability — a chosen rate, not a measurement.", fn: (r) => cleanIvIStrong(zAdjs(r), gBySlug && r.p ? gBySlug.get(slugKey(r.p.display)) : undefined), digits: 0 },
       { id: "mech", label: "⚙️ Mech%", hint: "Estimated share of your fights that are vehicle or mech play, projected from 🛡️ Resist rather than measured from shooting.", fn: (r) => r.mech, digits: 1 },
       { id: "adj", label: "🎯🎈 ivi", hint: "Opposition-weighted IvI before the kill-speed adjustment: public IvI adjusted by 🛡️ Resist so soft-farm padding is tempered. The 🎈 is a reminder that this score is still inflated (slow, safe play is not penalised here — see ⚔️ iVi).", fn: (r) => r.adj, digits: 0 },
       { id: "ekpm", label: "eKPM", hint: "Average enemy weapon KPM faced (how hard the opposition shoots).", fn: (r) => r.ekpm, digits: 2 },
