@@ -466,7 +466,7 @@ export function createStatsTable($) {
       // both discounts at once. Same Pure value as the 🧘 Pure iVi column (plain adjs +
       // uncentered 🪳 charge), never the displayed (🪳-evened) ⚔️ iVi, or 🪳 gets charged
       // twice. Eyfia: Pure 921 × (1 − 9.1%) → 838. Took 🧘 Pure iVi's visible slot.
-      { id: "combinedivi", label: tr("col.combinedivi", "🧼 Pure ×(1−G)"), hint: tr("tip.combinedivi", "Your true ability as a solo player, cleaned of both inflations: 🧘 Pure iVi × (1 − 🌈 G). The 🪳 crowd charge and the G cheese charge, stacked — 🪳 and G are near-independent, so each sin is docked once. G is a rank share, not a cheating probability — a chosen rate, not a measurement. Eyfia: Pure 921 × (1 − 9.1%) → 838."), digits: 0,
+      { id: "combinedivi", label: tr("col.combinedivi", "🧼 Pure"), hint: tr("tip.combinedivi", "Your true ability as a solo player, cleaned of both inflations: 🧘 Pure iVi × (1 − 🌈 G). The 🪳 crowd charge and the G cheese charge, stacked — 🪳 and G are near-independent, so each sin is docked once. G is a rank share, not a cheating probability — a chosen rate, not a measurement. Eyfia: Pure 921 × (1 − 9.1%) → 838."), digits: 0,
         fn: (r) => { if ($.IS_PS) return NaN; const a = shownValue(r, "adjs"); if (!isFiniteNum(a)) return NaN; const z = traitP && r.p ? zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display)), rvpOf(r.p.display), crpOf(r.p.display)) : null; const v = z ? pureIvI(a, z.score) : null; const c = combinedIvI(v, gBySlug && r.p ? gBySlug.get(slugKey(r.p.display)) : undefined); return c == null ? NaN : c; } },
       // 🌈 G (owner 2026-11-08): one value per player — the share of all cached
       // players beaten on K/D + Brave at once. Most sit at 10–23% (median 17.21%).

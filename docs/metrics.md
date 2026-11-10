@@ -50,7 +50,7 @@ Resistance-weighted K/D. Each death counts for more or less depending on how har
 
 Lower of two percentiles (dist.mjs percentileOf, floored share below, 0–99): 🎈 Inflation and 🤝 Assists per kill. Only players with 🤝 Assists (≥ 100 kills in recent Honu sessions) and an Inflation value; others "—". The lower of the two (not an average) keeps solo farmers of soft fights (high Inflation, few assists) and team players in hard fights (many assists, no inflation) low: only both together read as riding a zerg. Lower is better (like 🤝: sorts high→low first, reversed grey tag, in points). Computed in the browser from the ranks.json / ranks-lite.json pools (trait-scores.mjs; ranks-lite carries `inflation` for this). Seed case: Bhorn 95.
 
-### 🧼 Pure ×(1−G)
+### 🧼 Pure
 
 Your true ability as a solo player, cleaned of both inflations: 🧘 Pure iVi × (1 − 🌈 G).
 

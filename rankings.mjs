@@ -86,7 +86,7 @@ export function initRankings(host) {
     // both discounts at once. 🪳 and G are near-independent (r ≈ −0.06), so each sin is
     // docked once. The G half is a chosen rate, not a measurement. Took 🧘 Pure iVi's
     // visible slot; Pure moved to debug. PC only; missing 🪳 or G → "—".
-    { id: "combinedivi", label: tr("col.combinedivi", "🧼 Pure ×(1−G)"), digits: 0, tip: tr("tip.combinedivi", "Your true ability as a solo player, cleaned of both inflations: 🧘 Pure iVi × (1 − 🌈 G). The 🪳 crowd charge and the G cheese charge, stacked — 🪳 and G are near-independent, so each sin is docked once. G is a rank share, not a cheating probability — a chosen rate, not a measurement. Eyfia: Pure 921 × (1 − 9.1%) → 838.") },
+    { id: "combinedivi", label: tr("col.combinedivi", "🧼 Pure"), digits: 0, tip: tr("tip.combinedivi", "Your true ability as a solo player, cleaned of both inflations: 🧘 Pure iVi × (1 − 🌈 G). The 🪳 crowd charge and the G cheese charge, stacked — 🪳 and G are near-independent, so each sin is docked once. G is a rank share, not a cheating probability — a chosen rate, not a measurement. Eyfia: Pure 921 × (1 − 9.1%) → 838.") },
     // 🌈 G (owner 2026-11-08): two-factor product score — one value per player, the share of
     // all cached players beaten on K/D + Brave at once. Most sit at 10–23% (median 17.21%).
     { id: "g", label: tr("col.g", "🌈 G"), digits: 2, g: true, tip: tr("tip.g", "Share of all cached players you beat on K/D and Brave at once: (1 − K/D rank) × (1 − Brave rank). Most players sit at 10–23% (median 17.21%); the cheesiest near 99.7%.") },
