@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Weapon handling, advanced — PlanetSide 2</title>
+    <style>
+      :root {
+        --bg: #f4f4f2;
+        --surface: #ffffff;
+        --surface-2: #ececea;
+        --ink: #17191c;
+        --ink-2: #454a52;
+        --ink-3: #6d747e;
+        --line: #d6d8d3;
+        --accent: #b34a12;
+        --accent-soft: #f6e3d8;
+        --good: #1e6b3a;
+        --warn: #8a5a00;
+        --bad: #a02318;
+        --code-bg: #ececea;
+        --shadow: 0 1px 2px rgba(20, 24, 30, .08);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #101215;
+          --surface: #181b1f;
+          --surface-2: #20242a;
+          --ink: #e8eaec;
+          --ink-2: #b6bcc4;
+          --ink-3: #8b929d;
+          --line: #2e333b;
+          --accent: #e07b3f;
+          --accent-soft: #3a2718;
+          --good: #5cb87e;
+          --warn: #d9a84e;
+          --bad: #e06a5c;
+          --code-bg: #20242a;
+          --shadow: 0 1px 2px rgba(0, 0, 0, .35);
+        }
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Libre Franklin", system-ui, -apple-system, sans-serif;
+        font-size: 16px;
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+      }
+      .mono, code, .num { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+      a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+      a:hover { text-decoration-thickness: 2px; }
+
+      .wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px 80px; }
+
+      /* ---------- lead ---------- */
+      .lead { padding: 44px 0 8px; }
+      .lead h1 {
+        font-size: clamp(30px, 5.4vw, 52px);
+        line-height: 1.02;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        margin: 0 0 14px;
+        max-width: 15ch;
+      }
+      .lead p.dek { font-size: clamp(16px, 2.2vw, 19px); color: var(--ink-2); max-width: 68ch; margin: 0 0 18px; }
+      .lead .meta {
+        display: flex; flex-wrap: wrap; gap: 8px 22px;
+        font-family: "IBM Plex Mono", monospace; font-size: 12.5px; color: var(--ink-3);
+        border-top: 2px solid var(--ink); border-bottom: 1px solid var(--line);
+        padding: 10px 0;
+      }
+      .lead .meta b { color: var(--ink); font-weight: 600; }
+
+      /* ---------- layout ---------- */
+      .layout { display: grid; grid-template-columns: 218px minmax(0, 1fr); gap: 44px; margin-top: 30px; }
+      nav.toc { position: sticky; top: 18px; align-self: start; font-size: 13.5px; }
+      nav.toc .toc-h { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 10px; }
+      nav.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: toc; }
+      nav.toc li { margin: 0 0 2px; }
+      nav.toc a {
+        display: flex; gap: 9px; align-items: baseline; color: var(--ink-2); text-decoration: none;
+        padding: 5px 8px; border-radius: 0; line-height: 1.3;
+      }
+      nav.toc a::before { counter-increment: toc; content: counter(toc, decimal-leading-zero); font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--ink-3); }
+      nav.toc a:hover, nav.toc a.active { background: var(--surface-2); color: var(--ink); }
+      nav.toc a.active::before { color: var(--accent); }
+
+      main { min-width: 0; }
+      section { margin: 0 0 54px; scroll-margin-top: 18px; }
+      section > h2 {
+        font-size: clamp(23px, 3.4vw, 30px); font-weight: 800; letter-spacing: -0.015em;
+        margin: 0 0 6px; display: flex; gap: 12px; align-items: baseline;
+      }
+      section > h2 .no { font-family: "IBM Plex Mono", monospace; font-size: 14px; font-weight: 600; color: var(--accent); }
+      section > .sub { color: var(--ink-2); margin: 0 0 18px; max-width: 72ch; }
+      h3 { font-size: 17.5px; font-weight: 800; margin: 26px 0 8px; letter-spacing: -0.01em; }
+      p { margin: 0 0 12px; max-width: 76ch; }
+      ul, ol { margin: 0 0 12px; padding-left: 22px; max-width: 76ch; }
+      li { margin: 0 0 5px; }
+      li::marker { color: var(--ink-3); }
+      strong { font-weight: 700; }
+      code { background: var(--code-bg); padding: 1px 5px; border-radius: 0; font-size: .88em; }
+
+      .rule {
+        border: 1px solid var(--ink); border-left: 6px solid var(--accent);
+        background: var(--surface); padding: 14px 18px; margin: 18px 0; box-shadow: var(--shadow);
+      }
+      .rule .tag { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 5px; }
+      .rule p { margin: 0; font-size: 16.5px; }
+      .rule p + p { margin-top: 8px; font-size: 15px; color: var(--ink-2); }
+
+      .note { border: 1px solid var(--line); background: var(--surface); padding: 12px 16px; margin: 16px 0; font-size: 14.5px; }
+      .note .tag { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; display: block; margin-bottom: 4px; }
+      .note p { margin: 0; color: var(--ink-2); }
+      .note p strong { color: var(--ink); }
+      .note.dated .tag { color: var(--warn); }
+      .note.dead { border-color: var(--bad); }
+      .note.dead .tag { color: var(--bad); }
+      .note.verified .tag { color: var(--good); }
+
+      /* ---------- tables ---------- */
+      .tblwrap { overflow-x: auto; margin: 14px 0 18px; border: 1px solid var(--line); background: var(--surface); }
+      table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+      th, td { padding: 8px 12px; text-align: left; vertical-align: top; }
+      thead th { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); border-bottom: 2px solid var(--ink); white-space: nowrap; }
+      tbody tr + tr td { border-top: 1px solid var(--line); }
+      td.n, th.n { text-align: right; font-family: "IBM Plex Mono", monospace; white-space: nowrap; }
+      td:first-child { font-weight: 600; }
+      table.plain td:first-child { font-weight: 400; }
+
+      .tiers-note { color: var(--ink-2); font-size: 14.5px; margin-bottom: 10px; }
+      .tiers { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 18px; }
+      .tier {
+        display: inline-flex; align-items: baseline; gap: 7px;
+        border: 1px solid var(--line); background: var(--surface);
+        padding: 6px 11px; border-radius: 0;
+      }
+      .tier b { font-family: "IBM Plex Mono", monospace; font-size: 16px; font-weight: 600; }
+      .tier i { font-style: normal; font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--accent); }
+
+      .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 34px; }
+      .cols > div { min-width: 0; }
+
+      /* ---------- calculators ---------- */
+      .calc {
+        border: 1px solid var(--ink); background: var(--surface); margin: 20px 0; box-shadow: var(--shadow);
+      }
+      .calc-head { border-bottom: 1px solid var(--line); padding: 12px 18px 10px; display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; justify-content: space-between; }
+      .calc-head h3 { margin: 0; font-size: 16px; }
+      .calc-head .hint { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: var(--ink-3); }
+      .calc-body { padding: 16px 18px 6px; }
+      .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
+      .field label { display: block; font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 5px; }
+      .field input, .field select {
+        width: 100%; font: inherit; font-family: "IBM Plex Mono", monospace; font-size: 17px;
+        padding: 8px 10px; border: 1px solid var(--line); border-radius: 0;
+        background: var(--bg); color: var(--ink);
+      }
+      .field select { font-size: 14.5px; }
+      .field input:focus, .field select:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+      .presets { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+      .presets button {
+        font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+        border: 1px solid var(--line); background: var(--surface-2); color: var(--ink);
+        padding: 6px 12px; border-radius: 0;
+      }
+      .presets button:hover { border-color: var(--ink); }
+      .presets button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+      .results { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1px; background: var(--line); border-top: 1px solid var(--line); margin-top: 16px; }
+      .result { background: var(--surface); padding: 12px 14px; }
+      .result .k { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); display: block; margin-bottom: 3px; }
+      .result .v { font-family: "IBM Plex Mono", monospace; font-size: 24px; font-weight: 600; line-height: 1.1; }
+      .result .v small { font-size: 13px; color: var(--ink-3); font-weight: 400; }
+      .calc .foot { padding: 10px 18px 14px; font-size: 13.5px; color: var(--ink-2); }
+      .calc .foot p { margin: 0; }
+
+      /* ---------- class blocks ---------- */
+      .classblock { border-top: 2px solid var(--ink); padding-top: 14px; margin-top: 26px; }
+      .classblock:first-of-type { margin-top: 8px; }
+      .classblock h3 { margin-top: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; }
+      .classblock h3 .role { font-family: "IBM Plex Mono", monospace; font-size: 12px; font-weight: 500; color: var(--accent); letter-spacing: .06em; text-transform: uppercase; }
+
+      .trick { border-top: 1px solid var(--line); padding: 12px 0 4px; }
+      .trick h4 { margin: 0 0 4px; font-size: 16px; font-weight: 800; }
+      .trick p { margin-bottom: 8px; }
+
+      footer { border-top: 2px solid var(--ink); padding-top: 18px; margin-top: 10px; font-size: 14px; color: var(--ink-2); }
+      footer h2 { font-size: 18px; color: var(--ink); margin: 0 0 10px; }
+      footer ul { list-style: none; padding: 0; margin: 0 0 14px; }
+      footer li { margin: 0 0 6px; }
+
+      @media (max-width: 640px) {
+        table { font-size: 13.5px; }
+        th, td { padding: 6px 8px; }
+        thead th { white-space: normal; }
+        td.n, th.n { white-space: normal; }
+      }
+      @media (max-width: 900px) {
+        .layout { grid-template-columns: 1fr; gap: 0; }
+        nav.toc { position: static; margin-bottom: 26px; }
+        nav.toc ol { display: flex; flex-wrap: wrap; gap: 4px; }
+        nav.toc li { margin: 0; }
+        nav.toc a { border: 1px solid var(--line); background: var(--surface); }
+        .cols { grid-template-columns: 1fr; }
+      }
+</style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="lead">
+        <h1>Weapon handling, advanced: where the numbers bite</h1>
+        <p class="dek">A reading guide to the cone-of-fire numbers for every weapon with an aim-down-sights mode (386 weapons). It says which stance and firing mode pays for each class, and shows what attachments do to the numbers. Built from Census values, the same ones the weapon comparison page uses.</p>
+        <div class="meta">
+          <span><b>Data</b> Census cone of fire, bloom, ADS time (read 10 Nov 2026)</span>
+          <span><b>Model</b> body half-width 0.3 m; edge = 0.3 ÷ tan(cone ÷ 2)</span>
+          <span><b>Scope</b> stock weapons unless an attachment is named</span>
+        </div>
+      </div>
+
+      <div class="layout">
+        <nav class="toc" aria-label="Contents">
+          <p class="toc-h">Contents</p>
+          <ol>
+            <li><a href="#read">How to read the numbers</a></li>
+            <li><a href="#examples">Striking examples</a></li>
+            <li><a href="#attachments">Attachments that move the numbers</a></li>
+            <li><a href="#classes">Per-class rules</a></li>
+            <li><a href="#caveats">What is not modelled</a></li>
+          </ol>
+        </nav>
+
+        <main>
+          <section id="read">
+            <h2><span class="no">01</span> How to read the numbers</h2>
+            <p class="sub">Three questions decide the stance for any weapon.</p>
+            <ul>
+              <li><strong>Does moving cost accuracy on ADS?</strong> Compare the ADS cone standing still and moving. Same number means strafing while aiming is free.</li>
+              <li><strong>Does hip-fire hold at range?</strong> The body edge is the distance where the cone reaches the 0.3 m body half-width. Inside it, a shot lands on the body; beyond it, a shot can miss.</li>
+              <li><strong>What does ADS cost?</strong> Census time to iron sights: 150 ms on 342 weapons, 200 ms on 15, 300 ms on 29.</li>
+            </ul>
+            <p class="note">Edges are geometry from the simulator's constants, not in-game tests. Use them to compare weapons, not as exact kill ranges.</p>
+          </section>
+
+          <section id="examples">
+            <h2><span class="no">02</span> Striking examples</h2>
+            <p class="sub">Stock cone values, body edge in metres (standing / running).</p>
+            <div class="tblwrap"><table>
+              <thead><tr><th>Weapon</th><th>Hip standing</th><th>Hip running</th><th>ADS standing</th><th>ADS running</th><th>What it means</th></tr></thead>
+              <tbody>
+                <tr><td>Tempest, Shuriken, Skorpios, MKV (SMG)</td><td>34 m</td><td>23 m</td><td>115 m</td><td>115 m</td><td>Hip-standing is body-accurate to about 34 m, but ADS strafes for free to about 115 m. The hip window only helps in the first 150 ms.</td></tr>
+                <tr><td>NSX Kappa (SMG; Tengu variants have the same ADS cone)</td><td>20 m</td><td>17 m</td><td>—</td><td>—</td><td>Among the 6 SMGs where ADS moving is worse than standing (0.15° → 0.32°). Strafe on hip only at very close range.</td></tr>
+                <tr><td>TRAC-5 (carbine)</td><td>23 m</td><td>17 m</td><td>—</td><td>—</td><td>Carbines are the strongest hip class after SMGs; only 4 of 42 keep the same ADS cone while moving.</td></tr>
+                <tr><td>Gauss Rifle Burst (AR)</td><td>14 m</td><td>12 m</td><td>—</td><td>—</td><td>Assault rifles never reach 30 m on hip; shoot from a standstill.</td></tr>
+                <tr><td>GD Guardian (scout)</td><td>10 m</td><td>9 m</td><td>0° standing, 0.15° moving</td><td>—</td><td>Scouts are the most accurate standing on ADS (0°). Stand still for the aimed shot.</td></tr>
+                <tr><td>NS-1999 Party Pistol</td><td>—</td><td>—</td><td>moving 1.5°</td><td>—</td><td>Data oddity: its moving ADS cone is worse than its hip moving cone (1°). Verify against Census before trusting.</td></tr>
+              </tbody>
+            </table></div>
+          </section>
+
+          <section id="attachments">
+            <h2><span class="no">03</span> Attachments that move the numbers</h2>
+            <p class="sub">Hip cone multipliers from the simulator's attachment table (wiki-typed; Census has none). Edges for an SMG and a carbine.</p>
+            <div class="tblwrap"><table>
+              <thead><tr><th>Weapon</th><th>Attachment</th><th>Hip standing</th><th>Hip running</th><th>Effect</th></tr></thead>
+              <tbody>
+                <tr><td>SMG (stock)</td><td>none</td><td>34 m</td><td>23 m</td><td>baseline</td></tr>
+                <tr><td>SMG</td><td>Laser Sight (cone ×0.67)</td><td>51 m</td><td>34 m</td><td>Hip running now reaches the stock standing edge. Best hip upgrade in the class.</td></tr>
+                <tr><td>SMG</td><td>Heavy Magazine (cone ×1.2)</td><td>29 m</td><td>19 m</td><td>Costs 5 m standing and 4 m running. The extra rounds are not modelled.</td></tr>
+                <tr><td>SMG</td><td>Compensator (cone ×1.15)</td><td>30 m</td><td>20 m</td><td>Costs 4 m standing and 3 m running on hip; its recoil gain is not on the hip cone.</td></tr>
+                <tr><td>Carbine (TRAC-5)</td><td>Laser Sight</td><td>34 m</td><td>26 m</td><td>Standing hip is body-accurate to 34 m; a carbine with Laser Sight can hip-fire at the SMG's stock range.</td></tr>
+                <tr><td>Assault rifle (Gauss Rifle Burst)</td><td>Laser Sight</td><td>21 m</td><td>17 m</td><td>Still under 30 m on hip, even with Laser Sight.</td></tr>
+                <tr><td>Scout (GD Guardian)</td><td>Laser Sight</td><td>15 m</td><td>13 m</td><td>Hip stays a close-range option.</td></tr>
+              </tbody>
+            </table></div>
+            <p class="note">Hybrid Laser also cuts the hip cone by a third (×0.67) and the hip spread (×0.67). Its numbers match Laser Sight on the cone here.</p>
+          </section>
+
+          <section id="classes">
+            <h2><span class="no">04</span> Per-class rules</h2>
+            <ul>
+              <li><strong>SMG (47):</strong> strafe and fire on ADS, 41 of 47 are free to move. Hip is the worst way to move (1.5° moving vs 1° standing).</li>
+              <li><strong>Pistol (74):</strong> ADS while strafing for 59 of 74. Flare guns, Deep Freeze, CandyCannon and the NS-44L Blackhand family are the exceptions.</li>
+              <li><strong>Carbine (42):</strong> only 4 of 42 keep the ADS cone while moving. Shoot from a standstill, strafe in short bursts.</li>
+              <li><strong>Assault rifle, LMG, sniper, crossbow, hybrid (149):</strong> no strafe-free ADS; hip never reaches 30 m. Shoot from a standstill.</li>
+              <li><strong>Scout rifle (32):</strong> 3 of 32 strafe free. Stand still for the aimed shot.</li>
+              <li><strong>Heavy weapon (13):</strong> 6 of 13 strafe free; the Lasher X2 and NS-D Helios family are worse when moving.</li>
+              <li><strong>Shotgun (29):</strong> strafe freely. The apparent hip accuracy at range comes from ignoring pellet spread; use damage falloff instead.</li>
+            </ul>
+          </section>
+
+          <section id="caveats">
+            <h2><span class="no">05</span> What is not modelled</h2>
+            <ul>
+              <li>In-game feel, recoil control and bullet travel time.</li>
+              <li>Heavy Magazine extra rounds, Compensator recoil on hip, and attachment effects not listed in the simulator table.</li>
+              <li>Shotgun pellet spread in the body-edge number.</li>
+              <li>Per-weapon sage-page sections: this guide is class-level; per-weapon pages are the next step.</li>
+            </ul>
+          </section>
+        </main>
+      </div>
+    </div>
+  </body>
+</html>
