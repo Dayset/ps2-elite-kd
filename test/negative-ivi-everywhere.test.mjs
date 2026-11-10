@@ -27,7 +27,7 @@ test("negative iVi is shown as-is in stats table, live page, kill feed and duels
   assert.equal(en["tier.below"], "Below the rating scale");
   const cx = read("columns-example.mjs");
   assert.doesNotMatch(cx, /Math\.max\(0, .*adjs\)/, "example page no longer floors iVi at 0");
-  assert.match(read("columns.html"), /columns-example\.mjs\?v=20261108-neg2/);
+  assert.match(read("columns.html"), /columns-example\.mjs\?v=20261110-swp1/);
 });
 
 test("distribution graph still floors at 0 (underflow bin), tier grouping unchanged", () => {

@@ -18,6 +18,7 @@ import { PADDER_PENALTY_REF } from "./padding.mjs?v=20261023-short1";
 import { traitPools, zergScore } from "./trait-scores.mjs?v=20261027-z79";
 import { zergChargedAdjs, ZERG_CHARGE, zergFresh } from "./zerg-charge.mjs?v=20261029-zadj2";
 import { pureIvI } from "./pure-ivi.mjs?v=20261029-purevis1";
+import { combinedIvI } from "./combined-ivi.mjs?v=20261110-cmb1";
 import { loadLuckData, playerLuck, luckCellHtml } from "./luck-col.mjs?v=20261102-luck5";
 import { gScores } from "./g-score.mjs?v=20261108-g2f1";
 
@@ -60,7 +61,7 @@ export function rowZerg(payload, row) {
 export function rowCells(payload, row) {
   if (!payload || !row) return [];
   const pct = (col, v, low = false) => {
-    const pool = col === "pureivi" ? null : ranksPool(payload, col);
+    const pool = col === "combinedivi" ? null : ranksPool(payload, col);
     const p = pool && fin(v) ? percentileOf(pool, v) : null;
     return p == null ? null : low ? 99 - p : p;
   };
@@ -70,6 +71,7 @@ export function rowCells(payload, row) {
   const gObjs = payload.rows.map((r) => { const o = Object.fromEntries(payload.cols.map((c, j) => [c, r[j]])); return { slug: o.slug, rkd: o.rkd, pvs: o.pvs, inf: o.inf }; });
   const gMap = gScores(gObjs);
   const g = gMap.get(gObjs.find((o) => o.slug === row.slug));
+  const combined = combinedIvI(pure, g);
   const consP = pct("cons", row.cons);
   return [
     { id: "adjs", text: fin(row.adjs) ? String(Math.round(row.adjs)) : "—", pct: pct("adjs", row.adjs) },
@@ -81,7 +83,7 @@ export function rowCells(payload, row) {
     { id: "luck", text: "—", pct: null },
     { id: "apk", text: f(row.apk), pct: pct("apk", row.apk) },
     { id: "zerg", text: zerg == null ? "—" : String(Math.round(zerg)), pct: zerg == null ? null : 99 - Math.round(zerg) },
-    { id: "pureivi", text: pure == null ? "—" : String(Math.round(pure)), pct: null },
+    { id: "combinedivi", text: combined == null ? "—" : String(Math.round(combined)), pct: null },
     { id: "g", text: g == null ? "—" : g.toFixed(2) + "%", pct: null }, // a share of the whole population, not better or worse
     { id: "inf", text: fin(row.inf) ? row.inf.toFixed(1) + "%" : "—", pct: null }, // a share, not better or worse
   ];

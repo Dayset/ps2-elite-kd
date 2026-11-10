@@ -50,15 +50,15 @@ Resistance-weighted K/D. Each death counts for more or less depending on how har
 
 Lower of two percentiles (dist.mjs percentileOf, floored share below, 0–99): 🎈 Inflation and 🤝 Assists per kill. Only players with 🤝 Assists (≥ 100 kills in recent Honu sessions) and an Inflation value; others "—". The lower of the two (not an average) keeps solo farmers of soft fights (high Inflation, few assists) and team players in hard fights (many assists, no inflation) low: only both together read as riding a zerg. Lower is better (like 🤝: sorts high→low first, reversed grey tag, in points). Computed in the browser from the ranks.json / ranks-lite.json pools (trait-scores.mjs; ranks-lite carries `inflation` for this). Seed case: Bhorn 95.
 
-### 🧘‍♂️ Pure iVi
+### 🧼 Pure ×(1−G)
 
-Your true ability as a solo player: the plain adjusted iVi (`adjs`, before the 🪳 evening-out) with the crowd-support charge taken off.
+Your true ability as a solo player, cleaned of both inflations: 🧘 Pure iVi × (1 − 🌈 G).
 
-- adjs above 0: `adjs × (1 − 0.00436 × 🪳)`.
-- adjs at or below 0: `adjs − 0.00436 × 🪳 × 610.6` — a fixed drop instead of a percentage, because a percentage of a non-positive score would move it up. 610.6 is the frozen median positive adjusted iVi (2026-10-19, the padder-penalty reference).
-- Rate 0.00436 fitted on 915 duel pairs (723 infantry-only, 2026-10-28): kill_gap = −5.9 + 0.656 × adjs_gap − 0.286 × zerg_gap, so 0.286 ÷ 0.656 ≈ 0.00436 per 🪳 point.
-- Only ever discounts, never boosts; no centering, no freshness gate. PC only; no 🪳 score = "—". Not a replacement for ⚔️ iVi, and not the 🪳 evening-out described under ⚔️ iVi.
-- Example: adjs 1225 at 🪳 87 → 1225 × (1 − 0.00436 × 87) ≈ 760.
+- Base is the Pure value (plain `adjs` with the uncentered 🪳 charge) — never the displayed (🪳-evened) ⚔️ iVi, or 🪳 gets charged twice.
+- 🪳 and G are near-independent (Pearson −0.06 on the 2026-11-10 snapshot; only 18 players are both 🪳 ≥ 70 and G ≥ 50), so stacking them docks each sin once.
+- The G half is a chosen rate, not a measurement: G is the share of cached players beaten on K/D and Brave at once — a rank share, not a cheating probability.
+- PC only; no 🪳 score or no G = "—". Floored at 0.
+- Example: Eyfia — Pure 921 at G 9.1% → ≈ 838; Aekris — Pure 2667 at G 99.3% → 19.
 
 ### 🔀 Diff (public since 2026-10-21, was a debug column)
 
@@ -75,6 +75,16 @@ These are hidden by default. Tick **show older debug stats** in the footer to se
 - **eKPM / own KPM**: the average enemy weapon pace, and your own pace. They're kept separate.
 - **📊 COI**: the combat output index, derived from Resist.
 - **📉 Slope**: the whole-curve, death-weighted angle of K/D against enemy KPM. A negative value means K/D falls as the opposition gets harder.
+
+### 🧘‍♂️ Pure iVi
+
+Your true ability as a solo player: the plain adjusted iVi (`adjs`, before the 🪳 evening-out) with the crowd-support charge taken off.
+
+- adjs above 0: `adjs × (1 − 0.00436 × 🪳)`.
+- adjs at or below 0: `adjs − 0.00436 × 🪳 × 610.6` — a fixed drop instead of a percentage, because a percentage of a non-positive score would move it up. 610.6 is the frozen median positive adjusted iVi (2026-10-19, the padder-penalty reference).
+- Rate 0.00436 fitted on 915 duel pairs (723 infantry-only, 2026-10-28): kill_gap = −5.9 + 0.656 × adjs_gap − 0.286 × zerg_gap, so 0.286 ÷ 0.656 ≈ 0.00436 per 🪳 point.
+- Only ever discounts, never boosts; no centering, no freshness gate. PC only; no 🪳 score = "—". Not a replacement for ⚔️ iVi, and not the 🪳 evening-out described under ⚔️ iVi.
+- Example: adjs 1225 at 🪳 87 → 1225 × (1 − 0.00436 × 87) ≈ 760.
 
 ## Public columns
 

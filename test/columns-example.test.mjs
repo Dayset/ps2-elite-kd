@@ -44,7 +44,7 @@ test("not-cached note points to the main page and escapes the name", () => {
 test("example row: main-table columns, ranks.json values, cards and links on the page", () => {
   const row = findRanksRow(ranks, DEMO_NAME);
   const cells = rowCells(ranks, row);
-  assert.deepEqual(cells.map((c) => c.id), ["adjs", "act", "pvs", "rf", "rkd", "cons", "luck", "apk", "zerg", "pureivi", "g", "inf"]);
+  assert.deepEqual(cells.map((c) => c.id), ["adjs", "act", "pvs", "rf", "rkd", "cons", "luck", "apk", "zerg", "combinedivi", "g", "inf"]);
   const by = Object.fromEntries(cells.map((c) => [c.id, c]));
   assert.equal(by.adjs.text, String(Math.round(row.adjs)));
   assert.equal(by.rkd.text, row.rkd.toFixed(3));
@@ -56,7 +56,7 @@ test("example row: main-table columns, ranks.json values, cards and links on the
     assert.ok(html.includes(`<td data-ex="${c.id}">`), "row cell " + c.id);
     assert.ok(html.includes(`class="cx-val" data-ex="${c.id}"`), "card value " + c.id);
   }
-  for (const id of ["ivi", "activity", "brave", "resist", "matchup-kd", "const", "luck", "assists", "zerg", "pureivi", "g", "infantry"]) {
+  for (const id of ["ivi", "activity", "brave", "resist", "matchup-kd", "const", "luck", "assists", "zerg", "combinedivi", "g", "infantry"]) {
     assert.ok(html.includes(`href="#${id}"`) && html.includes(`id="${id}"`), id);
   }
 });
@@ -71,7 +71,7 @@ test("docs: every public column has a 'How it's measured' section", () => {
     ["assists", ["cp.apkL1", "cp.apkL2", "cp.apkNote"]],
     ["infantry", ["cp.infL1", "cp.infL2"]],
     ["zerg", ["cp.zergNote"]],
-    ["pureivi", ["cp.pureiviL1", "cp.pureiviL2", "cp.pureiviL3"]],
+    ["combinedivi", ["cp.combinediviL1", "cp.combinediviL2", "cp.combinediviL3"]],
     ["g", ["cp.gL1", "cp.gL2", "cp.gNote"]],
   ]) {
     const card = html.slice(html.indexOf(`id="${id}"`));

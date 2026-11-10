@@ -82,21 +82,21 @@ export function initRankings(host) {
     { id: "apk", label: tr("col.assists", "🤝 Assists"), digits: 2, apk: true, tip: "Assists per kill in recent Honu sessions: how often you help teammates get kills." },
     // 🪳 Zerg / 🤥😤 Impostor–DieHard (owner t480u–t485u): computed here from the ranks.json pools (trait-scores.mjs), same numbers as ✨ Stats.
     { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), digits: 0, zerg: true, tip: ZERG_HINT }, // short hover (owner t9); details on columns.html#zerg
-    // 🧘‍♂️ Pure iVi (owner 2026-10-29): the uncentered 🪳 charge on the plain ⚔️ iVi, same formula as the ✨ Stats
-    // column — separate from Claude's #84 evening-out. PC only; missing 🪳 → "—".
-    { id: "pureivi", label: tr("col.pureivi", "🧘‍♂️ Pure iVi"), digits: 0, preVeh: true, tip: tr("tip.pureivi", "Your true ability as a solo player: plain ⚔️ iVi with the uncentered 🪳 charge, adjs × (1 − 0.00436 × 🪳). High 🪳 drops hard — monitor column next to the evened-out ⚔️ iVi. After the slash, the same score before the 🚜 vehicle/MAX cuts and before any 🪳 charge.") },
+    // 🧼 Combined (owner 2026-11-10, public since 2026-11-10): 🧘 Pure iVi × (1 − 🌈 G) —
+    // both discounts at once. 🪳 and G are near-independent (r ≈ −0.06), so each sin is
+    // docked once. The G half is a chosen rate, not a measurement. Took 🧘 Pure iVi's
+    // visible slot; Pure moved to debug. PC only; missing 🪳 or G → "—".
+    { id: "combinedivi", label: tr("col.combinedivi", "🧼 Pure ×(1−G)"), digits: 0, tip: tr("tip.combinedivi", "Your true ability as a solo player, cleaned of both inflations: 🧘 Pure iVi × (1 − 🌈 G). The 🪳 crowd charge and the G cheese charge, stacked — 🪳 and G are near-independent, so each sin is docked once. G is a rank share, not a cheating probability — a chosen rate, not a measurement. Eyfia: Pure 921 × (1 − 9.1%) → 838.") },
     // 🌈 G (owner 2026-11-08): two-factor product score — one value per player, the share of
     // all cached players beaten on K/D + Brave at once. Most sit at 10–23% (median 17.21%).
     { id: "g", label: tr("col.g", "🌈 G"), digits: 2, g: true, tip: tr("tip.g", "Share of all cached players you beat on K/D and Brave at once: (1 − K/D rank) × (1 − Brave rank). Most players sit at 10–23% (median 17.21%); the cheesiest near 99.7%.") },
     { id: "inf", label: tr("col.infantry", "🪖 Infantry"), digits: 1, inf: true, tip: INF_HINT },
   ];
   const DEBUG = [
-    // 🧼 Combined (owner 2026-11-10): 🧘 Pure iVi × (1 − 🌈 G), debug-only, just for
-    // testing — both discounts at once. 🪳 and G are near-independent (r ≈ −0.06), so
-    // each sin is docked once. Eyfia: Pure 921 × (1 − 9.1%) → 838. The Clean column
-    // (⚔️ iVi × (1 − G)) was removed the same day by the owner's pick; this column
-    // keeps the 🧼 emoji.
-    { id: "combinedivi", label: "🧼 Pure ×(1−G)", digits: 0, tip: "🧘 Pure iVi × (1 − 🌈 G) (debug-only, just for testing): both discounts at once — the 🪳 crowd charge and the G cheese charge. 🪳 and G are near-independent (r ≈ −0.06), so each sin is docked once. Eyfia: Pure 921 × (1 − 9.1%) → 838." },
+    // 🧘‍♂️ Pure iVi (owner 2026-10-29; visible until 2026-11-10, then debug): the uncentered
+    // 🪳 charge on the plain ⚔️ iVi — separate from Claude's #84 evening-out. The combined
+    // column took its visible slot. PC only; missing 🪳 → "—".
+    { id: "pureivi", label: tr("col.pureivi", "🧘‍♂️ Pure iVi"), digits: 0, preVeh: true, tip: tr("tip.pureivi", "Your true ability as a solo player: plain ⚔️ iVi with the uncentered 🪳 charge, adjs × (1 − 0.00436 × 🪳). High 🪳 drops hard — monitor column next to the evened-out ⚔️ iVi. After the slash, the same score before the 🚜 vehicle/MAX cuts and before any 🪳 charge.") },
     { id: "mech", label: "⚙️ Mech%", digits: 1, tip: "Estimated share of your fights that are vehicle or mech play, projected from 🛡️ Resist rather than measured from shooting." },
     { id: "adj", label: "🎯🎈 ivi", digits: 0, tip: "Opposition-weighted IvI (before speed adjustment)" },
     { id: "ekpm", label: "eKPM", digits: 2, tip: "Average enemy weapon KPM faced" },

@@ -37,15 +37,15 @@ test("missing adjs or 🪳 → null", () => {
   assert.equal(pureIvI(NaN, 30), null);
 });
 
-test("rankings: visible column right after zerg, same keys, plain value only", () => {
+test("rankings: debug column, first in DEBUG since 2026-11-10 (combined took its visible slot)", () => {
   const src = fs.readFileSync(path.join(root, "rankings.mjs"), "utf8");
   const vis = src.slice(src.indexOf("const VISIBLE = ["), src.indexOf("const DEBUG = ["));
-  assert.ok(vis.indexOf('id: "pureivi"') > -1, "pureivi is a visible rankings column");
-  assert.ok(vis.indexOf('id: "pureivi"') > vis.indexOf('id: "zerg"') && vis.indexOf('id: "pureivi"') < vis.indexOf('id: "inf"'), "pureivi right after zerg, before infantry");
+  assert.ok(!vis.includes('id: "pureivi"'), "pureivi is no longer a visible rankings column");
+  assert.ok(vis.indexOf('id: "combinedivi"') > vis.indexOf('id: "zerg"') && vis.indexOf('id: "combinedivi"') < vis.indexOf('id: "g"'), "combinedivi took the visible slot after zerg, before G");
   const dbg = src.slice(src.indexOf("const DEBUG = ["), src.indexOf("const PUBLIC = ["));
-  assert.ok(!dbg.includes('id: "pureivi"'), "no longer a debug column");
-  const block = vis.slice(vis.indexOf('id: "pureivi"'), vis.indexOf('{ id: "inf"'));
-  assert.ok(block.includes('tr("col.pureivi"') && block.includes('tr("tip.pureivi"'), "same i18n keys as the stats column");
+  assert.ok(dbg.indexOf('id: "pureivi"') > -1 && dbg.indexOf('id: "pureivi"') < dbg.indexOf('id: "mech"'), "pureivi is the first debug column");
+  const block = dbg.slice(dbg.indexOf('id: "pureivi"'), dbg.indexOf('{ id: "mech"'));
+  assert.ok(block.includes('tr("col.pureivi"') && block.includes('tr("tip.pureivi"'), "same i18n keys as before");
   assert.ok(!block.includes("Muse's"), "no solo credit in the hint");
   const field = src.slice(src.indexOf("o.pureivi ="), src.indexOf("o.pureivi =") + 140);
   assert.ok(field.includes("pureIvI(") && field.includes("o.adjs0"), "charged from the plain adjs, not the evened-out one");
@@ -56,14 +56,14 @@ test("rankings: visible column right after zerg, same keys, plain value only", (
   const tag = (f) => [...fs.readFileSync(path.join(root, f), "utf8").matchAll(/pure-ivi\.mjs\?v=([A-Za-z0-9_.-]+)/g)].map((m) => m[1]);
   assert.deepEqual(tag("rankings.mjs"), tag("stats-table.mjs"));
 });
-test("visible column right after zerg in the stats table, built on the plain value only", () => {
+test("debug column, first in the stats table's debug list, built on the plain value only", () => {
   const src = fs.readFileSync(path.join(root, "stats-table.mjs"), "utf8");
   const vis = src.slice(src.indexOf("const adjVisibleCols = ["), src.indexOf("const adjDebugCols"));
-  assert.ok(vis.indexOf('id: "pureivi"') > -1, "pureivi is a visible stats column");
-  assert.ok(vis.indexOf('id: "pureivi"') > vis.indexOf('id: "zerg"') && vis.indexOf('id: "pureivi"') < vis.indexOf('id: "inf"'), "pureivi right after zerg, before infantry");
+  assert.ok(!vis.includes('id: "pureivi"'), "pureivi is no longer a visible stats column");
+  assert.ok(vis.indexOf('id: "combinedivi"') > vis.indexOf('id: "zerg"') && vis.indexOf('id: "combinedivi"') < vis.indexOf('id: "g"'), "combinedivi took the visible slot after zerg, before G");
   const dbg = src.slice(src.indexOf("const adjDebugCols"), src.indexOf("const adjCols ="));
-  assert.ok(!dbg.includes('id: "pureivi"'), "no longer a debug column");
-  const block = vis.slice(vis.indexOf('id: "pureivi"'), vis.indexOf('{ id: "inf"'));
+  assert.ok(dbg.indexOf('id: "pureivi"') > -1 && dbg.indexOf('id: "pureivi"') < dbg.indexOf('id: "mech"'), "pureivi is the first debug column");
+  const block = dbg.slice(dbg.indexOf('id: "pureivi"'), dbg.indexOf('{ id: "mech"'));
   assert.ok(!block.includes("zAdjs") && !block.includes("zergChargedAdjs"), "no Claude #84 value in the Pure iVi formula");
   assert.ok(block.includes('shownValue(r, "adjs")'), "charged from the plain adjs, not the evened-out one");
   assert.ok(block.includes("$.IS_PS"), "PC only");
@@ -74,16 +74,17 @@ test("visible column right after zerg in the stats table, built on the plain val
   assert.doesNotMatch(en["tip.pureivi"], /Muse's/);
 });
 
-test("documented: columns.html section + metrics.md formula", () => {
+test("documented: columns.html section moved into the debug box + metrics.md formula", () => {
   const html = fs.readFileSync(path.join(root, "columns.html"), "utf8");
-  assert.ok(html.includes('id="pureivi"'), "columns.html has the Pure iVi section");
-  assert.ok(html.includes('href="#pureivi"'), "TOC links to it");
+  assert.ok(html.includes('id="pureivi"'), "columns.html keeps the Pure iVi section");
+  assert.ok(html.indexOf('id="debug"') < html.indexOf('id="pureivi"'), "the section sits inside the debug box now");
   assert.ok(html.includes('data-i18n="cp.pureiviH"'), "section heading is an i18n key");
   const en = JSON.parse(fs.readFileSync(path.join(root, "i18n/en.json"), "utf8"));
   for (const k of ["cp.tocPureivi", "cp.pureiviH", "cp.pureiviP", "cp.pureiviL1", "cp.pureiviL2", "cp.pureiviL3", "cp.pureiviNote"]) assert.ok(en[k], k);
   assert.match(en["cp.pureiviL1"], /0\.00436/);
   const md = fs.readFileSync(path.join(root, "docs/metrics.md"), "utf8");
   assert.ok(md.includes("### 🧘‍♂️ Pure iVi"), "metrics.md has the formula entry");
+  assert.ok(md.indexOf("## Debug columns") < md.indexOf("### 🧘‍♂️ Pure iVi"), "metrics.md entry moved under Debug columns");
   assert.match(md, /0\.00436/);
   assert.match(md, /610\.6/);
 });

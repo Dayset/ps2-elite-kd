@@ -462,10 +462,12 @@ export function createStatsTable($) {
       // Short hover (owner t9); 🪳 revive details in columns.html#zerg.
       { id: "zerg", label: tr("col.zerg", "🪳 Zerg"), hint: tr("tip.zerg", ZERG_HINT), digits: 0, zergCell: true, pctDir: "low",
         fn: (r) => { const z = traitP && r.p ? zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display)), rvpOf(r.p.display), crpOf(r.p.display)) : null; return z ? z.score : NaN; } },
-      // 🧘‍♂️ Pure iVi (owner 2026-10-29): the uncentered 🪳 charge on the plain ⚔️ iVi — your true solo
-      // ability, separate from Claude's #84 evening-out. PC only; missing 🪳 → "—".
-      { id: "pureivi", label: tr("col.pureivi", "🧘‍♂️ Pure iVi"), hint: tr("tip.pureivi", "Your true ability as a solo player: plain ⚔️ iVi with the uncentered 🪳 charge, adjs × (1 − 0.00436 × 🪳). High 🪳 drops hard — monitor column next to the evened-out ⚔️ iVi. After the slash, the same score before the 🚜 vehicle/MAX cuts and before any 🪳 charge."), digits: 0, thinTip: true, preVehCell: true,
-        fn: (r) => { if ($.IS_PS) return NaN; const a = shownValue(r, "adjs"); if (!isFiniteNum(a)) return NaN; const z = traitP && r.p ? zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display)), rvpOf(r.p.display), crpOf(r.p.display)) : null; const v = z ? pureIvI(a, z.score) : null; return v == null ? NaN : v; } },
+      // 🧼 Combined (owner 2026-11-10, public since 2026-11-10): 🧘 Pure iVi × (1 − 🌈 G) —
+      // both discounts at once. Same Pure value as the 🧘 Pure iVi column (plain adjs +
+      // uncentered 🪳 charge), never the displayed (🪳-evened) ⚔️ iVi, or 🪳 gets charged
+      // twice. Eyfia: Pure 921 × (1 − 9.1%) → 838. Took 🧘 Pure iVi's visible slot.
+      { id: "combinedivi", label: tr("col.combinedivi", "🧼 Pure ×(1−G)"), hint: tr("tip.combinedivi", "Your true ability as a solo player, cleaned of both inflations: 🧘 Pure iVi × (1 − 🌈 G). The 🪳 crowd charge and the G cheese charge, stacked — 🪳 and G are near-independent, so each sin is docked once. G is a rank share, not a cheating probability — a chosen rate, not a measurement. Eyfia: Pure 921 × (1 − 9.1%) → 838."), digits: 0,
+        fn: (r) => { if ($.IS_PS) return NaN; const a = shownValue(r, "adjs"); if (!isFiniteNum(a)) return NaN; const z = traitP && r.p ? zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display)), rvpOf(r.p.display), crpOf(r.p.display)) : null; const v = z ? pureIvI(a, z.score) : null; const c = combinedIvI(v, gBySlug && r.p ? gBySlug.get(slugKey(r.p.display)) : undefined); return c == null ? NaN : c; } },
       // 🌈 G (owner 2026-11-08): one value per player — the share of all cached
       // players beaten on K/D + Brave at once. Most sit at 10–23% (median 17.21%).
       { id: "g", label: tr("col.g", "🌈 G"), hint: tr("tip.g", "Share of all cached players you beat on K/D and Brave at once: (1 − K/D rank) × (1 − Brave rank). Most players sit at 10–23% (median 17.21%); the cheesiest near 99.7%."), fn: (r) => (gBySlug && r.p ? gBySlug.get(slugKey(r.p.display)) : undefined), digits: 2, gCell: true },
@@ -473,12 +475,11 @@ export function createStatsTable($) {
     ];
     // Older debug columns: appended only when "show older debug stats" (footer) is ticked.
     const adjDebugCols = [
-      // 🧼 Combined (owner 2026-11-10): 🧘 Pure iVi × (1 − 🌈 G), debug-only, just for
-      // testing — both discounts at once. Same Pure value as the 🧘 Pure iVi column
-      // (plain adjs + uncentered 🪳 charge), never the displayed (🪳-evened) ⚔️ iVi,
-      // or 🪳 gets charged twice. Eyfia: Pure 921 × (1 − 9.1%) → 838. The Clean column
-      // was removed the same day by the owner's pick; this column keeps the 🧼 emoji.
-      { id: "combinedivi", label: "🧼 Pure ×(1−G)", hint: "🧘 Pure iVi × (1 − 🌈 G) (debug-only, just for testing): both discounts at once — the 🪳 crowd charge and the G cheese charge. 🪳 and G are near-independent (r ≈ −0.06), so each sin is docked once. Eyfia: Pure 921 × (1 − 9.1%) → 838.", fn: (r) => { if ($.IS_PS) return NaN; const a = shownValue(r, "adjs"); if (!isFiniteNum(a)) return NaN; const z = traitP && r.p ? zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display)), rvpOf(r.p.display), crpOf(r.p.display)) : null; const v = z ? pureIvI(a, z.score) : null; const c = combinedIvI(v, gBySlug && r.p ? gBySlug.get(slugKey(r.p.display)) : undefined); return c == null ? NaN : c; }, digits: 0 },
+      // 🧘‍♂️ Pure iVi (owner 2026-10-29; visible until 2026-11-10, then debug): the uncentered
+      // 🪳 charge on the plain ⚔️ iVi — your true solo ability, separate from Claude's #84
+      // evening-out. The combined column took its visible slot. PC only; missing 🪳 → "—".
+      { id: "pureivi", label: tr("col.pureivi", "🧘‍♂️ Pure iVi"), hint: tr("tip.pureivi", "Your true ability as a solo player: plain ⚔️ iVi with the uncentered 🪳 charge, adjs × (1 − 0.00436 × 🪳). High 🪳 drops hard — monitor column next to the evened-out ⚔️ iVi. After the slash, the same score before the 🚜 vehicle/MAX cuts and before any 🪳 charge."), digits: 0, thinTip: true, preVehCell: true,
+        fn: (r) => { if ($.IS_PS) return NaN; const a = shownValue(r, "adjs"); if (!isFiniteNum(a)) return NaN; const z = traitP && r.p ? zergScore(traitP, shownValue(r, "inflation"), apkBySlug && apkBySlug.get(slugKey(r.p.display)), rvpOf(r.p.display), crpOf(r.p.display)) : null; const v = z ? pureIvI(a, z.score) : null; return v == null ? NaN : v; } },
       { id: "mech", label: "⚙️ Mech%", hint: "Estimated share of your fights that are vehicle or mech play, projected from 🛡️ Resist rather than measured from shooting.", fn: (r) => r.mech, digits: 1 },
       { id: "adj", label: "🎯🎈 ivi", hint: "Opposition-weighted IvI before the kill-speed adjustment: public IvI adjusted by 🛡️ Resist so soft-farm padding is tempered. The 🎈 is a reminder that this score is still inflated (slow, safe play is not penalised here — see ⚔️ iVi).", fn: (r) => r.adj, digits: 0 },
       { id: "ekpm", label: "eKPM", hint: "Average enemy weapon KPM faced (how hard the opposition shoots).", fn: (r) => r.ekpm, digits: 2 },

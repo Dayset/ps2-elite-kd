@@ -1,9 +1,10 @@
-// 🧼 Combined (owner 2026-11-10): 🧘 Pure iVi × (1 − G/100), debug-only, just
-// for testing — both discounts at once. 🪳 and G are near-independent
-// (r ≈ −0.06), so each sin is docked once. The Clean column (⚔️ iVi ×
-// (1 − G)) shipped alongside it in 79e9e150 and was REMOVED the same day by
-// the owner's pick; this column keeps the 🧼 emoji. Neither discount rate is
-// a measurement of cheating — G is a rank share, not a cheating probability.
+// 🧼 Combined (owner 2026-11-10): 🧘 Pure iVi × (1 − G/100), public since
+// 2026-11-10 — both discounts at once, in 🧘 Pure iVi's old visible slot.
+// 🪳 and G are near-independent (r ≈ −0.06), so each sin is docked once.
+// The Clean column (⚔️ iVi × (1 − G)) shipped alongside it in 79e9e150 and
+// was REMOVED the same day by the owner's pick; this column keeps the 🧼
+// emoji. Neither discount rate is a measurement of cheating — G is a rank
+// share, not a cheating probability.
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -78,12 +79,18 @@ test("clean is gone: no clean function, column id, label, or module file in the 
   assert.ok(!fs.existsSync(new URL("../test/clean-ivi.test.mjs", import.meta.url)), "test/clean-ivi.test.mjs deleted");
 });
 
-test("rankings: combined is the first DEBUG column, computed at load, sortable by row value", () => {
+test("rankings: combined is the visible column after zerg (took Pure's slot 2026-11-10), Pure first debug", () => {
   const src = read("rankings.mjs");
-  const dbg = src.slice(src.indexOf("const DEBUG = ["), src.indexOf("];", src.indexOf("const DEBUG = [")));
-  assert.ok(dbg.indexOf('id: "combinedivi"') < dbg.indexOf('id: "mech"'), "combined first debug column");
-  assert.ok(!src.slice(src.indexOf("const VISIBLE = ["), src.indexOf("];", src.indexOf("const VISIBLE = ["))).includes("combinedivi"), "combined not a visible column");
-  assert.ok(src.includes('from "./combined-ivi.mjs?v=20261110-cmb1"'), "rankings imports the module at the new pin");
+  const vis = src.slice(src.indexOf("const VISIBLE = ["), src.indexOf("const DEBUG = ["));
+  assert.ok(vis.indexOf('id: "combinedivi"') > vis.indexOf('id: "zerg"') && vis.indexOf('id: "combinedivi"') < vis.indexOf('id: "g"'), "combined visible after zerg, before G");
+  assert.ok(!vis.includes('id: "pureivi"'), "Pure no longer visible");
+  const dbg = src.slice(src.indexOf("const DEBUG = ["), src.indexOf("const PUBLIC = ["));
+  assert.ok(dbg.indexOf('id: "pureivi"') > -1 && dbg.indexOf('id: "pureivi"') < dbg.indexOf('id: "mech"'), "Pure first debug column");
+  const block = vis.slice(vis.indexOf('id: "combinedivi"'), vis.indexOf('{ id: "g"'));
+  assert.ok(block.includes('tr("col.combinedivi"') && block.includes('tr("tip.combinedivi"'), "same i18n keys as the stats column");
+  assert.ok(block.includes("chosen rate"), "tip keeps the chosen-rate honesty in public");
+  assert.ok(!block.includes("debug-only"), "no debug-only text on the public column");
+  assert.ok(src.includes('from "./combined-ivi.mjs?v=20261110-cmb1"'), "rankings imports the module at the unchanged pin");
   assert.ok(src.includes("o.combinedivi = combinedIvI(o.pureivi, o.g);"), "combined off the Pure value at load — never the evened-out ⚔️ iVi");
   assert.ok(src.includes("pools.combinedivi = rows.map((o) => o.combinedivi)"), "pool for positions/percentiles");
   assert.ok(src.includes("combinedivi: 16"), "fixed column width set");
@@ -91,32 +98,44 @@ test("rankings: combined is the first DEBUG column, computed at load, sortable b
   assert.ok(src.includes("const av = a[key], bv = b[key];"), "sort reads the row value by sort key");
 });
 
-test("stats table: combined is the first debug column, off the 🧘 Pure iVi value", () => {
+test("stats table: combined is the visible column after zerg, off the 🧘 Pure iVi value", () => {
   const src = read("stats-table.mjs");
-  const dbg = src.slice(src.indexOf("const adjDebugCols = ["), src.indexOf("];", src.indexOf("const adjDebugCols = [")));
-  assert.ok(dbg.indexOf('id: "combinedivi"') < dbg.indexOf('id: "mech"'), "combined first debug column");
-  assert.ok(!src.slice(src.indexOf("const adjVisibleCols = ["), src.indexOf("];", src.indexOf("const adjVisibleCols = ["))).includes("combinedivi"), "combined not a visible column");
-  assert.ok(src.includes('from "./combined-ivi.mjs?v=20261110-cmb1"'), "stats table imports the module at the new pin");
-  assert.ok(dbg.includes("pureIvI(a, z.score)"), "combined reuses the same Pure computation as the Pure column");
-  assert.ok(dbg.includes("combinedIvI(v,"), "combined applies the G discount to that Pure value");
-  assert.ok(!dbg.slice(dbg.indexOf('id: "combinedivi"'), dbg.indexOf('id: "mech"')).includes("zAdjs(r)"), "combined never starts from the evened-out ⚔️ iVi");
+  const vis = src.slice(src.indexOf("const adjVisibleCols = ["), src.indexOf("const adjDebugCols"));
+  assert.ok(vis.indexOf('id: "combinedivi"') > vis.indexOf('id: "zerg"') && vis.indexOf('id: "combinedivi"') < vis.indexOf('id: "g"'), "combined visible after zerg, before G");
+  assert.ok(!vis.includes('id: "pureivi"'), "Pure no longer visible");
+  const dbg = src.slice(src.indexOf("const adjDebugCols"), src.indexOf("const adjCols ="));
+  assert.ok(dbg.indexOf('id: "pureivi"') > -1 && dbg.indexOf('id: "pureivi"') < dbg.indexOf('id: "mech"'), "Pure first debug column");
+  assert.ok(src.includes('from "./combined-ivi.mjs?v=20261110-cmb1"'), "stats table imports the module at the unchanged pin");
+  const block = vis.slice(vis.indexOf('id: "combinedivi"'), vis.indexOf('{ id: "g"'));
+  assert.ok(block.includes("pureIvI(a, z.score)"), "combined reuses the same Pure computation as the Pure column");
+  assert.ok(block.includes("combinedIvI(v,"), "combined applies the G discount to that Pure value");
+  assert.ok(!block.includes("zAdjs(r)"), "combined never starts from the evened-out ⚔️ iVi");
+  assert.ok(block.includes('tr("col.combinedivi"') && block.includes('tr("tip.combinedivi"'), "same i18n keys as the rankings column");
   assert.ok(src.includes("gBySlug.get(slugKey(r.p.display))"), "G from the lazy full-payload load");
 });
 
-test("pin chain: one tag 20261110-cmb1 for the module and every touched link", () => {
+test("pin chain: module still 20261110-cmb1, every touched link now 20261110-swp1", () => {
   assert.match(read("rankings.mjs"), /combined-ivi\.mjs\?v=20261110-cmb1/);
   assert.match(read("stats-table.mjs"), /combined-ivi\.mjs\?v=20261110-cmb1/);
-  assert.match(read("shared-index.mjs"), /rankings\.mjs\?v=20261110-cmb1/);
-  assert.match(read("app.js"), /shared-index\.mjs\?v=20261110-cmb1/);
-  assert.match(read("app.js"), /stats-table\.mjs\?v=20261110-cmb1/);
-  assert.match(read("index.html"), /app\.js\?v=20261110-cmb1/);
-  assert.match(read("live.html"), /app\.js\?v=20261110-cmb1/);
+  assert.match(read("shared-index.mjs"), /rankings\.mjs\?v=20261110-swp1/);
+  assert.match(read("app.js"), /shared-index\.mjs\?v=20261110-swp1/);
+  assert.match(read("app.js"), /stats-table\.mjs\?v=20261110-swp1/);
+  assert.match(read("index.html"), /app\.js\?v=20261110-swp1/);
+  assert.match(read("live.html"), /app\.js\?v=20261110-swp1/);
+  assert.match(read("columns.html"), /columns-example\.mjs\?v=20261110-swp1/);
 });
 
-test("columns page: combined documented with the 🧼 emoji, clean gone", () => {
+test("columns page: combined is a public card with a How-it's-measured section, Pure moved to debug", () => {
   const html = read("columns.html");
   assert.ok(html.includes("🧼 Pure ×(1−G)"), "combined documented with the clean emoji");
-  assert.ok(html.includes("Pure 921 × (1 − 9.1%) → 838"), "combined worked example in the docs");
+  assert.ok(html.indexOf('id="combinedivi"') > -1 && html.indexOf('id="combinedivi"') < html.indexOf('id="debug"'), "combined card sits in the visible flow, before the debug box");
+  assert.ok(html.includes('data-i18n="cp.combinediviH"'), "combined heading is an i18n key");
+  const card = html.slice(html.indexOf('id="combinedivi"'));
+  assert.ok(card.includes("How it’s measured"), "combined has a How it's measured section");
+  for (const k of ["cp.combinediviL1", "cp.combinediviL2", "cp.combinediviL3", "cp.combinediviNote"]) assert.ok(card.includes(k), `combined card uses ${k}`);
+  assert.ok(card.includes("921 × (1 − 0.091)"), "combined worked example in the docs");
+  assert.ok(card.includes("Chosen, not measured"), "chosen-rate honesty on the public card");
+  assert.ok(html.indexOf('id="debug"') < html.indexOf('id="pureivi"'), "Pure card moved into the debug box");
   assert.ok(!html.includes("🧼 iVi ×(1−G)"), "clean not documented");
   assert.ok(!html.includes("2000 / 50% → 1000"), "clean example not documented");
 });

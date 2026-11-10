@@ -142,8 +142,8 @@
       <h2 class="cx-rowh"><span data-i18n="cp.rowH">One row, like on the main page</span> 👉 <input id="exName" class="st-name-in" type="text" value="YuigahamaYui" aria-label="Character name for the example (type any cached name)" data-i18n-aria-label="cp.exNameAria" autocomplete="off" spellcheck="false" enterkeyhint="go" /></h2>
       <p class="st-dim" id="exMsg" role="status" hidden></p>
       <div class="cx-scroll"><table class="cx-row">
-        <thead><tr><th><a href="#ivi">⚔️ iVi</a></th><th><a href="#activity">🏃 Activity</a></th><th><a href="#brave">🦁 Brave</a></th><th><a href="#resist">🛡️ Resist</a></th><th><a href="#matchup-kd">☠️ K/D</a></th><th><a href="#const">⚡ Const</a></th><th><a href="#luck" data-i18n="col.luck">🎲 Luck</a></th><th><a href="#assists" data-i18n="col.assists">🤝 Assists</a></th><th><a href="#zerg" data-i18n="col.zerg">🪳 Zerg</a></th><th><a href="#pureivi" data-i18n="col.pureivi">🧘‍♂️ Pure iVi</a></th><th><a href="#g" data-i18n="col.g">🌈 G</a></th><th><a href="#infantry" data-i18n="col.infantry">🪖 Infantry</a></th></tr></thead>
-        <tbody><tr><td data-ex="adjs">416</td><td data-ex="act">0.45</td><td data-ex="pvs">1.09</td><td data-ex="rf">0.77</td><td data-ex="rkd">0.804</td><td data-ex="cons">75%</td><td data-ex="luck">—</td><td data-ex="apk">0.60</td><td data-ex="zerg">79</td><td data-ex="pureivi">298</td><td data-ex="g">21.44%</td><td data-ex="inf">54.2%</td></tr></tbody>
+        <thead><tr><th><a href="#ivi">⚔️ iVi</a></th><th><a href="#activity">🏃 Activity</a></th><th><a href="#brave">🦁 Brave</a></th><th><a href="#resist">🛡️ Resist</a></th><th><a href="#matchup-kd">☠️ K/D</a></th><th><a href="#const">⚡ Const</a></th><th><a href="#luck" data-i18n="col.luck">🎲 Luck</a></th><th><a href="#assists" data-i18n="col.assists">🤝 Assists</a></th><th><a href="#zerg" data-i18n="col.zerg">🪳 Zerg</a></th><th><a href="#combinedivi" data-i18n="col.combinedivi">🧼 Pure ×(1−G)</a></th><th><a href="#g" data-i18n="col.g">🌈 G</a></th><th><a href="#infantry" data-i18n="col.infantry">🪖 Infantry</a></th></tr></thead>
+        <tbody><tr><td data-ex="adjs">416</td><td data-ex="act">0.45</td><td data-ex="pvs">1.09</td><td data-ex="rf">0.77</td><td data-ex="rkd">0.804</td><td data-ex="cons">75%</td><td data-ex="luck">—</td><td data-ex="apk">0.60</td><td data-ex="zerg">79</td><td data-ex="combinedivi">234</td><td data-ex="g">21.44%</td><td data-ex="inf">54.2%</td></tr></tbody>
       </table></div>
       <p class="st-dim cx-note" data-i18n="cp.rowNote">Type any cached name. Tap a column to see what it means.</p>
     </div>
@@ -290,16 +290,16 @@
     </div>
 
     <div class="st-card cx-col">
-      <div class="cx-top"><h3 id="pureivi" data-i18n="cp.pureiviH">🧘‍♂️ Pure iVi — your true solo ability</h3><span class="cx-val" data-ex="pureivi">298</span></div>
-      <div class="cx-pct" data-ex-pct="pureivi" hidden><b><i></i></b><span></span></div>
-      <p data-i18n="cp.pureiviP">What your rating would be if every fight counted as if you fought alone. A high iVi on a zerg surfer says: you have it only because of crowd efforts. Pure iVi says: this is your true ability as a solo player.</p>
+      <div class="cx-top"><h3 id="combinedivi" data-i18n="cp.combinediviH">🧼 Pure ×(1−G) — your true solo ability, cleaned twice</h3><span class="cx-val" data-ex="combinedivi">234</span></div>
+      <div class="cx-pct" data-ex-pct="combinedivi" hidden><b><i></i></b><span></span></div>
+      <p data-i18n="cp.combinediviP">What your rating would be if every fight counted as if you fought alone, and your K/D had to hold up against the fastest killers too. Pure iVi takes the crowd out; this takes the crowd and the cheese out.</p>
       <details class="cx-more"><summary data-i18n="cp.more">How it’s measured</summary>
         <ul class="st-list">
-          <li data-i18n-html="cp.pureiviL1"><b>Formula:</b> adjs above 0 → adjs × (1 − 0.00436 × 🪳); adjs at or below 0 → adjs − 0.00436 × 🪳 × 610.6. Each 🪳 point costs about 0.44% of the rating; 🪳 100 → −43.6%.</li>
-          <li data-i18n-html="cp.pureiviL2"><b>Measured, not guessed:</b> fitted on 915 duel pairs (723 infantry-only). At the same adjs gap, each 🪳 point of gap meant 0.286 fewer kill-gap points against 0.656 per adjs point — 0.286 ÷ 0.656 ≈ 0.00436.</li>
-          <li data-i18n-html="cp.pureiviL3"><b>Example:</b> ahorn, adjs 1225 at 🪳 87 → 1225 × (1 − 0.00436 × 87) ≈ <b>760</b>.</li>
+          <li data-i18n-html="cp.combinediviL1"><b>Formula:</b> 🧘 Pure iVi × (1 − 🌈 G), where Pure iVi is adjs × (1 − 0.00436 × 🪳). The base is the Pure value — never the displayed (🪳-evened) ⚔️ iVi, or 🪳 gets charged twice.</li>
+          <li data-i18n-html="cp.combinediviL2"><b>Chosen, not measured:</b> G is the share of cached players you beat on K/D and Brave at once — a rank share, not a cheating probability. Nothing in the data says 1% of G equals 1% of your score; that rate is a choice. The 🪳 half is measured (fitted on 915 duel pairs).</li>
+          <li data-i18n-html="cp.combinediviL3"><b>Example:</b> Eyfia — Pure 921 at G 9.1% → 921 × (1 − 0.091) ≈ <b>838</b>. Aekris — Pure 2667 at G 99.3% → <b>19</b>.</li>
         </ul>
-        <p data-i18n="cp.pureiviNote">Not a replacement for ⚔️ iVi, and not the 🪳⚔️ evening-out: that one centers on the average crowd (🪳 26.8) and lifts low-🪳 players up; Pure only ever discounts, never boosts, and has no freshness gate. PC only; no 🪳 score → “—”.</p>
+        <p data-i18n="cp.combinediviNote">Not a replacement for ⚔️ iVi. 🪳 and G are near-independent (r ≈ −0.06), so stacking them docks each sin once. PC only; no 🪳 score or no G → “—”.</p>
       </details>
     </div>
 
@@ -414,7 +414,6 @@
       <p class="st-dim" data-i18n="cp.dbgP">Older or in-between numbers. Tick “show older debug stats” in the main page footer to see them. Not used to judge anyone.</p>
       <div class="st-card">
         <dl class="st-defs">
-          <dt>🧼 Pure ×(1−G)</dt><dd>🧘 Pure iVi × (1 − 🌈 G), debug-only, just for testing. Both discounts at once — the 🪳 crowd charge and the G cheese charge. 🪳 and G are near-independent (r ≈ −0.06), so each sin is docked once. Eyfia: Pure 921 × (1 − 9.1%) → 838.</dd>
           <dt>⚙️ Mech%</dt><dd data-i18n="cp.dbgMech">A guess of your vehicle / mech share, projected from 🛡️ Resist. Not measured.</dd>
           <dt>🎯🎈 ivi</dt><dd data-i18n="cp.dbgIvi">⚔️ iVi before the pace bonus or cut, so slow play still looks good.</dd>
           <dt>eKPM</dt><dd data-i18n="cp.dbgEkpm">How fast your opponents kill, on average. Higher = harder opposition.</dd>
@@ -425,6 +424,20 @@
           <dt>⚔️ iVi before 🪳</dt><dd data-i18n="cp.dbgAdjs0">⚔️ iVi before the 🪳 Zerg evening-out, to compare with the ⚔️ iVi column.</dd>
         </dl>
       </div>
+
+    <div class="st-card cx-col">
+      <div class="cx-top"><h3 id="pureivi" data-i18n="cp.pureiviH">🧘‍♂️ Pure iVi — your true solo ability</h3><span class="cx-val" data-ex="pureivi">298</span></div>
+      <div class="cx-pct" data-ex-pct="pureivi" hidden><b><i></i></b><span></span></div>
+      <p data-i18n="cp.pureiviP">What your rating would be if every fight counted as if you fought alone. A high iVi on a zerg surfer says: you have it only because of crowd efforts. Pure iVi says: this is your true ability as a solo player.</p>
+      <details class="cx-more"><summary data-i18n="cp.more">How it’s measured</summary>
+        <ul class="st-list">
+          <li data-i18n-html="cp.pureiviL1"><b>Formula:</b> adjs above 0 → adjs × (1 − 0.00436 × 🪳); adjs at or below 0 → adjs − 0.00436 × 🪳 × 610.6. Each 🪳 point costs about 0.44% of the rating; 🪳 100 → −43.6%.</li>
+          <li data-i18n-html="cp.pureiviL2"><b>Measured, not guessed:</b> fitted on 915 duel pairs (723 infantry-only). At the same adjs gap, each 🪳 point of gap meant 0.286 fewer kill-gap points against 0.656 per adjs point — 0.286 ÷ 0.656 ≈ 0.00436.</li>
+          <li data-i18n-html="cp.pureiviL3"><b>Example:</b> ahorn, adjs 1225 at 🪳 87 → 1225 × (1 − 0.00436 × 87) ≈ <b>760</b>.</li>
+        </ul>
+        <p data-i18n="cp.pureiviNote">Not a replacement for ⚔️ iVi, and not the 🪳⚔️ evening-out: that one centers on the average crowd (🪳 26.8) and lifts low-🪳 players up; Pure only ever discounts, never boosts, and has no freshness gate. PC only; no 🪳 score → “—”.</p>
+      </details>
+    </div>
 
     <div class="st-card">
       <h3 id="diff" data-i18n="cp.diffH">🔀 Diff — aim on paper vs real results</h3>
@@ -444,7 +457,7 @@
   </main>
   <button id="toTop" class="st-totop" aria-label="Back to top" title="Back to top" data-i18n-aria-label="cp.top" data-i18n-title="cp.top">↑</button>
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="columns-example.mjs?v=20261108-neg2"></script>
+  <script type="module" src="columns-example.mjs?v=20261110-swp1"></script>
   <script>
     // TOC jump into the collapsed debug section opens it first.
     document.querySelectorAll('.st-toc a[href^="#"]').forEach(function (a) {
