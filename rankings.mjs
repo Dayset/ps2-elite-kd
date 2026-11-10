@@ -25,7 +25,7 @@ import { sfx } from "./sfx.mjs?v=20261026-sfx2";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-flick1";
 import { mergeFreshRows } from "./rank-row.mjs?v=20261101-opsrv1";
 import { gScores } from "./g-score.mjs?v=20261108-g2f1";
-import { cleanIvIMedium, cleanIvIStrong } from "./clean-ivi.mjs?v=20261110-cln1";
+import { cleanIvIStrong } from "./clean-ivi.mjs?v=20261110-cln2";
 import { renderAvgPlanetman } from "./average-planetman.mjs?v=20261109-avg3";
 import { readOutfitWorlds } from "./outfit-tags.mjs?v=20261101-osrv1";
 import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sav1";
@@ -91,9 +91,10 @@ export function initRankings(host) {
     { id: "inf", label: tr("col.infantry", "🪖 Infantry"), digits: 1, inf: true, tip: INF_HINT },
   ];
   const DEBUG = [
-    // 🧼 Clean iVi (owner 2026-11-10): ⚔️ iVi discounted by 🌈 G, debug-only — two strengths side by
-    // side so the owner can look at both and keep one. High iVi and high G can't both survive.
-    { id: "cleanivi", label: "🧼 iVi −10G", digits: 0, tip: "⚔️ iVi minus 10 points per 🌈 G point (debug-only): 2000 / 50% → 1500, 2005 / 51% → 1495." },
+    // 🧼 Clean iVi (owner 2026-11-10): ⚔️ iVi discounted by 🌈 G, debug-only — the strong
+    // strength, kept by the owner's pick (the medium adjs − 10 × G column was removed the
+    // same day: it still left 5 players over G 90% in the top 500). High iVi and high G
+    // can't both survive.
     { id: "cleanivis", label: "🧼 iVi ×(1−G)", digits: 0, tip: "⚔️ iVi × (1 − 🌈 G) (debug-only): 2000 / 50% → 1000, 2005 / 51% → 982. G is a rank share, not a cheating probability — a chosen rate, not a measurement." },
     { id: "mech", label: "⚙️ Mech%", digits: 1, tip: "Estimated share of your fights that are vehicle or mech play, projected from 🛡️ Resist rather than measured from shooting." },
     { id: "adj", label: "🎯🎈 ivi", digits: 0, tip: "Opposition-weighted IvI (before speed adjustment)" },
@@ -393,11 +394,9 @@ export function initRankings(host) {
       pools.g = rows.map((o) => o.g).filter(fin).sort((a, b) => a - b);
       for (const o of rows) o.pcts.g = pctOf(pools.g, o.g);
       // 🧼 Clean iVi (owner 2026-11-10): ⚔️ iVi discounted by 🌈 G, debug-only.
-      for (const o of rows) { o.cleanivi = cleanIvIMedium(o.adjs, o.g); o.cleanivis = cleanIvIStrong(o.adjs, o.g); }
-      for (const id of ["cleanivi", "cleanivis"]) {
-        pools[id] = rows.map((o) => o[id]).filter(fin).sort((a, b) => a - b);
-        for (const o of rows) o.pcts[id] = pctOf(pools[id], o[id]);
-      }
+      for (const o of rows) o.cleanivis = cleanIvIStrong(o.adjs, o.g);
+      pools.cleanivis = rows.map((o) => o.cleanivis).filter(fin).sort((a, b) => a - b);
+      for (const o of rows) o.pcts.cleanivis = pctOf(pools.cleanivis, o.cleanivis);
     }
     // t360u: new row objects carry no .rank yet → force assignRanks() to run again
     // (it skipped on an unchanged sort and left "undefined" ranks / a broken order).
@@ -498,7 +497,7 @@ export function initRankings(host) {
   // Sized to fit the header label + sort indicator, the widest thing in the column.
   const COL_W = {
     adjs: 9, act: 13, pvs: 10, rf: 11, cons: 10, luck: 9, apk: 12, zerg: 10, diff: 8, rkd: 8, inf: 13,
-    mech: 11, adj: 10, ekpm: 8, own: 10, coi: 9, slope: 10, inflation: 13, cleanivi: 12, cleanivis: 14,
+    mech: 11, adj: 10, ekpm: 8, own: 10, coi: 9, slope: 10, inflation: 13, cleanivis: 14,
     kd: 8, kpm: 8, ownKpm: 12, acc: 8, hsr: 8, ivi: 8,
   };
 
