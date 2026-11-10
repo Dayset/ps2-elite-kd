@@ -480,15 +480,15 @@
                   <tr><td>Bolt / pump cycle</td><td class="n">refire + chamber</td><td>Almost all bolt-actions: 170 ms refire; the M-77B chambers in 1225 ms, so 1395 ms between shots. Pump shotguns: 150 ms + 600/700 ms = 750/850 ms.</td></tr>
                   <tr><td>CoF recovery delay</td><td class="n">= refire time</td><td>Then the cone shrinks at 20°/s. A full reset on most automatics lands ~0.1 s after the last shot.</td></tr>
                   <tr><td>Recoil recovery delay</td><td class="n">≈ refire + delay</td><td>Often 2× refire in total before the crosshair starts returning.</td></tr>
-                  <tr><td>Reaction time</td><td class="n">~250 ms</td><td>The articles' figure for average human reaction. No training beats it — the only way past it is prediction (§05).</td></tr>
-                  <tr><td>Internet delay</td><td class="n">~200 ms</td><td>You see the enemy as they were ~200 ms ago; they see the same of you. The engine behind peek-first advantage (§09).</td></tr>
+                  <tr><td>Reaction time</td><td class="n">~150 ms</td><td>Best case for a fast human reaction. No training beats it — the only way past it is prediction (§05).</td></tr>
+                  <tr><td>Internet delay</td><td class="n">~50 ms</td><td>You see the enemy as they were ~50 ms ago; they see the same of you. The engine behind peek-first advantage (§09).</td></tr>
                 </tbody>
               </table>
             </div>
             <p><strong>The semi-auto queue trick:</strong> after a shot, release and re-press fire while the weapon chambers — it fires the instant it is ready, with no human delay added. Easiest below ~180 RPM, and the difference between a semi-auto's paper RoF and its real one.</p>
             <div class="note dated">
-              <span class="tag">Typical values, not constants</span>
-              <p>The ~250 ms reaction time and ~200 ms internet delay are the articles' 2016 statements of typical values. Your ping and your opponent's are what they are — the <em>structure</em> (you both fight in the past) is the durable part.</p>
+              <span class="tag">Best-case values</span>
+              <p>Reaction ~150 ms and delay ~50 ms are the fast end — the articles wrote ~250 ms and ~200 ms, the slow end. Your ping and your opponent's are what they are; the <em>structure</em> (you both fight in the past) is the durable part.</p>
             </div>
           </section>
 
@@ -503,7 +503,7 @@
               <li><strong>Execution</strong> — move the crosshair onto it.</li>
               <li><strong>Confirmation</strong> — check the crosshair is on target, then fire.</li>
             </ol>
-            <p>Average human reaction time is ~250 ms and no training beats it. The only way past it is to <strong>predict</strong> where the enemy will be. Train slowly and deliberately; speed comes from muscle memory, and muscle memory needs <strong>one mouse sensitivity</strong>, kept constant.</p>
+            <p>A fast human reaction is ~150 ms and no training beats it. The only way past it is to <strong>predict</strong> where the enemy will be. Train slowly and deliberately; speed comes from muscle memory, and muscle memory needs <strong>one mouse sensitivity</strong>, kept constant.</p>
             <p>Best players drop step 3. <strong>Twitch aiming</strong> fires on eye–brain–hand coordination with no confirmation, trading accuracy for speed. <strong>Drag shots</strong> are the extreme form, for weapons that live on a few accurate shots — shotguns, CQC sniping. Start twitch practice on a slow automatic; the guide suggests a 143-damage, 652-RPM weapon.</p>
             <ul>
               <li><strong>Track the crosshair, not the enemy.</strong> Eyes on the reticule, target in peripheral vision.</li>
@@ -680,7 +680,7 @@
 
             <ul>
               <li><strong>Awareness is a stream:</strong> weapon sounds identify the class; faction voices give away faction and status; one sniper tracer in peripheral vision is enough to locate a camper. Keep a mental list of enemies who revealed themselves until you kill them or see the corpse. One eye on the minimap, both ears open.</li>
-              <li><strong>You fight in the past.</strong> Internet delay means you see what the enemy was doing ~200 ms ago, and they see the same of you. Hit detection is client-side: if they shot your model on <em>their</em> screen, you take damage — which is why you can die after reaching cover. Turn it around: storming a room, you see the defenders before they see you. Start dodging <em>before</em> the enemy fires, get to cover the moment you take fire, and never stop to look for the shooter when under fire — the minimap hit direction is enough to pick a direction to run. The Counter-Intelligence implant helps by spotting anyone who shoots you with an unsuppressed weapon.</li>
+              <li><strong>You fight in the past.</strong> Internet delay means you see what the enemy was doing ~50 ms ago, and they see the same of you. Hit detection is client-side: if they shot your model on <em>their</em> screen, you take damage — which is why you can die after reaching cover. Turn it around: storming a room, you see the defenders before they see you. Start dodging <em>before</em> the enemy fires, get to cover the moment you take fire, and never stop to look for the shooter when under fire — the minimap hit direction is enough to pick a direction to run. The Counter-Intelligence implant helps by spotting anyone who shoots you with an unsuppressed weapon.</li>
               <li><strong>Your camera is in your chest.</strong> Your first-person camera sits in the chest area of your model, so your head is higher than where you look from — peeking over cover, your head can stick out above what you see. Field of view is narrow (85–106° horizontal at the common 55–74° vertical settings), so approaching from the side, even slightly to the front, is safe unless they turn. And you cannot tell whether an enemy is ADSing: the third-person ADS animation lags seconds behind.</li>
               <li><strong>Tracers are not damage.</strong> The enemy's tracers are rendered by your client and can appear to hit you while you take no damage — and vice versa. Judge by health, not by tracers.</li>
               <li><strong>Footsteps:</strong> crouch-walking is audible at ~20 m, sprinting and landing at ~40 m in ideal conditions — rarely audible in a real fight, so don't rely on it.</li>
