@@ -25,7 +25,7 @@ import { sfx } from "./sfx.mjs?v=20261026-sfx2";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-flick1";
 import { mergeFreshRows } from "./rank-row.mjs?v=20261101-opsrv1";
 import { gScores } from "./g-score.mjs?v=20261108-g2f1";
-import { cleanIvIStrong, combinedIvI } from "./clean-ivi.mjs?v=20261110-cln3";
+import { combinedIvI } from "./combined-ivi.mjs?v=20261110-cmb1";
 import { renderAvgPlanetman } from "./average-planetman.mjs?v=20261109-avg3";
 import { readOutfitWorlds } from "./outfit-tags.mjs?v=20261101-osrv1";
 import { layoutLabels, estimateWidth } from "./dist-labels.mjs?v=20261010-sav1";
@@ -91,15 +91,12 @@ export function initRankings(host) {
     { id: "inf", label: tr("col.infantry", "🪖 Infantry"), digits: 1, inf: true, tip: INF_HINT },
   ];
   const DEBUG = [
-    // 🧘🧼 Combined (owner 2026-11-10): 🧘 Pure iVi × (1 − 🌈 G), debug-only, just for
+    // 🧼 Combined (owner 2026-11-10): 🧘 Pure iVi × (1 − 🌈 G), debug-only, just for
     // testing — both discounts at once. 🪳 and G are near-independent (r ≈ −0.06), so
-    // each sin is docked once. Eyfia: Pure 921, Clean 1372, combined 838.
-    { id: "combinedivi", label: "🧘🧼 Pure ×(1−G)", digits: 0, tip: "🧘 Pure iVi × (1 − 🌈 G) (debug-only, just for testing): both discounts at once — the 🪳 crowd charge and the G cheese charge. 🪳 and G are near-independent (r ≈ −0.06), so each sin is docked once. Eyfia: Pure 921, Clean 1372, combined 838." },
-    // 🧼 Clean iVi (owner 2026-11-10): ⚔️ iVi discounted by 🌈 G, debug-only — the strong
-    // strength, kept by the owner's pick (the medium adjs − 10 × G column was removed the
-    // same day: it still left 5 players over G 90% in the top 500). High iVi and high G
-    // can't both survive.
-    { id: "cleanivis", label: "🧼 iVi ×(1−G)", digits: 0, tip: "⚔️ iVi × (1 − 🌈 G) (debug-only): 2000 / 50% → 1000, 2005 / 51% → 982. G is a rank share, not a cheating probability — a chosen rate, not a measurement." },
+    // each sin is docked once. Eyfia: Pure 921 × (1 − 9.1%) → 838. The Clean column
+    // (⚔️ iVi × (1 − G)) was removed the same day by the owner's pick; this column
+    // keeps the 🧼 emoji.
+    { id: "combinedivi", label: "🧼 Pure ×(1−G)", digits: 0, tip: "🧘 Pure iVi × (1 − 🌈 G) (debug-only, just for testing): both discounts at once — the 🪳 crowd charge and the G cheese charge. 🪳 and G are near-independent (r ≈ −0.06), so each sin is docked once. Eyfia: Pure 921 × (1 − 9.1%) → 838." },
     { id: "mech", label: "⚙️ Mech%", digits: 1, tip: "Estimated share of your fights that are vehicle or mech play, projected from 🛡️ Resist rather than measured from shooting." },
     { id: "adj", label: "🎯🎈 ivi", digits: 0, tip: "Opposition-weighted IvI (before speed adjustment)" },
     { id: "ekpm", label: "eKPM", digits: 2, tip: "Average enemy weapon KPM faced" },
@@ -397,11 +394,7 @@ export function initRankings(host) {
       for (const o of rows) o.g = gMap.get(o) ?? null;
       pools.g = rows.map((o) => o.g).filter(fin).sort((a, b) => a - b);
       for (const o of rows) o.pcts.g = pctOf(pools.g, o.g);
-      // 🧼 Clean iVi (owner 2026-11-10): ⚔️ iVi discounted by 🌈 G, debug-only.
-      for (const o of rows) o.cleanivis = cleanIvIStrong(o.adjs, o.g);
-      pools.cleanivis = rows.map((o) => o.cleanivis).filter(fin).sort((a, b) => a - b);
-      for (const o of rows) o.pcts.cleanivis = pctOf(pools.cleanivis, o.cleanivis);
-      // 🧘🧼 Combined (owner 2026-11-10): 🧘 Pure iVi × (1 − 🌈 G), debug-only, just
+      // 🧼 Combined (owner 2026-11-10): 🧘 Pure iVi × (1 − 🌈 G), debug-only, just
       // for testing. Base is the Pure value — never the evened-out ⚔️ iVi, or 🪳
       // gets charged twice. Null on PS (Pure is null there) and when G is missing.
       for (const o of rows) o.combinedivi = combinedIvI(o.pureivi, o.g);
@@ -507,7 +500,7 @@ export function initRankings(host) {
   // Sized to fit the header label + sort indicator, the widest thing in the column.
   const COL_W = {
     adjs: 9, act: 13, pvs: 10, rf: 11, cons: 10, luck: 9, apk: 12, zerg: 10, diff: 8, rkd: 8, inf: 13,
-    mech: 11, adj: 10, ekpm: 8, own: 10, coi: 9, slope: 10, inflation: 13, cleanivis: 14, combinedivi: 16,
+    mech: 11, adj: 10, ekpm: 8, own: 10, coi: 9, slope: 10, inflation: 13, combinedivi: 16,
     kd: 8, kpm: 8, ownKpm: 12, acc: 8, hsr: 8, ivi: 8,
   };
 
