@@ -69,6 +69,7 @@ const SAGE_GUIDES = new Map([
   [7253, "weapon-sage-t9-carv-s.html"],
   [1924, "weapon-sage-t9a-butcher.html"],
   [7256, "weapon-sage-tmg-50.html"],
+  [804249, "weapon-sage-nsx-naginata.html"],
   [14, "weapon-sage-t1-cycler.html"],
   [7124, "weapon-sage-cycler-trv.html"],
   [1909, "weapon-sage-darkstar.html"],
