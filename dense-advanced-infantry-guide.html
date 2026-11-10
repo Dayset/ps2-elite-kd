@@ -191,6 +191,12 @@
       .trick h4 { margin: 0 0 4px; font-size: 16px; font-weight: 800; }
       .trick p { margin-bottom: 8px; }
 
+      /* ---------- inline figures ---------- */
+      figure.fig { border: 1px solid var(--line); background: var(--surface); margin: 18px 0; padding: 14px 16px 10px; box-shadow: var(--shadow); }
+      figure.fig svg { display: block; width: 100%; height: auto; }
+      figure.fig figcaption { font-size: 13.5px; color: var(--ink-2); margin-top: 8px; max-width: 76ch; }
+      figure.fig text { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+
       footer { border-top: 2px solid var(--ink); padding-top: 18px; margin-top: 10px; font-size: 14px; color: var(--ink-2); }
       footer h2 { font-size: 18px; color: var(--ink); margin: 0 0 10px; }
       footer ul { list-style: none; padding: 0; margin: 0 0 14px; }
@@ -250,14 +256,14 @@
             <p class="sub">How many bullets a kill takes is arithmetic, not feel. Learn the tiers and you can read any weapon's card at a glance.</p>
 
             <ul>
-              <li><strong>Health pools:</strong> standard infantry <strong>1000 HP</strong> (500 health + 500 shields). Infiltrator <strong>900</strong> (500 + 400). MAX <strong>2000 HP, no shields</strong>.</li>
-              <li><strong>Falloff is linear:</strong> full damage out to the max-damage range, then a straight line down to minimum damage, then flat. Example from the articles: TRAC-5, 143 @ 10 m → 112 @ 60 m.</li>
-              <li><strong>Bullets to kill:</strong> <code>BTK = ceil(target HP ÷ bullet damage)</code>. One point of damage can change the count — the TRAC-5 needs 7 bullets at 143 (7 × 143 = 1001) but 8 at 142 (7 × 142 = 994). Most automatics drop two damage tiers over their range; SMGs typically drop four.</li>
-              <li><strong>Rounding:</strong> damage reduced by resistances or armour rounds <em>up</em>; damage reduced by range degradation rounds <em>down</em>.</li>
-              <li><strong>Headshots ×2</strong> for most weapons, and they ignore Nanoweave. Exceptions: bolt-action snipers 2.1×, shotguns / T7 Mini-Chaingun / Hunter crossbow 1.5×, NS-61 Emissary 1.8×, NSX Tomoe 2.5×, NSX Daimyo 5×. At ×2, 143- and 125-damage bullets need 4 headshots; 200- and 167-damage bullets need 3.</li>
-              <li><strong>Legs ×0.9</strong> for all known small arms and machine guns. Arms and body take normal damage. The weapon model is ignored by bullets — only the body part hit matters.</li>
-              <li><strong>Hit markers:</strong> plain hit = cross, headshot = double cross, any hit over 250 damage adds a circle.</li>
-              <li><strong>DPS and TTK:</strong> <code>DPS = damage × RoF ÷ 60</code>; <code>TTK = (BTK − 1) ÷ (RoF ÷ 60)</code>. TRAC-5: DPS 1787, TTK 0.48 s. The articles give average TTK as ~0.5 s.</li>
+              <li><strong>Health pools.</strong> Standard infantry has <strong>1000 HP</strong>: 500 health plus 500 shields. An Infiltrator has 900 (500 + 400). A MAX has 2000 HP and no shields at all.</li>
+              <li><strong>Falloff is a straight line.</strong> A weapon deals full damage out to its max-damage range, then loses damage steadily until it reaches its minimum, then stays flat. Worked example: the TRAC-5 deals 143 damage to 10 m and 112 at 60 m.</li>
+              <li><strong>Bullets to kill:</strong> <code>BTK = ceil(target HP ÷ bullet damage)</code>. One point of damage can change the count: the TRAC-5 needs 7 bullets at 143 (7 × 143 = 1001) but 8 at 142 (7 × 142 = 994). Most automatics cross two damage tiers over their range; SMGs typically cross four.</li>
+              <li><strong>Rounding:</strong> damage reduced by resistances or armour rounds <em>up</em>. Damage reduced by range degradation rounds <em>down</em>.</li>
+              <li><strong>Headshots deal ×2</strong> for most weapons, and they ignore Nanoweave. The exceptions: bolt-action snipers 2.1×; shotguns, the T7 Mini-Chaingun and the Hunter crossbow 1.5×; the NS-61 Emissary 1.8×; the NSX Tomoe 2.5×; the NSX Daimyo 5×. At ×2, a 143- or 125-damage weapon needs 4 headshots to kill; a 200- or 167-damage weapon needs 3.</li>
+              <li><strong>Legs take ×0.9</strong> for all known small arms and machine guns. Arms and body take full damage. Bullets ignore the weapon model — only the body part they hit matters.</li>
+              <li><strong>Hit markers:</strong> a plain hit shows a cross, a headshot a double cross, and any hit above 250 damage adds a circle around them.</li>
+              <li><strong>DPS and TTK:</strong> <code>DPS = damage × RoF ÷ 60</code>; <code>TTK = (BTK − 1) ÷ (RoF ÷ 60)</code>. The TRAC-5 works out to DPS 1787 and TTK 0.48 s; the articles give ~0.5 s as the average TTK across weapons.</li>
             </ul>
 
             <h3>Damage tiers against a 1000-HP target</h3>
@@ -279,14 +285,37 @@
               <span class="tier"><b>67</b><i>15 shots</i></span>
             </div>
 
+            <figure class="fig">
+              <svg viewBox="0 0 640 230" role="img" aria-label="Linear damage falloff: the TRAC-5 deals full 143 damage out to 10 metres, then a straight line down to 112 at 60 metres, then flat">
+                <rect x="60" y="20" width="55" height="160" fill="var(--accent-soft)"/>
+                <rect x="115" y="20" width="275" height="160" fill="var(--surface-2)"/>
+                <line x1="60" y1="180" x2="610" y2="180" stroke="var(--ink)" stroke-width="1.5"/>
+                <line x1="60" y1="20" x2="60" y2="180" stroke="var(--ink)" stroke-width="1.5"/>
+                <line x1="60" y1="42" x2="610" y2="42" stroke="var(--ink-3)" stroke-dasharray="4 4"/>
+                <line x1="60" y1="142" x2="610" y2="142" stroke="var(--ink-3)" stroke-dasharray="4 4"/>
+                <text x="606" y="38" font-size="12" fill="var(--ink-2)" text-anchor="end">143 — max damage</text>
+                <text x="606" y="138" font-size="12" fill="var(--ink-2)" text-anchor="end">112 — min damage</text>
+                <line x1="115" y1="20" x2="115" y2="180" stroke="var(--ink-3)" stroke-dasharray="2 4"/>
+                <line x1="390" y1="20" x2="390" y2="180" stroke="var(--ink-3)" stroke-dasharray="2 4"/>
+                <polyline points="60,42 115,42 390,142 610,142" fill="none" stroke="var(--accent)" stroke-width="3"/>
+                <text x="115" y="198" font-size="12" fill="var(--ink-2)" text-anchor="middle">10 m</text>
+                <text x="390" y="198" font-size="12" fill="var(--ink-2)" text-anchor="middle">60 m</text>
+                <text x="600" y="198" font-size="12" fill="var(--ink-2)" text-anchor="end">range</text>
+                <text x="87" y="36" font-size="11" fill="var(--ink-2)" text-anchor="middle">full damage</text>
+                <text x="252" y="120" font-size="11" fill="var(--ink-2)" text-anchor="middle">linear falloff</text>
+                <text x="500" y="132" font-size="11" fill="var(--ink-2)" text-anchor="middle">flat minimum</text>
+              </svg>
+              <figcaption>Falloff is a straight line, not a curve — TRAC-5: 143 damage out to 10 m, down to 112 at 60 m, flat after. One point less damage can add a whole bullet to the kill (143 → 7 bullets, 142 → 8).</figcaption>
+            </figure>
+
             <h3>Alpha vs rate of fire</h3>
-            <p>High bullet damage wins the <em>first</em> shot: a 200-damage gun has done 200 with its first bullet while a 125-damage gun has done 125, and rate of fire only matters from the second shot on. High damage also finishes wounded targets and punishes less when you can only land single shots on a partly exposed enemy. High rate of fire wins when BTK rises by one, and is more forgiving in close quarters against a dodging target.</p>
+            <p>High bullet damage wins the <em>first</em> shot: after one bullet a 200-damage gun has dealt 200 while a 125-damage gun has dealt 125 — rate of fire only matters from the second shot on. High damage also finishes wounded targets faster and punishes you less when you can only land single shots on a partly exposed enemy. High rate of fire wins when the extra bullet raises BTK by one, and it is more forgiving in close quarters against a dodging target.</p>
 
             <h3>Drop, reloads, and being heard</h3>
             <ul>
-              <li><strong>Gravity:</strong> 11.25 for infantry weapons, 7.5 for bolt-action snipers, 8 for shotgun slugs. VS weapons have no drop except bolt-action snipers, launchers and slugs — but lower velocity on average. Lead moving targets; aim high at distance.</li>
-              <li><strong>Reloads come in two lengths:</strong> short (magazine swapped, chamber not cycled) and long (empty magazine, chamber cycled). TRAC-5: 2.595 s short / 3.8 s long. Topping off is almost always the cheaper reload.</li>
-              <li><strong>Fire detect range</strong> (unsuppressed) — how far your shots show you: 40–50 m for most infantry weapons, 60 m second-generation battle rifles, 100 m sniper rifles and rocket launchers, 150 m directive snipers and the Archer, 40 m TRAP-M1, 10 m Hunter crossbow, 5 m power knife. Compensator adds 35 m, flash suppressor adds 15 m, a suppressor removes it entirely.</li>
+              <li><strong>Bullets drop.</strong> Gravity pulls infantry weapons' bullets at 11.25 (7.5 for bolt-action snipers, 8 for shotgun slugs). Vanu weapons have no drop — except their bolt-action snipers, launchers and slugs — but they fire slower bullets on average. Whatever you shoot: lead moving targets and aim high at distance.</li>
+              <li><strong>Reloads come in two lengths.</strong> A short reload swaps the magazine without cycling the chamber; a long reload starts from an empty magazine and cycles it. The TRAC-5 needs 2.595 s short, 3.8 s long. Topping off a part-spent magazine is almost always the cheaper reload.</li>
+              <li><strong>Fire detect range</strong> is how far away your unsuppressed shots reveal you: 40–50 m for most infantry weapons, 60 m for second-generation battle rifles, 100 m for sniper rifles and rocket launchers, 150 m for directive snipers and the Archer, 40 m for the TRAP-M1, 10 m for the Hunter crossbow, 5 m for the power knife. A Compensator adds 35 m to it, a flash suppressor 15 m, and a suppressor removes it entirely.</li>
             </ul>
 
             <div class="calc" id="btkCalc">
@@ -342,23 +371,49 @@
             <p class="sub">Bullets land randomly inside a cone, measured in degrees. The cone has a minimum, a current value and a maximum — and two stance rules that the whole ADAD rhythm is built on.</p>
 
             <ul>
-              <li><strong>Bloom:</strong> every shot grows the current cone by the weapon's bloom per shot, up to its maximum. Higher-damage bullets usually bloom more. Hipfire bloom is usually double the ADS bloom (SMGs, the T7 MCG and most sniper rifles excepted).</li>
-              <li><strong>Recovery:</strong> stop firing and the cone shrinks back to the stance minimum after a delay equal to the weapon's refire time, at <strong>20°/s</strong> for most weapons. Worked example (TRAC-5, moving ADS): cone 0.3, ten shots bloom it 0.05 × 10 = 0.5 up to 0.8; refire is 60 ÷ 750 = 0.08 s, recovery takes (0.8 − 0.3) ÷ 20 = 0.025 s — full reset 0.105 s after the last shot.</li>
-              <li><strong>Stance sets the floor:</strong> minimum and maximum depend on still / moving / crouching / jumping / falling, and on hipfire vs ADS. Sprint CoF is meaningless — you cannot fire while sprinting, and sprint recovery outlasts it. When you stop firing, the current cone drops to the stance minimum almost instantly.</li>
-              <li><strong>Jumping</strong> kicks you out of ADS at once and gives most weapons a huge minimum cone mid-air. Exceptions: carbines and the Rocklet Rifle keep usable accuracy while jumping and flying — the basis of Light Assault aerial combat. Repeated jumps slow you down, stacking until you crawl. Falling a short distance (~5 m) counts as standing-moving, and you can ADS while falling.</li>
+              <li><strong>Bloom.</strong> Every shot grows the current cone by the weapon's bloom-per-shot value, up to the cone's maximum. Higher-damage bullets usually bloom more. Hipfire bloom is usually double the ADS bloom — the exceptions are SMGs, the T7 MCG and most sniper rifles.</li>
+              <li><strong>Recovery.</strong> Stop firing, wait out a delay equal to the weapon's refire time, and the cone shrinks back to the stance minimum at <strong>20°/s</strong> for most weapons. Worked example (TRAC-5, moving ADS): ten shots bloom the cone 0.05 × 10 = 0.5 above its 0.3 floor, to 0.8. The refire time is 60 ÷ 750 = 0.08 s, so recovery takes (0.8 − 0.3) ÷ 20 = 0.025 s — a full reset just 0.105 s after the last shot.</li>
+              <li><strong>Stance sets the floor.</strong> The cone's minimum and maximum depend on whether you stand still, move, crouch, jump or fall — and on hipfire vs ADS. The sprint CoF is meaningless: you cannot fire while sprinting, and the sprint recovery delay outlasts it anyway.</li>
+              <li><strong>Jumping</strong> kicks you out of ADS at once, and mid-air most weapons get a huge minimum cone. The exceptions — carbines and the Rocklet Rifle keep usable accuracy while jumping and flying — are the basis of Light Assault aerial combat. Repeated jumps slow you down, the penalty stacking until you crawl. Falling a short distance (~5 m) counts as standing-moving, and you can ADS while falling.</li>
             </ul>
 
             <div class="rule">
               <span class="tag">CoF rule 1</span>
-              <p><strong>The cone cannot shrink while you fire.</strong> Start firing from the hip and ADS mid-burst, and your cone stays as big as it was — only the bloom rate changes to the ADS value. Either don't ADS mid-burst, or stop firing for a moment to let it reset.</p>
-              <p>One exception: if the current cone exceeds the new stance's <em>maximum</em>, it snaps down to that maximum at once. The T7 MCG (fixed ADS cone) and the NSX Naginata (tiny still-ADS maximum) can exploit this.</p>
+              <p><strong>The cone cannot shrink while you fire.</strong> Start firing from the hip and ADS mid-burst, and the cone stays as big as it already was — only the bloom rate changes to the ADS value. So either don't ADS mid-burst, or stop firing for a moment and let the cone reset.</p>
+              <p>One exception: if the current cone exceeds the new stance's <em>maximum</em>, it snaps down to that maximum at once. The T7 MCG (a fixed ADS cone) and the NSX Naginata (a tiny still-ADS maximum) can exploit that.</p>
             </div>
 
             <div class="rule">
               <span class="tag">CoF rule 2 — the ADAD rule</span>
-              <p><strong>Stand still for the first shots, then move for free.</strong> Change stance while firing and, if your current cone is smaller than the new stance's minimum, it rises to match; if it is larger, it stays. So fire the opening shots standing still, and once bloom has pushed the cone past the moving minimum, start strafing — it costs no accuracy at all.</p>
+              <p><strong>Stand still for the first shots, then move for free.</strong> Change stance while firing, and if your current cone is smaller than the new stance's minimum, it rises to match; if it is larger, it stays. That gives the rhythm: fire the opening shots standing still, and once bloom has pushed the cone past the moving minimum, start strafing — movement costs no accuracy at all from that shot on.</p>
               <p><code>n<sub>still</sub></code> = the shots it takes for the cone to bloom up to the moving minimum: the smallest n with <code>still CoF + n × bloom ≥ moving min CoF</code>. TRAC-5 (still 0.1, moving 0.3, bloom 0.05): 4 still shots, then move. Gauss Rifle (0.03, 0.3, 0.06): 5 still shots, then move.</p>
             </div>
+
+            <figure class="fig">
+              <svg viewBox="0 0 640 235" role="img" aria-label="ADAD rhythm: four shots standing still bloom the cone from the 0.1 degree still minimum up to the 0.3 degree moving minimum; from the fifth shot on, strafing is free">
+                <line x1="60" y1="154" x2="610" y2="154" stroke="var(--ink-3)" stroke-dasharray="4 4"/>
+                <text x="606" y="149" font-size="12" fill="var(--ink-2)" text-anchor="end">still min 0.1°</text>
+                <line x1="60" y1="102" x2="610" y2="102" stroke="var(--ink-3)" stroke-dasharray="4 4"/>
+                <text x="606" y="97" font-size="12" fill="var(--ink-2)" text-anchor="end">moving min 0.3°</text>
+                <rect x="90" y="141" width="28" height="13" fill="var(--accent)"/>
+                <rect x="140" y="128" width="28" height="26" fill="var(--accent)"/>
+                <rect x="190" y="115" width="28" height="39" fill="var(--accent)"/>
+                <rect x="240" y="102" width="28" height="52" fill="var(--accent)"/>
+                <text x="104" y="175" font-size="12" fill="var(--ink-2)" text-anchor="middle">1</text>
+                <text x="154" y="175" font-size="12" fill="var(--ink-2)" text-anchor="middle">2</text>
+                <text x="204" y="175" font-size="12" fill="var(--ink-2)" text-anchor="middle">3</text>
+                <text x="254" y="175" font-size="12" fill="var(--ink-2)" text-anchor="middle">4</text>
+                <text x="176" y="196" font-size="12" fill="var(--ink-2)" text-anchor="middle">shots 1–4: stand still (TRAC-5: 0.1 + n × 0.05)</text>
+                <rect x="300" y="20" width="310" height="160" fill="var(--accent-soft)"/>
+                <text x="455" y="95" font-size="13" fill="var(--ink)" text-anchor="middle" font-weight="700">shot 5 and on:</text>
+                <text x="455" y="115" font-size="13" fill="var(--ink)" text-anchor="middle">strafe — it costs no accuracy</text>
+                <text x="455" y="135" font-size="12" fill="var(--ink-2)" text-anchor="middle">the cone is already at or above the</text>
+                <text x="455" y="151" font-size="12" fill="var(--ink-2)" text-anchor="middle">moving minimum</text>
+                <path d="M280,100 L296,100" stroke="var(--accent)" stroke-width="2"/>
+                <path d="M296,100 L288,96 L288,104 Z" fill="var(--accent)"/>
+              </svg>
+              <figcaption>CoF rule 2 as a picture (TRAC-5, moving ADS): each still shot blooms the cone 0.05°, so shot 4 crosses the moving minimum of 0.3° — from shot 5 on, movement is free. Gauss Rifle needs 5 still shots (0.03 / 0.3 / 0.06). Per-weapon counts: the ADAD calculator.</figcaption>
+            </figure>
 
             <div class="note verified">
               <span class="tag">Verified 2026</span>
@@ -400,8 +455,8 @@
 
             <h3>ADS speed and scope-in</h3>
             <ul>
-              <li><strong>ADS movement speed</strong> is normally 0.5×. Some weapons allow <strong>0.75×</strong> — 50% faster strafing while aimed, which makes their ADAD far more effective. The articles' list includes the TAR, GR-22, Carnage BR, H-V45, NS-11A; Jaguar, Bandit, Zenith, NS-11C, NSX Tanto; all SMGs, all shotguns including the Jackhammer, all sidearms; NS-15M; NS-30 Vandal; NS-AM7 Archer. The NSX Masamune sits at 0.33×.</li>
-              <li><strong>Scope-in times:</strong> 150 ms for most weapons, 250–300 ms sniper rifles, 350 ms rocket launchers; an HS/NV scope adds 100 ms. Scope-out is 150 ms. These are animation times — the cone changes on its own schedule, which is why rule 1 bites when you fire too early.</li>
+              <li><strong>ADS movement speed</strong> is normally 0.5×. Some weapons allow <strong>0.75×</strong> — 50% faster strafing while aimed, which makes their ADAD rhythm far more effective. The articles' list: the TAR, GR-22, Carnage BR, H-V45, NS-11A; the Jaguar, Bandit, Zenith, NS-11C, NSX Tanto; all SMGs; all shotguns including the Jackhammer; all sidearms; the NS-15M, NS-30 Vandal and NS-AM7 Archer. The NSX Masamune sits at 0.33×.</li>
+              <li><strong>Scope-in times:</strong> 150 ms for most weapons, 250–300 ms for sniper rifles, 350 ms for rocket launchers; an HS/NV scope adds 100 ms. Scope-out is 150 ms. These are animation times — the cone changes on its own schedule, which is why firing before the animation ends triggers rule 1.</li>
             </ul>
             <div class="note dated">
               <span class="tag">Dated — check before trusting</span>
@@ -418,21 +473,21 @@
               <div>
                 <h3>What you can and cannot counter</h3>
                 <ul>
-                  <li><strong>Vertical recoil</strong> (kick up) is countered by pulling the mouse down the same amount, shot for shot.</li>
-                  <li><strong>Horizontal recoil</strong> (side-to-side rattle) is random per shot and <strong>cannot</strong> be countered by mouse movement — only corrected after the fact, and mitigated by shorter bursts.</li>
-                  <li><strong>Recoil angle:</strong> a random value between the weapon's angle min and max, rolled per shot, tilting the whole pattern — this is what makes a gun pull left or right. "Horizontal recoil bias" does not exist as a separate mechanic.</li>
-                  <li>Recoil is measured in degrees and is absolute: a low-magnification scope does <strong>not</strong> have less recoil than a high-magnification one. The kick is identical; it just looks bigger zoomed in.</li>
+                  <li><strong>Vertical recoil</strong> kicks the crosshair up, and you counter it by pulling the mouse down the same amount, shot for shot.</li>
+                  <li><strong>Horizontal recoil</strong> rattles the crosshair side to side, randomly per shot. It <strong>cannot</strong> be countered by mouse movement — only corrected after the fact, and mitigated by firing shorter bursts.</li>
+                  <li><strong>Recoil angle:</strong> each shot rolls a random angle between the weapon's angle min and max, tilting the whole pattern — this is what makes a gun pull left or right. "Horizontal recoil bias" does not exist as a separate mechanic.</li>
+                  <li>Recoil is measured in degrees and is absolute: a low-magnification scope does <strong>not</strong> reduce it compared to a high-magnification one. The kick is identical — it just looks bigger when you are zoomed in.</li>
                 </ul>
               </div>
               <div>
                 <h3>First-shot recoil multiplier</h3>
-                <p>The <strong>FSRM</strong> multiplies the vertical recoil of the first shot of a burst, of every semi-auto shot, and of the first shot of a full-auto string. The TRAC-5's is 2.35×. This is the hidden tax on bursting and tap-firing: every burst pays it again. Counter it by aiming low in advance and letting the first kick carry the crosshair up onto the target.</p>
-                <p>It is also why the articles say to <strong>avoid single-shot and burst fire modes</strong> where possible — every shot in those modes takes the multiplier. Fixed-burst weapons are the exception.</p>
+                <p>The <strong>FSRM</strong> (first-shot recoil multiplier) multiplies the vertical recoil of the first shot of every burst, of every semi-auto shot, and of the first shot of a full-auto string — the TRAC-5's is 2.35×. It is a hidden tax on bursting and tap-firing: every burst pays it again. Counter it by aiming low in advance and letting the first kick carry the crosshair up onto the target.</p>
+                <p>It is also why the articles say to <strong>avoid single-shot and burst fire modes</strong> where possible: every shot in those modes takes the multiplier. Fixed-burst weapons are the exception.</p>
               </div>
             </div>
 
             <h3>Horizontal recoil tolerance — how far a burst can walk</h3>
-            <p>The <strong>HRT</strong> is the angle around the first shot's crosshair position that bounds horizontal recoil. The rule: accumulated horizontal recoil can exceed <strong>half</strong> the tolerance once; the next kick is then forced the other way. So:</p>
+            <p>The <strong>HRT</strong> is the angle around the first shot's crosshair position that bounds horizontal recoil. The bound: once a burst's kicks have carried the crosshair past <strong>half</strong> the tolerance in one direction, the next kick is forced back the other way. Two formulas follow:</p>
             <ul>
               <li><code>N<sub>kicks</sub> = floor((HRT ÷ 2) ÷ minimum horizontal recoil) + 1</code></li>
               <li><code>Pattern width = N<sub>kicks</sub> × maximum horizontal recoil × 2</code></li>
@@ -448,7 +503,35 @@
                 </tbody>
               </table>
             </div>
-            <p>The practical reading: once a burst has kicked the tolerance limit in one direction, it <em>must</em> come back — long bursts don't drift forever, they rattle inside a bounded width. Short bursts keep you far from the bound entirely.</p>
+            <p>The practical reading: once a burst has kicked the crosshair to the tolerance limit in one direction, the next kick <em>must</em> go back the other way. Long bursts don't drift forever — they rattle inside a bounded width. Short bursts keep you far from the bound entirely.</p>
+
+            <figure class="fig">
+              <svg viewBox="0 0 640 240" role="img" aria-label="Vertical recoil can be countered by pulling the mouse down; horizontal recoil is random but bounded by the tolerance, so the pattern rattles inside a fixed width">
+                <circle cx="160" cy="130" r="14" fill="none" stroke="var(--ink)" stroke-width="2"/>
+                <line x1="150" y1="130" x2="170" y2="130" stroke="var(--ink)"/>
+                <line x1="160" y1="120" x2="160" y2="140" stroke="var(--ink)"/>
+                <line x1="160" y1="112" x2="160" y2="60" stroke="var(--bad)" stroke-width="3"/>
+                <path d="M160,52 L154,64 L166,64 Z" fill="var(--bad)"/>
+                <text x="160" y="42" font-size="12" fill="var(--bad)" text-anchor="middle">vertical — kick up</text>
+                <line x1="192" y1="70" x2="192" y2="118" stroke="var(--good)" stroke-width="3"/>
+                <path d="M192,126 L186,114 L198,114 Z" fill="var(--good)"/>
+                <text x="192" y="160" font-size="12" fill="var(--good)" text-anchor="middle">your pull — counters it</text>
+                <text x="160" y="186" font-size="12" fill="var(--ink-2)" text-anchor="middle">one direction, shot for shot:</text>
+                <text x="160" y="202" font-size="12" fill="var(--ink-2)" text-anchor="middle">a mouse problem</text>
+                <line x1="400" y1="60" x2="400" y2="170" stroke="var(--ink-3)" stroke-dasharray="4 4"/>
+                <line x1="540" y1="60" x2="540" y2="170" stroke="var(--ink-3)" stroke-dasharray="4 4"/>
+                <polyline points="470,150 425,110 510,110 415,85 535,85 470,60" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+                <circle cx="470" cy="150" r="5" fill="var(--ink)"/>
+                <text x="470" y="176" font-size="11" fill="var(--ink-3)" text-anchor="middle">first shot</text>
+                <line x1="400" y1="40" x2="540" y2="40" stroke="var(--ink)" stroke-width="1.5"/>
+                <text x="470" y="30" font-size="12" fill="var(--ink-2)" text-anchor="middle">pattern width</text>
+                <text x="398" y="188" font-size="11" fill="var(--ink-3)" text-anchor="middle">− tolerance ÷ 2</text>
+                <text x="542" y="188" font-size="11" fill="var(--ink-3)" text-anchor="middle">+ tolerance ÷ 2</text>
+                <text x="470" y="214" font-size="12" fill="var(--ink-2)" text-anchor="middle">random per shot, bounded, uncounterable —</text>
+                <text x="470" y="230" font-size="12" fill="var(--ink-2)" text-anchor="middle">a burst-length problem</text>
+              </svg>
+              <figcaption>The two recoil families, side by side. Vertical: one direction, counter it with the mouse. Horizontal: random kicks that cannot be countered — but past half the tolerance the next kick is forced back, so long bursts rattle inside a bounded width (TRAC-5: ~0.9°) instead of drifting forever. Short bursts keep you far from the bound entirely.</figcaption>
+            </figure>
 
             <div class="note dead">
               <span class="tag">Dead — do not use</span>
@@ -457,11 +540,11 @@
 
             <h3>Recoil recovery and the pull-down quirk</h3>
             <ul>
-              <li>After you stop firing, the crosshair returns after a true delay of <code>refire time + recoil recovery delay</code>. The recovery delay often equals the refire time, so the true delay is often <strong>2× refire</strong>. Shotguns, battle rifles, semi-auto snipers and scouts start recovering earlier.</li>
-              <li>Recovery speed is the weapon's recoil decrease in degrees per second (TRAC-5: 18°/s).</li>
-              <li><strong>The quirk:</strong> recovery only works properly if you <em>don't</em> move the crosshair to counteract vertical recoil. Pull down through a long burst and the crosshair barely moves when you release the trigger — the game was quietly cancelling your pull. On weapons you tap-fire, this decides your cadence: <strong>recentering time</strong> depends on vertical recoil, horizontal recoil, refire time, recovery delay and recovery rate. Fast tap firing wants high RoF, low recoil, low recovery delay, high recovery rate.</li>
-              <li>Some weapons scale recoil over a burst — the MGR-L1 Promise is the worked example, its vertical and horizontal recoil falling from maximum to minimum over the first 4–5 shots. Attachments don't change the scaling values.</li>
-              <li>The six recoil types rank from best — unvaried horizontal recoil, no angle, only the left/right direction random — to worst: varied horizontal recoil with varied angle, five random variables, typical of CQC weapons.</li>
+              <li>After you stop firing, the crosshair starts returning only after <code>refire time + recoil recovery delay</code>. The recovery delay often equals the refire time, so the wait is often <strong>2× refire</strong> in total. Shotguns, battle rifles, semi-auto snipers and scout rifles start recovering earlier.</li>
+              <li>Recovery speed is the weapon's recoil-decrease stat, in degrees per second (TRAC-5: 18°/s).</li>
+              <li><strong>The quirk:</strong> recovery only works properly if you <em>don't</em> pull the mouse down to counter vertical recoil. Pull down through a long burst and the crosshair barely moves when you release the trigger — the game was quietly cancelling your pull. For tap-firing this decides the cadence: <strong>recentering time</strong> depends on vertical recoil, horizontal recoil, refire time, recovery delay and recovery rate. Fast tap-firing wants high RoF, low recoil, a short recovery delay and a fast recovery rate.</li>
+              <li>Some weapons scale their recoil over a burst — the MGR-L1 Promise is the worked example: its vertical and horizontal recoil fall from maximum to minimum over the first 4–5 shots. Attachments do not change the scaling values.</li>
+              <li>The six recoil types rank from best to worst: best is unvaried horizontal recoil with no angle, only the left/right direction random; worst is varied horizontal recoil with a varied angle — five random variables per shot, typical of CQC weapons.</li>
             </ul>
           </section>
 
@@ -473,19 +556,19 @@
               <table>
                 <thead><tr><th>Constant</th><th class="n">Value</th><th>Why it matters</th></tr></thead>
                 <tbody>
-                  <tr><td>Sprint recovery</td><td class="n">0.3 s</td><td>Delay before you can fire after stopping a sprint (0.5 s for MAX weapons). Sprint around a corner into a waiting enemy and you hand them a third of a second for free.</td></tr>
+                  <tr><td>Sprint recovery</td><td class="n">0.3 s</td><td>After you stop a sprint, you cannot fire for 0.3 s (0.5 s for MAX weapons). Sprint around a corner into a waiting enemy and you hand them a third of a second for free.</td></tr>
                   <tr><td>Scope-in</td><td class="n">150 ms</td><td>Most weapons. 250–300 ms sniper rifles, 350 ms launchers, +100 ms with HS/NV. Scope-out 150 ms.</td></tr>
-                  <tr><td>Equip / unequip</td><td class="n">0.25 s unequip</td><td>Unequip is 0.25 s for all weapons except anti-materiel rifles. Equip: 0.25 s pistols and knife, 0.55–1.2 s primaries. Forward Grip and underbarrel launchers increase equip time.</td></tr>
-                  <tr><td>Weapon switching</td><td class="n">ignores refire</td><td>Switching items ignores refire time — fire a rocket or a sniper shot and switch instantly instead of waiting out the cycle.</td></tr>
-                  <tr><td>Bolt / pump cycle</td><td class="n">refire + chamber</td><td>Almost all bolt-actions: 170 ms refire; the M-77B chambers in 1225 ms, so 1395 ms between shots. Pump shotguns: 150 ms + 600/700 ms = 750/850 ms.</td></tr>
-                  <tr><td>CoF recovery delay</td><td class="n">= refire time</td><td>Then the cone shrinks at 20°/s. A full reset on most automatics lands ~0.1 s after the last shot.</td></tr>
-                  <tr><td>Recoil recovery delay</td><td class="n">≈ refire + delay</td><td>Often 2× refire in total before the crosshair starts returning.</td></tr>
-                  <tr><td>Reaction time</td><td class="n">~150 ms</td><td>Best case for a fast human reaction. No training beats it — the only way past it is prediction (§05).</td></tr>
-                  <tr><td>Internet delay</td><td class="n">~50 ms</td><td>You see the enemy as they were ~50 ms ago; they see the same of you. The engine behind peek-first advantage (§09).</td></tr>
+                  <tr><td>Equip / unequip</td><td class="n">0.25 s unequip</td><td>Unequip takes 0.25 s for every weapon except anti-materiel rifles. Equip takes 0.25 s for pistols and the knife, 0.55–1.2 s for primaries; a Forward Grip or an underbarrel launcher adds to it.</td></tr>
+                  <tr><td>Weapon switching</td><td class="n">ignores refire</td><td>Switching items ignores the refire time: fire a rocket or a sniper shot, then switch instantly instead of waiting out the chambering.</td></tr>
+                  <tr><td>Bolt / pump cycle</td><td class="n">refire + chamber</td><td>Bolt-actions have a 170 ms refire on top of the chamber time — the M-77B's 1225 ms chamber means 1395 ms between shots. Pump shotguns: 150 ms + 600/700 ms = 750/850 ms.</td></tr>
+                  <tr><td>CoF recovery delay</td><td class="n">= refire time</td><td>After that delay the cone shrinks at 20°/s, so a full reset on most automatics lands ~0.1 s after the last shot.</td></tr>
+                  <tr><td>Recoil recovery delay</td><td class="n">≈ refire + delay</td><td>Often 2× refire passes in total before the crosshair even starts returning.</td></tr>
+                  <tr><td>Reaction time</td><td class="n">~150 ms</td><td>The best case for a fast human reaction. No training beats it — the only way past it is prediction (§05).</td></tr>
+                  <tr><td>Internet delay</td><td class="n">~50 ms</td><td>You see the enemy as they were ~50 ms ago, and they see the same of you — the engine behind peek-first advantage (§09).</td></tr>
                 </tbody>
               </table>
             </div>
-            <p><strong>The semi-auto queue trick:</strong> after a shot, release and re-press fire while the weapon chambers — it fires the instant it is ready, with no human delay added. Easiest below ~180 RPM, and the difference between a semi-auto's paper RoF and its real one.</p>
+            <p><strong>The semi-auto queue trick:</strong> after a shot, release and re-press fire while the weapon is still chambering — it fires the instant it is ready, adding no human delay. Easiest below ~180 RPM, and it is the difference between a semi-auto's paper RoF and its real one.</p>
             <div class="note dated">
               <span class="tag">Best-case values</span>
               <p>Reaction ~150 ms and delay ~50 ms are the fast end — the articles wrote ~250 ms and ~200 ms, the slow end. Your ping and your opponent's are what they are; the <em>structure</em> (you both fight in the past) is the durable part.</p>
@@ -503,12 +586,12 @@
               <li><strong>Execution</strong> — move the crosshair onto it.</li>
               <li><strong>Confirmation</strong> — check the crosshair is on target, then fire.</li>
             </ol>
-            <p>A fast human reaction is ~150 ms and no training beats it. The only way past it is to <strong>predict</strong> where the enemy will be. Train slowly and deliberately; speed comes from muscle memory, and muscle memory needs <strong>one mouse sensitivity</strong>, kept constant.</p>
-            <p>Best players drop step 3. <strong>Twitch aiming</strong> fires on eye–brain–hand coordination with no confirmation, trading accuracy for speed. <strong>Drag shots</strong> are the extreme form, for weapons that live on a few accurate shots — shotguns, CQC sniping. Start twitch practice on a slow automatic; the guide suggests a 143-damage, 652-RPM weapon.</p>
+            <p>A fast human reaction is ~150 ms, and no training beats it — the only way past it is to <strong>predict</strong> where the enemy will be. Train slowly and deliberately; speed comes from muscle memory, and muscle memory needs <strong>one mouse sensitivity</strong>, kept constant.</p>
+            <p>The best players drop step 3. <strong>Twitch aiming</strong> fires on eye–brain–hand coordination with no confirmation, trading accuracy for speed. <strong>Drag shots</strong> are the extreme form, for weapons that live on a few accurate shots — shotguns, CQC sniping. Start twitch practice on a slow automatic; the guide suggests a 143-damage, 652-RPM weapon.</p>
             <ul>
-              <li><strong>Track the crosshair, not the enemy.</strong> Eyes on the reticule, target in peripheral vision.</li>
-              <li><strong>Pre-aiming:</strong> keep the crosshair where the enemy's head <em>will</em> appear — the edge of a doorway or corner, at head height — so they walk into your sights. Read the minimap and the friendly/enemy dots to predict the approach. Mid-fight, predict their strafe pattern and aim where they are about to move.</li>
-              <li><strong>Pre-firing:</strong> start shooting on a guess before the enemy appears, then correct while firing. It backfires when the guess is wrong — you arrive at the real fight with a bloomed cone and a half-spent magazine.</li>
+              <li><strong>Track the crosshair, not the enemy.</strong> Keep your eyes on the reticule and the target in peripheral vision.</li>
+              <li><strong>Pre-aiming:</strong> hold the crosshair where the enemy's head <em>will</em> appear — the edge of a doorway or corner, at head height — so they walk into your sights. Read the minimap and the friendly/enemy dots to predict the approach, and mid-fight predict their strafe pattern: aim where they are about to be.</li>
+              <li><strong>Pre-firing:</strong> start shooting on a guess before the enemy appears, then correct while firing. When the guess is wrong it backfires — you arrive at the real fight with a bloomed cone and a half-spent magazine.</li>
             </ul>
 
             <h3>Where to aim: centre mass, neck, or head</h3>
@@ -516,13 +599,50 @@
               <table>
                 <thead><tr><th>Aim point</th><th>Who / when</th><th>The trade</th></tr></thead>
                 <tbody>
-                  <tr><td>Centre mass</td><td>Beginners and average players; compromised positions</td><td>Most bullets hit, TTK stays consistent. The head is roughly 4–5× smaller than the torso, so body shots are 4–5× easier to land; a headshot is worth 2× a body shot (2.5× against a Nanoweave target) — pure body shots are not a bad default.</td></tr>
-                  <tr><td>Neck</td><td>Above-average players, most situations</td><td>Some bullets climb into the head from recoil and CoF; most still hit the body. The default of skilled play.</td></tr>
-                  <tr><td>Head</td><td>Unaware enemies; close range; must-kill-fast moments</td><td>Shortest possible TTK, hardest to land and to hold — recoil and CoF work to push shots off a small target.</td></tr>
+                  <tr><td>Centre mass</td><td>Beginners and average players; compromised positions</td><td>Most bullets land and the TTK stays consistent. The head is roughly 4–5× smaller than the torso, so body shots are 4–5× easier to land, while a headshot is worth only 2× a body shot (2.5× against Nanoweave) — pure body shots are not a bad default.</td></tr>
+                  <tr><td>Neck</td><td>Above-average players, most situations</td><td>Aim at the neck and recoil plus CoF climb some bullets into the head while most still hit the body. The default of skilled play.</td></tr>
+                  <tr><td>Head</td><td>Unaware enemies; close range; must-kill-fast moments</td><td>The shortest possible TTK, and the hardest to land and to hold — recoil and CoF work to push your shots off a small target.</td></tr>
                 </tbody>
               </table>
             </div>
-            <p>Skilled players use all three, by situation: a fair 1v1 inside optimal range, both firing at once → <strong>neck</strong>. A compromised position — sprinting, jumping, just finished a hipfire kill, cone in a bad state → <strong>centre mass</strong>. An unaware enemy with a clear head shot → ADS and go for the <strong>head</strong>. Range bends the same way: close → head, further → neck, outside effective range → centre mass.</p>
+            <figure class="fig">
+              <svg viewBox="0 0 640 280" role="img" aria-label="Side view of an infantry soldier aiming down sights, with the three aim zones marked: head, neck and centre mass">
+                <line x1="140" y1="254" x2="330" y2="254" stroke="var(--line)" stroke-width="2"/>
+                <path d="M174,78 a16,16 0 0 1 32,0" fill="var(--ink)"/>
+                <circle cx="190" cy="78" r="14" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="2"/>
+                <rect x="184" y="92" width="12" height="9" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.5"/>
+                <path d="M170,101 L212,101 L220,180 L164,180 Z" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="2"/>
+                <rect x="170" y="180" width="13" height="66" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="2"/>
+                <rect x="197" y="180" width="13" height="66" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="2"/>
+                <rect x="162" y="246" width="24" height="8" fill="var(--ink)"/>
+                <rect x="197" y="246" width="24" height="8" fill="var(--ink)"/>
+                <path d="M170,112 L200,112 L200,130 L178,124 Z" fill="var(--ink)"/>
+                <rect x="200" y="112" width="118" height="7" fill="var(--ink)"/>
+                <rect x="225" y="104" width="20" height="6" fill="var(--ink)"/>
+                <rect x="206" y="119" width="6" height="10" fill="var(--ink)"/>
+                <line x1="196" y1="118" x2="244" y2="115" stroke="var(--ink)" stroke-width="6" stroke-linecap="round"/>
+                <line x1="196" y1="130" x2="258" y2="116" stroke="var(--ink)" stroke-width="6" stroke-linecap="round"/>
+                <circle cx="244" cy="115" r="4" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.5"/>
+                <circle cx="258" cy="116" r="4" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.5"/>
+                <line x1="150" y1="62" x2="630" y2="62" stroke="var(--ink-3)" stroke-dasharray="3 4"/>
+                <line x1="150" y1="92" x2="630" y2="92" stroke="var(--ink-3)" stroke-dasharray="3 4"/>
+                <line x1="150" y1="101" x2="630" y2="101" stroke="var(--ink-3)" stroke-dasharray="3 4"/>
+                <line x1="150" y1="180" x2="630" y2="180" stroke="var(--ink-3)" stroke-dasharray="3 4"/>
+                <line x1="236" y1="75" x2="344" y2="75" stroke="var(--ink-3)" stroke-dasharray="2 3"/>
+                <line x1="236" y1="97" x2="344" y2="97" stroke="var(--ink-3)" stroke-dasharray="2 3"/>
+                <line x1="236" y1="140" x2="344" y2="140" stroke="var(--ink-3)" stroke-dasharray="2 3"/>
+                <text x="350" y="72" font-size="13" fill="var(--bad)" font-weight="700">HEAD ×2</text>
+                <text x="440" y="72" font-size="12" fill="var(--ink-2)">unaware enemy, close range, must-kill-fast</text>
+                <text x="350" y="100" font-size="13" fill="var(--accent)" font-weight="700">NECK</text>
+                <text x="415" y="100" font-size="12" fill="var(--ink-2)">the skilled default — recoil climbs into the head</text>
+                <text x="350" y="143" font-size="13" fill="var(--good)" font-weight="700">CENTRE MASS</text>
+                <text x="475" y="143" font-size="12" fill="var(--ink-2)">most bullets land,</text>
+                <text x="350" y="160" font-size="12" fill="var(--ink-2)">consistent TTK — beginners, compromised positions</text>
+              </svg>
+              <figcaption>Side view, aiming down sights: the three aim points and their trade. The head is roughly 4–5× smaller than the torso, so body shots are 4–5× easier to land while a headshot is worth only 2× (2.5× against Nanoweave). Range bends the choice: close → head, further → neck, outside effective range → centre mass.</figcaption>
+            </figure>
+
+            <p>Skilled players use all three, chosen by situation. A fair 1v1 inside optimal range with both firing at once → <strong>neck</strong>. A compromised position — sprinting, jumping, just finished a hipfire kill, cone in a bad state → <strong>centre mass</strong>. An unaware enemy offering a clean head shot → ADS and take the <strong>head</strong>. Range bends the same way: close → head, further → neck, outside effective range → centre mass.</p>
           </section>
 
           <!-- ============ 6 GREY AREA ============ -->
@@ -530,54 +650,86 @@
             <h2><span class="no">06</span> Hipfire vs ADS — the grey area</h2>
             <p class="sub">Every weapon's effective range splits into a hipfire part and an ADS part. Very close is hipfire, far is ADS — and between them sits the decision that defines mid-level play.</p>
 
-            <p>Attachments move the boundary, not the total: a <strong>Laser Sight</strong> extends hipfire range (not total range); a <strong>Forward Grip</strong> extends total range (not hipfire range); a <strong>Compensator</strong> extends total range but shrinks hipfire range; a <strong>large magazine</strong> extends hipfire range because misses are less punishing.</p>
+            <p>Attachments move the hipfire/ADS boundary, not the total range: a <strong>Laser Sight</strong> extends hipfire range only; a <strong>Forward Grip</strong> extends total range only; a <strong>Compensator</strong> extends total range but shrinks hipfire range; a <strong>large magazine</strong> extends hipfire range, because misses cost less when you carry more ammo.</p>
+
+            <figure class="fig">
+              <svg viewBox="0 0 640 235" role="img" aria-label="Range bar split into a hipfire zone, a grey decision area and an ADS zone, with the weapon classes' effective ranges marked underneath">
+                <rect x="70" y="70" width="80" height="36" fill="var(--accent-soft)" stroke="var(--ink)"/>
+                <rect x="150" y="70" width="132" height="36" fill="var(--surface-2)" stroke="var(--ink)"/>
+                <rect x="282" y="70" width="318" height="36" fill="none" stroke="var(--ink)"/>
+                <text x="110" y="93" font-size="12" fill="var(--ink)" text-anchor="middle">hipfire</text>
+                <text x="216" y="93" font-size="12" fill="var(--ink)" text-anchor="middle">the grey area — decide</text>
+                <text x="441" y="93" font-size="12" fill="var(--ink)" text-anchor="middle">ADS</text>
+                <line x1="150" y1="52" x2="240" y2="52" stroke="var(--accent)" stroke-width="2"/>
+                <path d="M240,52 L231,48 L231,56 Z" fill="var(--accent)"/>
+                <text x="150" y="44" font-size="11" fill="var(--accent)" text-anchor="middle">Laser Sight widens hipfire</text>
+                <line x1="372" y1="52" x2="282" y2="52" stroke="var(--accent)" stroke-width="2"/>
+                <path d="M282,52 L291,48 L291,56 Z" fill="var(--accent)"/>
+                <text x="386" y="44" font-size="11" fill="var(--accent)" text-anchor="middle">Forward Grip widens total range</text>
+                <line x1="96" y1="106" x2="96" y2="126" stroke="var(--ink-3)"/>
+                <text x="96" y="140" font-size="11" fill="var(--ink-2)" text-anchor="middle">shotgun 5 m</text>
+                <line x1="176" y1="106" x2="176" y2="126" stroke="var(--ink-3)"/>
+                <text x="176" y="160" font-size="11" fill="var(--ink-2)" text-anchor="middle">SMG 20 m</text>
+                <line x1="282" y1="106" x2="282" y2="126" stroke="var(--ink-3)"/>
+                <text x="282" y="140" font-size="11" fill="var(--ink-2)" text-anchor="middle">carbine 40 m</text>
+                <line x1="388" y1="106" x2="388" y2="126" stroke="var(--ink-3)"/>
+                <text x="388" y="160" font-size="11" fill="var(--ink-2)" text-anchor="middle">assault rifle 60 m</text>
+                <line x1="494" y1="106" x2="494" y2="126" stroke="var(--ink-3)"/>
+                <text x="494" y="140" font-size="11" fill="var(--ink-2)" text-anchor="middle">LMG 80 m</text>
+                <line x1="600" y1="106" x2="600" y2="126" stroke="var(--ink-3)"/>
+                <text x="588" y="160" font-size="11" fill="var(--ink-2)" text-anchor="middle">semi-auto sniper 100 m</text>
+                <text x="70" y="196" font-size="12" fill="var(--ink-2)">Very close → hipfire (a bet on the enemy's bad accuracy). Far → ADS (a bet on yours).</text>
+                <text x="70" y="216" font-size="12" fill="var(--ink-3)">In between sits the decision that defines mid-level play. Compensator: total range up, hipfire range down.</text>
+              </svg>
+              <figcaption>Every weapon's effective range splits into a hipfire part and an ADS part; the ticks are the articles' "get inside your effective range" pointers. Attachments move the boundary, not the total — a large magazine widens hipfire too, because misses cost less.</figcaption>
+            </figure>
 
             <div class="cols">
               <div>
                 <h3>Hipfire is a hose</h3>
-                <p>Easier to land at least some damage, and your faster movement dodges more of theirs — but it spends more ammo and gives a longer TTK. Hipfire is a bet on the <strong>enemy having bad accuracy</strong>: safe against most players, fatal against a good shot.</p>
+                <p>Hipfiring makes it easier to land at least some damage, and your faster movement dodges more of theirs — but it spends more ammo and gives a longer TTK. Hipfire is a bet on the <strong>enemy having bad accuracy</strong>: safe against most players, fatal against a good shot.</p>
               </div>
               <div>
                 <h3>ADS is a drill</h3>
-                <p>The tightest stream, the fastest possible TTK, the least ammo — <em>if</em> you actually hit. ADS is a bet on <strong>your</strong> accuracy. Its costs: scope-in time, narrower field of view, amplified screen shake and flinch, the gun and scope blocking vision, slower movement — and if you start firing before the ADS finishes, you keep the hipfire cone penalties (rule 1, §02). Rule: ADS only for the duration of the engagement.</p>
+                <p>ADS gives the tightest stream, the fastest possible TTK and the least ammo spent — <em>if</em> you actually hit. It is a bet on <strong>your</strong> accuracy, and its costs are real: scope-in time, a narrower field of view, amplified screen shake and flinch, the gun and scope blocking vision, slower movement — and if you fire before the ADS animation finishes, you keep the hipfire cone penalties (rule 1, §02). Rule: stay in ADS only for the duration of the engagement.</p>
               </div>
             </div>
 
             <h3>The seven factors</h3>
-            <p>Inside the grey area, the real question is <em>"is ADSing necessary?"</em> Weigh:</p>
+            <p>Inside the grey area the real question is <em>"is ADSing necessary?"</em>. Weigh:</p>
             <ol>
               <li><strong>Your accuracy vs the enemy's.</strong></li>
               <li><strong>Target status</strong> — how much damage the kill still needs. Heavies need more; a wounded or shield-flashing enemy needs less.</li>
               <li><strong>Target position and cover</strong> — a partly exposed target wants ADS.</li>
               <li><strong>Target movement</strong> — a fast-moving target wants hipfire.</li>
               <li><strong>Ammo left.</strong></li>
-              <li><strong>Weapon stats</strong> — high RoF/DPS and good hipfire CoF favour hipfire; 0.75× ADS speed favours ADS. A good hipfire SMG with Advanced Laser Sight adds a third option: hipfiring <em>for headshots</em>.</li>
-              <li><strong>Space to manoeuvre</strong> — no space argues against hipfire; space itself is neutral.</li>
+              <li><strong>Weapon stats</strong> — high RoF/DPS and a good hipfire CoF favour hipfire; 0.75× ADS speed favours ADS. A good hipfire SMG with an Advanced Laser Sight adds a third option: hipfiring <em>for headshots</em>.</li>
+              <li><strong>Space to manoeuvre</strong> — no room argues against hipfire, though open room by itself argues nothing.</li>
             </ol>
-            <p><strong>Simple answers.</strong> ADS when ammo is short, when you must kill fastest or die, when the enemy is still or slow, when the enemy is partly behind cover. Hipfire when you are in danger and cannot afford to slow down, or when you can trade extra ammo and time for movement and less damage taken.</p>
-            <p>Halospud's shorter version: always ADS at range; always ADS against a head-glitching enemy; ADS when low on health and needing a fast headshot kill; ADS against a stationary enemy; always hipfire in extreme close quarters. Hipfire more with carbines and SMGs.</p>
+            <p><strong>Simple answers.</strong> ADS when ammo is short, when you must kill fastest or die, when the enemy is still or slow, and when the enemy is partly behind cover. Hipfire when you are in danger and cannot afford to slow down, or when you can trade extra ammo and time for movement and less damage taken.</p>
+            <p>Halospud's shorter version: always ADS at range; always ADS against a head-glitching enemy; ADS when low on health and needing a fast headshot kill; ADS against a stationary enemy; always hipfire in extreme close quarters — and hipfire more with carbines and SMGs.</p>
           </section>
 
           <!-- ============ 7 BURSTING ============ -->
           <section id="burst">
             <h2><span class="no">07</span> Bursting</h2>
-            <p class="sub">Bursts keep the cone tight, keep you short of the horizontal-recoil tolerance limit, and open gaps to correct your aim. Every gap also re-charges the first-shot multiplier — so keep gaps as short as possible to protect DPS.</p>
+            <p class="sub">Bursts keep the cone tight, keep you short of the horizontal-recoil tolerance limit, and open gaps to correct your aim. But every gap also re-charges the first-shot multiplier — so keep the gaps as short as possible to protect your DPS.</p>
 
             <p>Burst length is not a number; it depends on:</p>
             <ul>
-              <li><strong>Initial CoF</strong> — the stance you start from.</li>
-              <li><strong>Bloom per shot</strong> — how fast the cone grows.</li>
-              <li><strong>Distance to target</strong> — the same cone covers less of a far target.</li>
-              <li><strong>Whether the crosshair is still on target.</strong> If you lost it, stop firing and let the cone reset while you re-acquire. Firing past the target blooms the gun and wastes ammo — worst on high-RoF guns and low-magazine guns against shielded Heavies.</li>
-              <li><strong>Risk.</strong> Target about to reach cover, about to kill you, a third party arriving — sometimes the right call is to gamble and keep firing.</li>
+              <li><strong>Initial CoF</strong> — the stance you start the burst from.</li>
+              <li><strong>Bloom per shot</strong> — how fast the cone grows during it.</li>
+              <li><strong>Distance to target</strong> — the same cone covers less of a far target than a near one.</li>
+              <li><strong>Whether the crosshair is still on target.</strong> If you lost it, stop firing and let the cone reset while you re-acquire. Firing past a target blooms the gun and wastes ammo — worst on high-RoF guns and low-magazine guns against shielded Heavies.</li>
+              <li><strong>Risk.</strong> The target is about to reach cover, or to kill you, or a third party is arriving — sometimes the right call is to gamble and keep firing.</li>
             </ul>
-            <p>The practical rule: <strong>keep firing until you see your bullets missing</strong>. With experience you develop an "inner clock" for each situation — that clock, not a shot count, is the skill.</p>
+            <p>The practical rule: <strong>keep firing until you see your bullets missing</strong>, then stop. With experience you develop an "inner clock" for each situation — that clock, not a memorised shot count, is the skill.</p>
             <div class="note dead">
               <span class="tag">Dead — do not use</span>
               <p>The Weapon Mechanics guide contains an angular-size burst-length calculation. <strong>The guide itself marks the angular-size research 💀 DEAD — "proven to be wrong. Do not use it"</strong> (Dorf's projectile-radius finding, 0.03 m, corrected it). Its burst-length numbers and effective-range tables do not carry over. Burst by the factors above.</p>
             </div>
             <h3>Semi-autos</h3>
-            <p>Tap-fire: aim at the head, fire, wait for the crosshair to <em>fully</em> return, fire again — the double-tap headshot on semi-auto snipers is the template. Use the queue trick (§04) so the weapon, not your finger, sets the pace. Spamming is fine at close range with pistols and shotguns, where recentering matters less than volume.</p>
+            <p>Tap-fire: aim at the head, fire, wait for the crosshair to <em>fully</em> return, fire again — the double-tap headshot on semi-auto snipers is the template. Use the queue trick (§04) so the weapon, not your finger, sets the pace. Spamming is fine at close range with pistols and shotguns, where volume matters more than recentering.</p>
           </section>
 
           <!-- ============ 8 MOVEMENT ============ -->
@@ -600,8 +752,8 @@
             </div>
 
             <h3>The rhythm</h3>
-            <p>ADAD — alternating strafe keys — makes the enemy miss, but the timing is the whole trick: too long between switches and the enemy re-acquires you; too short and you barely move, so they hit you by accident while aiming at a rough area. Halospud's advice is qualitative only: most players leave too long between switches, so if in doubt, <strong>alternate a little quicker</strong>.</p>
-            <p>The numeric layer comes from CoF rule 2 (§02): <strong>fire the first shots standing still, then strafe once the cone has bloomed past the moving minimum</strong> — from that shot on, movement costs no accuracy. 0.75× ADS weapons make the strafe itself 50% faster and the whole rhythm much more effective. Outside that opening, moving while shooting is nearly always worth it: the small cone improvement from standing still is worth less than the misses your movement forces.</p>
+            <p>ADAD — alternating strafe keys — makes the enemy miss, but the timing is the whole trick. Switch too slowly and the enemy re-acquires you; switch too fast and you barely move, so they hit you by accident while aiming at a rough area. Halospud's advice is qualitative only: most players leave too long between switches, so if in doubt, <strong>alternate a little quicker</strong>.</p>
+            <p>The numeric layer comes from CoF rule 2 (§02): <strong>fire the first shots standing still, then strafe once the cone has bloomed past the moving minimum</strong> — from that shot on, movement costs no accuracy. 0.75× ADS weapons make the strafe itself 50% faster and the whole rhythm much more effective. Outside that opening, moving while shooting is nearly always worth it: the small cone improvement from standing still buys less than the misses your movement forces.</p>
             <div class="note">
               <span class="tag">Where the numbers live</span>
               <p>There is <strong>no numeric ADAD cadence in the Halospud articles</strong> — anyone quoting one from them is inventing it. The counts come from the CoF derivation above, verified live in VR Training in 2026, and the per-weapon still-shot counts are on the <a href="https://dayset.github.io/ps2-elite-kd/weapon-compare.html#adad">ADAD calculator</a>.</p>
@@ -609,9 +761,9 @@
 
             <h3>Reloading and range discipline</h3>
             <ul>
-              <li>Reload in cover. Check the minimap and look around while you do it.</li>
-              <li>Caught mid-reload: run, or draw the sidearm — equipping it is always faster than finishing a reload.</li>
-              <li>Don't reload after every kill ("reloaditus"). If the magazine still holds enough for one more enemy, stay ready; check you are safe first.</li>
+              <li>Reload in cover, and check the minimap and look around while you do it.</li>
+              <li>Caught mid-reload: run, or draw the sidearm — equipping it is always faster than finishing the reload.</li>
+              <li>Don't reload after every kill ("reloaditus"). If the magazine still holds enough for one more enemy, stay ready — after checking that you are safe.</li>
               <li>Get <em>inside</em> your weapon's effective range before opening fire. The articles' rough pointers: shotguns 5 m, SMGs 20 m, carbines 40 m, assault rifles 60 m, LMGs 80 m, semi-auto snipers 100 m, bolt-actions 150–300 m by model. Being able to see a target does not mean you should shoot it.</li>
             </ul>
           </section>
@@ -622,54 +774,70 @@
             <p class="sub">An engagement starts when either side rounds a corner into line of sight. How you handle the peek matters as much as how you aim.</p>
 
             <ul>
-              <li><strong>Crosshair placement:</strong> aim at the edge of the corner where the enemy's head will appear, at head height, <em>before</em> they arrive; predict the approach from the map and the dots. This matters most while learning a low sensitivity, because it removes the big mouse swings needed to acquire targets.</li>
-              <li><strong>Minimise line of sight:</strong> round a corner only far enough to see <em>one</em> enemy. Peeking too far against several is a big disadvantage — take them one at a time and chain the kills. Staying close to cover means you can duck back the moment you start losing. Avoid 1v2s while learning. Tight peeking limits your own dodging, so headshots matter more there — and bring the highest-DPS CQC weapon you can.</li>
-              <li><strong>Peek in hipfire, ADS after.</strong> ADSing before the corner slows your strafe and throws away your peek advantage. Peek hipfiring, ADS the instant you see the opponent — unless the weapon hipfires well or the enemy is right in front of you. And never start firing before the ADS finishes: you keep the hipfire cone penalties even once aimed.</li>
-              <li><strong>Stalemates:</strong> when both sides pre-aim a doorway, pushing in wears you down a little with every peek. Flank instead — find a less defended entrance.</li>
+              <li><strong>Crosshair placement:</strong> aim at the edge of the corner where the enemy's head will appear, at head height, <em>before</em> they arrive — predict the approach from the map and the dots. This matters most while you are learning a low sensitivity, because it removes the big mouse swings needed to acquire targets.</li>
+              <li><strong>Minimise line of sight:</strong> round a corner only far enough to see <em>one</em> enemy. Peeking too far against several is a big disadvantage — take them one at a time and chain the kills. Staying close to cover means you can duck back the moment you start losing. Avoid 1v2s while learning. A tight peek also limits your own dodging, so headshots matter more there — bring the highest-DPS CQC weapon you can.</li>
+              <li><strong>Peek in hipfire, ADS after.</strong> ADSing before the corner slows your strafe and throws away your peek advantage. Peek hipfiring and ADS the instant you see the opponent — unless the weapon hipfires well or the enemy is right in front of you. And never fire before the ADS animation finishes: you keep the hipfire cone penalties even once aimed.</li>
+              <li><strong>Stalemates:</strong> when both sides pre-aim the same doorway, pushing in wears you down a little with every peek. Flank instead — find a less defended entrance.</li>
             </ul>
 
             <div class="rule">
               <span class="tag">Peek-first advantage</span>
-              <p>The aggressor gets <strong>your ping + server delay + the opponent's ping</strong> before the opponent's client even shows you peeking — time for a shot or two, free. Slow-peeking (ADS-strafing around a corner) negates it entirely. Worse, your shoulder, feet or weapon can be visible around the corner before you can see them. Move fast: strafe out hipfiring, ADS on sight. It also works defensively — peek and duck back repeatedly until someone is out there.</p>
+              <p>Peeking buys a free window equal to <strong>your ping + the server's delay + their ping</strong>: for that long, the opponent's client has not even rendered you yet — time for a shot or two, free. Slow-peeking (ADS-strafing around a corner) negates it entirely. Worse, your shoulder, feet or weapon can be visible around the corner before you can see them. Move fast: strafe out hipfiring, ADS on sight. It also works defensively — peek and duck back repeatedly until someone is out there.</p>
             </div>
 
+            <figure class="fig">
+              <svg viewBox="0 0 640 180" role="img" aria-label="Timeline of the peek-first advantage: your ping plus the server delay plus their ping pass before the opponent's screen even shows you peeking">
+                <text x="60" y="40" font-size="12" fill="var(--ink)" font-weight="700">t = 0 — you peek, and can already fire</text>
+                <rect x="60" y="80" width="150" height="34" fill="var(--accent-soft)" stroke="var(--ink)"/>
+                <rect x="210" y="80" width="150" height="34" fill="var(--surface-2)" stroke="var(--ink)"/>
+                <rect x="360" y="80" width="150" height="34" fill="var(--accent-soft)" stroke="var(--ink)"/>
+                <text x="135" y="102" font-size="11" fill="var(--ink-2)" text-anchor="middle">your ping ~50 ms</text>
+                <text x="285" y="102" font-size="11" fill="var(--ink-2)" text-anchor="middle">server ~50 ms</text>
+                <text x="435" y="102" font-size="11" fill="var(--ink-2)" text-anchor="middle">their ping ~50 ms</text>
+                <line x1="510" y1="60" x2="510" y2="130" stroke="var(--bad)" stroke-width="2" stroke-dasharray="4 3"/>
+                <text x="516" y="70" font-size="12" fill="var(--bad)">their screen finally shows you</text>
+                <text x="60" y="150" font-size="12" fill="var(--ink-2)">The whole bar is a free window — time for a shot or two. Slow-peeking (ADS-strafing out) spends it on animation instead.</text>
+              </svg>
+              <figcaption>Peek-first advantage as time, not philosophy: the aggressor's window equals your ping + the server's delay + their ping. Best-case values shown; the structure (you both fight in the past) is the durable part.</figcaption>
+            </figure>
+
             <h3>Partial cover and head-glitching</h3>
-            <p>Your viewpoint is at your head/neck and your bullets come from there, not from the gun — so behind the right cover you can see much more of the enemy than they see of you. The rule: <strong>the player closest to the apex of the cover wins</strong>. The classic spots are the tops of stairs. The price is built in: if they do hit you, it is almost certainly a headshot — take any damage in a head-glitch spot and back away at once. Watch for hitboxes extending past the visible edge: aiming just above railings and barriers often hits the railing; stairs, crates and terrain suffer less.</p>
+            <p>Your viewpoint sits at your head/neck, and your bullets come from there — not from the gun muzzle — so behind the right cover you can see much more of the enemy than they see of you. The rule: <strong>the player closest to the apex of the cover wins</strong>, and the classic spots are the tops of stairs. The price is built in: if they do hit you, it is almost certainly a headshot — take any damage in a head-glitch spot and back away at once. Watch for hitboxes extending past the visible edge: aiming just above railings and barriers often hits the railing, while stairs, crates and terrain suffer less from it.</p>
 
             <h3>Fight selection — read the threat level first</h3>
-            <p>Before you commit, weigh: are you already under fire? Your cover and escape route? Who has the initiative — they fired first unseen is much worse; you see them and they don't know is much better; you caught them reloading is much better. Relative skill, if known. Whether the enemy is inside <em>their</em> weapon's effective range. Whether other enemies are nearby.</p>
-            <p>Too high → <strong>disengage and restart on better terms</strong>. If you must fight at high threat, the higher it is, the more you are pushed to ADS and go for the fastest possible kill.</p>
+            <p>Before you commit, weigh: are you already under fire? Where are your cover and escape route? Who has the initiative — being shot at unseen is much worse; seeing them while they don't know is much better; catching them reloading is much better. Then: their relative skill, if you know it; whether the enemy is inside <em>their</em> weapon's effective range; and whether other enemies are nearby.</p>
+            <p>If the threat is too high, <strong>disengage and restart on better terms</strong>. If you must fight at high threat anyway, the higher it is, the more you are pushed to ADS and go for the fastest possible kill.</p>
 
             <h3>Evasive movement (Halospud, Part 4)</h3>
-            <p>Evasive movement works best in close quarters, and geometry is why: at 90° horizontal field of view, an enemy 5 m away must run 10 m to cross your screen; at 18 m away, 36 m. Far targets cross slowly and are easy to track — but they are also smaller, so at long range the small recoil kicks matter more. Use smooth mouse movement when aiming and fast, twitchy movement when dodging; twitchy movement also breaks up your character's animations, so your feet slide and give no readable direction of travel. Low frame rate makes twitch aim inconsistent.</p>
+            <p>Evasive movement works best in close quarters, and geometry is why: at a 90° horizontal field of view, an enemy 5 m away must run 10 m to cross your screen — an enemy 18 m away must run 36 m. Far targets cross slowly and are easy to track, but they are also smaller, so at long range small recoil kicks matter more. Use smooth mouse movement when aiming and fast, twitchy movement when dodging; twitchy movement also breaks up your character's animations, so your feet slide and give no readable direction of travel. A low frame rate makes twitch aim inconsistent.</p>
 
             <div class="trick">
               <h4>Warping is mostly not latency</h4>
-              <p>Rapid erratic movement makes character animations fail to match what you are doing — feet sliding, landing animations playing while you keep running and change direction. Genuine packet-loss warping exists, but it is the rarer case. What looks like a cheater's movement is usually this.</p>
+              <p>Rapid erratic movement makes the character animations fail to match what you are doing — feet sliding, landing animations playing while you keep running and change direction. Genuine packet-loss warping exists, but it is the rarer case; what looks like a cheater's movement is usually this.</p>
             </div>
             <div class="trick">
               <h4>Sprint strafing</h4>
-              <p>Sprint one way, spin 180° and keep sprinting — no speed is lost, because the game has no movement acceleration. Repeat with short gaps so the enemy never settles their aim; it works best perpendicular to the opponent. It buys <em>time</em>, not distance: use it while reloading, healing, or caught unprepared — then stop and aim the moment the enemy stops firing (a reload or weapon swap), and aim for the head, since you are likely low on health.</p>
+              <p>Sprint one way, spin 180° and keep sprinting — no speed is lost, because the game has no movement acceleration. Repeat with short gaps so the enemy never settles their aim; it works best perpendicular to the opponent. It buys <em>time</em>, not distance: use it while reloading, healing or caught unprepared, then stop and aim the moment the enemy stops firing (they are reloading or swapping weapons) — and aim for the head, since you are likely low on health.</p>
             </div>
             <div class="trick">
               <h4>Zig-zagging</h4>
-              <p>The same idea with shallower turns (~135°), so you still make progress in a direction at the cost of less dodging. Good against semi-auto and bolt-action weapons and for crossing sniper-covered ground. Automatics will still land shots — just fewer.</p>
+              <p>The same idea with shallower turns (~135°), so you still make progress in a direction, at the cost of less dodging. Good against semi-auto and bolt-action weapons, and for crossing sniper-covered ground. Automatics will still land shots — just fewer.</p>
             </div>
             <div class="trick">
               <h4>The Therum Shuffle</h4>
-              <p>Zig-zagging with 80–100° turns, constant small mouse twitches to slide the feet, and jumps — landing bends the knees while you keep running, which makes the model slide. As a Heavy, jump to tap overshield and take a medkit in the air (no movement penalty there); never use overshield to shuffle on the ground, it halves your speed. Don't jump repeatedly — it applies a speed penalty. Advanced, and most players are better off sprint strafing. You cannot see your own animations, so practise with someone watching on the Test Server, Jaeger or in VR.</p>
+              <p>Zig-zagging with 80–100° turns, constant small mouse twitches to slide the feet, and jumps — landing bends the knees while you keep running, which makes the model slide. As a Heavy, jump to tap the overshield and take a medkit in the air (no movement penalty there); never use the overshield to shuffle on the ground, it halves your speed. Don't jump repeatedly — it applies a speed penalty. This is advanced, and most players are better off sprint strafing. You cannot see your own animations, so practise with someone watching, on the Test Server, Jaeger or in VR.</p>
             </div>
             <div class="trick">
               <h4>Sprint peeking</h4>
-              <p>Instead of strafing out of a corner, sprint out, turn ~90° to aim, and strafe back into the corner as you turn. It maximises peek-first advantage, and you clear the corner further than a strafing peek, so a pre-aimed enemy has to re-acquire. Adding a crouch after the strafe throws a head-level pre-aim off again. Downsides: you expose yourself to more enemies, and you need fast, reliable aim or the advantage is wasted. It works better with higher ping and slow server tick — large prime-time fights.</p>
+              <p>Instead of strafing out of a corner, sprint out, turn ~90° to aim, and strafe back into the corner as you turn. It maximises peek-first advantage, and you clear the corner further than a strafing peek, so a pre-aimed enemy has to re-acquire. Adding a crouch after the strafe throws a head-level pre-aim off again. The downsides: you expose yourself to more enemies, and you need fast, reliable aim or the advantage is wasted. It works better with higher ping and a slow server tick — large prime-time fights.</p>
             </div>
             <div class="trick">
               <h4>Repeeking and doubling back</h4>
-              <p>When you break off, turn and peek again the instant you reach cover. Repeeking re-takes peek-first advantage and, more importantly, surprises people — they are often sprinting, falling back, or slow to react. It is devastating against compulsive reloaders. It does <strong>not</strong> work against an enemy holding a position or chokepoint — they are still ADSing and ready. Doubling back is a repeek with a delay, around small buildings or crates: keep sprinting a little past cover (they hear the footsteps), then turn and repeek from deeper in cover. The enemy thinks you went the other way — they either chase and meet you with their weapon down, or turn to cut you off on the far side and take shots in the back.</p>
+              <p>When you break off, turn and peek again the instant you reach cover. Repeeking re-takes peek-first advantage and, more importantly, surprises people — they are often sprinting, falling back, or slow to react, and it is devastating against compulsive reloaders. It does <strong>not</strong> work against an enemy holding a position or chokepoint: they are still ADSing and ready. Doubling back is a repeek with a delay, around small buildings or crates: keep sprinting a little past cover (they hear the footsteps), then turn and repeek from deeper in cover. The enemy thinks you went the other way — they either chase and meet you with their weapon down, or turn to cut you off on the far side and take shots in the back.</p>
             </div>
             <div class="trick">
               <h4>Jump pads and human cover</h4>
-              <p>You keep some control in the air off a jump pad: hold jump for more height, crouch for downward speed, directional keys plus mouse for momentum. Touching a pad gives a few seconds of fall-damage immunity. Beat the "turkey shoot" — enemies farming the top of a vertical pad — by holding crouch at the top and walking straight out instead of flying up. On long pads into camped elevated platforms, drop a little short and use the platform as cover. And enemies themselves are cover: peek so only one enemy has line of sight while the other sees only his teammate's back — he may even shoot his teammate. In very dense rooms enemies block each other's lines of fire; that crowding is what knife-primary play exploits, and it works for any class with good movement, awareness and fast aim. High risk, high reward.</p>
+              <p>You keep some control in the air off a jump pad: hold jump for more height, crouch for downward speed, and steer with the directional keys plus the mouse. Touching a pad gives a few seconds of fall-damage immunity. Beat the "turkey shoot" — enemies farming the top of a vertical pad — by holding crouch at the top and walking straight out instead of flying up, and on long pads into camped elevated platforms, drop a little short and use the platform as cover. Enemies themselves are cover, too: peek so only one enemy has line of sight while the other sees only his teammate's back — he may even shoot his teammate. In very dense rooms enemies block each other's lines of fire; that crowding is what knife-primary play exploits, and it works for any class with good movement, awareness and fast aim. High risk, high reward.</p>
             </div>
           </section>
 
@@ -679,11 +847,11 @@
             <p class="sub">In the ideal fight you never play on reaction — you force the enemy to. Awareness is what makes that possible, and the netcode decides what "fair" even means.</p>
 
             <ul>
-              <li><strong>Awareness is a stream:</strong> weapon sounds identify the class; faction voices give away faction and status; one sniper tracer in peripheral vision is enough to locate a camper. Keep a mental list of enemies who revealed themselves until you kill them or see the corpse. One eye on the minimap, both ears open.</li>
-              <li><strong>You fight in the past.</strong> Internet delay means you see what the enemy was doing ~50 ms ago, and they see the same of you. Hit detection is client-side: if they shot your model on <em>their</em> screen, you take damage — which is why you can die after reaching cover. Turn it around: storming a room, you see the defenders before they see you. Start dodging <em>before</em> the enemy fires, get to cover the moment you take fire, and never stop to look for the shooter when under fire — the minimap hit direction is enough to pick a direction to run. The Counter-Intelligence implant helps by spotting anyone who shoots you with an unsuppressed weapon.</li>
-              <li><strong>Your camera is in your chest.</strong> Your first-person camera sits in the chest area of your model, so your head is higher than where you look from — peeking over cover, your head can stick out above what you see. Field of view is narrow (85–106° horizontal at the common 55–74° vertical settings), so approaching from the side, even slightly to the front, is safe unless they turn. And you cannot tell whether an enemy is ADSing: the third-person ADS animation lags seconds behind.</li>
-              <li><strong>Tracers are not damage.</strong> The enemy's tracers are rendered by your client and can appear to hit you while you take no damage — and vice versa. Judge by health, not by tracers.</li>
-              <li><strong>Footsteps:</strong> crouch-walking is audible at ~20 m, sprinting and landing at ~40 m in ideal conditions — rarely audible in a real fight, so don't rely on it.</li>
+              <li><strong>Awareness is a stream.</strong> Weapon sounds identify the class, faction voices give away faction and status, and one sniper tracer in peripheral vision is enough to locate a camper. Keep a mental list of enemies who have revealed themselves, until you kill them or see the corpse. One eye on the minimap, both ears open.</li>
+              <li><strong>You fight in the past.</strong> Internet delay means you see what the enemy was doing ~50 ms ago, and they see the same of you. Hit detection is client-side: if they shot your model on <em>their</em> screen, you take damage — which is why you can die after reaching cover. Turn it around: storming a room, you see the defenders before they see you. Start dodging <em>before</em> the enemy fires, get to cover the moment you take fire, and never stop to look for the shooter — the minimap hit direction is enough to pick a direction to run. The Counter-Intelligence implant helps by spotting anyone who shoots you with an unsuppressed weapon.</li>
+              <li><strong>Your camera is in your chest.</strong> The first-person camera sits in the chest area of your model, so your head is higher than where you look from — peeking over cover, your head can stick out above what you see. The field of view is narrow (85–106° horizontal at the common 55–74° vertical settings), so approaching from the side, even slightly to the front, is safe unless they turn. And you cannot tell whether an enemy is ADSing: the third-person ADS animation lags seconds behind.</li>
+              <li><strong>Tracers are not damage.</strong> The enemy's tracers are rendered by your client, so they can appear to hit you while you take no damage — and vice versa. Judge by health, not by tracers.</li>
+              <li><strong>Footsteps:</strong> crouch-walking is audible at ~20 m, and sprinting and landing at ~40 m in ideal conditions — rarely audible in a real fight, so don't rely on it.</li>
             </ul>
 
             <h3>Player model quirks worth knowing</h3>
