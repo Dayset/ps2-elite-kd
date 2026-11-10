@@ -232,6 +232,7 @@
             <li><a href="#examples">Striking examples</a></li>
             <li><a href="#attachments">Attachments that move the numbers</a></li>
             <li><a href="#classes">Per-class rules</a></li>
+            <li><a href="#playbook">Advanced playbook</a></li>
             <li><a href="#caveats">What is not modelled</a></li>
           </ol>
         </nav>
@@ -295,8 +296,38 @@
             </ul>
           </section>
 
+          <section id="playbook">
+            <h2><span class="no">05</span> Advanced playbook: head hits and getting out of the way</h2>
+            <p class="sub">The head is 0.3 m across (radius 0.15 m), and the cone only has to reach it, not the body. Median head-hit distance per class (standing / running), from the same cone data.</p>
+            <div class="tblwrap"><table>
+              <thead><tr><th>Class</th><th>Hip standing</th><th>Hip running</th><th>ADS standing</th><th>ADS running</th><th>Count</th></tr></thead>
+              <tbody>
+                <tr><td>Sniper rifle</td><td>3 m</td><td>3 m</td><td>unlimited (0° cone)</td><td>31 m</td><td>39</td></tr>
+                <tr><td>Crossbow</td><td>10 m</td><td>8 m</td><td>unlimited</td><td>31 m</td><td>6</td></tr>
+                <tr><td>Scout rifle</td><td>6 m</td><td>5 m</td><td>unlimited</td><td>69 m</td><td>32</td></tr>
+                <tr><td>LMG</td><td>6 m</td><td>5 m</td><td>172 m</td><td>49 m</td><td>54</td></tr>
+                <tr><td>Assault rifle</td><td>9 m</td><td>7 m</td><td>172 m</td><td>69 m</td><td>48</td></tr>
+                <tr><td>Carbine</td><td>12 m</td><td>9 m</td><td>172 m</td><td>57 m</td><td>42</td></tr>
+                <tr><td>Heavy weapon</td><td>9 m</td><td>7 m</td><td>57 m</td><td>43 m</td><td>13</td></tr>
+                <tr><td>Pistol</td><td>17 m</td><td>12 m</td><td>57 m</td><td>57 m</td><td>74</td></tr>
+                <tr><td>SMG</td><td>17 m</td><td>12 m</td><td>57 m</td><td>57 m</td><td>47</td></tr>
+                <tr><td>Shotgun</td><td colspan="4">not meaningful: the edge ignores pellet spread</td><td>29</td></tr>
+              </tbody>
+            </table></div>
+            <h3>Playbook</h3>
+            <ul>
+              <li><strong>Snipers and scouts: head from a standstill.</strong> Their standing ADS cone is 0° or close to it, so the head is reachable at any range the model covers. Strafing on ADS (31–69 m) only pays on the close-in moves.</li>
+              <li><strong>Pistols and SMGs: head while strafing on ADS.</strong> A 57 m ADS head edge means you can strafe and still take the head through most real engagement ranges. Don't drop to hip for a head shot: hip head edge is 12–17 m.</li>
+              <li><strong>Carbines, ARs and LMGs: head only from a standstill.</strong> ADS standing reaches the head to 172 m, but moving on ADS drops it to 49–69 m. A moving head shot past about 50 m is a lucky shot, not a plan.</li>
+              <li><strong>The 150 ms ADS raise is the real cost.</strong> A hip shot is only worth taking when the target is closer than the hip head edge and the ADS raise would lose the fight.</li>
+              <li><strong>Don't get caught on the move.</strong> Move on the weapons whose cone doesn't widen (SMG, most pistols, shotguns). On the others, stop, fire the aimed shot, then move again.</li>
+              <li><strong>Attachments that matter for head hits:</strong> Laser Sight extends hip edges (SMG hip running 23 m → 34 m); Heavy Magazine and Compensator shrink them. For ADS head hits, attachments change the ADS cone only through the table in the simulator, which doesn't cover every weapon, so check the comparison page before relying on one.</li>
+            </ul>
+            <p class="note">Shotgun head distances are not shown: the edge model has no pellet spread, so its numbers would be misleading. Use the shotgun falloff and the comparison page.</p>
+          </section>
+
           <section id="caveats">
-            <h2><span class="no">05</span> What is not modelled</h2>
+            <h2><span class="no">06</span> What is not modelled</h2>
             <ul>
               <li>In-game feel, recoil control and bullet travel time.</li>
               <li>Heavy Magazine extra rounds, Compensator recoil on hip, and attachment effects not listed in the simulator table.</li>
