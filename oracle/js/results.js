@@ -1,7 +1,7 @@
 // PS2MapOracle dashboard — split from index.html (#15). No behaviour change.
 import { S, FACS, esc, $, when, info, wide } from "./state.js?v=20261018-scrub2";
 import { get } from "./api.js?v=20261018-scrub2";
-import { poolLabel } from "./other.js?v=20261107-fac1";
+import { poolLabel } from "./other.js?v=20261111-flat1";
 import { t as tr, currentLang } from "../../i18n.mjs";
 import { renderSkillFoot } from "./skill-foot.js?v=20261102-globfoot1";
 import { myVoteMark } from "./vote.js?v=20261101-votejoin1";

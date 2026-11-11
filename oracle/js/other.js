@@ -30,7 +30,8 @@ export function kindNoteHtml(a) {
     const t = s.facility.targets.map((x) => `<span class="${esc(x.owner || "")}">${esc(x.name)}${x.owner ? ` ${esc(x.owner)}` : ""}</span>`).join(" · ");
     return `<div class="note">${tr("or.fa.rule", "Hold all 3 to win at once; otherwise the most held at the end wins.")} 🎯 ${t}</div>`;
   }
-  if (a.kind === "facility" || a.kind === "aerial" || a.kind === "pressure") return `<div class="note">${tr("or.fa.even", "The game shares no live score for this alert type, so win chances stay even.")}</div>`;
+  if (a.kind === "aerial" || a.kind === "pressure") return `<div class="note">${tr("or.ae.nolive", "The game shares no live score for this alert type, so there is no live prediction. The first faction to 10,000 points wins, otherwise the highest score when time runs out; the result shows here when it ends.")}</div>`;
+  if (a.kind === "facility") return `<div class="note">${tr("or.fa.even", "The game shares no live score for this alert type, so win chances stay even.")}</div>`;
   return "";
 }
 

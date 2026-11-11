@@ -232,7 +232,7 @@ test("#114 alert-type texts and the patch line", async () => {
   assert.equal(kindName(a), "Dome Domination (hold all 3 Biolabs)");
   assert.equal(kindName({ kind: "territory" }), "");
   assert.match(kindNoteHtml(a), /Acan NC.*Bitol.*&lt;Zotz&gt; TR/);
-  assert.match(kindNoteHtml({ kind: "aerial", state: {} }), /stay even/);
+  assert.match(kindNoteHtml({ kind: "aerial", state: {} }), /no live prediction/);
   const c = facilityCmdHtml(a);
   assert.match(c, /take Bitol \(15% → 27\.5%\)/); assert.match(c, /hold Acan/); assert.match(c, /no decisive move/);
   assert.equal(poolLabel("90"), "90-min Brier:"); assert.equal(poolLabel("facility"), "Facility alerts Brier:");

@@ -15,7 +15,7 @@ import { renderAlertSkill } from "./skill-foot.js?v=20261102-globfoot1";
 import { initAuth } from "./auth.js?v=20261028-dev82";
 import { enhance, onSectionExpand, refreshSummary } from "./collapse.js?v=20261026-pulse1";
 import { t as tr, ready } from "../../i18n.mjs";
-import { patchLine, kindName, kindNoteHtml, facilityCmdHtml } from "./other.js?v=20261107-fac1";
+import { patchLine, kindName, kindNoteHtml, facilityCmdHtml } from "./other.js?v=20261111-flat1";
 import { maintNotice, when, schedState, lastOnline, plannedDown, STATUS_URL } from "./maint.js?v=20261101-int1";
 import { fightsCard, popLiveLine } from "./fights.js?v=20261102-conduit1";
 await ready;   // #73: the language file is in before anything renders
@@ -170,10 +170,11 @@ function render2(now) {
     return;
   }
   const s = a.state;
-  const win = s ? s.win : null;
+  const flat = a.kind === "aerial" || a.kind === "pressure"; // #135: no live score, no model: no flat 33 % line
+  const win = s && !flat ? s.win : null;
   const lead = s && s.leader;
   const left = a.status === "live" ? leftLabel(a, now) : statusLabel(a, now);
-  const oddsHtml = win ? FACS.map((f) => `<div class="fac ${f} ${f === lead ? "lead" : ""}"><div class="l">${f}</div><div class="n">${pct1(win[f].pct)}%</div><div class="stars">${stars(win[f].pct)}</div></div>`).join("") : `<div class="note">${a.status === "live" ? tr("or.waitSnap", "Waiting for the first map snapshot…") : tr("or.noOdds", "No live win chances were recorded for this alert.")}</div>`;
+  const oddsHtml = flat ? "" : win ? FACS.map((f) => `<div class="fac ${f} ${f === lead ? "lead" : ""}"><div class="l">${f}</div><div class="n">${pct1(win[f].pct)}%</div><div class="stars">${stars(win[f].pct)}</div></div>`).join("") : `<div class="note">${a.status === "live" ? tr("or.waitSnap", "Waiting for the first map snapshot…") : tr("or.noOdds", "No live win chances were recorded for this alert.")}</div>`;
   const rows = s ? FACS.map((f) => `<div class="row" data-terr="${f}"><span class="lbl ${f}">${tr("or.terr", "{f} territory", { f })}</span><div class="track"><span style="width:${s.territory[f]}%;background:${COLOR[f]}"></span></div><span class="v">${Math.round(s.territory[f])}%</span></div>`).join("") +
     FACS.map((f) => {
       const base = s.territory[f] || 0, m = s.momentum[f];
@@ -228,8 +229,8 @@ function render2(now) {
       </div>
     </div>
     ${cmdHtml}
-    <div class="timerow"><section class="card chart"><h2 data-sec="win-chance-over-time">${tr("or.h.chart", "Win chance over time")}</h2><div id="chart"><div class="sk sk-chart" aria-label="${tr("or.loading", "Loading")}"></div></div></section><div id="lockHere"></div></div>
-    ${benchPanel(a)}`;
+    <div class="timerow">${flat ? "" : `<section class="card chart"><h2 data-sec="win-chance-over-time">${tr("or.h.chart", "Win chance over time")}</h2><div id="chart"><div class="sk sk-chart" aria-label="${tr("or.loading", "Loading")}"></div></div></section>`}<div id="lockHere"></div></div>
+    ${flat ? "" : benchPanel(a)}`;
   if ($("backLive")) $("backLive").onclick = backToLive;
   if ($("copyLink")) $("copyLink").onclick = () => {
     const b = $("copyLink");
@@ -272,7 +273,7 @@ function render2(now) {
   // ⏱ Live timer sits next to the win-chance chart (both are about time); past alerts have no countdown, so no card.
   // Filled before the chart is drawn: the chart reads its box width, which depends on this card.
   if (lh) lh.innerHTML = a.status === "live" ? `<section class="card lock">${lockCard(a, now)}</section>` : "";
-  if (S.ticksFor === a.key) { const c = $("chart"); c.innerHTML = chart(S.ticks, a.dur, c.clientWidth); chartHover(c, S.ticks, a.dur, (k, how) => scrub(a, k, how)); }
+  if (S.ticksFor === a.key && $("chart")) { const c = $("chart"); c.innerHTML = chart(S.ticks, a.dur, c.clientWidth); chartHover(c, S.ticks, a.dur, (k, how) => scrub(a, k, how)); }
   if (S.scrub && S.scrub.key === a.key) scrub(a, S.scrub.tick, S.scrub.how);
   drawMap(a);
 }
