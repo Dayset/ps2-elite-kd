@@ -68,9 +68,9 @@
         var bandChip = lab.dataset.bandChip !== '0'; // AR-100 / T1S show the band as plain text, not a chip
         function adviceFor(d) {
           for (var i = 0; i < BAND_LIMITS.length; i++) {
-            if (d < BAND_LIMITS[i]) return [BAND_NAMES[i], lab.dataset['advice' + i] || '', BAND_CLASSES[i] || 'good'];
+            if (d < BAND_LIMITS[i]) return [BAND_NAMES[i], lab.dataset['advice-' + i] || '', BAND_CLASSES[i] || 'good'];
           }
-          return [BAND_NAMES[BAND_NAMES.length - 1], lab.dataset['advice' + (BAND_NAMES.length - 1)] || '', BAND_CLASSES[BAND_CLASSES.length - 1] || 'skip'];
+          return [BAND_NAMES[BAND_NAMES.length - 1], lab.dataset['advice-' + (BAND_NAMES.length - 1)] || '', BAND_CLASSES[BAND_CLASSES.length - 1] || 'skip'];
         }
         function update() {
           var d = parseInt(slider.value, 10);
