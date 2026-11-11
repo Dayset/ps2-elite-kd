@@ -18,7 +18,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="weapon-sage.css?v=20261109-sageguide3" />
+  <link rel="stylesheet" href="weapon-sage.css?v=20261111-sagetrim1" />
   <style>
     /* Faction colours for the NS-11A (differs from the shared NC default).
        Dark values in :root (dark is the default); light values under data-theme. */
@@ -107,7 +107,7 @@
               <line x1="20" y1="96" x2="44" y2="96" />
             </g>
             <polygon points="96,58 196,22 196,140" fill="var(--skip)" opacity="0.14" />
-            <text x="106" y="34" class="panel-label" fill="var(--skip)" font-size="15">Cone: 7.0° — maxed</text>
+            <text x="106" y="34" class="panel-label" fill="var(--skip)" font-size="15">7.0° — maxed</text>
             <text x="12" y="168" font-size="14" fill="var(--ink)">1 · Sprinting, trigger held</text>
             <text x="12" y="188" font-size="14" fill="var(--ink-soft)">Hipfire from a sprint</text>
             <!-- panel 2: ADS pressed mid-hold, cone unchanged -->
@@ -177,7 +177,8 @@
             <line x1="282" y1="96" x2="358" y2="96" stroke="var(--ink)" stroke-width="1.5" />
             <circle cx="320" cy="96" r="4" fill="var(--good)" />
             <text x="232" y="168" font-size="14" fill="var(--ink)"><tspan font-weight="700">AIM</tspan> — sight comes up</text>
-            <text x="232" y="188" font-size="14" fill="var(--ink-soft)">Sight raise · ≈0.15 s · Nano-Regen (F) covers it</text>
+            <text x="232" y="188" font-size="14" fill="var(--ink-soft)">Sight raise · ≈0.15 s</text>
+            <text x="232" y="206" font-size="14" fill="var(--ink-soft)">Nano-Regen (F) covers it.</text>
             <!-- beat 3: fire, tight group -->
             <circle cx="533" cy="30" r="15" fill="var(--good)" />
             <text x="533" y="36" text-anchor="middle" font-size="17" font-weight="700" fill="#fff">3</text>
@@ -192,7 +193,7 @@
               <circle cx="536" cy="82" r="4" /><circle cx="533" cy="100" r="4" />
             </g>
             <text x="440" y="168" font-size="14" fill="var(--ink)"><tspan font-weight="700">FIRE</tspan> — from the aimed cone</text>
-            <text x="440" y="188" font-size="14" fill="var(--ink-soft)">0.10° cone · tight group on the chest</text>
+            <text x="440" y="188" font-size="14" fill="var(--ink-soft)">0.10° cone · tight chest group</text>
           </svg>
           <p class="cap"><b>Three beats, always in this order.</b> Stop first so the cone can shrink, aim second so the sight is up before any bullet leaves, fire third from a cone that starts at <b>0.10°</b> instead of 7.0°. The whole sequence costs about half a second — your Nano-Regen Device buys it.</p>
           <div class="exception">

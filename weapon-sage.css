@@ -1,3 +1,13 @@
+      /* Self-hosted fonts (assets/fonts/, SIL OFL 1.1; see NOTICE).
+         The Sage layouts were measured against Rajdhani/Barlow; serving the
+         files locally keeps the pages' no-third-party promise (legal test). */
+      @font-face { font-family: "Rajdhani"; font-style: normal; font-weight: 500; font-display: swap; src: url("assets/fonts/rajdhani-500.woff2") format("woff2"); }
+      @font-face { font-family: "Rajdhani"; font-style: normal; font-weight: 600; font-display: swap; src: url("assets/fonts/rajdhani-600.woff2") format("woff2"); }
+      @font-face { font-family: "Rajdhani"; font-style: normal; font-weight: 700; font-display: swap; src: url("assets/fonts/rajdhani-700.woff2") format("woff2"); }
+      @font-face { font-family: "Barlow"; font-style: normal; font-weight: 400; font-display: swap; src: url("assets/fonts/barlow-400.woff2") format("woff2"); }
+      @font-face { font-family: "Barlow"; font-style: italic; font-weight: 400; font-display: swap; src: url("assets/fonts/barlow-400-italic.woff2") format("woff2"); }
+      @font-face { font-family: "Barlow"; font-style: normal; font-weight: 500; font-display: swap; src: url("assets/fonts/barlow-500.woff2") format("woff2"); }
+      @font-face { font-family: "Barlow"; font-style: normal; font-weight: 600; font-display: swap; src: url("assets/fonts/barlow-600.woff2") format("woff2"); }
       :root {
         --nc-blue: #1c56a8;
         --nc-blue-deep: #0e2c56;
@@ -161,7 +171,7 @@
       .loadout li b { font-weight: 600; }
 
       /* ---------- range bands ---------- */
-      .band { display: grid; grid-template-columns: 86px 1fr; gap: 0 14px; background: var(--surface); border: 1px solid var(--line); margin-bottom: 10px; overflow: hidden; }
+      .band { display: grid; grid-template-columns: 102px 1fr; gap: 0 14px; background: var(--surface); border: 1px solid var(--line); margin-bottom: 10px; overflow: hidden; }
       .band .dist { background: var(--nc-blue-deep); color: #fff; font-family: "Rajdhani", sans-serif; font-weight: 700; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 12px 4px; text-align: center; }
       @media (prefers-color-scheme: dark) { .band .dist { color: #0d141d; background: var(--nc-blue); } }
       .band .dist .d1 { font-size: 24px; line-height: 1; }

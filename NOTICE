@@ -59,6 +59,11 @@ Vendored code (served from this site, not loaded from elsewhere):
   Kazuhiko Arase, MIT license (https://github.com/kazuhikoarase/qrcode-generator).
   Draws the one-time sign-in QR code on the oracle page (#82). "QR Code" is a
   registered trademark of DENSO WAVE INCORPORATED.
+- assets/fonts/*.woff2: Rajdhani (Copyright (c) 2014, Indian Type Foundry) and
+  Barlow (Copyright (c) 2017, Jeremy Tribby), both SIL Open Font License 1.1,
+  fetched from Google Fonts and served locally so the Sage guide pages render
+  in the fonts their layouts were measured against without any third-party
+  request (2026-11-11 text-trim fix).
 
 Runtime dependencies: none besides the vendored file above. The site loads no
 third-party scripts, styles or fonts. Build and test tools (wrangler, cwebp, Playwright) are used only in
