@@ -12,6 +12,8 @@ import { hutMarkOf } from "./hut.mjs?v=20261030-hs1";
 import { t as tr } from "./i18n.mjs";
 import { chartFontScale } from "./desk-scale.mjs?v=20261010-sav1";
 import { PURE_IVI_CHARGE } from "./pure-ivi.mjs?v=20261029-purevis1";
+import { WEB_AXES, buildWebPools, webValuesFor, radarPoint, radarPoints } from "./web-chart.mjs?v=20261111-web1";
+import { loadLuckData } from "./luck-col.mjs?v=20261102-luck5";
 
 /**
  * $ = app.js state and functions this part uses, as live getters (and setters for state it changes), so app.js
@@ -58,23 +60,25 @@ export function createChart($) {
       pureBtn.classList.toggle("active", on);
       pureBtn.setAttribute("aria-pressed", on ? "true" : "false");
     }
+    const webBtn = document.querySelector('[data-yscale="web-btn"]');
+    if (webBtn) {
+      const on = $.yScaleMode === "web";
+      webBtn.classList.toggle("active", on);
+      webBtn.setAttribute("aria-pressed", on ? "true" : "false");
+    }
     const ySlider = document.getElementById("yScaleSlider");
     if (ySlider) {
-      ySlider.disabled = $.yScaleMode === "kd";
+      ySlider.disabled = $.yScaleMode === "kd" || $.yScaleMode === "web";
       if (document.activeElement !== ySlider) ySlider.value = $.yScalePct;
       const ySliderVal = document.getElementById("yScaleVal");
       if (ySliderVal) ySliderVal.textContent = $.yScalePct >= 10 ? $.yScalePct.toFixed(0) + "%" : $.yScalePct.toFixed(1) + "%";
     }
   }
 
-  // At least one plotted player with a usable Pure value (PC + known 🪳 + Pure iVi > 0).
-  function pureAvailable() {
-    return !$.IS_PS && $.players.some((p) => {
-      const g = $.pureGraphFor ? $.pureGraphFor(p.display) : null;
-      return g && isFiniteNum(g.pure) && g.pure > 0;
-    });
-  }
-
+  // 🧘 Pure view (owner 2026-10-29) and 🕸️ Web view (owner 2026-11-11) are
+  // both debug-only now: the 💀 / 🧘 / 🕸️ switches show only when their
+  // view is on offer — otherwise the bar keeps the one-view behaviour
+  // (nothing to flip to). Pure still needs a usable Pure value somewhere.
   function syncSmoothBtn() {
     // Dayset 2026-10-20: Smooth (banded) and its 🌊 wave are retired from the
     // UI — "fancy but useless". The button now stays hidden even with the
@@ -83,18 +87,19 @@ export function createChart($) {
     const b = document.querySelector('[data-mode="banded"]');
     if (b) b.hidden = true;
     // t488u: no 🎯 view → the 🎯 button stays hidden (the ivi scale itself is untouched, still gated in setYScaleMode).
-    // 🧘 Pure view (owner 2026-10-29): the 💀 / 🧘 switch shows only when at least one plotted player has a
-    // usable Pure value — otherwise the bar keeps the one-view behaviour (nothing to flip to).
     if ($.els.chartModeBar) {
       if (!$.AIM_VIEW) {
         const cum = $.els.chartModeBar.querySelector('[data-mode="cumulative"]');
         if (cum) cum.hidden = true;
       }
-      const avail = pureAvailable();
+      const avail = $.pureViewAvailable ? $.pureViewAvailable() : false;
+      const webAvail = $.webViewAvailable ? $.webViewAvailable() : false;
       const kdBtn = $.els.chartModeBar.querySelector('[data-yscale="kd-btn"]');
-      if (kdBtn) kdBtn.hidden = !($.AIM_VIEW || avail);
+      if (kdBtn) kdBtn.hidden = !($.AIM_VIEW || avail || webAvail);
       const pureBtn = $.els.chartModeBar.querySelector('[data-yscale="pure-btn"]');
       if (pureBtn) pureBtn.hidden = !avail;
+      const webBtn = $.els.chartModeBar.querySelector('[data-yscale="web-btn"]');
+      if (webBtn) webBtn.hidden = !webAvail;
       const show = [...$.els.chartModeBar.children].some((x) => !x.hidden);
       $.els.chartModeBar.hidden = !show;
       // #86: .chart-mode-bar's display: flex beats [hidden], so an empty bar rendered as a small dot.
@@ -503,6 +508,177 @@ export function createChart($) {
     return true;
   }
 
+  /* ---------- 🕸️ Web (radar) view (owner 2026-11-11) ----------
+   * The plotted players as webs on the 10 axes of web-chart.mjs. Pools come
+   * from the one shared ranks.json payload (loadRanksPayload) plus the
+   * cached 🎲 Luck file — no second ranks fetch. Vertices show emoji only
+   * (owner's call); full names + values live in <title> tooltips. */
+
+  /** Full label for one web axis, for tooltips (never vertex text). */
+  function webAxisLabel(k) {
+    return [
+      tr("chart.webAxisIvi", "⚔️ iVi — rating vs your most-fought players"),
+      tr("chart.webAxisAct", "🏃 Activity — winning combat, fast"),
+      tr("chart.webAxisBrave", "🦁 Brave — holds up vs fast killers"),
+      tr("chart.webAxisResist", "🛡️ Resist — K/D weighted by enemy danger"),
+      tr("chart.webAxisKd", "☠️ K/D — vs your most-fought players"),
+      tr("chart.webAxisLuck", "🎲 Luck — wins vs what iVi predicts"),
+      tr("chart.webAxisAssists", "🤝 Assists — inverted: fewer shared kills reads higher"),
+      tr("chart.webAxisSolo", "🪳 Solo — inverted: less crowd-riding reads higher"),
+      tr("chart.webAxisClean", "🧼 Clean — Pure iVi × (1 − G)"),
+      tr("chart.webAxisInf", "🪖 Infantry — kills made on foot"),
+    ][k] || WEB_AXES[k].emoji;
+  }
+
+  // Web pools: lazy, once; a redraw follows when they land (only while
+  // the web view is still showing).
+  let webPools = null;
+  let webPoolsLoad = null;
+  const webHidden = new Set(); // display names toggled off via the web chips
+  function ensureWebPools() {
+    if (webPools) return Promise.resolve(webPools);
+    if (webPoolsLoad) return webPoolsLoad;
+    if (!$.loadRanksPayload || !$.DATA) return Promise.resolve(null);
+    webPoolsLoad = Promise.all([
+      $.loadRanksPayload().catch(() => null),
+      loadLuckData($.DATA).catch(() => null),
+    ]).then(([payload, luckData]) => {
+      webPools = buildWebPools(payload, luckData);
+      if (webPools && $.yScaleMode === "web" && $.players.length) drawChart($.players);
+      return webPools;
+    }).catch(() => { webPoolsLoad = null; return null; });
+    return webPoolsLoad;
+  }
+
+  function setWebNote(text) {
+    const el = document.getElementById("chartWebNote");
+    if (!el) return;
+    el.textContent = text || "";
+    el.hidden = !text;
+  }
+
+  /** Legend chips under the web: click to hide / show one player's web. */
+  function drawWebChips(list) {
+    const box = document.getElementById("chartWebChips");
+    if (!box) return;
+    box.replaceChildren();
+    if (!list.length) { box.hidden = true; return; }
+    box.hidden = false;
+    list.forEach((p, i) => {
+      const off = webHidden.has(p.display);
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "chart-web-chip";
+      chip.setAttribute("aria-pressed", off ? "false" : "true");
+      chip.title = off
+        ? tr("chart.webChipShow", "Show {name} on the web", { name: p.display })
+        : tr("chart.webChipHide", "Hide {name} from the web", { name: p.display });
+      const dot = document.createElement("span");
+      dot.className = "chart-web-chip-dot";
+      dot.style.background = $.seriesColor(i);
+      chip.appendChild(dot);
+      chip.appendChild(document.createTextNode(p.display));
+      chip.addEventListener("click", () => {
+        if (webHidden.has(p.display)) webHidden.delete(p.display);
+        else webHidden.add(p.display);
+        if ($.players.length) drawChart($.players);
+      });
+      box.appendChild(chip);
+    });
+  }
+
+  function drawWebChart(svg, list, th, fz) {
+    const cx = $.VB.w / 2, cy = $.VB.h / 2, R = 200;
+    const n = WEB_AXES.length;
+    svg.setAttribute("aria-label", tr("chart.webAria", "Skill web: each axis is the share of all ranked players beaten on that stat"));
+    // Rings + spokes + emoji-only vertex labels.
+    for (const rv of [25, 50, 75, 100]) {
+      const poly = $.ns("polygon");
+      poly.setAttribute("class", "web-ring");
+      poly.setAttribute("points", Array.from({ length: n }, (_, k) => {
+        const p = radarPoint(rv, k, n, cx, cy, R);
+        return `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+      }).join(" "));
+      poly.setAttribute("fill", "none");
+      poly.setAttribute("stroke", th.grid);
+      poly.setAttribute("stroke-width", rv === 100 ? "1.2" : "0.8");
+      poly.setAttribute("stroke-opacity", rv === 100 ? "0.9" : "0.5");
+      svg.appendChild(poly);
+    }
+    for (let k = 0; k < n; k++) {
+      const a = (Math.PI * 2 * k) / n - Math.PI / 2;
+      const line = $.ns("line");
+      line.setAttribute("class", "web-spoke");
+      line.setAttribute("x1", cx);
+      line.setAttribute("y1", cy);
+      line.setAttribute("x2", cx + R * Math.cos(a));
+      line.setAttribute("y2", cy + R * Math.sin(a));
+      line.setAttribute("stroke", th.grid);
+      line.setAttribute("stroke-width", "0.8");
+      line.setAttribute("stroke-opacity", "0.5");
+      svg.appendChild(line);
+      const lp = radarPoint(100, k, n, cx, cy, R + 30);
+      const t = $.ns("text");
+      t.setAttribute("class", "web-axis");
+      t.setAttribute("x", lp.x.toFixed(1));
+      t.setAttribute("y", lp.y.toFixed(1));
+      t.setAttribute("fill", th.text);
+      t.setAttribute("font-size", fz(20));
+      t.setAttribute("text-anchor", "middle");
+      t.setAttribute("dominant-baseline", "central");
+      t.textContent = WEB_AXES[k].emoji;
+      const tip = $.ns("title");
+      tip.textContent = webAxisLabel(k);
+      t.appendChild(tip);
+      svg.appendChild(t);
+    }
+    if (!webPools) {
+      ensureWebPools();
+      setWebNote(tr("chart.webLoading", "Loading ranks…"));
+      drawWebChips(list);
+      return;
+    }
+    const missing = [];
+    for (let i = 0; i < list.length; i++) {
+      const p = list[i];
+      if (webHidden.has(p.display)) continue;
+      const vals = webValuesFor(webPools, slugKey(p.display));
+      if (!vals) { missing.push(p.display); continue; } // no ranks row: no web, never a guessed one
+      const col = $.seriesColor(i);
+      const pts = radarPoints(vals, cx, cy, R);
+      if (pts.length >= 3) {
+        const poly = $.ns("polygon");
+        poly.setAttribute("class", "web-poly");
+        poly.setAttribute("points", pts.map((pt) => `${pt.x.toFixed(1)},${pt.y.toFixed(1)}`).join(" "));
+        poly.setAttribute("fill", col);
+        poly.setAttribute("fill-opacity", $.isLightTheme() ? "0.12" : "0.18");
+        poly.setAttribute("stroke", col);
+        poly.setAttribute("stroke-width", "2");
+        poly.setAttribute("stroke-linejoin", "round");
+        svg.appendChild(poly);
+      }
+      vals.forEach((v, k) => {
+        if (v == null) return; // no value on this axis: jumped across, never plotted at 0
+        const pt = radarPoint(v, k, n, cx, cy, R);
+        const c = $.ns("circle");
+        c.setAttribute("class", "web-dot");
+        c.setAttribute("cx", pt.x.toFixed(1));
+        c.setAttribute("cy", pt.y.toFixed(1));
+        c.setAttribute("r", "3.5");
+        c.setAttribute("fill", col);
+        c.setAttribute("stroke", th.markerStroke);
+        c.setAttribute("stroke-width", "0.6");
+        const tip = $.ns("title");
+        tip.textContent = `${p.display}: ${webAxisLabel(k)} — ${v}%`;
+        c.appendChild(tip);
+        svg.appendChild(c);
+      });
+    }
+    if (missing.length) setWebNote(tr("chart.webHidden", "Web hides players with no ranks data: {names}", { names: missing.join(", ") }));
+    else setWebNote("");
+    drawWebChips(list);
+  }
+
   function drawChart(list, { waveFrame = false, skipTable = false, pop = true } = {}) {
     // 2026-10-29: the pure lines lagged one draw behind — pureGraphFor reads
     // $.lastStatsList, which renderStatsTable only set at this function's end,
@@ -533,6 +709,17 @@ export function createChart($) {
     bg.setAttribute("height", $.VB.h);
     bg.setAttribute("fill", th.bg);
     svg.appendChild(bg);
+
+    // 🕸️ Web view: the radar replaces the K/D curves entirely (same svg,
+    // same section); the stats table below still renders as usual.
+    if ($.yScaleMode === "web") {
+      drawWebChart(svg, list, th, fz);
+      if (!skipTable) $.renderStatsTable(list);
+      const pureNote = document.getElementById("chartPureNote");
+      if (pureNote) { pureNote.textContent = ""; pureNote.hidden = true; }
+      syncChartModeUi();
+      return;
+    }
 
     // Zoom slider: above the middle zooms into the LEFT start of the graph
     // (X shrinks fast from the right, X min stays 0) and Y re-fits to what is

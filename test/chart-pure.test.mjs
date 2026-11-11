@@ -42,7 +42,7 @@ test("chart: pure branch anchors like ivi, and omits unknown 🪳 outright", () 
   assert.ok(src.includes('stroke-width", lightLines ? "1.6" : "1.4"'), "dashed drawn thicker than the solid");
   assert.ok(src.includes('tr("chart.ylabPure"'), "pure Y label key");
   assert.ok(src.includes('getElementById("chartPureNote")') && src.includes('tr("chart.pureHidden"'), "hidden-players note");
-  assert.ok(src.includes("function pureAvailable()"), "bar/flip availability helper");
+  assert.ok(src.includes("$.pureViewAvailable"), "bar availability reads the debug-gated helper");
   assert.ok(src.includes('querySelector(\'[data-yscale="pure-btn"]\')'), "pure button wired in UI sync");
 });
 
@@ -58,17 +58,21 @@ test("chart: mode bar re-syncs on every draw, so the 🧘 button appears after a
   assert.ok(draw.includes("syncChartModeUi();"), "drawChart re-syncs the mode bar (setup-time sync alone leaves the button hidden)");
 });
 
-test("app: flip is 💀 ⇄ 🧘, gated on a usable Pure value, 🎯 stays off", () => {
+test("app: flip cycles 💀 → 🧘 → 🕸️, gated on debug + a usable Pure value, 🎯 stays off", () => {
   const src = read("app.js");
-  assert.ok(src.includes('setYScaleMode(yScaleMode === "pure" ? "kd" : "pure")'), "flip cycles kd ⇄ pure");
+  assert.ok(src.includes("nextChartView(yScaleMode, dir,"), "flip steps through the 3-view cycle in swipe direction");
   assert.ok(!src.includes('? "ivi" : "kd"'), "no kd ⇄ ivi flip left");
-  assert.ok(src.includes("const pureAvailable = ()"), "availability helper defined");
-  assert.ok(src.includes("if (!pureAvailable()) return;"), "flip + wheel gated");
-  assert.ok(src.includes("canStart: () => pureAvailable()"), "drag gated");
-  assert.ok(src.includes('pick === "skill" && pureAvailable()'), "keys gated");
+  assert.ok(src.includes("function pureViewAvailable()"), "Pure availability helper defined (debug-gated)");
+  assert.ok(src.includes("function webViewAvailable()"), "Web availability helper defined (debug-gated)");
+  assert.ok(src.includes("showDebugCols && !IS_PS"), "Pure needs the debug box + PC");
+  assert.ok(src.includes("if (want === yScaleMode) return;"), "flip returns when nothing is on offer (public: 💀 only)");
+  assert.ok(src.includes("canStart: () => (pureViewAvailable() || webViewAvailable())"), "drag gated");
+  assert.ok(src.includes('pick === "skill" && (pureViewAvailable() || webViewAvailable())'), "keys gated");
   assert.ok(src.includes('querySelector(\'[data-yscale="pure-btn"]\')'), "pure button click handler");
+  assert.ok(src.includes('querySelector(\'[data-yscale="web-btn"]\')'), "web button click handler");
   assert.ok(src.includes("setYScaleMode(yScaleMode, v);"), "slider keeps the current scale");
-  assert.ok(src.includes('setYScaleMode("kd")') && src.includes('setYScaleMode("pure")'), "buttons select their mode outright");
+  assert.ok(src.includes('setYScaleMode("kd")') && src.includes('setYScaleMode("pure")') && src.includes('setYScaleMode("web")'), "buttons select their mode outright");
+  assert.ok(src.includes('if (!showDebugCols && (yScaleMode === "pure" || yScaleMode === "web")) setYScaleMode("kd")'), "debug off falls back to 💀");
 });
 
 test("wave: ivi still needs AIM_VIEW, pure does not", () => {
@@ -100,8 +104,9 @@ test("html + i18n: 🧘 button, note slot, keys with the {names} placeholder", (
 test("one module = one ?v= tag across all importers", () => {
   const tag = (mod, files) => {
     const found = new Set();
+    // Anchor on / or " so web-chart.mjs does not also match chart.mjs.
     for (const f of files) {
-      for (const m of read(f).matchAll(new RegExp(`${mod.replace(".", "\\.")}\\?v=([A-Za-z0-9_.-]+)`, "g"))) found.add(m[1]);
+      for (const m of read(f).matchAll(new RegExp(`[/"]${mod.replace(".", "\\.")}\\?v=([A-Za-z0-9_.-]+)`, "g"))) found.add(m[1]);
     }
     return found;
   };
@@ -110,6 +115,7 @@ test("one module = one ?v= tag across all importers", () => {
   assert.equal(tag("stats-table.mjs", appFiles).size, 1);
   assert.deepEqual([...tag("chart-wave.mjs", appFiles)], ["20261029-puregraph1"]);
   assert.deepEqual([...tag("pure-ivi.mjs", ["app.js", "stats-table.mjs", "rankings.mjs", "chart.mjs"])], ["20261029-purevis1"]);
+  assert.deepEqual([...tag("web-chart.mjs", ["app.js", "chart.mjs"])], ["20261111-web1"]);
   const htmlTag = (f) => [...read(f).matchAll(/app\.js\?v=([A-Za-z0-9_.-]+)/g)].map((m) => m[1]);
   // t765u: app.js tag moves on with later work; both pages must just agree on one tag.
   assert.equal(htmlTag("index.html").length, 1);

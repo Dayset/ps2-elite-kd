@@ -69,10 +69,14 @@ export function createChartWave($) {
     } catch { return 0; }
   }
 
-  // Y-scale display switch: K/D / A (iVi-median) / B (iVi-start) / 🧘 Pure
+  // Y-scale display switch: K/D / A (iVi-median) / B (iVi-start) / 🧘 Pure / 🕸️ Web
   function setYScaleMode(mode, pct) {
     // t488u: always 💀 K/D while the 🎯 view is off — except 🧘 Pure, which is its own owner-approved view (2026-10-29) and needs no AIM_VIEW.
+    // 2026-11-11: 🧘 Pure and 🕸️ Web are debug-only (Pure is no longer public — 🧼 Clean is); Web is PC only. A gated mode falls back to 💀.
+    if (mode === "pure" && $.pureViewAvailable && !$.pureViewAvailable()) mode = "kd";
+    if (mode === "web" && (!$.webViewAvailable || !$.webViewAvailable())) mode = "kd";
     $.yScaleMode = (mode === "ivi" && !$.AIM_VIEW) ? "kd" : mode;
+    if ($.yScaleMode === "web") stopWave(); // the 🌊 wave swings the K/D curves; it has nothing to move on a web
     if (pct !== undefined) $.yScalePct = pct;
     $.syncYScaleUi();
     $.syncChartModeUi();

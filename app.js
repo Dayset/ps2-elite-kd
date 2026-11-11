@@ -70,6 +70,7 @@ import { mountWeapons } from "./weapons.mjs?v=20261106-wplink1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261025-loc1";
 import { createWheelSwiper } from "./dist-cycle.mjs?v=20261017-cycle15";
 import { slideSwap, attachDragCarousel } from "./chart-slide.mjs?v=20261020-flick1";
+import { nextChartView } from "./web-chart.mjs?v=20261111-web1";
 import { mountStatsCarousel } from "./stats-carousel.mjs?v=20261102-dots1";
 import { pickGraphForKeys } from "./graph-keys.mjs?v=20261017-graphkeys1";
 import { entryFetchedAt, pickNewest, writeWithEviction } from "./cache-pick.mjs?v=20261010-sav1";
@@ -251,6 +252,11 @@ import {
       get chartFs() { return chartFs; }, set chartFs(v) { chartFs = v; },
       get chartMode() { return chartMode; }, set chartMode(v) { chartMode = v; },
       get chartTheme() { return chartTheme; },
+      get DATA() { return DATA; },
+      get loadRanksPayload() { return () => sharedPart().loadRanksPayload(); },
+      get showDebugCols() { return showDebugCols; },
+      get pureViewAvailable() { return pureViewAvailable; },
+      get webViewAvailable() { return webViewAvailable; },
       get els() { return els; },
       get ghostsOn() { return ghostsOn; }, set ghostsOn(v) { ghostsOn = v; },
       get hutMarked() { return hutMarked; },
@@ -1040,6 +1046,22 @@ import {
   function sourceLabel(...a) { return statsPart().sourceLabel(...a); }
 
   let showDebugCols = readShowDebugCols();
+  /**
+   * 🧘 Pure view is debug-only now (owner 2026-11-11): Pure is no longer
+   * public — 🧼 Clean is the public stat — and Pure already lives as a
+   * debug column in the tables, so the chart matches. Public carousel =
+   * 💀 iVi only; debug carousel = 💀 → 🧘 → 🕸️.
+   */
+  function pureViewAvailable() {
+    return showDebugCols && !IS_PS && players.some((p) => {
+      const g = pureGraphFor(p.display);
+      return g && isFiniteNum(g.pure) && g.pure > 0;
+    });
+  }
+  /** 🕸️ Web view: debug-only, PC only (🪳 / 🌈 / 🧼 are PC stats). */
+  function webViewAvailable() {
+    return showDebugCols && !IS_PS && players.length > 0;
+  }
   /** Last list rendered into the stats tables (re-render when the debug box flips). */
   let lastStatsList = null;
   if (els.debugColsToggle) {
@@ -1060,6 +1082,8 @@ import {
       if (lastStatsList) renderStatsTable(lastStatsList);
       syncSmoothBtn();
       syncLiveBtn();
+      // Debug off while on 🧘 / 🕸️: both are debug-only, so fall back to 💀.
+      if (!showDebugCols && (yScaleMode === "pure" || yScaleMode === "web")) setYScaleMode("kd");
     });
   }
   syncLiveBtn();
@@ -1247,7 +1271,10 @@ import {
       get chartOnScreen() { return chartOnScreen; },
       get drawChart() { return drawChart; },
       get ghostsOn() { return ghostsOn; },
+      get IS_PS() { return IS_PS; },
       get players() { return players; },
+      get pureViewAvailable() { return pureViewAvailable; },
+      get webViewAvailable() { return webViewAvailable; },
       get setGhostsOn() { return setGhostsOn; },
       get syncChartModeUi() { return syncChartModeUi; },
       get syncYScaleUi() { return syncYScaleUi; },
@@ -1572,22 +1599,24 @@ import {
   }
   syncChartModeUi();
 
-  // 🧘 Pure view (owner 2026-10-29): the skill graph flips 💀 ⇄ 🧘 only when at least one plotted player has a usable Pure value; the 🎯 view stays off per t488u.
-  const pureAvailable = () => !IS_PS && players.some((p) => { const g = pureGraphFor(p.display); return g && isFiniteNum(g.pure) && g.pure > 0; });
-  /* t383u: 👆 swipe sideways on the skill graph switches 💀 ⇄ 🧘 (two views,
-   * so either direction flips). Touch, mouse drag, or a two-finger trackpad
-   * swipe; vertical drags keep scrolling the page. Phones also get the short
-   * "who wins fights / solo ability" tip for the view they landed on. */
+  // 🧘 Pure + 🕸️ Web views (owner 2026-10-29 / 2026-11-11): the skill graph
+  // flips 💀 → 🧘 → 🕸️ (and back), skipping debug-gated views when the box
+  // is off — public carousel is 💀 only. The 🎯 view stays off per t488u.
+  /* t383u: 👆 swipe sideways on the skill graph switches views (one step
+   * per swipe, in swipe direction). Touch, mouse drag, or a two-finger
+   * trackpad swipe; vertical drags keep scrolling the page. Phones also
+   * get the short tip for the view they landed on. */
   if (els.chart) {
     const flipView = (dir = 1) => {
-      if (!pureAvailable()) return; // 🧘 flip needs a usable Pure value somewhere; 🎯 stays off per t488u
+      const want = nextChartView(yScaleMode, dir, { pure: pureViewAvailable(), web: webViewAvailable() });
+      if (want === yScaleMode) return; // nothing to flip to (public: 💀 only)
       // t384u: the other view slides in, carousel-style (restored after d758c9e dropped it).
       const wrap = els.chart.closest(".chart-wrap");
       const panel = wrap ? getComputedStyle(wrap).backgroundColor : "";
-      slideSwap({ container: wrap, svg: els.chart, dir, background: panel, draw: () => setYScaleMode(yScaleMode === "pure" ? "kd" : "pure") });
-      sfx("sparkle"); // same dice-press sound: K/D ⇄ Pure mode switch (swipe / keys)
+      slideSwap({ container: wrap, svg: els.chart, dir, background: panel, draw: () => setYScaleMode(want) });
+      sfx("sparkle"); // same dice-press sound: view switch (swipe / keys)
       if (isTouchUi()) {
-        const on = document.querySelector(yScaleMode === "kd" ? '[data-yscale="kd-btn"]' : '[data-yscale="pure-btn"]');
+        const on = document.querySelector(`[data-yscale="${want}-btn"]`);
         if (on && on.getAttribute("data-tip")) showHeadTip(on.getAttribute("data-tip"), on);
       }
     };
@@ -1596,7 +1625,7 @@ import {
     // mid-drag); release past ¼ width or flick to finish, else spring back.
     const showViewTip = () => {
       if (!isTouchUi()) return;
-      const on = document.querySelector(yScaleMode === "kd" ? '[data-yscale="kd-btn"]' : '[data-yscale="pure-btn"]');
+      const on = document.querySelector(`[data-yscale="${yScaleMode}-btn"]`);
       if (on && on.getAttribute("data-tip")) showHeadTip(on.getAttribute("data-tip"), on);
     };
     let viewAtDragStart = yScaleMode;
@@ -1607,23 +1636,23 @@ import {
         container: chartWrap,
         svg: () => els.chart,
         background: () => getComputedStyle(chartWrap).backgroundColor,
-        canStart: () => pureAvailable() && players.length > 0 && !els.chart.hasAttribute("hidden"),
+        canStart: () => (pureViewAvailable() || webViewAvailable()) && players.length > 0 && !els.chart.hasAttribute("hidden"),
         onStart: () => { viewAtDragStart = yScaleMode; },
-        show: () => { const want = viewAtDragStart === "pure" ? "kd" : "pure"; if (yScaleMode !== want) setYScaleMode(want); },
+        show: (dir) => { const want = nextChartView(viewAtDragStart, dir, { pure: pureViewAvailable(), web: webViewAvailable() }); if (yScaleMode !== want) setYScaleMode(want); },
         restore: () => { if (yScaleMode !== viewAtDragStart) setYScaleMode(viewAtDragStart); },
         onCommit: showViewTip,
       });
     }
     const wheelSw = createWheelSwiper();
     els.chart.addEventListener("wheel", (e) => {
-      if (!pureAvailable()) return; // no Pure value anywhere → sideways wheel scrolls like anywhere else
+      if (!pureViewAvailable() && !webViewAvailable()) return; // nothing to flip to → sideways wheel scrolls like anywhere else
       const dir = wheelSw.push(e.deltaX, e.deltaY);
       if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) e.preventDefault(); // not browser back / forward
       if (dir && players.length) flipView(dir);
     }, { passive: false });
     // ⌨️ Global ←/→: whichever graph holds the middle of the screen gets the
-    // keys — 📊 steps to the next / previous metric, the skill graph flips
-    // 💀 ⇄ 🧘 (same as swiping). The pills' own focused-key handler owns
+    // keys — 📊 steps to the next / previous metric, the skill graph steps
+    // to the next / previous view (same as swiping). The pills' own focused-key handler owns
     // arrows while a pill has focus; typing in any field is untouched, and
     // when neither graph is centred the keys keep scrolling the page.
     // t489u: CAPTURE phase + stopPropagation on a claim. A control that kept
@@ -1650,7 +1679,7 @@ import {
         e.stopPropagation();
         rankingsApi.stepDist(dir);
         sfx("sparkle");
-      } else if (pick === "skill" && pureAvailable()) {
+      } else if (pick === "skill" && (pureViewAvailable() || webViewAvailable())) {
         e.preventDefault();
         e.stopPropagation();
         flipView(dir);
@@ -1664,7 +1693,7 @@ import {
       if (b && isTouchUi()) showHeadTip(b.getAttribute("data-tip"), b);
     });
   }
-  // 💀 button selects K/D mode, 🧘 selects Pure mode (in chartModeBar)
+  // 💀 button selects K/D mode, 🧘 selects Pure mode, 🕸️ selects Web mode (in chartModeBar)
   const kdBtn = document.querySelector('[data-yscale="kd-btn"]');
   if (kdBtn) {
     kdBtn.addEventListener("click", () => {
@@ -1677,6 +1706,13 @@ import {
     pureBtn.addEventListener("click", () => {
       setYScaleMode("pure");
       sfx("sparkle"); // same dice-press sound: K/D ⇄ Pure mode switch
+    });
+  }
+  const webBtn = document.querySelector('[data-yscale="web-btn"]');
+  if (webBtn) {
+    webBtn.addEventListener("click", () => {
+      setYScaleMode("web");
+      sfx("sparkle"); // same dice-press sound: view switch
     });
   }
   // Slider input

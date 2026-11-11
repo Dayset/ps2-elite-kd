@@ -1419,6 +1419,37 @@ html[data-theme="light"] .progress-modal-backdrop {
   gap: 0.5rem;
   margin: 0.3rem 0.6rem 0;
 }
+/* 🕸️ Web view legend chips (owner 2026-11-11): one pill per plotted player; click to hide / show their web. */
+.chart-mode-row { flex-wrap: wrap; }
+.chart-web-chips {
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+.chart-web-chips[hidden] { display: none; }
+.chart-web-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid var(--ctrl-btn-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+.chart-web-chip[aria-pressed="false"] { opacity: 0.45; }
+.chart-web-chip-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
 .chart-mode-bar {
   display: flex;
   justify-content: flex-end;

@@ -49,6 +49,10 @@ async function withPage(fn, { width = 1280, height = 900 } = {}) {
     const { sessionId } = await send("Target.attachToTarget", { targetId, flatten: true });
     await send("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: false }, sessionId);
     await send("Page.enable", {}, sessionId);
+    await send("Runtime.enable", {}, sessionId);
+    // 🧘 Pure is debug-only now (owner 2026-11-11): preset the debug box so
+    // the button exists and the mode switch is allowed.
+    await send("Page.addScriptToEvaluateOnNewDocument", { source: `(() => { try { localStorage.setItem("ps2-elite-kd-debug-cols", "1"); } catch {} })();` }, sessionId);
     const ev = async (expr) => {
       const r = await send("Runtime.evaluate", { expression: expr, awaitPromise: true, returnByValue: true }, sessionId);
       if (r.exceptionDetails) throw new Error(r.exceptionDetails.text + " " + (r.exceptionDetails.exception?.description || ""));
