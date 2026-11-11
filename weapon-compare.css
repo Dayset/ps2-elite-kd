@@ -245,3 +245,20 @@ tbody.open .wc-caret::before { content: "▾"; }
 #wcAdad > .wc-note { margin: 0 0 10px; }
 #wcAdad .adad-tbl > summary h2, #wcAdad .adad-notes > summary h2 { display: inline; font-size: 0.95rem; margin: 0; }
 #wcAdad .adad-foot { margin: 14px 0 0; }
+
+/* tier lists: one folded group per weapon class, tier header rows (the
+   .rk-tier row style from styles.css) over the ranked weapons */
+#wcTiers > .wc-note { margin: 0 0 10px; }
+#wcTiers .wc-segwrap { margin-bottom: 8px; }
+#tiersMeta { margin: 0 0 4px; font-variant-numeric: tabular-nums; }
+.wc-tiercat { border: 1px solid var(--border); margin-top: 8px; }
+.wc-tiercat > summary { cursor: pointer; font-weight: 700; padding: 6px 8px; }
+.wc-tiercat > summary .wc-dim { font-weight: 400; }
+.wc-tier-table { width: 100%; min-width: 560px; font-size: 0.84rem; border-collapse: collapse; }
+.wc-tier-table th, .wc-tier-table td { text-align: center; padding: 0.2rem 0.5rem; white-space: nowrap; }
+.wc-tier-table .wc-tier-name { text-align: left; white-space: normal; }
+.wc-tier-table .wc-tier-name a { text-decoration: none; }
+.wc-tier-table .wc-tier-name a:hover { text-decoration: underline; }
+.wc-tier-S { color: var(--wc-gold); font-weight: 700; }
+.wc-tier-A { color: var(--wc-good); font-weight: 700; }
+.wc-tier-table td { font-variant-numeric: tabular-nums; }

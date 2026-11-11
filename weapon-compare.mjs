@@ -23,6 +23,7 @@ import {
   FPS_LIMIT, fpsFireRateDrop, withFpsLimit, deepBands, minShots, hitDamage,
 } from "./weapons-model.mjs?v=20261107-merge1";
 import { METRICS, GROUPS, GROUP_EN, NO_BLOOM, statValues, bestOf, rank, classBests, rowAllSame } from "./weapon-stats.mjs?v=20261109-merge1";
+import { computeTiers, TIER_MIN_CLASS } from "./weapon-tiers.mjs?v=20261111-wctiers1";
 import {
   simParams, compareBursts, burstAnalysis, deepTimings, sprayPattern, attEffects, SLOTS, slotOf, canon, TARGET, STANCES,
   stylesFor, loadoutEffects, loadoutProfile, loadoutRec,
@@ -537,6 +538,7 @@ async function boot() {
     if (range || !calc) compute();
     if (range && !cards) paintCardMeta();
     if (range) renderTable();
+    if (range) renderTiers();
     if (charts) { drawTtk(); drawCdf(); }
     // every simulator job this draw needs goes to the worker in ONE message (a second message would make the
     // first one's jobs stale in the worker)
@@ -677,6 +679,73 @@ async function boot() {
     if (weapons.has(id) && addId(id)) document.querySelector(".wc-pick").scrollIntoView({ block: "start", behavior: "smooth" });
   });
   if (location.hash === "#adad") $("wcAdad").open = true;
+
+  // ---- tier lists: every weapon ranked by strafing effective DPS, per class ----
+  let tierStance = "ads";
+  const tierOpen = new Set(); // classes the user opened (kept through a redraw)
+  const tierOpts = () => ({ range: st.range, fpsOn: st.fpsOn, fps: st.fps, stance: tierStance });
+  function paintTierStance() {
+    $("tiersAds").setAttribute("aria-checked", String(tierStance === "ads"));
+    $("tiersHip").setAttribute("aria-checked", String(tierStance === "hip"));
+  }
+  function renderTiers() {
+    const box = $("wcTiers");
+    if (!box || !box.open) return;
+    const body = $("tiersBody");
+    if (!recoil) {
+      $("tiersMeta").textContent = "";
+      body.innerHTML = `<p class="wc-dim">${esc(tr("wc.sim.wait", "Loading recoil data…"))}</p>`;
+      return;
+    }
+    const { classes, total } = computeTiers([...weapons.values()], recoil, tierOpts());
+    $("tiersMeta").textContent = tr("wc.tiers.meta", "At {m} m · {fps} · {n} weapons in {c} classes", {
+      m: nf(st.range),
+      fps: st.fpsOn ? tr("wc.tiers.fpsOn", "FPS limit on at {fps} FPS", { fps: nf(st.fps) }) : tr("wc.tiers.fpsOff", "FPS limit off"),
+      n: nf(total), c: nf(classes.length),
+    });
+    if (!tierOpen.size) tierOpen.add(((weapons.get(st.ids[0]) || {}).cat) || "Assault Rifle");
+    const th = (k, en) => `<th scope="col">${esc(tr("wc.tiers.col." + k, en))}</th>`;
+    let h = "";
+    for (const { cat, rows } of classes) {
+      // consecutive tier runs, like the rankings' tier groups
+      const groups = [];
+      for (const r of rows) {
+        const g = groups[groups.length - 1];
+        if (g && g.tier === r.tier) g.rows.push(r);
+        else groups.push({ tier: r.tier, rows: [r] });
+      }
+      const tierRows = groups.map((g) => {
+        const lo = Math.round(g.rows[g.rows.length - 1].eff), hi = Math.round(g.rows[0].eff);
+        const label = g.tier === null ? tr("wc.tiers.few", "Too few to tier — ranked only") : g.tier;
+        const head = `<tr class="rk-tier"><td colspan="6"><span class="rk-tier-label">${esc(label)}</span> <span class="rk-tier-meta">${esc(tr("wc.tiers.group", "{n} weapons · {lo}–{hi} DPS", { n: nf(g.rows.length), lo: nf(lo), hi: nf(hi) }))}</span></td></tr>`;
+        return head + g.rows.map((r) => `<tr><td class="${r.tier ? `wc-tier-${r.tier}` : ""}">${esc(r.tier ?? "–")}</td>`
+          + `<td class="wc-tier-name"><a href="weapon-compare.html?w=${r.id}">${esc(r.name)}</a></td>`
+          + `<td>${esc(FACTION[r.fac] ?? "")}</td>`
+          + `<td>${nf(Math.round(r.eff))}</td>`
+          + `<td>${r.loss == null ? "–" : (r.loss * 100).toFixed(1) + "%"}</td>`
+          + `<td>${r.nFree === Infinity ? esc(tr("wc.noBloom", "no bloom")) : nf(r.nFree)}</td></tr>`).join("");
+      }).join("");
+      h += `<details class="wc-tiercat" data-cat="${esc(cat)}"${tierOpen.has(cat) ? " open" : ""}><summary>${esc(cat)} <span class="wc-dim">${esc(tr("wc.tiers.count", "{n} weapons", { n: nf(rows.length) }))}</span>${rows.length < TIER_MIN_CLASS ? ` · ${esc(tr("wc.tiers.few", "Too few to tier — ranked only"))}` : ""}</summary>`
+        + `<div class="tscroll"><table class="ranks-table wc-tier-table"><thead><tr>${th("tier", "Tier")}${th("weapon", "Weapon")}${th("faction", "Faction")}${th("eff", "Effective DPS")}${th("loss", "Walk loss")}${th("free", "Free shots")}</tr></thead><tbody>${tierRows}</tbody></table></div></details>`;
+    }
+    body.innerHTML = h;
+  }
+  $("wcTiers").addEventListener("toggle", () => { if ($("wcTiers").open) renderTiers(); });
+  $("tiersAds").addEventListener("click", () => { tierStance = "ads"; paintTierStance(); renderTiers(); });
+  $("tiersHip").addEventListener("click", () => { tierStance = "hip"; paintTierStance(); renderTiers(); });
+  $("tiersBody").addEventListener("toggle", (e) => {
+    const d = e.target.closest && e.target.closest("details[data-cat]");
+    if (!d) return;
+    if (d.open) tierOpen.add(d.dataset.cat); else tierOpen.delete(d.dataset.cat);
+  }, true);
+  // a tier row's weapon opens the in-depth comparison, like the ADAD table's Compare links
+  $("wcTiers").addEventListener("click", (e) => {
+    const a = e.target.closest('a[href^="weapon-compare.html?w="]');
+    if (!a) return;
+    e.preventDefault();
+    const id = Number(new URL(a.href, location.href).searchParams.get("w"));
+    if (weapons.has(id) && addId(id)) document.querySelector(".wc-pick").scrollIntoView({ block: "start", behavior: "smooth" });
+  });
 
   // ------------------------------------------------------------- compute --
   let calc = null;

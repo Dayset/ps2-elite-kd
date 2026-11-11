@@ -128,6 +128,28 @@ test("screen-height presets: 1080p, 1440p, 2160p (4K); anything else is custom",
   assert.equal(resPresetFor(4320), "custom");
 });
 
+test("tier lists: a folded section after the ADAD calculator, wired to the page state", () => {
+  const html = read("weapon-compare.html"), mjs = read("weapon-compare.mjs"), css = read("weapon-compare.css");
+  const en = JSON.parse(read("i18n/en.json"));
+  for (const id of ["wcTiers", "tiersAds", "tiersHip", "tiersMeta", "tiersBody"]) assert.match(html, new RegExp(`id="${id}"`), id);
+  assert.match(html, /<details class="[^"]*dist-section[^"]*" id="wcTiers">/);
+  assert.doesNotMatch(html, /<details[^>]*id="wcTiers"[^>]* open/);
+  assert.match(html, /id="tiersAds" aria-checked="true"/);
+  assert.match(html, /data-i18n="wc\.tiers\.sum"/);
+  assert.match(html, /data-i18n="wc\.how\.tiers"/);
+  assert.match(mjs, /from "\.\/weapon-tiers\.mjs\?v=/);
+  assert.match(mjs, /computeTiers\(\[\.\.\.weapons\.values\(\)\], recoil, tierOpts\(\)\)/);
+  assert.match(mjs, /if \(range\) renderTiers\(\);/);
+  assert.match(mjs, /tiersBody/);
+  assert.match(css, /\.wc-tier-table/);
+  assert.match(css, /\.wc-tier-S/);
+  for (const k of ["wc.tiers.sum", "wc.tiers.sub", "wc.tiers.meta", "wc.tiers.fpsOn", "wc.tiers.fpsOff",
+    "wc.tiers.col.tier", "wc.tiers.col.weapon", "wc.tiers.col.faction", "wc.tiers.col.eff", "wc.tiers.col.loss",
+    "wc.tiers.col.free", "wc.tiers.count", "wc.tiers.group", "wc.tiers.few", "wc.tiers.caveat", "wc.how.tiers"]) {
+    assert.ok(typeof en[k] === "string" && en[k].length, k);
+  }
+});
+
 test("beginner guides: one switch, a finder, and a link slot on every weapon card (veteran view hides them)", () => {
   const html = read("weapon-compare.html"), mjs = read("weapon-compare.mjs"), css = read("weapon-compare.css");
   assert.match(html, /id="wcGuides" type="checkbox" checked/);
