@@ -10,7 +10,7 @@ import os from "node:os";
 import { execFileSync } from "node:child_process";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
-const COLS = ["name", "query", "slug", "savedAt", "adjs", "rf", "act", "pvs", "rkd", "mech", "cons", "inflation", "adj", "ekpm", "own", "coi", "slope", "kd", "kpm", "ownKpm", "acc", "hsr", "ivi", "thin", "mark", "farm", "top", "created", "last", "apk", "zat", "inf", "infMax", "infVeh", "vcut", "adjsPreVeh", "hut", "hutMk", "vdf", "nbd", "nbh", "rvp", "crp", "trc", "adjs0", "srv"];
+const COLS = ["name", "query", "slug", "savedAt", "adjs", "rf", "act", "pvs", "rkd", "mech", "cons", "inflation", "adj", "ekpm", "own", "coi", "slope", "kd", "kpm", "ownKpm", "acc", "hsr", "ivi", "thin", "mark", "farm", "top", "created", "last", "apk", "revk", "zat", "inf", "infMax", "infVeh", "vcut", "adjsPreVeh", "hut", "hutMk", "vdf", "nbd", "nbh", "rvp", "crp", "trc", "adjs0", "srv"];
 const row = (name, slug, srv, adjs) => {
   const o = Object.fromEntries(COLS.map((c) => [c, null]));
   Object.assign(o, { name, query: name, slug, savedAt: 1, adjs, kd: 2, kpm: 1, acc: 20, hsr: 20, ivi: 800, inflation: 1, apk: 0.4, rvp: 50, crp: 50, vdf: 1, srv });

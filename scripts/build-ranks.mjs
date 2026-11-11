@@ -481,6 +481,10 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES, zergCharg
       const fa = sp.sprout && !isNotFarm({ name: np.display, cid: np.cid }) ? farmAccount(np.rawRows || np.rows, m.ownKpm) : null;
       // 🤝 Assists per kill (t382u: public now) — null below SESSION_MIN.MIN_KILLS session kills.
       if (!info || !info.hidden) row.push(sm && sm.measured && Number.isFinite(sm.values.s_apk) ? Math.round(sm.values.s_apk * 1000) / 1000 : null);
+      // 👿 Sore (owner 2026-11-11): revenge kills per kill as a percentage (Revenge Kill
+      // XP tick, exp id 11) — null below 100 XP-detail kills (the 🤝 rule, on the XP pass:
+      // s_revk alone would also fire on a measured player with only a few XP sessions).
+      if (!info || !info.hidden) row.push(sm && sm.measured && sm.xpKills >= 100 && Number.isFinite(sm.values.s_revk) ? Math.round(sm.values.s_revk * 1000) / 10 : null);
       // 🪳⚔️ freshness (#84): day of the newest counted Honu session; stale → ⚔️ iVi not evened out.
       if (!info || !info.hidden) row.push(dayOf(pl.assists && pl.assists.last));
       // 🪖 Infantry: % of lifetime weapon-stat kills on foot (MAX counted as infantry) + MAX / vehicle % for hover; null until filled.
@@ -503,6 +507,7 @@ export function buildRanksWithGuard(dataDir, { known = KNOWN_EXTREMES, zergCharg
     if (ww != null) { worldBy.set(slug, ww); worldByOpp.add(slug); }
   }
   ranks.cols.push("apk"); // 🤝 trailing column (see onPlayer); not part of RANK_COLS / rankRow
+  ranks.cols.push("revk"); // 👿 trailing column (see onPlayer): revenge %; not part of RANK_COLS / rankRow
   ranks.cols.push("zat"); // 🪳⚔️ day of the newest 🤝 session (zerg-charge.mjs zergFresh)
   ranks.cols.push("inf", "infMax", "infVeh"); // 🪖 trailing columns (see onPlayer), % of lifetime kills
   ranks.cols.push("vcut"); // 🚜 vehicle cut % on adjs (adjs is already cut)
@@ -1335,8 +1340,8 @@ export function buildNames(index, { withFile = false } = {}) {
  * "inflation" rides along for 🪳 Zerg (owner 2026-10-21, trait-scores.mjs): the
  * lower of the 🎈 Inflation and 🤝 Assists percentiles needs the Inflation pool.
  */
-export const LITE_COLS = ["name", "slug", "adjs", "adjs0", "zat", "cons", "apk", "inf", "infMax", "infVeh", "ivi", "inflation", "hut", "hutMk", "vdf", "rvp", "crp", "nbd", "nbh", "trc"];
-const LITE_DIGITS = { adjs: 1, adjs0: 1, zat: 0, cons: 4, apk: 3, inf: 1, infMax: 1, infVeh: 1, ivi: 1, inflation: 2, hut: 3, hutMk: 0, vdf: 3, rvp: 0, crp: 0, nbd: 3, nbh: 1, trc: 0 };
+export const LITE_COLS = ["name", "slug", "adjs", "adjs0", "zat", "cons", "apk", "revk", "inf", "infMax", "infVeh", "ivi", "inflation", "hut", "hutMk", "vdf", "rvp", "crp", "nbd", "nbh", "trc"];
+const LITE_DIGITS = { adjs: 1, adjs0: 1, zat: 0, cons: 4, apk: 3, revk: 1, inf: 1, infMax: 1, infVeh: 1, ivi: 1, inflation: 2, hut: 3, hutMk: 0, vdf: 3, rvp: 0, crp: 0, nbd: 3, nbh: 1, trc: 0 };
 export function buildRanksLite(ranks) {
   const ix = LITE_COLS.map((k) => (ranks && Array.isArray(ranks.cols) ? ranks.cols.indexOf(k) : -1));
   if (ix.some((i) => i < 0) || !Array.isArray(ranks.rows)) return null;

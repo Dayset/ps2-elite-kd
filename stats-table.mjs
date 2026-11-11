@@ -80,6 +80,9 @@ export function createStatsTable($) {
 
   let apkPool = null;
 
+  // 👿 Sore (owner 2026-11-11): revenge % by slug from ranks-lite.json, same load as 🤝.
+  let revkBySlug = null;
+
   // 🪖 Infantry (% of lifetime kills with infantry weapons): value + MAX / vehicle % by slug, pool for the percentile.
   let infBySlug = null;
   // 🎲 vs expected per player (owner t849u): debug column only, loaded the first time the debug box is on.
@@ -209,6 +212,11 @@ export function createStatsTable($) {
           apkBySlug = new Map();
           for (const row of payload.rows) if (isFiniteNum(row[ai])) apkBySlug.set(row[si], row[ai]);
           apkPool = [...apkBySlug.values()].sort((a, b) => a - b);
+        }
+        const ri = payload.cols.indexOf("revk"); // 👿 Sore: revenge % (ranks-lite carries it next to 🤝)
+        if (ri >= 0 && si >= 0) {
+          revkBySlug = new Map();
+          for (const row of payload.rows) if (isFiniteNum(row[ri])) revkBySlug.set(row[si], row[ri]);
         }
         const zi = payload.cols.indexOf("zat"); // 🪳⚔️ freshness (#84)
         if (zi >= 0 && si >= 0) { zatBySlug = new Map(); for (const row of payload.rows) if (isFiniteNum(row[zi])) zatBySlug.set(row[si], row[zi]); }
@@ -496,6 +504,10 @@ export function createStatsTable($) {
       // ⚔️ iVi before the 🪳 Zerg evening-out (#84): the plain adjusted iVi, for comparison with the ⚔️ iVi column.
       { id: "adjs0", label: tr("col.adjs0", "⚔️ iVi before 🪳"), hint: tr("tip.adjs0", "⚔️ iVi before it was evened out for 🪳 Zerg. The ⚔️ iVi column is the evened-out value."), digits: 0, thinTip: true,
         fn: (r) => shownValue(r, "adjs") },
+      // 👿 Sore (owner 2026-11-11): revenge kills per kill in recent Honu sessions, as a
+      // percentage (Revenge Kill XP tick, exp id 11) — from ranks-lite.json, same load as 🤝.
+      // "—" without XP detail (needs 100 kills in Honu sessions, same rule as 🤝).
+      { id: "revk", label: tr("col.sore", "👿 Sore %"), hint: tr("tip.sore", "Revenge kills per kill in recent Honu sessions, as a percentage (Revenge Kill XP tick). Higher = you avenge your deaths more often; it runs with lower K/D, since revenge needs a death first."), fn: (r) => (revkBySlug && r.p ? revkBySlug.get(slugKey(r.p.display)) : undefined), digits: 1 },
     ];
     // Opponent-sample metrics: "—" below MIN_FIGHTS (player-metrics.mjs), so they
     // also drop out of sorting and the % column references.
