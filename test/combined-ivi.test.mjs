@@ -114,14 +114,14 @@ test("stats table: combined is the visible column after zerg, off the 🧘 Pure 
   assert.ok(src.includes("gBySlug.get(slugKey(r.p.display))"), "G from the lazy full-payload load");
 });
 
-test("pin chain: module still 20261110-cmb1, every touched link now 20261110-ren1", () => {
+test("pin chain: module still 20261110-cmb1, every touched link now 20261111-sore1", () => {
   assert.match(read("rankings.mjs"), /combined-ivi\.mjs\?v=20261110-cmb1/);
   assert.match(read("stats-table.mjs"), /combined-ivi\.mjs\?v=20261110-cmb1/);
-  assert.match(read("shared-index.mjs"), /rankings\.mjs\?v=20261110-ren1/);
-  assert.match(read("app.js"), /shared-index\.mjs\?v=20261110-ren1/);
-  assert.match(read("app.js"), /stats-table\.mjs\?v=20261110-ren1/);
-  assert.match(read("index.html"), /app\.js\?v=20261110-ren1/);
-  assert.match(read("live.html"), /app\.js\?v=20261110-ren1/);
+  assert.match(read("shared-index.mjs"), /rankings\.mjs\?v=20261111-sore1/);
+  assert.match(read("app.js"), /shared-index\.mjs\?v=20261111-sore1/);
+  assert.match(read("app.js"), /stats-table\.mjs\?v=20261111-sore1/);
+  assert.match(read("index.html"), /app\.js\?v=20261111-sore1/);
+  assert.match(read("live.html"), /app\.js\?v=20261111-sore1/);
   assert.match(read("columns.html"), /columns-example\.mjs\?v=20261110-swp1/); // unchanged in the rename, keeps its swap pin
 });
 

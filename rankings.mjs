@@ -107,6 +107,11 @@ export function initRankings(host) {
     { id: "inflation", label: "🎈 Inflation", digits: 2, tip: "Global KD ÷ KD at ≥0.5 enemy KPM — lower is better", ascFirst: true },
     // owner 2026-10-28: low value currently → older stats only (table with the debug box; not in the chart menu).
     { id: "diff", label: tr("col.diff", "🔀 Diff"), digits: 0, aimgap: true, tip: AIMGAP_HINT }, // short hover (owner t9); details on columns.html#diff
+    // 👿 Sore (owner 2026-11-11): revenge kills per kill in recent Honu sessions, as a
+    // percentage (Revenge Kill XP tick, exp id 11). Higher = you avenge your deaths more
+    // often; it runs with lower K/D, since revenge needs a death first. Debug-only;
+    // "—" without XP detail (needs 100 kills in Honu sessions, same rule as 🤝).
+    { id: "revk", label: tr("col.sore", "👿 Sore %"), digits: 1, sore: true, tip: tr("tip.sore", "Revenge kills per kill in recent Honu sessions, as a percentage (Revenge Kill XP tick). Higher = you avenge your deaths more often; it runs with lower K/D, since revenge needs a death first.") },
   ];
 
   // Public stats (in ranks.json; chart only — the table keeps the main page's columns).
