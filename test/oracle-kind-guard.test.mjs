@@ -19,3 +19,11 @@ test("neutral-map guard: territory yes, aerial and pressure no (#117)", async ()
   assert.equal(neutralMatters("aerial"), false);
   assert.equal(neutralMatters("territory"), true);
 });
+
+test("overrun (#135): flagged in the worker, labelled overdue on the page", async () => {
+  const { readFileSync } = await import("node:fs");
+  const w = readFileSync(new URL("../oracle-worker/src/index.js", import.meta.url), "utf8");
+  const m = readFileSync(new URL("../oracle/js/main.js", import.meta.url), "utf8");
+  assert.match(w, /overrun:\$\{\(\(endTs - startTs\) \/ 60\)\.toFixed\(1\)\}/);
+  assert.match(m, /"or\.overdue"/);
+});

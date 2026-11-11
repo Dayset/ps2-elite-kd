@@ -561,6 +561,8 @@ export async function runCycle(env, nowMs = Date.now()) {
     // A corrupt map window AND a disagreeing snapshot: keep Census's winner on the
     // record, but give every vote back (we can't be sure who really won).
     if (flags.some((f) => f.startsWith("neutral_heavy")) && flags.some((f) => f.startsWith("snapshot_winner_")) && !flags.includes("votes_void")) flags.push("votes_void");
+    // #135: an alert that ran well past its scheduled length (46685: 36.6 of 30 min) is logged so overruns show up in the data.
+    if (endTs - startTs > dur * 60 + 60 && !flags.some((f) => f.startsWith("overrun:"))) flags.push(`overrun:${((endTs - startTs) / 60).toFixed(1)}`);
     const rec = { ...base, end_ts: endTs, final: finalOk ? final : null, checks, flags };
     // #77: a territory draw goes to Sudden Death (15 min kill race) straight away; show it as
     // such from its start row instead of "settling" on the frozen territory end for 10 minutes.

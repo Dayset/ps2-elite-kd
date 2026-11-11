@@ -34,6 +34,7 @@ function heldBroken(a) { return a.status === "unresolved" && (a.flags || []).som
 
 function statusLabel(a, now) {
   if (heldBroken(a)) return tr("or.st.held", "held: Census data broken");
+  if (a.status === "live" && now > a.start_ts + a.dur * 60) return leftLabel(a, now);
   if (a.status === "live") return tr("or.st.live", "{m} / {d} min", { m: mins(now - a.start_ts), d: a.dur });
   if (a.status === "settling") return tr("or.st.settling", "settling…");
   if (a.status === "sudden_death") return tr("or.st.sd", "sudden death");
@@ -47,6 +48,8 @@ function badgeLabel(st) {
     settled: tr("or.badge.settled", "settled"), unresolved: tr("or.badge.unresolved", "unresolved"), interrupted: tr("or.badge.interrupted", "interrupted") })[st] || st.replace("_", " ");
 }
 const minLeft = (n) => tr("or.minLeft", "{n} min left", { n });
+/** #135: time left, or "overdue" once a live alert is past its scheduled end with no end row yet. */
+const leftLabel = (a, now) => now > a.start_ts + a.dur * 60 ? tr("or.overdue", "{n} min overdue, waiting for Census", { n: mins(now - a.start_ts - a.dur * 60) }) : minLeft(mins(a.start_ts + a.dur * 60 - now));
 
 function renderTabs(now) {
   if (!S.alerts.length) { $("tabs").innerHTML = ""; return; }
@@ -57,7 +60,7 @@ function renderTabs(now) {
     // No final (decided from snapshot) falls back to state.territory.
     const terr = a.status === "settled" && a.final ? a.final : (a.state && a.state.territory) || {};
     return `<button class="tab ${a.key === S.selected ? "on" : ""}" data-k="${esc(a.key)}">
-      <b>${esc(a.world_name)} · ${esc(a.zone_name)}</b><small class="tl0">${esc(statusLabel(a, now))}</small><small class="tl">${esc(a.status === "live" ? minLeft(mins(a.start_ts + a.dur * 60 - now)) : statusLabel(a, now))}</small>
+      <b>${esc(a.world_name)} · ${esc(a.zone_name)}</b><small class="tl0">${esc(statusLabel(a, now))}</small><small class="tl">${esc(a.status === "live" ? leftLabel(a, now) : statusLabel(a, now))}</small>
       <div class="bar">${bar(terr)}</div></button>`;
   }).join("");
   const on = $("tabs").querySelector(".tab.on");
@@ -169,7 +172,7 @@ function render2(now) {
   const s = a.state;
   const win = s ? s.win : null;
   const lead = s && s.leader;
-  const left = a.status === "live" ? minLeft(mins(a.start_ts + a.dur * 60 - now)) : statusLabel(a, now);
+  const left = a.status === "live" ? leftLabel(a, now) : statusLabel(a, now);
   const oddsHtml = win ? FACS.map((f) => `<div class="fac ${f} ${f === lead ? "lead" : ""}"><div class="l">${f}</div><div class="n">${pct1(win[f].pct)}%</div><div class="stars">${stars(win[f].pct)}</div></div>`).join("") : `<div class="note">${a.status === "live" ? tr("or.waitSnap", "Waiting for the first map snapshot…") : tr("or.noOdds", "No live win chances were recorded for this alert.")}</div>`;
   const rows = s ? FACS.map((f) => `<div class="row" data-terr="${f}"><span class="lbl ${f}">${tr("or.terr", "{f} territory", { f })}</span><div class="track"><span style="width:${s.territory[f]}%;background:${COLOR[f]}"></span></div><span class="v">${Math.round(s.territory[f])}%</span></div>`).join("") +
     FACS.map((f) => {
