@@ -34,6 +34,17 @@ test("rankings: revk is the last debug column, after 🔀 Diff", () => {
   const block = dbg.slice(dbg.indexOf('id: "revk"'));
   assert.ok(block.includes('tr("col.sore"') && block.includes('tr("tip.sore"'), "same i18n keys as the stats column");
   assert.ok(block.includes("sore: true"), "sore flag for the cell branch");
+  // Pure percentage (owner 2026-11-11): the sore branch shows the population
+  // percentile as the number — top reads 100%, 0 reads 0% — and it sits before
+  // the generic p-tag path. The raw % rides on hover (sore.tip).
+  assert.ok(src.includes('if (c.sore)'), "cellHtml has a sore branch");
+  assert.ok(src.includes("function sorePct(pool, v)"), "percentile helper next to apkPctTag");
+  assert.ok(src.includes("(below / (pool.length - 1)) * 100"), "over n−1, so the top reads 100%");
+  const soreBranch = src.slice(src.indexOf("if (c.sore)"));
+  assert.ok(soreBranch.includes("sorePct(data.pools.revk"), "percentile off the revk pool");
+  assert.ok(soreBranch.includes("${p}%"), "sore cell is the percentile as a percentage");
+  assert.ok(soreBranch.includes('tr("sore.tip"'), "hover keeps the raw revenge %");
+  assert.ok(src.indexOf("if (c.sore)") < src.indexOf("const p = row.pcts[c.id];"), "sore branch runs before the generic pXX path");
 });
 
 test("stats table: revk is the last debug column, fed by the lite map", () => {
@@ -46,13 +57,28 @@ test("stats table: revk is the last debug column, fed by the lite map", () => {
   assert.ok(block.includes("revkBySlug.get(slugKey(r.p.display))"), "value from the lite map, like 🤝");
   assert.ok(src.includes('payload.cols.indexOf("revk")'), "loadConsPool reads the revk column");
   assert.ok(src.includes("let revkBySlug = null;"), "map declared next to apkBySlug");
+  // Pure percentage (owner 2026-11-11): the sore branch shows the population
+  // percentile as the number — top reads 100%, 0 reads 0% — no dimmed gap tag.
+  assert.ok(block.includes("soreCell: true"), "soreCell flag on the entry");
+  assert.ok(src.includes("if (c.soreCell)"), "playerRows has a soreCell branch");
+  assert.ok(src.includes("let revkPool = null;"), "sorted pool declared next to the map");
+  assert.ok(src.includes("revkPool = [...revkBySlug.values()].sort"), "pool built from the lite map, like 🤝");
+  assert.ok(src.includes("function sorePct(pool, v)"), "percentile helper in the table module");
+  const soreBranch = src.slice(src.indexOf("if (c.soreCell)"));
+  assert.ok(soreBranch.includes("sorePct(revkPool"), "percentile off the revk pool");
+  assert.ok(soreBranch.includes("${p}%"), "sore cell is the percentile as a percentage");
+  assert.ok(soreBranch.includes('tr("sore.tip"'), "hover keeps the raw revenge %");
 });
 
 test("documented: i18n keys exist and the debug box lists 👿 Sore %", () => {
   const en = JSON.parse(read("i18n/en.json"));
   assert.equal(en["col.sore"], "👿 Sore %");
   assert.match(en["tip.sore"], /Revenge Kill XP tick/);
+  assert.match(en["tip.sore"], /Share of measured players you beat on revenge kills/);
+  assert.match(en["tip.sore"], /top player reads 100%/, "hint says the display is the percentile");
+  assert.ok(en["sore.tip"].includes("you avenge more often than {p}% of measured players"), "cell hover keeps the raw % and the percentile");
   assert.match(en["cp.dbgSore"], /Revenge Kill XP tick/);
+  assert.match(en["cp.dbgSore"], /top player reads 100%/, "docs say the display is the percentile");
   const html = read("columns.html");
   const box = html.slice(html.indexOf('id="debug"'));
   assert.ok(box.includes("<dt>👿 Sore %</dt>"), "debug list names the column");

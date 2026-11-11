@@ -111,7 +111,7 @@ export function initRankings(host) {
     // percentage (Revenge Kill XP tick, exp id 11). Higher = you avenge your deaths more
     // often; it runs with lower K/D, since revenge needs a death first. Debug-only;
     // "—" without XP detail (needs 100 kills in Honu sessions, same rule as 🤝).
-    { id: "revk", label: tr("col.sore", "👿 Sore %"), digits: 1, sore: true, tip: tr("tip.sore", "Revenge kills per kill in recent Honu sessions, as a percentage (Revenge Kill XP tick). Higher = you avenge your deaths more often; it runs with lower K/D, since revenge needs a death first.") },
+    { id: "revk", label: tr("col.sore", "👿 Sore %"), digits: 1, sore: true, tip: tr("tip.sore", "Share of measured players you beat on revenge kills, as a percentage: the top player reads 100%, a player with no revenge kills reads 0% (Revenge Kill XP tick). Higher = you avenge your deaths more often; it runs with lower K/D, since revenge needs a death first.") },
   ];
 
   // Public stats (in ranks.json; chart only — the table keeps the main page's columns).
@@ -560,6 +560,18 @@ export function initRankings(host) {
     return p == null ? "" : `<span class="pct" title="${esc(tr("rk.pctileApk", "Percentile: higher than {n}% of players with 100+ session kills", { n: p }))}">p${p}</span>`;
   }
 
+  /**
+   * 👿 Sore percentile (owner 2026-11-11): share of the pool strictly below,
+   * over n−1 instead of n — the top value reads 100%, 0 reads 0%. (The site's
+   * percentileOf divides by n, so its top reads 99.)
+   */
+  function sorePct(pool, v) {
+    if (!pool || pool.length < 2 || !fin(v)) return null;
+    let below = 0;
+    for (const x of pool) if (x < v) below++;
+    return Math.round((below / (pool.length - 1)) * 100);
+  }
+
   /** 🚜 vehicle / MAX cut hover for the ⚔️ iVi cell (vehicle-cut.mjs, no visible mark): parts + total; "" without a cut. */
   function vcutTip(row) {
     const v = row && row.vcut > 0 ? vehicleCutTip(row.infVeh, row.infMax, row.vcut) : "";
@@ -582,6 +594,16 @@ export function initRankings(host) {
     if (c.inf) return fin(v) ? `<td title="${esc(infTip(v, row.infMax, row.infVeh, row.pcts[c.id]))}">${fmt(v, 1)}%</td>` : `<td title="${esc(INF_PENDING_TIP)}">—</td>`;
     // 🌈 G: one value, already a percentage — no pXX tag trailing it.
     if (c.g) return fin(v) ? `<td title="${esc(c.tip)}">${fmt(v, 2)}%</td>` : `<td>—</td>`;
+    // 👿 Sore: population percentile as a percentage (owner 2026-11-11) — the top
+    // value reads 100%, 0 reads 0%; the raw revenge % rides on hover. The number
+    // IS the percentile now, so no pXX tag trails it (unlike the other columns).
+    if (c.sore) {
+      if (!fin(v)) return `<td>—</td>`;
+      const p = sorePct(data.pools.revk || [], v);
+      if (p == null) return `<td title="${esc(c.tip)}">${fmt(v, 1)}%</td>`;
+      const tip = tr("sore.tip", "Revenge kills per kill: {v}% of kills — you avenge more often than {p}% of measured players.", { v: fmt(v, 1), p });
+      return `<td title="${esc(tip)}">${p}%</td>`;
+    }
     if (!fin(v) && c.thinTip && row.thin) return `<td class="thin-sample" title="${esc(MIN_FIGHTS_TIP)}">—</td>`;
     if (!fin(v)) return `<td>—</td>`;
     const p = row.pcts[c.id];
