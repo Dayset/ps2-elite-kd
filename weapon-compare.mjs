@@ -31,7 +31,7 @@ import { sageLines, SAGE_TEXT } from "./weapon-sage.mjs?v=20261107-sage1";
 
 export const MAX_WEAPONS = 4;
 export const MAX_RANGE = 500;        // hard cap (the 500 m option); the chart shows 100 / 200 / 500, see viewMax()
-export const DEFAULTS = Object.freeze({ acc: 20, hsr: 20, range: 20, hp: 1000 });
+export const DEFAULTS = Object.freeze({ acc: 100, hsr: 100, range: 20, hp: 1000 });
 export const SIM_RUNS = 300;
 export const GHOST_SPRAYS = 4;       // extra sprays drawn faintly behind the main one, each with its own random numbers
 const DEFAULT_IDS = [4, 14, 20];          // NC1 Gauss Rifle, T1 Cycler, Pulsar VS1

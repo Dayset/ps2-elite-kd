@@ -66,10 +66,10 @@
     </section>
 
     <section class="wc-panel wc-bar wc-sticky" aria-label="Accuracy, headshot rate, range and health" data-i18n-aria-label="wc.ctlAria">
-      <label class="wc-ctl"><span class="wc-ctl-h"><span data-i18n="wc.acc">Accuracy</span> <b id="wcAccV">20%</b></span>
-        <input id="wcAcc" type="range" min="10" max="100" step="1" value="20" data-i18n-title="wc.accTip" title="Share of shots (pellets) that hit the target." /></label>
-      <label class="wc-ctl"><span class="wc-ctl-h"><span data-i18n="wc.hsr">Headshot rate</span> <b id="wcHsrV">20%</b></span>
-        <input id="wcHsr" type="range" min="0" max="100" step="1" value="20" data-i18n-title="wc.hsrTip2" title="Share of shots aimed at the head; the rest are aimed at the chest." /></label>
+      <label class="wc-ctl"><span class="wc-ctl-h"><span data-i18n="wc.acc">Accuracy</span> <b id="wcAccV">100%</b></span>
+        <input id="wcAcc" type="range" min="10" max="100" step="1" value="100" data-i18n-title="wc.accTip" title="Share of shots (pellets) that hit the target." /></label>
+      <label class="wc-ctl"><span class="wc-ctl-h"><span data-i18n="wc.hsr">Headshot rate</span> <b id="wcHsrV">100%</b></span>
+        <input id="wcHsr" type="range" min="0" max="100" step="1" value="100" data-i18n-title="wc.hsrTip2" title="Share of shots aimed at the head; the rest are aimed at the chest." /></label>
       <div class="wc-ctl">
         <label class="wc-ctl-h" for="wcRange"><span data-i18n="wc.rangeShort">Range</span> <b id="wcRangeV">20 m</b></label>
         <input id="wcRange" type="range" min="0" max="100" step="1" value="20" />
@@ -327,6 +327,6 @@
     <div class="wc-zoomhead"><b id="wcZoomH"></b><button type="button" class="wc-btn" id="wcZoomClose" data-i18n="wc.sim.zoomClose">Close</button></div>
     <div id="wcZoomBody"></div>
   </dialog>
-  <script type="module" src="weapon-compare.mjs?v=20261109-merge2"></script>
+  <script type="module" src="weapon-compare.mjs?v=20261110-wc100"></script>
 </body>
 </html>

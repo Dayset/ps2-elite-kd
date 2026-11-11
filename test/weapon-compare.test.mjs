@@ -8,8 +8,8 @@ const read = (p) => readFileSync(new URL("../" + p, import.meta.url), "utf8");
 
 test("link state: defaults leave the query empty", () => {
   const s = parseState("");
-  assert.deepEqual([s.acc, s.hsr, s.range, s.hp, s.hasW], [20, 20, 20, 1000, false]);
-  assert.equal(stateToSearch({ ids: [], acc: 20, hsr: 20, range: 20, hp: 1000 }), "");
+  assert.deepEqual([s.acc, s.hsr, s.range, s.hp, s.hasW], [100, 100, 20, 1000, false]);
+  assert.equal(stateToSearch({ ids: [], acc: 100, hsr: 100, range: 20, hp: 1000 }), "");
 });
 
 test("link state round trip", () => {
@@ -66,8 +66,8 @@ test("the FPS limit survives the link, off by default", () => {
   const s = parseState("");
   assert.equal(s.fpsOn, false);
   assert.equal(s.fps, 60);
-  assert.equal(stateToSearch({ ids: [], acc: 20, hsr: 20, range: 20, hp: 1000 }), "");
-  const on = { ids: [4], acc: 20, hsr: 20, range: 20, hp: 1000, fps: 60, fpsOn: true };
+  assert.equal(stateToSearch({ ids: [], acc: 100, hsr: 100, range: 20, hp: 1000 }), "");
+  const on = { ids: [4], acc: 100, hsr: 100, range: 20, hp: 1000, fps: 60, fpsOn: true };
   assert.equal(stateToSearch(on), "?w=4&fps=60");
   const back = parseState(stateToSearch(on));
   assert.equal(back.fpsOn, true);
@@ -77,7 +77,7 @@ test("the FPS limit survives the link, off by default", () => {
 });
 
 test("the 500 m option survives the link", () => {
-  const s = { ids: [4], acc: 20, hsr: 20, range: 300, hp: 1000, far: true };
+  const s = { ids: [4], acc: 100, hsr: 100, range: 300, hp: 1000, far: true };
   assert.equal(stateToSearch(s), "?w=4&r=300&max=500");
   assert.equal(parseState("?w=4&r=300&max=500").far, true);
   assert.equal(parseState("?w=4").far, false);
@@ -86,7 +86,7 @@ test("the 500 m option survives the link", () => {
 test("loadout in the link: a<id>=Name,Name, only for chosen weapons, at most three parts", () => {
   const s = parseState("?w=4,14&a4=Compensator,Forward%20Grip&a99=Suppressor&a14=A,B,C,D");
   assert.deepEqual(s.att, { 4: ["Compensator", "Forward Grip"], 14: ["A", "B", "C"] });
-  const back = stateToSearch({ ids: [4, 14], acc: 20, hsr: 20, range: 20, hp: 1000, att: { 4: { barrel: "Compensator", rail: "", ammo: "Soft Point Ammunition" } } });
+  const back = stateToSearch({ ids: [4, 14], acc: 100, hsr: 100, range: 20, hp: 1000, att: { 4: { barrel: "Compensator", rail: "", ammo: "Soft Point Ammunition" } } });
   assert.equal(back, "?w=4%2C14&a4=Compensator%2CSoft+Point+Ammunition");
   assert.deepEqual(parseState(back).att, { 4: ["Compensator", "Soft Point Ammunition"] });
   assert.deepEqual(attList({ barrel: "", rail: "Forward Grip" }), ["Forward Grip"]);
@@ -112,6 +112,14 @@ test("recoil compensation defaults to 100% (full pulldown), both directions", ()
   assert.match(html, /id="wcSimCompX"[^>]*value="100"/);
   assert.match(html, /id="wcSimCompV">100%</);
   assert.match(html, /id="wcSimCompXV">100%</);
+});
+
+test("accuracy and headshot rate default to 100% (perfect-play baseline)", () => {
+  const html = read("weapon-compare.html");
+  assert.match(html, /id="wcAcc"[^>]*value="100"/);
+  assert.match(html, /id="wcHsr"[^>]*value="100"/);
+  assert.match(html, /id="wcAccV">100%</);
+  assert.match(html, /id="wcHsrV">100%</);
 });
 
 test("screen-height presets: 1080p, 1440p, 2160p (4K); anything else is custom", () => {
