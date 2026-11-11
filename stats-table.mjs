@@ -82,6 +82,7 @@ export function createStatsTable($) {
 
   // 👿 Sore (owner 2026-11-11): revenge % by slug from ranks-lite.json, same load as 🤝.
   let revkBySlug = null;
+  let revkPool = null; // sorted measured values, for the percentile display (top = 100%).
 
   // 🪖 Infantry (% of lifetime kills with infantry weapons): value + MAX / vehicle % by slug, pool for the percentile.
   let infBySlug = null;
@@ -217,6 +218,7 @@ export function createStatsTable($) {
         if (ri >= 0 && si >= 0) {
           revkBySlug = new Map();
           for (const row of payload.rows) if (isFiniteNum(row[ri])) revkBySlug.set(row[si], row[ri]);
+          revkPool = [...revkBySlug.values()].sort((a, b) => a - b);
         }
         const zi = payload.cols.indexOf("zat"); // 🪳⚔️ freshness (#84)
         if (zi >= 0 && si >= 0) { zatBySlug = new Map(); for (const row of payload.rows) if (isFiniteNum(row[zi])) zatBySlug.set(row[si], row[zi]); }
@@ -507,7 +509,7 @@ export function createStatsTable($) {
       // 👿 Sore (owner 2026-11-11): revenge kills per kill in recent Honu sessions, as a
       // percentage (Revenge Kill XP tick, exp id 11) — from ranks-lite.json, same load as 🤝.
       // "—" without XP detail (needs 100 kills in Honu sessions, same rule as 🤝).
-      { id: "revk", label: tr("col.sore", "👿 Sore %"), hint: tr("tip.sore", "Revenge kills per kill in recent Honu sessions, as a percentage (Revenge Kill XP tick). Higher = you avenge your deaths more often; it runs with lower K/D, since revenge needs a death first."), fn: (r) => (revkBySlug && r.p ? revkBySlug.get(slugKey(r.p.display)) : undefined), digits: 1 },
+      { id: "revk", label: tr("col.sore", "👿 Sore %"), hint: tr("tip.sore", "Share of measured players you beat on revenge kills, as a percentage: the top player reads 100%, a player with no revenge kills reads 0% (Revenge Kill XP tick). Higher = you avenge your deaths more often; it runs with lower K/D, since revenge needs a death first."), fn: (r) => (revkBySlug && r.p ? revkBySlug.get(slugKey(r.p.display)) : undefined), digits: 1, soreCell: true },
     ];
     // Opponent-sample metrics: "—" below MIN_FIGHTS (player-metrics.mjs), so they
     // also drop out of sorting and the % column references.
@@ -686,6 +688,15 @@ export function createStatsTable($) {
                 if (!isFiniteNum(v)) return `<td>—</td>`;
                 return `<td title="${escapeHtml(c.hint)}">${fmtNum(v, 2)}%</td>`;
               }
+              // 👿 Sore: population percentile as a percentage (owner 2026-11-11) — the top
+              // value reads 100%, 0 reads 0%; the raw revenge % rides on hover. The number
+              // IS the percentile now, so no dimmed gap tag trails it (unlike the other columns).
+              if (c.soreCell) {
+                if (!isFiniteNum(v)) return `<td>—</td>`;
+                const p = sorePct(revkPool || [], v);
+                if (p == null) return `<td title="${escapeHtml(c.hint)}">${fmtNum(v, 1)}%</td>`;
+                return `<td title="${escapeHtml(tr("sore.tip", "Revenge kills per kill: {v}% of kills — you avenge more often than {p}% of measured players.", { v: fmtNum(v, 1), p }))}">${p}%</td>`;
+              }
               if (c.pctileCell) {
                 const pctl = isFiniteNum(v) && consPool ? percentileOf(consPool, v) : null;
                 const txt = pctl == null ? "—" : `${pctl}%`;
@@ -811,6 +822,18 @@ export function createStatsTable($) {
   /** Altered-stats mark (padding.mjs statMark): "*" padding, "†" adjusted, or none. */
   function isConfirmedPadder(p) {
     return !!p && $.confirmedPadders.has(slugKey(p.display));
+  }
+
+  /**
+   * 👿 Sore percentile (owner 2026-11-11): share of the pool strictly below,
+   * over n−1 instead of n — the top value reads 100%, 0 reads 0%. (The site's
+   * percentileOf divides by n, so its top reads 99.)
+   */
+  function sorePct(pool, v) {
+    if (!pool || pool.length < 2 || !isFiniteNum(v)) return null;
+    let below = 0;
+    for (const x of pool) if (x < v) below++;
+    return Math.round((below / (pool.length - 1)) * 100);
   }
 
   function playerMark(p) {
