@@ -8,7 +8,14 @@
 // rec = { fm, states, adsFm, adsStates, pool, handling } from recoil.json (null when not loaded).
 // Hip-fire cone comes from the hip fire mode's player_state_group, aim-down-sights cone from the
 // ADS fire mode's own group (fire_mode_2.iron_sights = 1), as in Izubrr/planetside_weapon_compare.
-import { hitDamage, idealTtk, minShots, dps, effectiveRpm, timeOfShot } from "./weapons-model.mjs?v=20261107-merge1";
+import { hitDamage, idealTtk, minShots, dps, effectiveRpm, timeOfShot } from "./weapons-model.mjs?v=20261112-pellet1";
+import { pelletConeOf } from "./weapon-sim.mjs?v=20261112-pellet1";
+
+// The pellet spread + cone for a stat-table context: `rec` is the (possibly
+// loadout-adjusted) recoil record, `aim` the page's hip/ads toggle, `att` the
+// loadout's attachment effects ([] for a stock weapon). The DPS rows use it;
+// the per-hit damage rows stay all-pellets-land, like the ideal TTK.
+const coneOf = (ctx) => pelletConeOf(ctx && ctx.rec, ctx && ctx.aim === "hip", (ctx && ctx.att) || []);
 
 export const GROUPS = Object.freeze(["kill", "damage", "magazine", "strafe", "accuracyAds", "accuracyHip", "recoil", "handling"]);
 export const GROUP_EN = Object.freeze({
@@ -50,8 +57,8 @@ export const METRICS = Object.freeze([
   { key: "ideal", group: "kill", en: "Best case (all body hits)", dir: -1, unit: "ms", get: ({ p, range, hp }) => idealTtk(p, { range, hp }) },
   { key: "stk", group: "kill", en: "Shots to kill (body)", dir: -1, unit: "int", get: ({ p, range, hp }) => minShots(p, { range, hp }) },
   { key: "stkHead", group: "kill", en: "Shots to kill (head)", dir: -1, unit: "int", get: ({ p, range, hp }) => minShots(p, { range, hp, head: true }) },
-  { key: "dps", group: "kill", en: "Damage per second", dir: 1, unit: "int", get: ({ p, range }) => dps(p, { range }).burst },
-  { key: "dpsSus", group: "kill", en: "Sustained damage per second", dir: 1, unit: "int", get: ({ p, range }) => dps(p, { range }).sustained },
+  { key: "dps", group: "kill", en: "Damage per second", dir: 1, unit: "int", get: (ctx) => dps(ctx.p, { range: ctx.range, ...coneOf(ctx) }).burst },
+  { key: "dpsSus", group: "kill", en: "Sustained damage per second", dir: 1, unit: "int", get: (ctx) => dps(ctx.p, { range: ctx.range, ...coneOf(ctx) }).sustained },
 
   { key: "rpm", group: "damage", en: "Rounds per minute", dir: 1, unit: "int", get: ({ p }) => p.rpm },
   { key: "rpmAvg", group: "damage", en: "Average rate over a magazine", dir: 0, unit: "int", get: ({ p }) => (p.burstN > 1 || p.delayMs ? effectiveRpm(p) : null) },

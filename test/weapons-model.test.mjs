@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import {
   damageAt, hitDamage, timeOfShot, ttkDistribution, quantileMs, chanceByMs, minShots, idealTtk,
   medianTtk, dps, rangeAxis, ttkCurve, winnerStrip, slowerPct, withCadence, fpsFireRateDrop, withFpsLimit,
-  ttkHistogram, stkHistogram, deepBands,
+  ttkHistogram, stkHistogram, deepBands, pelletZones, PELLET_TARGET,
 } from "../weapons-model.mjs";
 import { toProfile } from "../replay/weapons.mjs";
 
@@ -218,6 +218,75 @@ test("TTK and STK histograms from an exact distribution", () => {
   const th2 = ttkHistogram(d2);
   assert.ok(Math.abs(th2.reduce((s, b) => s + b.p, 0) - 1) < 1e-9);
   for (let i = 1; i < th2.length; i++) assert.ok(th2[i].cum + 1e-12 >= th2[i - 1].cum);
+});
+
+test("pelletZones: the shares sum to 1, and match a seeded Monte-Carlo sample of the disc", () => {
+  // deterministic sampler: uniform in the disc, classified by the same target
+  // geometry the closed form uses (head circle, body / leg rectangles)
+  const sample = (spread, cof, range, aimX = 0, aimY = 0, n = 20000) => {
+    const R = range * Math.tan(((cof + spread) / 2) * Math.PI / 180);
+    let s = 123456789;
+    const rnd = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
+    const c = { head: 0, body: 0, leg: 0, miss: 0 };
+    const T = PELLET_TARGET;
+    for (let i = 0; i < n; i++) {
+      const r = R * Math.sqrt(rnd()), a = rnd() * 2 * Math.PI;
+      const x = aimX + r * Math.cos(a), y = aimY + r * Math.sin(a);
+      if ((x - T.headX) ** 2 + (y - T.headY) ** 2 <= T.headR ** 2) c.head++;
+      else if (Math.abs(x) <= T.halfW && y <= T.top && y >= T.legTop) c.body++;
+      else if (Math.abs(x) <= T.halfW && y < T.legTop && y >= T.bottom) c.leg++;
+      else c.miss++;
+    }
+    for (const k of Object.keys(c)) c[k] /= n;
+    return c;
+  };
+  for (const [spread, cof, range] of [[3.5, 0.15, 20], [3, 0, 35], [0.75, 0.15, 35], [2.5, 1.75, 20]]) {
+    const z = pelletZones(spread, cof, range);
+    near(z.head + z.body + z.leg + z.miss, 1, 1e-9);
+    const m = sample(spread, cof, range);
+    for (const k of ["head", "body", "leg", "miss"]) assert.ok(Math.abs(z[k] - m[k]) <= 0.02, `${spread}/${cof}/${range} ${k}: closed ${z[k]} vs sampled ${m[k]}`);
+  }
+  // head aim at close range puts most pellets on the head
+  assert.ok(pelletZones(3.5, 0.15, 5, 0, 0.45).head > 0.85);
+});
+
+test("pelletZones: point blank is all body, long range is almost all miss", () => {
+  assert.deepEqual(pelletZones(3.5, 0.15, 0), { head: 0, body: 1, leg: 0, miss: 0 });
+  const far = pelletZones(3.5, 0.15, 200);
+  assert.ok(far.miss > 0.99, `miss at 200 m: ${far.miss}`);
+  assert.ok(far.body < 0.01 && far.head < 0.01);
+});
+
+test("a pellet weapon with spread: the median grows with range, and matches the old model at 0 m", () => {
+  const sg = toProfile([400, 6, 2800, 100, 50, 5, 30, 1.5, 11, "semi"]);
+  const cone = { spread: 3.5, cof: 0.15 };
+  const at = (r, o = {}) => medianTtk(sg, { range: r, acc: 1, hsr: 0, hp: 1000, ...o });
+  assert.equal(at(0, cone), at(0), "at 0 m the disc is a point: spread changes nothing");
+  assert.equal(at(10, cone), at(10));
+  assert.equal(at(20, cone), 300, "was 150 ms with all pellets landing");
+  assert.equal(at(20), 150);
+  assert.equal(at(35, cone), 3850, "was 150 ms with all pellets landing");
+  assert.equal(at(35), 150);
+  // DPS is the expected damage now, not all-pellets-land
+  near(dps(sg, { range: 20, ...cone }).burst, 2555, 1);
+  near(dps(sg, { range: 20 }).burst, 5133, 1);
+  near(dps(sg, { range: 0, ...cone }).burst, dps(sg, { range: 0 }).burst, 1e-9);
+});
+
+test("single-pellet weapons ignore spread data entirely: bit-identical with or without it", () => {
+  const at = (o = {}) => medianTtk(AR, { range: 20, acc: 1, hsr: 0, hp: 1000, ...o });
+  assert.equal(at({ spread: 3, cof: 1 }), at());
+  assert.equal(dps(AR, { range: 20, spread: 3, cof: 1 }).burst, dps(AR, { range: 20 }).burst);
+  assert.equal(dps(AR, { range: 20, spread: 3, cof: 1 }).sustained, dps(AR, { range: 20 }).sustained);
+});
+
+test("ttkCurve with spread changes with range even when the damage is flat", () => {
+  const flat = toProfile([225, 6, 3000, 112, 112, 0, 0, 1.5, 5, "semi"]); // Jackhammer-like, flat damage
+  assert.deepEqual(ttkCurve(flat, [0, 20, 35], { acc: 1, hsr: 0, hp: 1000 }), [266.6666666666667, 266.6666666666667, 266.6666666666667]);
+  const geo = ttkCurve(flat, [0, 20, 35], { acc: 1, hsr: 0, hp: 1000, spread: 2.5, cof: 0.15 });
+  assert.ok(geo[0] < geo[1] && geo[1] < geo[2], `spread curve must grow with range: ${geo}`);
+  near(geo[1], 533.3333333333334, 1e-9);
+  near(geo[2], 1333.3333333333333, 1e-9);
 });
 
 test("deep dive bands are Dorf's reference tables, ordered and growing", () => {

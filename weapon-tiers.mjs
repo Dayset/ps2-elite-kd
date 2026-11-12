@@ -16,9 +16,15 @@
  * 25/26 = 96.2%, so "Top 1%" (needs >= 99%) could never fire. Classes
  * with fewer than TIER_MIN_CLASS weapons are ranked but untiered.
  *
+ * Pellet weapons rank on their spread-adjusted DPS (weapons-model.mjs dps
+ * with the weapon's pellet spread + standing cone from recoil.json), so a
+ * shotgun's effective DPS falls with range as its pellets miss — the old
+ * all-pellets-land DPS read far too high past 10 m.
+ *
  * Pure and DOM-free; the page passes its loaded weapons and recoil.json.
  */
-import { dps, withFpsLimit } from "./weapons-model.mjs?v=20261107-merge1";
+import { dps, withFpsLimit } from "./weapons-model.mjs?v=20261112-pellet1";
+import { pelletConeRaw } from "./weapon-sim.mjs?v=20261112-pellet1";
 import { deriveCurrent, paramsFor, nStill, burstHitAvg, SHOTS } from "./weapon-adad.mjs?v=20261109-merge1";
 
 /** Rank bands, best first: `max` = largest (rank + 1) / class-size share in the band. */
@@ -61,7 +67,10 @@ export function weaponEff(weapon, recoil, { range, fpsOn, fps, stance }) {
   const hitMove = burstHitAvg(p.still, p.move, p.bloom, nFree, SHOTS, range, "moving");
   const hitIdeal = burstHitAvg(p.still, p.move, p.bloom, nFree, SHOTS, range, "ideal");
   const prof = fpsOn ? withFpsLimit(weapon.p, fps) : weapon.p;
-  const raw = dps(prof, { range }).burst;
+  // the burst DPS is spread-adjusted for pellet weapons (standing cone,
+  // this stance): a shotgun's pellets miss at range, so its DPS falls with
+  // the range instead of reading all-pellets-land at every distance
+  const raw = dps(prof, { range, ...pelletConeRaw(recoil, weapon.id, stance === "hip") }).burst;
   if (!Number.isFinite(raw)) return null;
   return {
     eff: raw * hitMove,

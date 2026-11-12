@@ -81,18 +81,24 @@ test("the Naginata is the walk-cost poster child: D-tier hip, mid C-tier ADS (35
   assert.equal(lmgAds.rows.find((r) => r.name === 'T9A "Butcher"').tier, "S");
 });
 
-test("shotguns keep their full burst DPS while strafing: the cone is inside the torso", () => {
+test("shotguns rank on spread-adjusted DPS: the cone is inside the torso, the pellets are not", () => {
   const { classes } = computeTiers(weapons, recoil, { range: 35, fpsOn: true, fps: 60, stance: "hip" });
   const sg = classes.find((c) => c.cat === "Shotgun");
   assert.equal(sg.rows.length, 29);
-  // three shotguns tie at 1987 eff DPS; name order breaks the tie, so the
-  // third of them is A, not S — the band is by rank, not by value
-  assert.equal(sg.rows[0].name, "Deimos VA29");
+  // the tightest spread wins now: the three Barons (2.5° spread) tie at 531 eff DPS
+  // and the pumps (3–3.5°) sit below them; name order breaks the tie, so the
+  // third Baron is A, not S — the band is by rank, not by value
+  assert.equal(sg.rows[0].name, "NS \"Lucky\" Baron G5");
   assert.equal(sg.rows[0].tier, "S");
+  assert.ok(Math.abs(Math.round(sg.rows[0].eff) - 531) <= 1, `top shotgun eff ${sg.rows[0].eff}`);
   const jack = sg.rows.find((r) => r.name === "TAS-16 Blackjack");
-  assert.equal(jack.tier, "A");
+  assert.equal(jack.tier, "B", "was A at 1987 eff DPS with all pellets landing");
+  assert.ok(Math.abs(Math.round(jack.eff) - 457) <= 1, `Blackjack eff ${jack.eff}`);
   assert.ok(jack.loss < 0.001, `Blackjack walk loss ${jack.loss}`);
   assert.equal(jack.nFree, 0);
+  const deimos = sg.rows.find((r) => r.name === "Deimos VA29");
+  assert.equal(deimos.tier, "B", "was S at 1987 eff DPS with all pellets landing");
+  assert.ok(Math.abs(Math.round(deimos.eff) - 457) <= 1, `Deimos eff ${deimos.eff}`);
 });
 
 test("tiny classes are ranked but untiered", () => {

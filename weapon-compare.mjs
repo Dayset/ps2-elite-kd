@@ -21,13 +21,13 @@ import { toProfile } from "./replay/weapons.mjs";
 import {
   HP_PRESETS, ttkDistribution, quantileMs, rangeAxis, ttkCurve, winnerStrip, slowerPct, withCadence,
   FPS_LIMIT, fpsFireRateDrop, withFpsLimit, deepBands, minShots, hitDamage,
-} from "./weapons-model.mjs?v=20261107-merge1";
-import { METRICS, GROUPS, GROUP_EN, NO_BLOOM, statValues, bestOf, rank, classBests, rowAllSame } from "./weapon-stats.mjs?v=20261109-merge1";
-import { computeTiers, TIER_MIN_CLASS } from "./weapon-tiers.mjs?v=20261111-wctiers1";
+} from "./weapons-model.mjs?v=20261112-pellet1";
+import { METRICS, GROUPS, GROUP_EN, NO_BLOOM, statValues, bestOf, rank, classBests, rowAllSame } from "./weapon-stats.mjs?v=20261112-pellet1";
+import { computeTiers, TIER_MIN_CLASS } from "./weapon-tiers.mjs?v=20261112-pellet1";
 import {
   simParams, compareBursts, burstAnalysis, deepTimings, sprayPattern, attEffects, SLOTS, slotOf, canon, TARGET, STANCES,
-  stylesFor, loadoutEffects, loadoutProfile, loadoutRec,
-} from "./weapon-sim.mjs?v=20261109-deepfollow1";
+  stylesFor, loadoutEffects, loadoutProfile, loadoutRec, pelletConeOf,
+} from "./weapon-sim.mjs?v=20261112-pellet1";
 import { sageLines, SAGE_TEXT } from "./weapon-sage.mjs?v=20261107-sage1";
 
 export const MAX_WEAPONS = 4;
@@ -762,12 +762,16 @@ async function boot() {
     const opt = { acc: st.acc / 100, hsr: st.hsr / 100, hp: st.hp };
     const okey = `${opt.acc}|${opt.hsr}|${opt.hp}|${maxR}|${st.fpsOn ? st.fps : 0}|${simState.aim}`;
     if (curveCache.size > 200) curveCache.clear();
+    // the pellet spread + cone for each chosen weapon (standing, this aim):
+    // the TTK curve and the median at the chosen range read it, so a pellet
+    // weapon's exact maths finally knows about its cone
+    const coneOf = (w) => (recoil ? pelletConeOf(loadoutRec(recoilOf(w.id), effectsOf(w), hipAim()), hipAim(), effectsOf(w)) : { spread: 0, cof: 0 });
     const cs = ws.map((w) => {
       const k = w.id + "|" + chosenAtt(w.id).join("+") + "|" + okey;
-      if (!curveCache.has(k)) curveCache.set(k, ttkCurve(w.p, xs, opt));
+      if (!curveCache.has(k)) curveCache.set(k, ttkCurve(w.p, xs, { ...opt, ...coneOf(w) }));
       return curveCache.get(k);
     });
-    const dists = ws.map((w) => ttkDistribution(w.p, { ...opt, range: st.range }));
+    const dists = ws.map((w) => ttkDistribution(w.p, { ...opt, range: st.range, ...coneOf(w) }));
     const med = dists.map((d) => quantileMs(d, 0.5));
     calc = { maxR, ws, xs, curves: cs, dists, med, winners: winnerStrip(cs) };
   }
@@ -792,11 +796,11 @@ async function boot() {
   // best of the whole class (category) per range / hp, stock weapons: cached
   const classCache = new Map();
   function classBestFor(cat) {
-    const key = `${cat}|${st.range}|${st.hp}|${recoil ? 1 : 0}|${st.fpsOn ? st.fps : 0}`;
+    const key = `${cat}|${st.range}|${st.hp}|${recoil ? 1 : 0}|${st.fpsOn ? st.fps : 0}|${simState.aim}`;
     if (!classCache.has(key)) {
       if (classCache.size > 100) classCache.clear();
       // the class best is judged on the same slowed profiles as the chosen weapons
-      classCache.set(key, classBests((byCat.get(cat) || []).map((w) => statValues({ p: fpsP(w.p), rec: recoilOf(w.id), range: st.range, hp: st.hp }))));
+      classCache.set(key, classBests((byCat.get(cat) || []).map((w) => statValues({ p: fpsP(w.p), rec: recoilOf(w.id), range: st.range, hp: st.hp, aim: simState.aim, att: [] }))));
     }
     return classCache.get(key);
   }
@@ -817,8 +821,8 @@ async function boot() {
     $("wcKey").innerHTML = ws.length ? `<span><span class="good">■</span> ${esc(tr("wc.goodTip", "Best of the chosen weapons"))}</span> <span><span class="gold">■</span> ${esc(tr("wc.goldKey", "Best of the whole class"))}</span>`
       + (anyAtt ? ` <span><span class="wc-mod">123</span> ${esc(tr("wc.modKey", "changed by attachments"))}</span>` : "") : "";
     if (!ws.length) { box.innerHTML = `<p class="wc-dim wc-empty">${esc(tr("wc.search", "Type a weapon name…"))}</p>`; return; }
-    const vals = ws.map((w) => statValues({ p: w.p, rec: loadoutRec(recoilOf(w.id), effectsOf(w), hipAim()), range: st.range, hp: st.hp }));
-    const stock = ws.map((w) => (chosenAtt(w.id).length ? statValues({ p: w.base, rec: recoilOf(w.id), range: st.range, hp: st.hp }) : null));
+    const vals = ws.map((w) => statValues({ p: w.p, rec: loadoutRec(recoilOf(w.id), effectsOf(w), hipAim()), range: st.range, hp: st.hp, aim: simState.aim, att: effectsOf(w) }));
+    const stock = ws.map((w) => (chosenAtt(w.id).length ? statValues({ p: w.base, rec: recoilOf(w.id), range: st.range, hp: st.hp, aim: simState.aim, att: [] }) : null));
     const chosenBest = {};
     for (const m of METRICS) chosenBest[m.key] = bestOf(vals.map((v) => v[m.key]), m.dir);
     const best = bestOf(med, -1) ?? (med.filter((v) => v != null).length ? Math.min(...med.filter((v) => v != null)) : null);

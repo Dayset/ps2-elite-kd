@@ -8,6 +8,14 @@
 // armor values, because Census does not carry them. The target is a plain
 // health pool (HP).
 //
+// One opt-in exception: pellet spread. A pellet weapon's per-pellet hit
+// chances come from the spread geometry (pelletZones, fed by `spread` / `cof`
+// in degrees — Census pellet_spread + the standing cone from recoil.json,
+// see weapon-sim.mjs pelletConeOf), because pellets fly in a cone, not a
+// hose: at range most of them miss the target entirely. Without spread data
+// the model keeps its old behaviour exactly, so single-pellet weapons and
+// callers without recoil data do not move by a single millisecond.
+//
 // Time to kill (TTK) is the time from the first shot to the shot that
 // removes the last HP. The first shot is at t = 0, so a 3-shot kill at 600 rpm
 // is 200 ms. A reload is added after every full magazine.
@@ -107,6 +115,125 @@ function magPeriod(p) {
 }
 export const MAX_SHOTS = 400;
 
+/**
+ * The target the pellet geometry aims at, in metres, y up, aim point = chest
+ * centre (0, 0). Same numbers as weapon-sim.mjs TARGET — defined here so the
+ * two engines can never drift apart again (the sim re-exports this object).
+ * Head circle + body rectangle + leg rectangle partition the target: the head
+ * touches the body at y = 0.3 and the body meets the legs at y = -0.3, edges
+ * only, no overlap, so a pellet lands in exactly one zone.
+ */
+export const PELLET_TARGET = Object.freeze({ headX: 0, headY: 0.45, headR: 0.15, halfW: 0.3, top: 0.3, legTop: -0.3, bottom: -1.2 });
+
+// Exact area of (disc centred (cx, cy), radius R) ∩ ([x1, x2] × [y1, y2]).
+// ∫ over y of the clamped horizontal width; the antiderivative of √(R²−y²)
+// is (y/2)√(R²−y²) + (R²/2)·asin(y/R), and the width's min/max branches only
+// switch where √(R²−y²) crosses x1 or x2, so the interval splits at those y
+// values and each piece integrates in closed form. No sampling: the same
+// inputs always give the same area.
+function discRectArea(R, cx, cy, x1, x2, y1, y2) {
+  const X1 = x1 - cx, X2 = x2 - cx, Y1 = y1 - cy, Y2 = y2 - cy;
+  const lo = Math.max(Y1, -R), hi = Math.min(Y2, R);
+  if (!(hi > lo) || !(R > 0)) return 0;
+  const pts = new Set([lo, hi]);
+  for (const xv of [X1, X2]) {
+    if (Math.abs(xv) < R) {
+      const y = Math.sqrt(R * R - xv * xv);
+      if (y > lo && y < hi) pts.add(y);
+      if (-y > lo && -y < hi) pts.add(-y);
+    }
+  }
+  const ys = [...pts].sort((a, b) => a - b);
+  const F = (y) => {
+    const s = Math.sqrt(Math.max(0, R * R - y * y));
+    return (y / 2) * s + (R * R / 2) * Math.asin(Math.min(1, Math.max(-1, y / R)));
+  };
+  let area = 0;
+  for (let i = 0; i + 1 < ys.length; i++) {
+    const a = ys[i], b = ys[i + 1];
+    if (!(b > a)) continue;
+    const m = (a + b) / 2;
+    const s = Math.sqrt(Math.max(0, R * R - m * m));
+    const left = Math.max(X1, -s), right = Math.min(X2, s);
+    if (!(right > left)) continue;
+    // on this piece the min/max branches are fixed (they only switch at the
+    // split points), so the width integrates as a linear part + a √(R²−y²) part
+    const intR = X2 >= s ? F(b) - F(a) : X2 * (b - a);
+    const intL = X1 <= -s ? -(F(b) - F(a)) : X1 * (b - a);
+    area += intR - intL;
+  }
+  return Math.max(0, area);
+}
+
+// Exact area of the overlap of two discs (the lens formula); the degenerate
+// cases are the disjoint discs and one disc inside the other.
+function discCircleArea(R, cx, cy, ox, oy, r) {
+  const d = Math.hypot(ox - cx, oy - cy);
+  if (d >= R + r) return 0;
+  if (d <= Math.abs(R - r) || d === 0) return Math.PI * Math.min(R, r) ** 2;
+  const a = (d * d + R * R - r * r) / (2 * d);
+  const h = Math.sqrt(Math.max(0, R * R - a * a));
+  return R * R * Math.acos(Math.min(1, Math.max(-1, a / R)))
+    + r * r * Math.acos(Math.min(1, Math.max(-1, (d - a) / r))) - d * h;
+}
+
+/**
+ * Share of a shot's pellets landing on each zone of the target, from the
+ * pellet spread + cone: the pellets fill a disc of angular radius
+ * (cof + spread) / 2 around the aim point — the same disc weapon-sim.mjs
+ * places them in (its radius is (cof + pelletSpread) / 2 in degrees) — so at
+ * `range` metres the disc radius is range · tan((cof + spread) / 2).
+ * Closed-form area overlap, no sampling: the same inputs always give the
+ * same shares. `aimX` / `aimY` is the disc centre in target metres (chest
+ * (0, 0); the head is (0, 0.45)). Returns { head, body, leg, miss } summing
+ * to 1. At point blank the disc is a point on the chest, so body is 1; at
+ * long range the disc dwarfs the target and most pellets miss.
+ */
+export function pelletZones(spread, cof, range, aimX = 0, aimY = 0) {
+  const T = PELLET_TARGET;
+  const deg = ((Number(cof) || 0) + (Number(spread) || 0)) / 2;
+  const R = Math.max(0, Number(range) || 0) * Math.tan(deg * Math.PI / 180);
+  if (!(R > 0)) {
+    // a zero-radius disc is a point: the zone the aim point itself is in
+    const inHead = (aimX - T.headX) ** 2 + (aimY - T.headY) ** 2 <= T.headR ** 2;
+    const inBody = Math.abs(aimX) <= T.halfW && aimY <= T.top && aimY >= T.legTop;
+    const inLeg = Math.abs(aimX) <= T.halfW && aimY < T.legTop && aimY >= T.bottom;
+    return { head: inHead ? 1 : 0, body: !inHead && inBody ? 1 : 0, leg: !inHead && !inBody && inLeg ? 1 : 0, miss: inHead || inBody || inLeg ? 0 : 1 };
+  }
+  const disc = Math.PI * R * R;
+  const head = discCircleArea(R, aimX, aimY, T.headX, T.headY, T.headR) / disc;
+  const body = discRectArea(R, aimX, aimY, -T.halfW, T.halfW, T.legTop, T.top) / disc;
+  const leg = discRectArea(R, aimX, aimY, -T.halfW, T.halfW, T.bottom, T.legTop) / disc;
+  const h = clamp01(head), b = clamp01(body), l = clamp01(leg);
+  return { head: h, body: b, leg: l, miss: clamp01(1 - h - b - l) };
+}
+
+// Distribution of the damage of ONE shot for a pellet weapon with spread:
+// each pellet lands head / body / leg / miss with the geometric probabilities
+// (not the old independent-accuracy coin flip). Four-way multinomial over
+// the pellet counts, merged by damage value like shotOutcomes.
+function shotOutcomesGeo(pellets, body, head, leg, pHead, pBody, pLeg) {
+  const pMiss = Math.max(0, 1 - pHead - pBody - pLeg);
+  const logFact = [0];
+  for (let i = 1; i <= pellets; i++) logFact[i] = logFact[i - 1] + Math.log(i);
+  const out = new Map();
+  for (let b = 0; b <= pellets; b++) {
+    for (let h = 0; b + h <= pellets; h++) {
+      for (let l = 0; b + h + l <= pellets; l++) {
+        const m = pellets - b - h - l;
+        const lp = logFact[pellets] - logFact[b] - logFact[h] - logFact[l] - logFact[m]
+          + (b ? b * Math.log(pBody) : 0) + (h ? h * Math.log(pHead) : 0)
+          + (l ? l * Math.log(pLeg) : 0) + (m ? m * Math.log(pMiss) : 0);
+        const pr = Math.exp(lp);
+        if (!(pr > 0) || !Number.isFinite(pr)) continue;
+        const d = b * body + h * head + l * leg;
+        out.set(d, (out.get(d) || 0) + pr);
+      }
+    }
+  }
+  return [...out.entries()];
+}
+
 /** Damage of one pellet/bullet at `range` metres (linear falloff between the two ranges). */
 export function damageAt(p, range) {
   const { dmgMax, dmgMin, rangeMaxDmg, rangeMinDmg } = p;
@@ -167,7 +294,17 @@ function shotOutcomes(pellets, body, head, acc, hsr) {
 
 /**
  * Exact "kill by shot k" distribution.
- * opts: { range = 0, acc = 1, hsr = 0, hp = 500 }
+ * opts: { range = 0, acc = 1, hsr = 0, hp = 500, spread = 0, cof = 0 }
+ * `spread` / `cof` are the pellet spread and standing cone in degrees (see
+ * pelletZones): for a pellet weapon with spread data the per-pellet hit
+ * chances come from the spread geometry, not the accuracy coin flip. The
+ * disc is centred on the chest, or on the head with probability hsr — the
+ * per-pellet analogue of the sim aiming at the head with probability hsr —
+ * and scaled by acc, the share of shots whose disc is on the target at all.
+ * Single-pellet weapons, and pellet weapons without spread data, keep the
+ * old path exactly. Legs are a fourth outcome here (0.9x damage, or the
+ * KCAP value): the old path never saw them, because without a disc a pellet
+ * aimed at the chest cannot land on a leg.
  * Returns { cdf, ms, shotsMedian, ... } where cdf[i] is the probability the
  * target is dead by shot i + 1 and ms[i] the time of that shot.
  */
@@ -176,8 +313,19 @@ export function ttkDistribution(p, opts = {}) {
   const acc = clamp01(opts.acc ?? 1);
   const hsr = clamp01(opts.hsr ?? 0);
   const hp = Math.max(1, Math.round(opts.hp ?? 500));
-  const { body, head } = hitDamage(p, range);
-  const outcomes = shotOutcomes(p.pellets, body, head, acc, hsr);
+  const { body, head, leg } = hitDamage(p, range);
+  const spread = Number(opts.spread) || 0, cof = Number(opts.cof) || 0;
+  let outcomes;
+  if (p.pellets > 1 && (spread > 0 || cof > 0)) {
+    const g = pelletZones(spread, cof, range, 0, 0);
+    const gh = hsr > 0 ? pelletZones(spread, cof, range, PELLET_TARGET.headX, PELLET_TARGET.headY) : g;
+    const pHead = acc * ((1 - hsr) * g.head + hsr * gh.head);
+    const pBody = acc * ((1 - hsr) * g.body + hsr * gh.body);
+    const pLeg = acc * ((1 - hsr) * g.leg + hsr * gh.leg);
+    outcomes = shotOutcomesGeo(p.pellets, body, head, leg, pHead, pBody, pLeg);
+  } else {
+    outcomes = shotOutcomes(p.pellets, body, head, acc, hsr);
+  }
   const cdf = [], ms = [];
   // alive: damage so far (< hp) -> probability. Only a few damage totals are reachable (sums of body / head hits),
   // so a sparse map is far faster than a dense array over every health point, with the same exact result.
@@ -221,7 +369,9 @@ export function minShots(p, { range = 0, hp = 500, head = false } = {}) {
   return Math.ceil(hp / ((head ? h.head : h.body) * p.pellets));
 }
 
-/** Ideal TTK in ms (every pellet hits): body-only or head-only. */
+/** Ideal TTK in ms (every pellet hits): body-only or head-only. Deliberately
+ *  NOT spread-adjusted: it is the best-case bound (the luckiest possible
+ *  shot), and the median next to it is what the spread moves. */
 export function idealTtk(p, opts = {}) {
   return timeOfShot(p, minShots(p, opts));
 }
@@ -231,10 +381,18 @@ export function medianTtk(p, opts = {}) {
   return quantileMs(ttkDistribution(p, opts), 0.5);
 }
 
-/** Damage per second: `burst` = one magazine's firing time only, `sustained` = reloads included. Body hits, all pellets land. */
-export function dps(p, { range = 0 } = {}) {
-  const { body } = hitDamage(p, range);
-  const perShot = body * p.pellets;
+/** Damage per second: `burst` = one magazine's firing time only, `sustained` = reloads included.
+ *  Expected damage, not all-pellets-land: for a pellet weapon with spread data (`spread` / `cof`
+ *  in degrees) the per-shot damage is the geometric expectation over the zones at chest aim —
+ *  the pellets that miss the target deal nothing, the ones on the head deal head damage. Without
+ *  spread data, or for a single pellet, it is the old all-pellets-land body value, unchanged. */
+export function dps(p, { range = 0, spread, cof } = {}) {
+  const { body, head, leg } = hitDamage(p, range);
+  let perShot = body * p.pellets;
+  if (p.pellets > 1 && ((Number(spread) || 0) > 0 || (Number(cof) || 0) > 0)) {
+    const g = pelletZones(spread, cof, range, 0, 0);
+    perShot = p.pellets * (g.body * body + g.head * head + g.leg * leg);
+  }
   const magDmg = p.mag * perShot;
   const period = magPeriod(p);                   // pull -> last shot -> refire wait -> reload
   const burst = magDmg * 1000 / (period - p.reloadMs);
@@ -312,14 +470,20 @@ export function deepBands(range) {
 
 /**
  * Median-TTK curve over `ranges`. Distributions only change when the damage changes,
- * so results are cached on (body, head).
+ * so results are cached on (body, head) — plus the range itself, because the spread
+ * geometry changes with range even when the damage is flat (the Jackhammer's damage
+ * does not fall off, but its pellets still spread).
  */
-export function ttkCurve(p, ranges, { acc = 1, hsr = 0, hp = 500, q = 0.5 } = {}) {
+export function ttkCurve(p, ranges, { acc = 1, hsr = 0, hp = 500, q = 0.5, spread, cof } = {}) {
   const cache = new Map();
+  // the geometric branch (pellet weapon with spread data) genuinely changes
+  // with the range; every other weapon only changes with the damage, so the
+  // range stays out of its key and the flat-damage tail still shares one entry
+  const geo = p.pellets > 1 && ((Number(spread) || 0) > 0 || (Number(cof) || 0) > 0);
   return ranges.map((r) => {
     const { body, head } = hitDamage(p, r);
-    const key = body + "/" + head;
-    if (!cache.has(key)) cache.set(key, quantileMs(ttkDistribution(p, { range: r, acc, hsr, hp }), q));
+    const key = geo ? body + "/" + head + "|" + r : body + "/" + head;
+    if (!cache.has(key)) cache.set(key, quantileMs(ttkDistribution(p, { range: r, acc, hsr, hp, spread, cof }), q));
     return cache.get(key);
   });
 }

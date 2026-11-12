@@ -12,7 +12,7 @@
 //   ranges -> [{ range, best: { median, burst } | null }]
 //
 // A newer `gen` makes every older job stale: stale jobs are dropped, and a long class/ranges job stops between slices.
-import { compareBursts, burstAnalysis } from "./weapon-sim.mjs?v=20261109-deepfollow1";
+import { compareBursts, burstAnalysis } from "./weapon-sim.mjs?v=20261112-pellet1";
 import { sageLines } from "./weapon-sage.mjs?v=20261107-sage1";
 
 let latest = 0;

@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { slotOf, canon, SLOTS, BURSTS, simParams, simulate, compareBursts, sprayPattern, rng, burstStats, burstAnalysis, deepTimings, ADS_DEFAULT, ATTACHMENTS, descEffects, attEffects, hitZone, TARGET } from "../weapon-sim.mjs";
+import { slotOf, canon, SLOTS, BURSTS, simParams, simulate, compareBursts, sprayPattern, rng, burstStats, burstAnalysis, deepTimings, ADS_DEFAULT, ATTACHMENTS, descEffects, attEffects, hitZone, TARGET, pelletConeOf, pelletConeRaw } from "../weapon-sim.mjs";
 import { fpsFireRateDrop } from "../weapons-model.mjs";
 import { toProfile } from "../replay/weapons.mjs";
 
@@ -172,6 +172,40 @@ test("more wiki attachments: MPL, Weighted Receiver, Smart-Choke, Heavy Magazine
   assert.equal(simParams(AR, FM, STATES, { aim: "ads", attachments: ["Muzzle Brake"] }).vMin, simParams(AR, FM, STATES, { aim: "ads", attachments: ["Compensator"] }).vMin);
   assert.equal(slotOf("Heavy Magazine"), "ammo");
   assert.equal(slotOf("MPL"), "rail");
+});
+
+test("pelletConeOf: the spread + standing cone the model reads, per aim, with attachment terms", () => {
+  const fm = { ...FM, pellet_spread: 3, cof_pellet_spread: 3 };
+  const adsFm = { ...FM, pellet_spread: 0.75, cof_pellet_spread: 0.75 };
+  const states = [{ player_state_id: 0, cof_min: 1.75, cof_max: 4 }, { player_state_id: 1, cof_min: 1.25, cof_max: 4 }];
+  const adsStates = [{ player_state_id: 0, cof_min: 0.15, cof_max: 2 }, { player_state_id: 1, cof_min: 0.15, cof_max: 2 }];
+  const rec = { fm, states, adsFm, adsStates };
+  assert.deepEqual(pelletConeOf(rec, true, []), { spread: 3, cof: 1.75 });
+  assert.deepEqual(pelletConeOf(rec, false, []), { spread: 0.75, cof: 0.15 });
+  assert.deepEqual(pelletConeOf(null, true, []), { spread: 0, cof: 0 });
+  // Smart-Choke: -0.5° aiming, +0.5° hip — the same numbers simParams applies
+  const choke = [attEffects("Smart-Choke", "", "X", true)];
+  assert.deepEqual(pelletConeOf(rec, true, choke), { spread: 3.5, cof: 1.75 });
+  assert.deepEqual(pelletConeOf(rec, false, [attEffects("Smart-Choke", "", "X", false)]), { spread: 0.25, cof: 0.15 });
+  // no ADS fire mode: the sim's wiki fallback cone, as simParams uses it
+  assert.deepEqual(pelletConeOf({ fm, states, adsFm: null, adsStates: [] }, false, []), { spread: 3, cof: ADS_DEFAULT.standStill });
+});
+
+test("pelletConeRaw: the real Census snapshot, including the Rutherford ADS gap", () => {
+  const recoil = JSON.parse(readFileSync(new URL("../assets/weapons/recoil.json", import.meta.url), "utf8"));
+  assert.deepEqual(pelletConeRaw(recoil, 7390, true), { spread: 3, cof: 0 }, "Mag-Scatter: 3° hip and ADS, CoF 0");
+  assert.deepEqual(pelletConeRaw(recoil, 7390, false), { spread: 3, cof: 0 });
+  assert.deepEqual(pelletConeRaw(recoil, 804257, true), { spread: 3, cof: 1.75 }, "Tengu hip");
+  assert.deepEqual(pelletConeRaw(recoil, 804257, false), { spread: 0.75, cof: 0.15 }, "Tengu ADS");
+  assert.deepEqual(pelletConeRaw(recoil, 6005110, true), { spread: 0, cof: 0 }, "Horizon: no spread, no CoF — genuinely unaffected");
+  assert.deepEqual(pelletConeRaw(recoil, 6005110, false), { spread: 0, cof: 0 });
+  // SG-ARX Rutherford: Census carries no pellet_spread on its ADS fire mode
+  // (hip is 4°), so both the sim and the model read 0 there — a data gap, not
+  // a code gap; if Census ever gains the value this assertion must change
+  assert.deepEqual(pelletConeRaw(recoil, 6011256, true), { spread: 4, cof: 0.15 });
+  assert.deepEqual(pelletConeRaw(recoil, 6011256, false), { spread: 0, cof: 0.15 });
+  assert.deepEqual(pelletConeRaw(recoil, 999999, true), { spread: 0, cof: 0 });
+  assert.deepEqual(pelletConeRaw(null, 7390, true), { spread: 0, cof: 0 });
 });
 
 test("legs: the lower body box is a leg zone at 0.9x, KCAP flips it to 1.2x", () => {

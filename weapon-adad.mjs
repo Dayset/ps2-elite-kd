@@ -17,7 +17,7 @@
  * Pure maths is exported for tests; the DOM wiring runs at the bottom.
  */
 import { t as tr, currentLang, ready } from "./i18n.mjs";
-import { ATTACHMENTS, SLOTS, canon, slotOf } from "./weapon-sim.mjs?v=20261109-deepfollow1";
+import { ATTACHMENTS, SLOTS, canon, slotOf } from "./weapon-sim.mjs?v=20261112-pellet1";
 
 export const RECOVERY_RATE = 20; // deg/s: CoF recovery after one refire of delay
 export const SHOTS = 10;

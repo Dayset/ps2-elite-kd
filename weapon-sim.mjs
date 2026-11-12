@@ -11,7 +11,7 @@
 // the cone is filled. Those are constants here, labelled on the page.
 //
 // Units: angles in degrees, distances in metres, time in ms.
-import { hitDamage } from "./weapons-model.mjs?v=20261107-merge1";
+import { hitDamage, PELLET_TARGET } from "./weapons-model.mjs?v=20261112-pellet1";
 
 export const STANCES = Object.freeze(["crouchStill", "standStill", "crouchMove", "standMove"]);
 // Census player_state ids: 0 Standing, 1 Crouching, 2 Running, 5 CrouchWalking
@@ -20,8 +20,10 @@ export const STATE_ID = Object.freeze({ standStill: 0, crouchStill: 1, standMove
 /** Fallback only, for a weapon whose Census data has no aim-down-sights fire mode: the NSX Naginata's wiki values. Normally the ADS cone comes from the ADS fire mode's own player_state_group. */
 export const ADS_DEFAULT = Object.freeze({ crouchStill: 0.15, standStill: 0.15, crouchMove: 0.35, standMove: 0.4, bloomRatio: 0.5 });
 
-/** Target: aim point = chest centre. Head circle + body rectangle, metres, y up. */
-export const TARGET = Object.freeze({ headX: 0, headY: 0.45, headR: 0.15, halfW: 0.3, top: 0.3, legTop: -0.3, bottom: -1.2 });
+/** Target: aim point = chest centre. Head circle + body rectangle, metres, y up.
+ *  The numbers live in weapons-model.mjs (PELLET_TARGET) so the model and the
+ *  simulator can never drift apart again; this is the same object, re-exported. */
+export const TARGET = PELLET_TARGET;
 
 export const ASSUMPTIONS = Object.freeze([
   "target-size", "cone-uniform", "kick-after-shot", "horizontal-tolerance", "no-compensation",
@@ -289,6 +291,46 @@ export function simParams(profile, fm, states, opts = {}) {
     blastRatio: A.reduce((m, a) => m + (a.blastRatio || 0), 0),
     bulletRadius: A.reduce((m, a) => m + (a.bulletRadius || 0), 0),
   };
+}
+
+/**
+ * The pellet spread + minimum cone the model needs for one weapon and aim,
+ * from the decoded recoil record (the { fm, states, adsFm, adsStates } shape
+ * weapon-compare.mjs recoilOf returns), standing still — the model's
+ * convention, matching the tier lists (which also rank standing). `effects` =
+ * the loadout's attachment effects (loadoutEffects), the same array simParams
+ * reads: the spread terms (Smart-Choke, Hybrid Laser, Capsulate) are applied
+ * here, exactly as simParams applies them, because loadoutRec does not touch
+ * pellet_spread — while the cone is read as-is, because loadoutRec already
+ * scaled it (Laser Sight, Weighted Receiver). Stock weapons pass [].
+ * { spread, cof } in degrees; { 0, 0 } when there is no record — the model
+ * then keeps its old behaviour. A weapon with no ADS fire mode falls back to
+ * the sim's wiki cone (ADS_DEFAULT) when aiming, as simParams does.
+ */
+export function pelletConeOf(rec, hip, effects = []) {
+  if (!rec) return { spread: 0, cof: 0 };
+  const f = (hip ? rec.fm : (rec.adsFm || rec.fm)) || {};
+  const rows = hip ? rec.states : (rec.adsStates || rec.states);
+  const mul = (k) => (effects || []).reduce((m, a) => m * (a[k] ?? 1), 1);
+  const sumA = (k) => (effects || []).reduce((m, a) => m + (a[k] || 0), 0);
+  const spread = Math.max(0, (f.pellet_spread ?? f.cof_pellet_spread ?? 0)
+    * (hip ? mul("hipSpread") * mul("spreadHipMul") : mul("spreadAdsMul"))
+    + sumA(hip ? "spreadHip" : "spreadAds"));
+  const row = (rows || []).find((r) => r.player_state_id === 0) || (rows || [])[0] || {};
+  let cof = Number.isFinite(row.cof_min) ? row.cof_min : 0;
+  if (!hip && !(rec.adsStates && rec.adsStates.length)) cof = ADS_DEFAULT.standStill;
+  return { spread, cof };
+}
+
+/** The same, from the raw recoil.json snapshot and an item id (the tier lists' shape). */
+export function pelletConeRaw(recoil, id, hip) {
+  if (!recoil || !recoil.weapons) return { spread: 0, cof: 0 };
+  const w = recoil.weapons[String(id)];
+  if (!w) return { spread: 0, cof: 0 };
+  const fm = recoil.fm2?.[String(hip ? w[0] : (w[3] || w[0]))] || null;
+  const rows = recoil.groups?.[String(hip ? w[1] : (w[4] || w[1]))] || [];
+  const rec = hip ? { fm, states: rows } : { fm, states: rows, adsFm: fm, adsStates: rows };
+  return pelletConeOf(rec, hip, []);
 }
 
 /** Small fast seeded RNG (mulberry32). */
