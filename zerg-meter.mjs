@@ -19,7 +19,7 @@
 import { classifyDeath, cidNameEntry, slugKey } from "./live-model.mjs?v=20261108-neg2";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { traitPools, zergScore } from "./trait-scores.mjs?v=20261027-z79";
-import { valueToY, roachTop, createMotion, meterValue, parseLastEventRow, pickLatest, isStaleEvent } from "./zerg-meter-motion.mjs?v=20261113-zm1";
+import { valueToY, roachTop, createMotion, meterValue, parseLastEventRow, createFightQueue, fightTitle } from "./zerg-meter-motion.mjs?v=20261113-zm2";
 
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
@@ -37,9 +37,9 @@ let ranks = null; // slug -> { name, adjs, zerg }
 let ranksP = null;
 let cidNamesP = null;
 let lifeZerg = null; // the followed player's lifetime 🪳 (the resting value)
-let lastOppZerg = null; // the last opponent's lifetime 🪳 (null until a known opponent)
 let currentValue = null; // the target the motion chases (null = no reading yet)
 let displayName = target || "Zerg meter";
+let displayKind = null; // "kill" | "death" | null (resting: own lifetime)
 
 document.title = target ? `🪳 Zerg meter — ${target}` : "🪳 Zerg meter";
 
@@ -103,51 +103,60 @@ function opponentZerg(cid) {
   return pr;
 }
 
-// The most recent Death event decides the meter: ev.opp is the victim on
-// a kill, the killer on a death. Two guards: a stale event (older than the
-// newest already applied — a slow poll response must not overwrite a newer
-// stream event) never starts a lookup, and a slow lookup must not
-// overwrite a newer fight that already landed (sequence guard). The same
-// event re-polled every second is a no-op (same opponent + timestamp).
-let lastTs = null;
-let lastOppCid = null;
-let zergSeq = 0;
-function applyOpponent(oppCid, ts) {
-  if (isStaleEvent(lastTs, ts)) return;
-  if (ts === lastTs && oppCid === lastOppCid) return;
-  if (ts != null) lastTs = ts;
-  lastOppCid = oppCid;
-  const seq = ++zergSeq;
+// Every kill and death joins the fight queue (owner 2026-11-13): the
+// meter plays them in fight order, one per dwell, so no fight is skipped
+// when several land at once and deaths show exactly like kills. The queue
+// dedups (the stream and the 1 s poll deliver the same fight twice); an
+// unranked opponent has no Zerg to show and never joins it.
+const fightQueue = createFightQueue({ dwellMs: 2000, max: 20 });
+function offerFight(oppCid, ts, kind) {
   opponentZerg(oppCid).then((o) => {
-    if (!o || seq !== zergSeq) return;
-    lastOppZerg = o.zerg;
-    currentValue = meterValue(lifeZerg, lastOppZerg);
-    displayName = o.name;
+    if (!o) return;
+    fightQueue.offer({ opp: oppCid, ts, kind, zerg: o.zerg, name: o.name });
   });
 }
 
 function onDeath(ev, ts) {
-  applyOpponent(ev.opp, ts);
+  offerFight(ev.opp, ts, ev.kind);
 }
 
-// 1-second refresh of "last" (owner 2026-11-13): the latest KILL and the
-// latest DEATH from Census characters_event, the newer wins. This is what
-// keeps the meter a live stream: it catches up on load (the last fight
-// shows even if it happened before the page opened) and it self-heals when
-// the stream stalls or drops — the stream is kept for instant updates, the
-// poll is the backstop. A failed tick just skips; the next second retries.
-// Hidden tabs don't poll (nobody is watching; resumes instantly on return).
+// 1-second refresh of "last" (owner 2026-11-13): the recent KILLs and
+// DEATHs from Census characters_event, oldest first, so the queue plays
+// them in fight order. This is what keeps the meter a live stream: it
+// catches up on load and it self-heals when the stream stalls or drops —
+// the stream is kept for instant updates, the poll is the backstop. A
+// failed tick just skips; the next second retries. Hidden tabs don't poll
+// (nobody is watching; resumes instantly on return).
+const RECENT_WINDOW_S = 120; // on load, only fights from the last 2 min queue up; older is history
+let pollHighTs = null; // the newest fight timestamp the poll has ever offered
+let pollPrimed = false;
 function pollLast() {
   if (!me || document.hidden) return;
   const base = `${CENSUS}characters_event/?character_id=${me.cid}`;
   Promise.all([
-    getJson(`${base}&type=KILL&c:limit=1&c:sort=timestamp:-1`),
-    getJson(`${base}&type=DEATH&c:limit=1&c:sort=timestamp:-1`),
+    getJson(`${base}&type=KILL&c:limit=10&c:sort=timestamp:-1`),
+    getJson(`${base}&type=DEATH&c:limit=10&c:sort=timestamp:-1`),
   ]).then(([k, d]) => {
-    const ek = parseLastEventRow((k.characters_event_list || [])[0], "kill");
-    const ed = parseLastEventRow((d.characters_event_list || [])[0], "death");
-    const best = pickLatest(ek, ed);
-    if (best) applyOpponent(best.opp, best.ts);
+    const rows = [
+      ...(k.characters_event_list || []).map((r) => parseLastEventRow(r, "kill")),
+      ...(d.characters_event_list || []).map((r) => parseLastEventRow(r, "death")),
+    ].filter(Boolean).sort((a, b) => a.ts - b.ts); // oldest first
+    if (!rows.length) { pollPrimed = true; return; }
+    let batch;
+    if (!pollPrimed) {
+      // Catch-up on load: the recent fights queue up in order; if none
+      // are recent, only the newest one shows (the resting "last").
+      const nowSec = Math.floor(Date.now() / 1000);
+      batch = rows.filter((r) => r.ts >= nowSec - RECENT_WINDOW_S);
+      if (!batch.length) batch = [rows[rows.length - 1]];
+      pollPrimed = true;
+    } else {
+      batch = rows.filter((r) => pollHighTs == null || r.ts > pollHighTs);
+    }
+    for (const e of batch) {
+      if (pollHighTs == null || e.ts > pollHighTs) pollHighTs = e.ts;
+      offerFight(e.opp, e.ts, e.kind);
+    }
   }).catch(() => { /* next second retries */ });
 }
 
@@ -203,7 +212,7 @@ async function startLive() {
     await loadRanks();
     me.cached = ranks.get(slugKey(me.name)) || null;
     lifeZerg = me.cached && Number.isFinite(me.cached.zerg) ? me.cached.zerg : null;
-    currentValue = meterValue(lifeZerg, lastOppZerg); // rest at own lifetime 🪳 until the first fight
+    currentValue = meterValue(lifeZerg, null); // rest at own lifetime 🪳 until the first fight
     connect();
     pollLast(); // catch up on load: the last fight shows at once, no waiting
     setInterval(pollLast, 1000); // refresh "last" every second
@@ -222,6 +231,15 @@ function demoTarget(nowMs) {
 let lastShown = null;
 let lastTitle = "";
 function frame(nowMs) {
+  // The queue's turn: one fight per dwell, in fight order. The title is
+  // rebuilt for every new fight even when the value is unchanged (two
+  // opponents can share a Zerg), so it gets its own check below.
+  const next = demo ? null : fightQueue.tick(nowMs);
+  if (next) {
+    currentValue = meterValue(lifeZerg, next.zerg);
+    displayName = next.name;
+    displayKind = next.kind;
+  }
   const shown = motion.update(demo ? demoTarget(nowMs) : currentValue, nowMs);
   if (shown != null && (lastShown == null || Math.abs(shown - lastShown) > 0.005)) {
     lastShown = shown;
@@ -229,7 +247,9 @@ function frame(nowMs) {
     laserEl.style.top = `${(valueToY(shown) * 100).toFixed(3)}%`;
     roachEl.hidden = false;
     laserEl.hidden = false;
-    const t = `🪳 ${displayName} Zerg ${shown.toFixed(1)}`;
+  }
+  if (shown != null) {
+    const t = fightTitle(displayKind, displayName, shown);
     if (t !== lastTitle) { document.title = t; lastTitle = t; }
   }
   requestAnimationFrame(frame);

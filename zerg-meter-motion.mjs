@@ -52,8 +52,13 @@ export function clampZerg(v) {
  * DEATH and takes the newer — so the meter catches up on load (it shows
  * the last fight even if it happened before the page opened) and can never
  * freeze on a stale value if the live stream stalls. The stream is kept
- * for instant updates; both sources go through the same newest-wins
- * ordering below.
+ * for instant updates; both sources feed the fight queue below.
+ *
+ * Queue (owner 2026-11-13): every kill and death gets its turn on the
+ * meter — no fight is skipped when several land at once, and kills and
+ * deaths are both in it. The queue plays them in fight order, one per
+ * dwell (2 s), oldest first; the title says which it was ("killed X" vs
+ * "killed by Y") because the number alone can't tell them apart.
  */
 export function meterValue(lifeZerg, zerg) {
   if (Number.isFinite(zerg)) return zerg;
@@ -75,19 +80,54 @@ export function parseLastEventRow(row, kind) {
   const ts = Number(row.timestamp);
   if (typeof opp !== "string" || !/^[1-9]\d*$/.test(opp)) return null;
   if (!Number.isFinite(ts)) return null;
-  return { opp, ts };
+  return { opp, ts, kind };
 }
 
-/** The newer of two parsed last-fight events (ties go to the first). */
-export function pickLatest(a, b) {
-  if (!a) return b || null;
-  if (!b) return a;
-  return b.ts > a.ts ? b : a;
+/**
+ * The fight queue: every kill and death gets its turn on the meter, in
+ * fight order, one per dwell. offer() dedups (the stream and the 1 s poll
+ * deliver the same fight twice) and inserts by timestamp, so a slow
+ * lookup can't reorder two fights; entries past the cap drop the oldest.
+ * tick(nowMs) returns the entry to show now, or null to keep showing the
+ * current one (queue empty, or the dwell hasn't elapsed). Pure — the page
+ * only feeds it resolved opponents (zerg known) and applies what tick()
+ * returns. Unit-tested in test/zerg-meter.test.mjs.
+ */
+export function createFightQueue({ dwellMs = 2000, max = 20 } = {}) {
+  const entries = []; // { opp, ts, kind, zerg, name }, sorted by ts
+  const seen = new Set(); // "opp:ts" — one showing per fight
+  let current = null;
+  let currentSince = null;
+  function offer(e) {
+    if (!e || typeof e.opp !== "string" || !Number.isFinite(e.ts) || !Number.isFinite(e.zerg)) return false;
+    const key = `${e.opp}:${e.ts}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    if (seen.size > 200) { let n = 0; for (const k of seen) { seen.delete(k); if (++n >= 100) break; } }
+    let i = entries.length;
+    while (i > 0 && entries[i - 1].ts > e.ts) i--;
+    entries.splice(i, 0, e);
+    while (entries.length > max) entries.shift();
+    return true;
+  }
+  function tick(nowMs) {
+    if (!entries.length) return null;
+    if (current == null || nowMs - currentSince >= dwellMs) {
+      current = entries.shift();
+      currentSince = nowMs;
+      return current;
+    }
+    return null;
+  }
+  return { offer, tick, get size() { return entries.length; }, get current() { return current; } };
 }
 
-/** True when an event is older than the newest one already applied. */
-export function isStaleEvent(lastTs, ts) {
-  return lastTs != null && ts != null && ts < lastTs;
+/** Tab title for the fight on display — kills and deaths read differently. */
+export function fightTitle(kind, name, value) {
+  const v = Number.isFinite(value) ? value.toFixed(1) : "–";
+  if (kind === "kill") return `🪳 killed ${name} — Zerg ${v}`;
+  if (kind === "death") return `🪳 killed by ${name} — Zerg ${v}`;
+  return `🪳 ${name} Zerg ${v}`;
 }
 
 /** Value → height fraction (0 = top of the image) of the value's level. */

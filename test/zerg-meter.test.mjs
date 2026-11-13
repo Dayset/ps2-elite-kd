@@ -9,7 +9,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   METER, clampZerg, valueToY, roachHeight, roachTop, createMotion, meterValue,
-  parseLastEventRow, pickLatest, isStaleEvent,
+  parseLastEventRow, createFightQueue, fightTitle,
 } from "../zerg-meter-motion.mjs";
 
 const read = (f) => readFileSync(new URL(`../${f}`, import.meta.url), "utf8");
@@ -57,8 +57,8 @@ describe("1-second refresh: parsing the latest kill/death from characters_event"
   const killRow = { character_id: "8261280742797131393", attacker_character_id: "5428010917269715233", timestamp: "1794530283" };
   const deathRow = { character_id: "5428010917269715233", attacker_character_id: "5429683080379828913", timestamp: "1794530346" };
   it("a kill row's opponent is the victim, a death row's is the killer", () => {
-    assert.deepEqual(parseLastEventRow(killRow, "kill"), { opp: "8261280742797131393", ts: 1794530283 });
-    assert.deepEqual(parseLastEventRow(deathRow, "death"), { opp: "5429683080379828913", ts: 1794530346 });
+    assert.deepEqual(parseLastEventRow(killRow, "kill"), { opp: "8261280742797131393", ts: 1794530283, kind: "kill" });
+    assert.deepEqual(parseLastEventRow(deathRow, "death"), { opp: "5429683080379828913", ts: 1794530346, kind: "death" });
   });
   it("rows with no opponent or no timestamp are not a last fight", () => {
     assert.equal(parseLastEventRow({ character_id: "0", timestamp: "1794530283" }, "kill"), null);
@@ -67,22 +67,56 @@ describe("1-second refresh: parsing the latest kill/death from characters_event"
     assert.equal(parseLastEventRow(null, "kill"), null);
     assert.equal(parseLastEventRow(killRow, "login"), null);
   });
-  it("the newer of the latest kill and latest death wins, ties go to the kill", () => {
-    const k = parseLastEventRow(killRow, "kill");
-    const d = parseLastEventRow(deathRow, "death");
-    assert.equal(pickLatest(k, d), d, "the death is 63 s newer");
-    assert.equal(pickLatest(d, k), d);
-    assert.equal(pickLatest(k, null), k);
-    assert.equal(pickLatest(null, d), d);
-    assert.equal(pickLatest(null, null), null);
-    assert.equal(pickLatest({ opp: "1", ts: 100 }, { opp: "2", ts: 100 }).opp, "1");
+});
+
+describe("fight queue: every kill and death gets its turn, in fight order", () => {
+  const kill = (opp, ts, zerg = 26) => ({ opp, ts, kind: "kill", zerg, name: `victim-${opp}` });
+  const death = (opp, ts, zerg = 7) => ({ opp, ts, kind: "death", zerg, name: `killer-${opp}` });
+  it("plays kills and deaths in timestamp order, one per dwell", () => {
+    const q = createFightQueue({ dwellMs: 2000, max: 20 });
+    assert.equal(q.offer(death("9", 105)), true);
+    assert.equal(q.offer(kill("1", 100)), true);
+    assert.equal(q.offer(kill("2", 102)), true);
+    assert.equal(q.size, 3);
+    assert.equal(q.tick(1000).opp, "1", "the earliest fight shows first");
+    assert.equal(q.tick(1500), null, "still inside the dwell");
+    assert.equal(q.tick(2999), null, "1 ms before the dwell ends");
+    assert.equal(q.tick(3000).opp, "2", "the next fight at the dwell");
+    assert.equal(q.tick(5000).opp, "9", "the death shows exactly like a kill");
+    assert.equal(q.tick(7000), null, "queue empty: keeps the last one showing");
+    assert.equal(q.current.opp, "9");
   });
-  it("an event older than the newest applied is stale; same-second is not", () => {
-    assert.equal(isStaleEvent(1794530346, 1794530283), true);
-    assert.equal(isStaleEvent(1794530346, 1794530346), false);
-    assert.equal(isStaleEvent(1794530346, 1794530400), false);
-    assert.equal(isStaleEvent(null, 1794530283), false, "nothing applied yet");
-    assert.equal(isStaleEvent(1794530346, null), false, "an event with no timestamp still applies");
+  it("the same fight offered twice (stream + poll) shows once", () => {
+    const q = createFightQueue({ dwellMs: 2000, max: 20 });
+    assert.equal(q.offer(kill("1", 100)), true);
+    assert.equal(q.offer(kill("1", 100)), false, "same opponent, same second");
+    assert.equal(q.offer(kill("2", 100)), true, "two kills in the same second are two fights");
+    assert.equal(q.size, 2);
+  });
+  it("a slow lookup can't reorder two fights (sorted insert)", () => {
+    const q = createFightQueue({ dwellMs: 2000, max: 20 });
+    q.offer(kill("2", 102));
+    q.offer(kill("1", 100)); // resolves later, still sorts first
+    assert.equal(q.tick(0).opp, "1");
+  });
+  it("past the cap the oldest drops, the newest stays", () => {
+    const q = createFightQueue({ dwellMs: 2000, max: 3 });
+    for (let i = 0; i < 5; i++) q.offer(kill(String(i), 100 + i));
+    assert.equal(q.size, 3);
+    assert.equal(q.tick(0).opp, "2");
+  });
+  it("rejects entries with no Zerg to show", () => {
+    const q = createFightQueue({ dwellMs: 2000, max: 20 });
+    assert.equal(q.offer({ opp: "1", ts: 100, kind: "kill", zerg: null, name: "x" }), false);
+    assert.equal(q.size, 0);
+  });
+});
+
+describe("fight title: kills and deaths read differently", () => {
+  it("names the direction — the number alone can't tell them apart", () => {
+    assert.equal(fightTitle("kill", "Fantom220TR", 26), "🪳 killed Fantom220TR — Zerg 26.0");
+    assert.equal(fightTitle("death", "Zugie", 7), "🪳 killed by Zugie — Zerg 7.0");
+    assert.equal(fightTitle(null, "Zewgie", 1), "🪳 Zewgie Zerg 1.0");
   });
 });
 
@@ -141,7 +175,7 @@ describe("page: meter only, and shared pins match live.mjs", () => {
       };
       assert.equal(pin(meter), pin(live), `${mod} pin`);
     }
-    assert.match(read("zerg-meter.html"), /zerg-meter\.mjs\?v=20261113-zm1/);
-    assert.match(meter, /zerg-meter-motion\.mjs\?v=20261113-zm1/);
+    assert.match(read("zerg-meter.html"), /zerg-meter\.mjs\?v=20261113-zm2/);
+    assert.match(meter, /zerg-meter-motion\.mjs\?v=20261113-zm2/);
   });
 });
