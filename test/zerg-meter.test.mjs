@@ -106,10 +106,14 @@ describe("fight queue: every kill and death gets its turn, in fight order", () =
     assert.equal(q.size, 3);
     assert.equal(q.tick(0).opp, "2");
   });
-  it("rejects entries with no Zerg to show", () => {
+  it("queues an unknown opponent (zerg null) as a mirror event, not a number", () => {
     const q = createFightQueue({ dwellMs: 2000, max: 20 });
-    assert.equal(q.offer({ opp: "1", ts: 100, kind: "kill", zerg: null, name: "x" }), false);
-    assert.equal(q.size, 0);
+    assert.equal(q.offer({ opp: "5429078932898658897", ts: 100, kind: "kill", zerg: null, name: "SnowfallV" }), true);
+    assert.equal(q.size, 1);
+    const got = q.tick(100);
+    assert.equal(got.name, "SnowfallV");
+    assert.equal(got.kind, "kill");
+    assert.equal(got.zerg, null);
   });
 });
 
@@ -163,6 +167,11 @@ describe("marks: placed when the roach arrives, never before it moved", () => {
 });
 
 describe("fight title: kills and deaths read differently", () => {
+  it("an unknown value reads '?' — never a number that isn't the opponent's", () => {
+    assert.equal(fightTitle("kill", "SnowfallV", null), "🪳 killed SnowfallV — Zerg ?");
+    assert.equal(fightTitle("death", "SnowfallV", null), "🪳 killed by SnowfallV — Zerg ?");
+    assert.equal(fightTitle(null, "Zewgie", null), "🪳 Zewgie Zerg ?");
+  });
   it("names the direction — the number alone can't tell them apart", () => {
     assert.equal(fightTitle("kill", "Fantom220TR", 26), "🪳 killed Fantom220TR — Zerg 26.0");
     assert.equal(fightTitle("death", "Zugie", 7), "🪳 killed by Zugie — Zerg 7.0");
@@ -225,7 +234,7 @@ describe("page: meter only, and shared pins match live.mjs", () => {
       };
       assert.equal(pin(meter), pin(live), `${mod} pin`);
     }
-    assert.match(read("zerg-meter.html"), /zerg-meter\.mjs\?v=20261113-zm4/);
-    assert.match(meter, /zerg-meter-motion\.mjs\?v=20261113-zm4/);
+    assert.match(read("zerg-meter.html"), /zerg-meter\.mjs\?v=20261113-zm6/);
+    assert.match(meter, /zerg-meter-motion\.mjs\?v=20261113-zm5/); // motion module unchanged this round
   });
 });

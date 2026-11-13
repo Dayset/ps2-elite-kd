@@ -66,8 +66,14 @@ export function clampZerg(v) {
  * jumps). Marks (owner 2026-11-13): on a kill or death the roach leaves
  * a laser mark at that level — placed when the roach ARRIVES there (not
  * when the fight starts showing, while the roach is still travelling),
- * or when it departs to the next fight, whichever comes first; the mark
- * stays 4 s from placement, then disappears outright.
+ * or when it departs to the next fight, whichever comes first — plus a
+ * further 1 s delay (owner 2026-11-13), so the mark lands a second after
+ * the roach is there; the mark stays 4 s from placement, then disappears
+ * outright. Unknown opponents (owner 2026-11-13): a killer or victim
+ * with no lifetime 🪳 still joins the queue — when it shows, the roach
+ * mirrors horizontally back and forth a few times (an indicator of
+ * unknown value) and leaves a laser mark at the level it's standing on,
+ * and the title reads "Zerg ?" instead of a number.
  */
 export function meterValue(lifeZerg, zerg) {
   if (Number.isFinite(zerg)) return zerg;
@@ -99,8 +105,9 @@ export function parseLastEventRow(row, kind) {
  * lookup can't reorder two fights; entries past the cap drop the oldest.
  * tick(nowMs) returns the entry to show now, or null to keep showing the
  * current one (queue empty, or the dwell hasn't elapsed). Pure — the page
- * only feeds it resolved opponents (zerg known) and applies what tick()
- * returns. Unit-tested in test/zerg-meter.test.mjs.
+ * only feeds it opponents whose name resolved (zerg known, or null for
+ * an unknown opponent) and applies what tick() returns. Unit-tested in
+ * test/zerg-meter.test.mjs.
  */
 export function createFightQueue({ dwellMs = 2000, max = 20 } = {}) {
   const entries = []; // { opp, ts, kind, zerg, name }, sorted by ts
@@ -108,7 +115,9 @@ export function createFightQueue({ dwellMs = 2000, max = 20 } = {}) {
   let current = null;
   let currentSince = null;
   function offer(e) {
-    if (!e || typeof e.opp !== "string" || !Number.isFinite(e.ts) || !Number.isFinite(e.zerg)) return false;
+    // zerg may be null: an unknown opponent (no lifetime 🪳) still joins
+    // the queue — it shows as a mirror event, not a number.
+    if (!e || typeof e.opp !== "string" || !Number.isFinite(e.ts)) return false;
     const key = `${e.opp}:${e.ts}`;
     if (seen.has(key)) return false;
     seen.add(key);
@@ -151,9 +160,9 @@ export function hasArrived(shown, target) {
   return shown != null && target != null && Math.abs(shown - target) <= MARK_ARRIVE_EPS;
 }
 
-/** Tab title for the fight on display — kills and deaths read differently. */
+/** Tab title for the fight on display — kills and deaths read differently. An unknown value reads "?" (never a number that isn't the opponent's). */
 export function fightTitle(kind, name, value) {
-  const v = Number.isFinite(value) ? value.toFixed(1) : "–";
+  const v = Number.isFinite(value) ? value.toFixed(1) : "?";
   if (kind === "kill") return `🪳 killed ${name} — Zerg ${v}`;
   if (kind === "death") return `🪳 killed by ${name} — Zerg ${v}`;
   return `🪳 ${name} Zerg ${v}`;
