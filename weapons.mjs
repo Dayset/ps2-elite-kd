@@ -227,7 +227,10 @@ export function mountWeapons(section, { getJson, baseOf, sortScroll, isFresh = (
       const r = wrap.getBoundingClientRect();
       const headH = table.tHead ? table.tHead.getBoundingClientRect().height : 0;
       let off = 0;
-      if (r.top < 0 && r.bottom > headH) off = Math.min(-r.top, Math.max(0, wrap.clientHeight - headH));
+      // Portal nav (.site-nav) sticks at the window top: pin below it, not under it.
+      const navEl = document.querySelector(".site-nav");
+      const navH = navEl ? Math.ceil(navEl.getBoundingClientRect().height) : 0;
+      if (r.top < 0 && r.bottom > headH) off = Math.min(-r.top + navH, Math.max(0, wrap.clientHeight - headH));
       off = Math.round(off);
       if (off !== last) { last = off; table.style.setProperty("--rk-head-top", off + "px"); }
     };

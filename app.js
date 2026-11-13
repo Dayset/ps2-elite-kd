@@ -995,6 +995,17 @@ import {
     });
   }
 
+  // Portal nav (.site-nav, sticky at the window top): publish its height as
+  // --nav-h so sticky bars below it (.alpha-bar) clear it instead of sliding under it.
+  function syncNavH() {
+    const nav = document.querySelector(".site-nav");
+    document.documentElement.style.setProperty("--nav-h", (nav ? Math.ceil(nav.getBoundingClientRect().height) : 0) + "px");
+  }
+  if (typeof window !== "undefined") {
+    syncNavH();
+    window.addEventListener("resize", syncNavH);
+  }
+
   // #66: the ✨ Stats table and the name cells (marks, flairs, server tags) moved to stats-table.mjs unchanged. These wrappers keep the old names; the part is created on
   // first use and reads this file's state through live getters (and setters where it changes it).
   var _createStatsTable;

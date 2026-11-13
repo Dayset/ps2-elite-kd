@@ -77,7 +77,7 @@ body.wc-noguides .wc-guide, body.wc-noguides .wc-guidefind { display: none; }
 .wc-gcat a:hover { border-color: var(--accent); }
 
 /* the sticky control bar: four equal cells */
-.wc-sticky { position: sticky; top: 0; z-index: 20; box-shadow: 0 6px 10px -8px var(--shadow); }
+.wc-sticky { position: sticky; top: var(--nav-h, 0px); z-index: 20; box-shadow: 0 6px 10px -8px var(--shadow); } /* --nav-h: portal nav height, set by weapon-compare.mjs */
 .wc-bar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px 16px; align-items: start; padding-top: 6px; padding-bottom: 6px; }
 .wc-ctl { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; color: var(--dim); min-width: 0; }
 .wc-ctl-h { display: flex; justify-content: space-between; gap: 8px; min-height: 1.2em; }
@@ -87,6 +87,13 @@ body.wc-noguides .wc-guide, body.wc-noguides .wc-guidefind { display: none; }
 .wc-check { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--dim); cursor: pointer; }
 .wc-check input { width: 1rem; height: 1rem; margin: 0; accent-color: var(--accent); }
 
+/* site footer: cross-links so the page no longer dead-ends (mirrors the nav, plus the ADAD calculator) */
+.wc-site-foot { margin: 14px 0 0; padding: 12px 10px 20px; border-top: 1px solid var(--border); text-align: center; }
+.wc-site-foot nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px; }
+.wc-site-foot nav a { color: var(--dim); text-decoration: none; font-size: 0.85rem; white-space: nowrap; }
+.wc-site-foot nav a:hover, .wc-site-foot nav a[aria-current="page"] { color: var(--text); }
+.wc-site-foot p { margin: 10px 0 0; font-size: 0.78rem; color: var(--dim); }
+
 /* stat table: a .ranks-table (zebra, pinned header) turned sideways — one column per weapon, all the same width */
 .wc-table-wrap { max-height: none; overflow: auto; border: 0; scrollbar-gutter: auto; }
 @media (hover: hover) and (pointer: fine) { .wc-table-wrap { max-height: none; } }
@@ -95,6 +102,12 @@ body.wc-noguides .wc-guide, body.wc-noguides .wc-guidefind { display: none; }
 .wc-table th, .wc-table td { text-align: center; padding: 0.2rem 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
 .wc-table .wc-lab { text-align: left; color: var(--dim); font-weight: 400; position: sticky; left: 0; z-index: 2; box-shadow: 4px 0 8px -4px var(--shadow); white-space: normal; }
 .wc-table thead th { vertical-align: bottom; border-top: 3px solid var(--c, transparent); }
+/* Weapon-stats header sticks below the portal nav + the sticky control bar
+   (same pattern as the players table, which pins via --rk-head-top). The
+   tier / deep tables below reuse .ranks-table, so their header offset comes
+   from --rk-head-top on .wc-wrap instead. */
+.wc-table-wrap .wc-table thead th { position: sticky; top: var(--rk-head-top, calc(var(--nav-h, 0px) + var(--wc-bar-h, 0px))); z-index: 3; background: var(--panel); }
+.wc-wrap { --rk-head-top: calc(var(--nav-h, 0px) + var(--wc-bar-h, 0px)); }
 .wc-table thead th.wc-lab { z-index: 5; border-top-color: transparent; }
 .wc-whead { display: flex; flex-direction: column; align-items: center; gap: 1px; }
 .wc-whead img { width: 56px; height: 28px; object-fit: contain; }

@@ -135,7 +135,7 @@ table.weapons tbody tr.alt td { background: var(--row-alt); }
 .tscroll { overflow: auto; max-height: min(74vh, 860px); border: 1px solid var(--border); }
 table.weapons { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; min-width: 860px; }
 table.weapons th, table.weapons td { padding: 7px 10px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
-table.weapons th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--dim); position: sticky; top: 0; z-index: 2; background: var(--panel); border-bottom: 2px solid var(--border); }
+table.weapons th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--dim); position: sticky; top: var(--nav-h, 0px); z-index: 2; background: var(--panel); border-bottom: 2px solid var(--border); }
 table.weapons td:nth-child(3), table.weapons th:nth-child(3),
 table.weapons td:nth-child(4), table.weapons th:nth-child(4) { text-align: left; }
 table.weapons td.rowtoggle, table.weapons td.imgcell, table.weapons th:nth-child(1), table.weapons th:nth-child(2),

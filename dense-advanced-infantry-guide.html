@@ -41,6 +41,14 @@
           --shadow: 0 1px 2px rgba(0, 0, 0, .35);
         }
       }
+      /* ---- shared site nav (same rules as styles.css, token names of this page) ---- */
+      .site-nav { display: flex; align-items: center; flex-wrap: wrap; background: var(--surface); border-bottom: 1px solid var(--line); padding: 0 10px; position: sticky; top: 0; z-index: 60; }
+      .site-nav a { padding: 10px 10px; font-size: 0.85rem; color: var(--ink-2); text-decoration: none; border-bottom: 2px solid transparent; white-space: nowrap; }
+      .site-nav a:hover { color: var(--ink); }
+      .site-nav a.sn-active { color: var(--ink); font-weight: 700; border-bottom-color: var(--accent); }
+      .site-nav .sn-brand { font-weight: 700; color: var(--ink); margin-right: 10px; }
+      .site-nav .sn-spacer { flex: 1; }
+      @media (max-width: 700px) { .site-nav a { padding: 9px 7px; font-size: 0.78rem; } .site-nav .sn-hide-m { display: none; } }
       * { box-sizing: border-box; }
       html { scroll-behavior: smooth; }
       @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
@@ -80,7 +88,7 @@
 
       /* ---------- layout ---------- */
       .layout { display: grid; grid-template-columns: 218px minmax(0, 1fr); gap: 44px; margin-top: 30px; }
-      nav.toc { position: sticky; top: 18px; align-self: start; font-size: 13.5px; }
+      nav.toc { position: sticky; top: 56px; align-self: start; font-size: 13.5px; } /* 18px + ~38px portal nav (sticky only above 900px, where the nav is one row) */
       nav.toc .toc-h { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 10px; }
       nav.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: toc; }
       nav.toc li { margin: 0 0 2px; }
@@ -219,6 +227,19 @@
     </style>
   </head>
   <body>
+  <header class="site-nav" aria-label="Site sections">
+    <nav style="display:contents" aria-label="Main">
+        <a class="sn-brand" href="index.html">⚔️ PS2 Elite</a>
+        <a href="index.html">📊 Players</a>
+        <a href="weapon-compare.html">⚖️ Weapons</a>
+        <a href="outfits.html">🛡️ Outfits</a>
+        <a href="columns.html" class="sn-hide-m">📖 Columns</a>
+        <a href="dense-advanced-infantry-guide.html" class="sn-active">🎯 Guide</a>
+        <a href="archive.html">📚 Archive</a>
+        <a href="updates.html" class="sn-hide-m">📝 Updates</a>
+        <a href="privacy.html" class="sn-hide-m">🔒 Privacy</a>
+    </nav>
+  </header>
     <div class="wrap">
       <div class="lead">
         <h1>The dense advanced infantry guide</h1>

@@ -962,7 +962,11 @@ export function initRankings(host) {
       let off = 0;
       const r = wrap.getBoundingClientRect();
       const headH = $("ranksHead") ? $("ranksHead").getBoundingClientRect().height : 0;
-      if (r.top < 0 && r.bottom > headH) off = Math.min(-r.top, Math.max(0, wrap.clientHeight - headH));
+      // Portal nav (.site-nav) sticks at the window top: the pinned header must
+      // sit below it, not under it (nav z-index 60 > header z-index 3).
+      const navEl = document.querySelector(".site-nav");
+      const navH = navEl ? Math.ceil(navEl.getBoundingClientRect().height) : 0;
+      if (r.top < 0 && r.bottom > headH) off = Math.min(-r.top + navH, Math.max(0, wrap.clientHeight - headH));
       off = Math.round(off);
       if (off !== lastOff) { lastOff = off; table.style.setProperty("--rk-head-top", off + "px"); }
     };

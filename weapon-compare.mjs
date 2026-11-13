@@ -370,6 +370,16 @@ export const newSeed = () => 1 + Math.floor(Math.random() * 2 ** 30);
 if (typeof document !== "undefined" && document.getElementById("wcTtk")) boot();
 
 async function boot() {
+  // Portal nav + sticky control bar heights, as CSS vars for the sticky
+  // offsets below them (.wc-sticky, .wc-table thead, .ranks-table thead).
+  const syncNavVars = () => {
+    const root = document.documentElement;
+    const nav = document.querySelector(".site-nav");
+    const bar = document.querySelector(".wc-bar");
+    root.style.setProperty("--nav-h", (nav ? Math.ceil(nav.getBoundingClientRect().height) : 0) + "px");
+    root.style.setProperty("--wc-bar-h", (bar ? Math.ceil(bar.getBoundingClientRect().height) : 0) + "px");
+  };
+  syncNavVars();
   await ready;
   const isLight = () => document.documentElement.getAttribute("data-theme") === "light";
   const color = (i) => paletteColor(i, isLight());
@@ -481,7 +491,33 @@ async function boot() {
   // footer: the experimental FPS limit (checkbox enables it, slider sets the frame rate)
   $("wcFps").addEventListener("change", () => { st.fpsOn = $("wcFps").checked; paintFps(); invalidate("all"); });
   $("wcFpsRange").addEventListener("input", () => { st.fps = +$("wcFpsRange").value; paintFps(); invalidate("range"); });
-  window.addEventListener("resize", () => { clearTimeout(boot.rt); boot.rt = setTimeout(() => invalidate("charts"), 120); });
+  window.addEventListener("resize", () => { syncNavVars(); clearTimeout(boot.rt); boot.rt = setTimeout(() => invalidate("charts"), 120); });
+  // Weapon-stats header pin (same pattern as the Rankings table): the thead
+  // sticks to its scroll box, so when the page scrolls past the box top the
+  // offset is pushed down and the weapon names stay below the nav + control bar.
+  {
+    let queued = false, last = -1;
+    const pin = () => {
+      queued = false;
+      const wrap = $("wcCards");
+      const table = wrap && wrap.querySelector("table.wc-table");
+      if (!wrap || !table) return;
+      const r = wrap.getBoundingClientRect();
+      const headH = table.tHead ? table.tHead.getBoundingClientRect().height : 0;
+      const navEl = document.querySelector(".site-nav");
+      const navH = navEl ? Math.ceil(navEl.getBoundingClientRect().height) : 0;
+      const bar = document.querySelector(".wc-bar");
+      const barH = bar ? Math.ceil(bar.getBoundingClientRect().height) : 0;
+      let off = 0;
+      if (r.top < 0 && r.bottom > headH) off = Math.min(-r.top + navH + barH, Math.max(0, wrap.clientHeight - headH));
+      off = Math.round(off);
+      if (off !== last) { last = off; table.style.setProperty("--rk-head-top", off + "px"); }
+    };
+    const q = () => { if (!queued) { queued = true; requestAnimationFrame(pin); } };
+    window.addEventListener("scroll", q, { passive: true });
+    window.addEventListener("resize", q, { passive: true });
+    q();
+  }
   window.addEventListener("ps2-lang", () => { fillCats(); fillHp(); paintSeg(); renderGuideFinder(); invalidate("all"); });
   // the weapon cards: ✕ removes, the slot menus set the loadout
   $("wcChips").addEventListener("click", (e) => { const b = e.target.closest("button[data-id]"); if (b) removeId(+b.dataset.id); });

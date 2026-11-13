@@ -20,11 +20,24 @@
   <link rel="preload" href="assets/weapons/catalog.json" as="fetch" crossorigin />
   <link rel="preload" href="assets/weapons/profiles.json" as="fetch" crossorigin />
   <link rel="preload" href="assets/weapons/recoil.json" as="fetch" crossorigin />
-  <link rel="stylesheet" href="styles.css?v=20261031-fr1" />
+  <link rel="stylesheet" href="styles.css?v=20261113-portal2" />
   <link rel="stylesheet" href="weapon-compare.css?v=20261111-wctiers1" />
   <link rel="stylesheet" href="weapon-adad.css?v=20261109-merge1" />
 </head>
 <body class="site-page">
+  <header class="site-nav" aria-label="Site sections">
+    <nav style="display:contents" aria-label="Main">
+        <a class="sn-brand" href="index.html">⚔️ PS2 Elite</a>
+        <a href="index.html">📊 Players</a>
+        <a href="weapon-compare.html" class="sn-active">⚖️ Weapons</a>
+        <a href="outfits.html">🛡️ Outfits</a>
+        <a href="columns.html" class="sn-hide-m">📖 Columns</a>
+        <a href="dense-advanced-infantry-guide.html">🎯 Guide</a>
+        <a href="archive.html">📚 Archive</a>
+        <a href="updates.html" class="sn-hide-m">📝 Updates</a>
+        <a href="privacy.html" class="sn-hide-m">🔒 Privacy</a>
+    </nav>
+  </header>
   <main class="wc-wrap">
     <header class="wc-panel wc-head wc-slim">
       <a class="wc-back" href="index.html" aria-label="Back to the stats" data-i18n-aria-label="wc.back">🔙</a>
@@ -338,6 +351,20 @@
       <p id="wcFpsNote" class="wc-note"></p>
     </footer>
   </main>
+  <footer class="wc-site-foot">
+    <nav aria-label="More pages">
+      <a href="index.html">📊 Players</a>
+      <a href="weapon-compare.html" aria-current="page">⚖️ Weapons</a>
+      <a href="weapon-adad.html">🎯 ADAD calculator</a>
+      <a href="outfits.html">🛡️ Outfits</a>
+      <a href="columns.html">📖 Columns</a>
+      <a href="dense-advanced-infantry-guide.html">🎯 Guide</a>
+      <a href="archive.html">📚 Archive</a>
+      <a href="updates.html">📝 Updates</a>
+      <a href="privacy.html">🔒 Privacy</a>
+    </nav>
+    <p>Data from the Daybreak Census API · MIT licensed · not affiliated with Daybreak</p>
+  </footer>
   <dialog id="wcZoom" class="wc-zoomdlg" aria-labelledby="wcZoomH">
     <div class="wc-zoomhead"><b id="wcZoomH"></b><button type="button" class="wc-btn" id="wcZoomClose" data-i18n="wc.sim.zoomClose">Close</button></div>
     <div id="wcZoomBody"></div>
