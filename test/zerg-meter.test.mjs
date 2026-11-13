@@ -234,7 +234,7 @@ describe("page: meter only, and shared pins match live.mjs", () => {
       };
       assert.equal(pin(meter), pin(live), `${mod} pin`);
     }
-    assert.match(read("zerg-meter.html"), /zerg-meter\.mjs\?v=20261113-zm6/);
+    assert.match(read("zerg-meter.html"), /zerg-meter\.mjs\?v=20261113-zm7/);
     assert.match(meter, /zerg-meter-motion\.mjs\?v=20261113-zm5/); // motion module unchanged this round
   });
 });

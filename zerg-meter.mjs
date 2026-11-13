@@ -37,9 +37,9 @@ const motion = createMotion();
 // roach arrives at the level, 1 s after it departs, 1 s after an unknown
 // fight shows. The mark then stays 4 s from placement (placeMark).
 const MARK_DELAY_MS = 1000;
-function scheduleMark(zerg) {
+function scheduleMark(zerg, unknown) {
   if (zerg == null) return;
-  setTimeout(() => placeMark(zerg), MARK_DELAY_MS);
+  setTimeout(() => placeMark(zerg, unknown), MARK_DELAY_MS);
 }
 
 // Mirror (owner 2026-11-13): an unknown opponent — a killer or victim
@@ -67,11 +67,11 @@ function stopMirroring() {
 }
 const MARK_MS = 4000;
 const marks = [];
-function placeMark(zerg) {
+function placeMark(zerg, unknown) {
   const y = valueToY(zerg);
   if (y == null) return;
   const el = document.createElement("div");
-  el.className = "zm-mark";
+  el.className = "zm-mark" + (unknown ? " zm-mark-unknown" : "");
   el.style.top = `${(y * 100).toFixed(3)}%`;
   meterEl.appendChild(el);
   marks.push(el);
@@ -327,7 +327,7 @@ function frame(nowMs) {
       displayUnknown = true;
       faded = false;
       startMirroring();
-      scheduleMark(motion.displayed);
+      scheduleMark(motion.displayed, true); // unknown mark: left side, not the laser
     } else {
       stopMirroring();
       currentValue = meterValue(lifeZerg, next.zerg);

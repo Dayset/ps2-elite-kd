@@ -30,6 +30,11 @@
     background: #ff2020;
     box-shadow: 0 0 8px 2px rgba(255, 32, 32, 0.85), 0 0 18px 5px rgba(255, 32, 32, 0.4);
   }
+  /* Unknown mark (owner 2026-11-13): a fight with no lifetime 🪳 leaves
+     its mark on the LEFT side of the meter, not at the laser — it marks
+     that an unknown fight happened, not a value on the scale. Same width,
+     mirrored to the bar's left edge. */
+  .zm-mark.zm-mark-unknown { left: 8%; }
 </style>
 </head>
 <body>
@@ -38,6 +43,6 @@
     <div class="zm-laser" id="zmLaser" hidden></div>
     <img class="zm-roach" id="zmRoach" src="assets/zerg-roach.png" alt="" hidden>
   </main>
-  <script type="module" src="zerg-meter.mjs?v=20261113-zm6"></script>
+  <script type="module" src="zerg-meter.mjs?v=20261113-zm7"></script>
 </body>
 </html>
