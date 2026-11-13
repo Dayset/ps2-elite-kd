@@ -120,13 +120,14 @@ function stepOdo(nowMs) {
   odoStrips.forEach((strip, i) => {
     odoPos[i] += (odoTarget[i] - odoPos[i]) * (1 - Math.exp(-dt / ODO_TAU_MS));
     if (Math.abs(odoTarget[i] - odoPos[i]) < 0.005) odoPos[i] = odoTarget[i];
-    // Re-centre when settled: the strip repeats every 10, so shifting by
-    // 10 changes nothing on screen but keeps the wheel in the middle copy
-    // (20–29), where a 9-step roll in either direction stays on the strip.
-    if (odoPos[i] === odoTarget[i]) {
-      if (odoPos[i] < 20) { odoPos[i] += 10; odoTarget[i] += 10; }
-      else if (odoPos[i] > 29) { odoPos[i] -= 10; odoTarget[i] -= 10; }
-    }
+    // Keep the wheel in the middle copy (20 ≤ pos < 30) EVERY frame, not
+    // just when settled: shifting by 10 changes nothing on screen (the
+    // strip repeats every 10), and it guarantees the strip is always
+    // under the window. The old settle-only re-centring let rapid
+    // successive rolls (big value jumps) push the wheel past the end of
+    // the strip before it ever settled, so it showed a blank wheel.
+    while (odoPos[i] < 20) { odoPos[i] += 10; odoTarget[i] += 10; }
+    while (odoPos[i] >= 30) { odoPos[i] -= 10; odoTarget[i] -= 10; }
     strip.style.transform = `translateY(${-odoPos[i] * h}px)`;
   });
 }
