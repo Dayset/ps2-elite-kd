@@ -5,11 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>🪳 Zerg meter</title>
+<script>if (new URLSearchParams(location.search).get("transparent") === "1") document.documentElement.classList.add("zm-transparent");</script>
 <style>
   /* Meter only. Nothing else: no nav, no links, no header/footer, no
      background image. Solid black — the meter image is pure black, so it
      blends into the page with no visible edge. */
   html, body { margin: 0; padding: 0; background: #000; height: 100%; }
+  /* Transparent mode (?transparent=1, owner 2026-11-13): no page background
+     at all, so the meter can sit on a stream as a browser-source overlay.
+     The meter image itself is a transparent PNG, so the scale and bar show
+     and the stream shows through everywhere else. Set by the inline script
+     in <head> before the first paint, so there is no black flash. */
+  html.zm-transparent, html.zm-transparent body { background: transparent; }
   body { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; overflow: hidden; }
   .zm { position: relative; height: min(96vh, 96dvh); aspect-ratio: 480 / 2239; }
   .zm-bg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
@@ -35,14 +42,29 @@
      that an unknown fight happened, not a value on the scale. Same width,
      mirrored to the bar's left edge. */
   .zm-mark.zm-mark-unknown { left: 8%; }
+  /* Laser colours (owner 2026-11-13): the live laser and the marks it
+     leaves take the fight's colour — green on a kill, red on a death
+     (the base, no class), yellow on an unknown or uncalculated value,
+     blue when the meter is back at the followed player's own value. */
+  .zm-laser.zm-green, .zm-mark.zm-green { background: #22ff22; box-shadow: 0 0 8px 2px rgba(34,255,34,0.85), 0 0 18px 5px rgba(34,255,34,0.4); }
+  .zm-laser.zm-yellow, .zm-mark.zm-yellow { background: #ffd21f; box-shadow: 0 0 8px 2px rgba(255,210,31,0.85), 0 0 18px 5px rgba(255,210,31,0.4); }
+  .zm-laser.zm-blue { background: #2b8bff; box-shadow: 0 0 8px 2px rgba(43,139,255,0.85), 0 0 18px 5px rgba(43,139,255,0.4); }
+  /* Mark number (owner 2026-11-13): a small queue number beside each
+     mark, in the mark's colour (green kill, red death, yellow unknown).
+     Known marks put it just right of the line; unknown marks (left side)
+     put it just left of the line, right-aligned. A dark shadow keeps it
+     readable over the scale digits and over a stream. */
+  .zm-mark-num { position: absolute; transform: translateY(-50%); font: 700 1.7vh/1 system-ui, sans-serif; color: #ff2020; text-shadow: 0 0 3px #000, 0 0 6px #000; pointer-events: none; }
+  .zm-mark-num.zm-green { color: #22ff22; }
+  .zm-mark-num.zm-yellow { color: #ffd21f; }
 </style>
 </head>
 <body>
   <main class="zm" id="zergMeter" role="img" aria-label="Live Zerg meter">
-    <img class="zm-bg" src="assets/zerg-meter-bg.jpg" alt="">
+    <img class="zm-bg" src="assets/zerg-meter-bg.png" alt="">
     <div class="zm-laser" id="zmLaser" hidden></div>
-    <img class="zm-roach" id="zmRoach" src="assets/zerg-roach.png" alt="" hidden>
+    <img class="zm-roach" id="zmRoach" src="assets/zerg-roach.png?v=20261113-roach1" alt="" hidden>
   </main>
-  <script type="module" src="zerg-meter.mjs?v=20261113-zm7"></script>
+  <script type="module" src="zerg-meter.mjs?v=20261113-zm9"></script>
 </body>
 </html>

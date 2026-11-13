@@ -218,8 +218,10 @@ describe("page: meter only, and shared pins match live.mjs", () => {
     assert.doesNotMatch(html, /<(header|footer|nav)[\s>]/, "no header/footer/nav");
     assert.doesNotMatch(html, /styles\.css/, "no site stylesheet");
     assert.doesNotMatch(html, /background-image/, "no page background image");
-    assert.match(html, /background: #000/, "solid black page");
-    assert.match(html, /assets\/zerg-meter-bg\.jpg/, "clean meter background");
+    assert.match(html, /background: #000/, "solid black page by default");
+    assert.match(html, /assets\/zerg-meter-bg\.png/, "clean meter background (transparent PNG)");
+    assert.match(html, /transparent/, "?transparent=1 overlay mode (transparent page for a stream)");
+    assert.match(html, /zm-transparent/, "transparent page class");
     assert.match(html, /assets\/zerg-roach\.png/, "outlined roach");
   });
 
@@ -234,7 +236,7 @@ describe("page: meter only, and shared pins match live.mjs", () => {
       };
       assert.equal(pin(meter), pin(live), `${mod} pin`);
     }
-    assert.match(read("zerg-meter.html"), /zerg-meter\.mjs\?v=20261113-zm7/);
-    assert.match(meter, /zerg-meter-motion\.mjs\?v=20261113-zm5/); // motion module unchanged this round
+    assert.match(read("zerg-meter.html"), /zerg-meter\.mjs\?v=20261113-zm9/);
+    assert.match(meter, /zerg-meter-motion\.mjs\?v=20261113-zm6/);
   });
 });

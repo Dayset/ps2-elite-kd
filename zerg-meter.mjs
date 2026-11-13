@@ -19,7 +19,7 @@
 import { classifyDeath, cidNameEntry, slugKey } from "./live-model.mjs?v=20261108-neg2";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { traitPools, zergScore } from "./trait-scores.mjs?v=20261027-z79";
-import { valueToY, roachTop, createMotion, meterValue, parseLastEventRow, createFightQueue, fightTitle, shouldFadeDown, hasArrived } from "./zerg-meter-motion.mjs?v=20261113-zm5";
+import { valueToY, roachTop, createMotion, meterValue, parseLastEventRow, createFightQueue, fightTitle, shouldFadeDown, hasArrived } from "./zerg-meter-motion.mjs?v=20261113-zm6";
 
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
@@ -33,13 +33,28 @@ const roachEl = document.getElementById("zmRoach");
 const laserEl = document.getElementById("zmLaser");
 const motion = createMotion();
 
+// Laser colours (owner 2026-11-13): the live laser takes the fight's
+// colour — green on a kill, red on a death (the base, no class), yellow on
+// an unknown or uncalculated value, blue when the meter is back at the
+// followed player's own value (resting). The marks it leaves take the
+// same colour (placeMark, below).
+const LASER_COLORS = ["zm-green", "zm-yellow", "zm-blue"];
+function setLaserColor(kind) {
+  laserEl.classList.remove(...LASER_COLORS);
+  if (kind === "kill") laserEl.classList.add("zm-green");
+  else if (kind === "unknown") laserEl.classList.add("zm-yellow");
+  else if (kind === "rest") laserEl.classList.add("zm-blue");
+  // death: no class (red is the base)
+}
+setLaserColor("rest"); // resting at the player's own value: blue
+
 // A mark lands 1 s after its trigger (owner 2026-11-13): 1 s after the
 // roach arrives at the level, 1 s after it departs, 1 s after an unknown
 // fight shows. The mark then stays 4 s from placement (placeMark).
 const MARK_DELAY_MS = 1000;
-function scheduleMark(zerg, unknown) {
+function scheduleMark(zerg, kind, no) {
   if (zerg == null) return;
-  setTimeout(() => placeMark(zerg, unknown), MARK_DELAY_MS);
+  setTimeout(() => placeMark(zerg, kind, no), MARK_DELAY_MS);
 }
 
 // Mirror (owner 2026-11-13): an unknown opponent — a killer or victim
@@ -65,22 +80,33 @@ function stopMirroring() {
   if (mirrorTimer != null) { clearTimeout(mirrorTimer); mirrorTimer = null; }
   roachEl.classList.remove("zm-mirror");
 }
-const MARK_MS = 4000;
-const marks = [];
-function placeMark(zerg, unknown) {
+const MARK_MS = 10000; // kill/death marks stay 10 s (owner 2026-11-13)
+const MARK_UNKNOWN_MS = 4000; // unknown marks stay 4 s
+const marks = []; // { line, num } pairs — the line and its queue number go together
+function placeMark(zerg, kind, no) {
   const y = valueToY(zerg);
   if (y == null) return;
-  const el = document.createElement("div");
-  el.className = "zm-mark" + (unknown ? " zm-mark-unknown" : "");
-  el.style.top = `${(y * 100).toFixed(3)}%`;
-  meterEl.appendChild(el);
-  marks.push(el);
-  if (marks.length > 8) marks.shift().remove();
+  const line = document.createElement("div");
+  // Unknown: left side + yellow. Kill: green. Death: red (the base).
+  line.className = "zm-mark" + (kind === "unknown" ? " zm-mark-unknown zm-yellow" : kind === "kill" ? " zm-green" : "");
+  line.style.top = `${(y * 100).toFixed(3)}%`;
+  const num = document.createElement("div");
+  num.className = "zm-mark-num" + (kind === "unknown" ? " zm-yellow" : kind === "kill" ? " zm-green" : "");
+  num.textContent = String(no);
+  num.style.top = line.style.top;
+  if (kind === "unknown") num.style.right = "93%"; // just left of the left-side line
+  else num.style.left = "62.5%"; // just right of the laser-side line
+  meterEl.appendChild(line);
+  meterEl.appendChild(num);
+  const pair = { line, num };
+  marks.push(pair);
+  if (marks.length > 8) { const old = marks.shift(); old.line.remove(); old.num.remove(); }
   setTimeout(() => {
-    const i = marks.indexOf(el);
+    const i = marks.indexOf(pair);
     if (i >= 0) marks.splice(i, 1);
-    el.remove();
-  }, MARK_MS);
+    line.remove();
+    num.remove();
+  }, kind === "unknown" ? MARK_UNKNOWN_MS : MARK_MS);
 }
 
 let me = null; // { cid, name, cached: { adjs, zerg } | null }
@@ -306,15 +332,17 @@ let lastTitle = "";
 let faded = false; // the meter has faded down to rest after the idle window
 let pendingMark = null; // the fight on display whose mark isn't placed yet
 let displayUnknown = false; // the fight on display has no lifetime 🪳 to show
+let fightNo = 0; // queue number: 1 for the first fight shown, then 2, 3, … — each mark carries its fight's number
 function frame(nowMs) {
   // The queue's turn: one fight per dwell, in fight order. The title is
   // rebuilt for every new fight even when the value is unchanged (two
   // opponents can share a Zerg), so it gets its own check below.
   const next = demo ? null : fightQueue.tick(nowMs);
   if (next) {
+    next.no = ++fightNo;
     // The roach leaves the previous fight's mark as it departs (it got as
     // close as the dwell allowed); the new fight's mark waits for arrival.
-    if (pendingMark) scheduleMark(pendingMark.zerg);
+    if (pendingMark) scheduleMark(pendingMark.zerg, pendingMark.kind, pendingMark.no);
     pendingMark = null;
     if (next.zerg == null) {
       // Unknown opponent (no lifetime 🪳): the roach stays where it is
@@ -326,8 +354,9 @@ function frame(nowMs) {
       displayKind = next.kind;
       displayUnknown = true;
       faded = false;
+      setLaserColor("unknown"); // yellow
       startMirroring();
-      scheduleMark(motion.displayed, true); // unknown mark: left side, not the laser
+      scheduleMark(motion.displayed, "unknown", next.no); // unknown mark: left side, yellow
     } else {
       stopMirroring();
       currentValue = meterValue(lifeZerg, next.zerg);
@@ -335,6 +364,7 @@ function frame(nowMs) {
       displayKind = next.kind;
       displayUnknown = false;
       faded = false;
+      setLaserColor(next.kind); // kill: green, death: red
       pendingMark = next;
     }
   }
@@ -350,9 +380,10 @@ function frame(nowMs) {
     faded,
   })) {
     faded = true;
-    if (pendingMark) scheduleMark(pendingMark.zerg); // leave the last mark behind
+    if (pendingMark) scheduleMark(pendingMark.zerg, pendingMark.kind, pendingMark.no); // leave the last mark behind
     pendingMark = null;
     stopMirroring();
+    setLaserColor("rest"); // back at the player's own value: blue
     currentValue = lifeZerg;
     displayName = me.name;
     displayKind = null;
@@ -363,7 +394,7 @@ function frame(nowMs) {
   // before it moved. (A big fall can outlast the dwell; the departure
   // above covers that case.)
   if (pendingMark && hasArrived(shown, pendingMark.zerg)) {
-    scheduleMark(pendingMark.zerg);
+    scheduleMark(pendingMark.zerg, pendingMark.kind, pendingMark.no);
     pendingMark = null;
   }
   if (shown != null && (lastShown == null || Math.abs(shown - lastShown) > 0.005)) {
