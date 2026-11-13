@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="PS2 Elite: how anyone can check that oracle votes were recorded publicly and not changed later. Step by step, with a worked example." />
+  <link rel="icon" href="favicon.ico" />
+  <title data-i18n="vc.title">PS2 Elite: how to check a vote</title>
+  <script>
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="styles.css?v=20261113-portal2" />
+  <style>
+    /* Same shell as privacy.html. Flat style: no rounded corners. */
+    body { overflow: auto; }
+    .st-wrap { max-width: none; margin: 0 auto; padding: 0; }
+    .st-head { position: relative; background: var(--panel); border: 1px solid var(--border); border-radius: 0; padding: 12px 14px 12px 4.75rem; margin-bottom: 12px; }
+    .st-head .lang-select { position: absolute; top: 10px; right: 12px; }
+    .st-back { position: absolute; top: 10px; left: 12px; width: 3rem; height: 3rem; display: inline-flex; align-items: center; justify-content: center; font-size: 1.7rem; line-height: 1; text-decoration: none; background: var(--ctrl-btn-bg); border: 1px solid var(--border); border-radius: 0; }
+    .st-back:hover { border-color: var(--accent); }
+    .st-head h1 { font-size: 1.25rem; margin: 0 0 4px; padding-right: 8.5rem; }
+    .st-sub { color: var(--dim); font-size: 0.85rem; margin: 0; }
+    .st-card { background: var(--panel); border: 1px solid var(--border); border-radius: 0; padding: 12px 14px; margin-bottom: 12px; line-height: 1.5; }
+    .st-card h2 { font-size: 1rem; margin: 0 0 6px; }
+    .st-card p { margin: 0 0 6px; }
+    .st-card p:last-child { margin-bottom: 0; }
+    .st-list { margin: 0; padding-left: 1.2rem; }
+    .st-list li { margin: 4px 0; }
+    .st-dim { color: var(--dim); font-size: 0.85rem; }
+    .st-wrap a { color: var(--accent); }
+    .vc-code { font-family: ui-monospace, Consolas, monospace; font-size: 0.78rem; word-break: break-all; background: var(--bg); border: 1px solid var(--border); border-radius: 0; padding: 6px 8px; margin: 4px 0 8px; }
+    .vc-tbl { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 6px 0; }
+    .vc-tbl td { border: 1px solid var(--border); padding: 4px 6px; vertical-align: top; }
+    .vc-tbl td:first-child { color: var(--dim); white-space: nowrap; width: 1%; }
+    .vc-area { width: 100%; min-height: 9rem; font: inherit; font-family: ui-monospace, Consolas, monospace; font-size: 0.8rem; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 0; padding: 6px 8px; box-sizing: border-box; }
+    .vc-btn { font: inherit; font-weight: 600; color: var(--text); background: var(--ctrl-btn-bg); border: 1px solid var(--accent); border-radius: 0; padding: 6px 12px; margin-top: 8px; cursor: pointer; }
+    .vc-verdict { font-weight: 600; margin-top: 8px; }
+    .vc-ok { color: var(--accent); }
+    .vc-bad { color: var(--err); }
+    .vc-hide { display: none; }
+    .vc-h3 { font-size: 0.95rem; margin: 12px 0 4px; }
+    @media (max-width: 600px) {
+      .st-head h1 { padding-right: 0; margin-top: 3.4rem; }
+    }
+  </style>
+</head>
+<body class="site-page">
+  <header class="site-nav" aria-label="Site sections">
+    <nav style="display:contents" aria-label="Main">
+        <a class="sn-brand" href="index.html">⚔️ PS2 Elite</a>
+        <a href="index.html">📊 Players</a>
+        <a href="weapon-compare.html">⚖️ Weapons</a>
+        <a href="oracle/">🔮 Oracle</a>
+        <a href="outfits.html">🛡️ Outfits</a>
+        <a href="columns.html" class="sn-hide-m">📖 Columns</a>
+        <a href="dense-advanced-infantry-guide.html">🎯 Guide</a>
+        <a href="archive.html">📚 Archive</a>
+        <a href="updates.html" class="sn-hide-m">📝 Updates</a>
+        <a href="privacy.html" class="sn-hide-m">🔒 Privacy</a>
+    </nav>
+  </header>
+  <main class="st-wrap">
+    <div class="st-head">
+      <a class="st-back" href="oracle/" aria-label="Back to the Oracle" data-i18n-aria-label="vc.back">🔙</a>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+      <h1 data-i18n="vc.h1">🔐 How to check a vote</h1>
+      <p class="st-sub" data-i18n="vc.sub">Anyone can check that oracle votes were recorded publicly and not changed later. No account needed.</p>
+    </div>
+
+    <section class="st-card" aria-labelledby="vcWhat">
+      <h2 id="vcWhat" data-i18n="vc.whatH">What this proves</h2>
+      <p data-i18n="vc.what1">When you place a vote, the site makes a fingerprint of it: a long code built from the vote's details and a random secret number, the salt. When the alert settles, it makes a second fingerprint of the result.</p>
+      <p data-i18n="vc.what2">Each day's fingerprints are combined into one seal. The seal is stamped into the Bitcoin blockchain. Bitcoin records cannot be changed afterwards, so the seal shows what the site had recorded that day. If a vote were changed later, its fingerprint would no longer fit the seal.</p>
+    </section>
+
+    <section class="st-card" aria-labelledby="vcNot">
+      <h2 id="vcNot" data-i18n="vc.notH">What it does not show</h2>
+      <p data-i18n="vc.not1">The public log holds only fingerprints and seals. It does not show who voted for what: no character names, amounts or outcomes. Only the voter, who has the salt, can check their own vote.</p>
+    </section>
+
+    <section class="st-card" aria-labelledby="vcAnyone">
+      <h2 id="vcAnyone" data-i18n="vc.anyoneH">Step 1: check that a day was sealed (anyone)</h2>
+      <ol class="st-list">
+        <li data-i18n-html="vc.anyone1">Open the list of sealed days: <a href="https://ps2-oracle.dayset.workers.dev/votelog">the sealed days list</a>.</li>
+        <li data-i18n="vc.anyone2">Pick a day. Its entry shows the seal and whether it is stamped.</li>
+        <li data-i18n="vc.anyone3">Download that day's stamp file, named with the date (for example 2026-11-13.ots), from the same site under /votelog/.</li>
+        <li data-i18n-html="vc.anyone4">Check the stamp with the free <a href="https://opentimestamps.org">OpenTimestamps</a> client. A new stamp shows as pending until Bitcoin confirms it, usually within a few hours. After that the check gives the Bitcoin block and the date.</li>
+      </ol>
+      <p class="st-dim" data-i18n="vc.anyoneNote">This proves the day's record existed on that date and has not changed since. It does not prove a particular vote is in it; that needs the voter's own check (Step 2).</p>
+    </section>
+
+    <section class="st-card" aria-labelledby="vcVoter">
+      <h2 id="vcVoter" data-i18n="vc.votersH">Step 2: check your own vote (voter)</h2>
+      <ol class="st-list">
+        <li data-i18n="vc.voter1">Sign in to the oracle and open "All my votes". Each vote has its fingerprint (hash), its day and its salt. Keep the salt private.</li>
+        <li data-i18n="vc.voter2">Copy the vote's details and its salt into the box at the bottom of this page. Nothing is sent anywhere: the check runs in your browser.</li>
+        <li data-i18n="vc.voter3">"Matches" means your vote is inside that day's sealed record, unchanged since sealing.</li>
+      </ol>
+      <p class="st-dim" data-i18n="vc.voterNote">If you want someone else to check your vote, show them your details and salt only. Do not post the salt publicly.</p>
+    </section>
+
+    <section class="st-card" aria-labelledby="vcEx">
+      <h2 id="vcEx" data-i18n="vc.exH">Worked example</h2>
+      <p data-i18n="vc.ex1">These are sample values, not real votes. The page computes each step in your browser, the same way the site does. Each example has its own salt.</p>
+      <h3 class="vc-h3" data-i18n="vc.winH">Example A: a vote that won</h3>
+      <table class="vc-tbl">
+        <tr><td data-i18n="vc.exDetails">Vote details</td><td><span id="wValues" class="vc-code"></span></td></tr>
+        <tr><td data-i18n="vc.exSalt">Secret number (salt)</td><td><span id="wSalt" class="vc-code"></span></td></tr>
+        <tr><td data-i18n="vc.exHash">Fingerprint when placed</td><td><span id="wHash" class="vc-code"></span></td></tr>
+        <tr><td data-i18n="vc.exSettled">Fingerprint when settled</td><td><span id="wSettled" class="vc-code"></span></td></tr>
+        <tr><td data-i18n="vc.exPath">Path to the seal (2 steps)</td><td><span id="wPath" class="vc-code"></span></td></tr>
+        <tr><td data-i18n="vc.exRoot">Seal (sample day)</td><td><span id="wRoot" class="vc-code"></span></td></tr>
+      </table>
+      <p class="vc-verdict vc-ok" data-i18n="vc.exOk">✅ The path leads to the seal: the vote is in the sealed record.</p>
+      <h3 class="vc-h3" data-i18n="vc.lossH">Example B: a vote that lost</h3>
+      <table class="vc-tbl">
+        <tr><td data-i18n="vc.exDetails">Vote details</td><td><span id="lValues" class="vc-code"></span></td></tr>
+        <tr><td data-i18n="vc.exSalt">Secret number (salt)</td><td><span id="lSalt" class="vc-code"></span></td></tr>
+        <tr><td data-i18n="vc.exHash">Fingerprint when placed</td><td><span id="lHash" class="vc-code"></span></td></tr>
+        <tr><td data-i18n="vc.exSettled">Fingerprint when settled</td><td><span id="lSettled" class="vc-code"></span></td></tr>
+        <tr><td data-i18n="vc.exPath">Path to the seal (2 steps)</td><td><span id="lPath" class="vc-code"></span></td></tr>
+        <tr><td data-i18n="vc.exRoot">Seal (sample day)</td><td><span id="lRoot" class="vc-code"></span></td></tr>
+      </table>
+      <p class="vc-verdict vc-ok" data-i18n="vc.exOk2">✅ The path leads to the seal: this vote is in the sealed record too.</p>
+      <p class="st-dim" data-i18n="vc.exChange">Change one number in the details and the fingerprint no longer fits the seal. That is what would show a later change.</p>
+    </section>
+
+    <section class="st-card" aria-labelledby="vcMine">
+      <h2 id="vcMine" data-i18n="vc.mineH">Check your own vote (stays in your browser)</h2>
+      <p data-i18n="vc.mine1">Paste your vote record as JSON, in this shape: {"kind":"placed","values":[...details in the order shown on the site...],"salt":"...","hash":"...","path":[...],"root":"..."}. The first four fields come from your vote; path and root come from the public check for that hash.</p>
+      <textarea id="mineIn" class="vc-area" spellcheck="false" aria-label="Your vote record" data-i18n-aria-label="vc.mineAria"></textarea>
+      <button id="mineBtn" class="vc-btn" type="button" data-i18n="vc.mineBtn">Check</button>
+      <p id="mineOk" class="vc-verdict vc-ok vc-hide" data-i18n="vc.mineOk">✅ Matches: your vote is inside the sealed record, unchanged since sealing.</p>
+      <p id="mineBad" class="vc-verdict vc-bad vc-hide" data-i18n="vc.mineBad">❌ Does not match. Check that every detail and the salt are copied exactly, or the vote has changed since it was sealed.</p>
+      <p id="mineErr" class="vc-verdict vc-bad vc-hide" data-i18n="vc.mineErr">Could not read that record. It should be JSON in the shape shown above.</p>
+    </section>
+
+    <section class="st-card" aria-labelledby="vcStatus">
+      <h2 id="vcStatus" data-i18n="vc.statusH">Status</h2>
+      <p data-i18n="vc.status1">Sealing and the public endpoints are live. The check inside "All my votes" is planned and will replace the copy-and-paste step above.</p>
+      <p class="st-dim" data-i18n="vc.about">Run by Dayset as a free hobby project. Not affiliated with Daybreak Game Company.</p>
+    </section>
+  </main>
+  <script type="module" src="i18n.mjs"></script>
+  <script type="module">
+    // Same rules as oracle-worker/src/votelog.js: SHA-256 over text, pairs hashed as left + right (hex strings).
+    const enc = new TextEncoder();
+    const hex = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+    const sha = async (s) => hex(await crypto.subtle.digest("SHA-256", enc.encode(s)));
+    const pair = (a, b) => sha(a + b);
+    const commit = (kind, values, salt) => sha(`votelog/1|${kind}|${salt}|${JSON.stringify(values)}`);
+    async function levels(leaves) {
+      let level = [...leaves].sort();
+      const out = [level];
+      while (level.length > 1) {
+        const next = [];
+        for (let i = 0; i < level.length; i += 2) next.push(await pair(level[i], level[i + 1] ?? level[i]));
+        out.push(next); level = next;
+      }
+      return out;
+    }
+    async function pathFor(leaves, leaf) {
+      const sorted = [...leaves].sort();
+      let idx = sorted.indexOf(leaf);
+      const lv = await levels(sorted);
+      const path = [];
+      for (let l = 0; l < lv.length - 1; l++) {
+        const L = lv[l], sib = idx ^ 1;
+        if (sib < L.length) path.push({ h: L[sib], side: sib < idx ? "left" : "right" });
+        else path.push({ h: L[idx], side: "right" });
+        idx >>= 1;
+      }
+      return path;
+    }
+    async function walk(leaf, path) {
+      let acc = leaf;
+      for (const s of path) acc = s.side === "left" ? await pair(s.h, acc) : await pair(acc, s.h);
+      return acc;
+    }
+
+    // Worked examples (sample values only). Both are on one sample day, so they share one seal.
+    const examples = [
+      { p: "w", placed: ["demo-win-1", "1234567", "demo-alert", "VS", 10, 0.5, 9.5, 14, 40.2, 0.1, 1794586073],
+        salt: "5f0c2e7a9b1d4c63a8e2f1b07d9c4e52", settled: ["demo-win-1", "won", 14, 1794589000] },
+      { p: "l", placed: ["demo-loss-1", "7654321", "demo-alert", "NC", 5, 0.25, 4.75, 8, 30, 0.2, 1794586200],
+        salt: "c4a19e0d7b2f4a86e13d5b9f0c27a8e1", settled: ["demo-loss-1", "lost", 0, 1794589000] },
+    ];
+    for (const e of examples) {
+      e.hash = await commit("placed", e.placed, e.salt);
+      e.sHash = await commit("settled", e.settled, e.salt);
+    }
+    const leaves = [...examples.flatMap((e) => [e.hash, e.sHash]), await sha("sample vote 3")];
+    const root = (await levels(leaves)).at(-1)[0];
+    const short = (h) => h.slice(0, 16) + "…";
+    for (const e of examples) {
+      const path = await pathFor(leaves, e.hash);
+      // Check the path in the page, the same way a voter's browser would.
+      const ok = (await walk(e.hash, path)) === root;
+      const id = e.p;
+      document.getElementById(id + "Values").textContent = JSON.stringify(e.placed);
+      document.getElementById(id + "Salt").textContent = e.salt;
+      document.getElementById(id + "Hash").textContent = e.hash;
+      document.getElementById(id + "Settled").textContent = JSON.stringify(e.settled) + "  →  " + e.sHash;
+      document.getElementById(id + "Path").textContent = path.map((s) => `${s.side}: ${short(s.h)}`).join("  →  ") + (ok ? "" : " (mismatch)");
+      document.getElementById(id + "Root").textContent = root;
+    }
+
+    // Your own record (stays in the browser).
+    const show = (id, on) => document.getElementById(id).classList.toggle("vc-hide", !on);
+    document.getElementById("mineBtn").addEventListener("click", async () => {
+      show("mineOk", false); show("mineBad", false); show("mineErr", false);
+      let r;
+      try { r = JSON.parse(document.getElementById("mineIn").value); } catch { show("mineErr", true); return; }
+      if (!r || !Array.isArray(r.values) || typeof r.salt !== "string" || typeof r.hash !== "string" || !Array.isArray(r.path) || typeof r.root !== "string") {
+        show("mineErr", true); return;
+      }
+      const kind = r.kind === "settled" ? "settled" : "placed";
+      const h = await commit(kind, r.values, r.salt);
+      const top = await walk(h, r.path);
+      show(h === r.hash && top === r.root ? "mineOk" : "mineBad", true);
+    });
+  </script>
+</body>
+</html>
