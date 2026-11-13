@@ -16,9 +16,10 @@
   /* Roach rides the bar (bar centre 35.27% of the image width); the laser
      runs at its eye level (41.4% of the sprite height) from just behind the
      face to just left of the scale digits. Both are positioned from JS in
-     % of the meter, so they track the image at any size. */
+     % of the meter, so they track the image at any size. A laser mark is
+     the same line, left behind at a fight's level for 4 s. */
   .zm-roach { position: absolute; left: 35.27%; width: 35%; transform: translateX(-50%); }
-  .zm-laser {
+  .zm-laser, .zm-mark {
     position: absolute; left: 46%; width: 15.5%; height: 3px;
     transform: translateY(-50%); border-radius: 2px;
     background: #ff2020;
@@ -32,6 +33,6 @@
     <div class="zm-laser" id="zmLaser" hidden></div>
     <img class="zm-roach" id="zmRoach" src="assets/zerg-roach.png" alt="" hidden>
   </main>
-  <script type="module" src="zerg-meter.mjs?v=20261113-zm2"></script>
+  <script type="module" src="zerg-meter.mjs?v=20261113-zm3"></script>
 </body>
 </html>

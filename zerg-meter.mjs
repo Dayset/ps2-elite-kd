@@ -19,7 +19,7 @@
 import { classifyDeath, cidNameEntry, slugKey } from "./live-model.mjs?v=20261108-neg2";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { traitPools, zergScore } from "./trait-scores.mjs?v=20261027-z79";
-import { valueToY, roachTop, createMotion, meterValue, parseLastEventRow, createFightQueue, fightTitle } from "./zerg-meter-motion.mjs?v=20261113-zm2";
+import { valueToY, roachTop, createMotion, meterValue, parseLastEventRow, createFightQueue, fightTitle, shouldFadeDown } from "./zerg-meter-motion.mjs?v=20261113-zm3";
 
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
@@ -28,9 +28,32 @@ const params = new URLSearchParams(location.search);
 const target = (params.get("names") || "").split(",")[0].trim();
 const demo = params.get("demo") === "1";
 
+const meterEl = document.getElementById("zergMeter");
 const roachEl = document.getElementById("zmRoach");
 const laserEl = document.getElementById("zmLaser");
 const motion = createMotion();
+
+// Laser marks: on a kill or death the roach leaves a laser mark at that
+// level (owner 2026-11-13). A mark stays 4 s from when its fight came
+// from the queue, then disappears outright. At most two are alive at
+// once (4 s life / 2 s dwell); the cap is insurance only.
+const MARK_MS = 4000;
+const marks = [];
+function placeMark(zerg) {
+  const y = valueToY(zerg);
+  if (y == null) return;
+  const el = document.createElement("div");
+  el.className = "zm-mark";
+  el.style.top = `${(y * 100).toFixed(3)}%`;
+  meterEl.appendChild(el);
+  marks.push(el);
+  if (marks.length > 8) marks.shift().remove();
+  setTimeout(() => {
+    const i = marks.indexOf(el);
+    if (i >= 0) marks.splice(i, 1);
+    el.remove();
+  }, MARK_MS);
+}
 
 let me = null; // { cid, name, cached: { adjs, zerg } | null }
 let ranks = null; // slug -> { name, adjs, zerg }
@@ -230,6 +253,7 @@ function demoTarget(nowMs) {
 
 let lastShown = null;
 let lastTitle = "";
+let faded = false; // the meter has faded down to rest after the idle window
 function frame(nowMs) {
   // The queue's turn: one fight per dwell, in fight order. The title is
   // rebuilt for every new fight even when the value is unchanged (two
@@ -239,6 +263,24 @@ function frame(nowMs) {
     currentValue = meterValue(lifeZerg, next.zerg);
     displayName = next.name;
     displayKind = next.kind;
+    faded = false;
+    placeMark(next.zerg); // the roach leaves a laser mark at that level
+  }
+  // Decay (owner 2026-11-13): no kills or deaths shown for 10 s and the
+  // queue empty — the meter fades down to rest (own lifetime 🪳). The
+  // fall motion glides it down; a new fight resets the clock. Unranked
+  // followed players have no rest position, so they stay on the last fight.
+  if (!demo && lifeZerg != null && shouldFadeDown({
+    queueEmpty: fightQueue.size === 0,
+    hasCurrent: fightQueue.current != null,
+    currentSinceMs: fightQueue.currentSince,
+    nowMs,
+    faded,
+  })) {
+    faded = true;
+    currentValue = lifeZerg;
+    displayName = me.name;
+    displayKind = null;
   }
   const shown = motion.update(demo ? demoTarget(nowMs) : currentValue, nowMs);
   if (shown != null && (lastShown == null || Math.abs(shown - lastShown) > 0.005)) {

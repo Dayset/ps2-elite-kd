@@ -59,6 +59,13 @@ export function clampZerg(v) {
  * deaths are both in it. The queue plays them in fight order, one per
  * dwell (2 s), oldest first; the title says which it was ("killed X" vs
  * "killed by Y") because the number alone can't tell them apart.
+ *
+ * Decay (owner 2026-11-13): when no kills or deaths have shown for 10 s
+ * the meter fades down to rest — the roach slides back to the followed
+ * player's own lifetime 🪳 (the fall motion, so it glides rather than
+ * jumps). Marks (owner 2026-11-13): on a kill or death the roach leaves
+ * a laser mark at that level; the mark stays 4 s from when the fight
+ * came from the queue, then disappears outright.
  */
 export function meterValue(lifeZerg, zerg) {
   if (Number.isFinite(zerg)) return zerg;
@@ -119,7 +126,19 @@ export function createFightQueue({ dwellMs = 2000, max = 20 } = {}) {
     }
     return null;
   }
-  return { offer, tick, get size() { return entries.length; }, get current() { return current; } };
+  return { offer, tick, get size() { return entries.length; }, get current() { return current; }, get currentSince() { return currentSince; } };
+}
+
+/** Idle window after the last shown fight before the meter fades down to rest. */
+export const FADE_IDLE_MS = 10000;
+
+/**
+ * True when the meter has sat on one fight with an empty queue for the
+ * whole idle window: time to fade down to rest. Pure — unit-tested in
+ * test/zerg-meter.test.mjs.
+ */
+export function shouldFadeDown({ queueEmpty, hasCurrent, currentSinceMs, nowMs, faded }) {
+  return queueEmpty && hasCurrent && currentSinceMs != null && !faded && nowMs - currentSinceMs >= FADE_IDLE_MS;
 }
 
 /** Tab title for the fight on display — kills and deaths read differently. */

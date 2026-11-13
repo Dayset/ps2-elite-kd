@@ -9,7 +9,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   METER, clampZerg, valueToY, roachHeight, roachTop, createMotion, meterValue,
-  parseLastEventRow, createFightQueue, fightTitle,
+  parseLastEventRow, createFightQueue, fightTitle, shouldFadeDown, FADE_IDLE_MS,
 } from "../zerg-meter-motion.mjs";
 
 const read = (f) => readFileSync(new URL(`../${f}`, import.meta.url), "utf8");
@@ -112,6 +112,29 @@ describe("fight queue: every kill and death gets its turn, in fight order", () =
   });
 });
 
+describe("decay: the meter fades down to rest after 10 s with no fights", () => {
+  const base = { queueEmpty: true, hasCurrent: true, currentSinceMs: 1000, nowMs: 1000, faded: false };
+  it("the idle window is 10 s, counted from when the last fight showed", () => {
+    assert.equal(FADE_IDLE_MS, 10000);
+    assert.equal(shouldFadeDown({ ...base, nowMs: 1000 + 9999 }), false, "1 ms early");
+    assert.equal(shouldFadeDown({ ...base, nowMs: 1000 + 10000 }), true, "exactly 10 s");
+    assert.equal(shouldFadeDown({ ...base, nowMs: 1000 + 20000 }), true);
+  });
+  it("never fades while the queue still has fights, or before any fight showed", () => {
+    assert.equal(shouldFadeDown({ ...base, queueEmpty: false, nowMs: 11000 }), false, "queue still draining");
+    assert.equal(shouldFadeDown({ ...base, hasCurrent: false, nowMs: 11000 }), false, "nothing shown yet");
+    assert.equal(shouldFadeDown({ ...base, currentSinceMs: null, nowMs: 11000 }), false);
+    assert.equal(shouldFadeDown({ ...base, nowMs: 11000, faded: true }), false, "already faded");
+  });
+  it("the queue reports when the current fight started showing", () => {
+    const q = createFightQueue({ dwellMs: 2000, max: 20 });
+    assert.equal(q.currentSince, null);
+    q.offer({ opp: "1", ts: 100, kind: "kill", zerg: 26, name: "x" });
+    q.tick(5000);
+    assert.equal(q.currentSince, 5000);
+  });
+});
+
 describe("fight title: kills and deaths read differently", () => {
   it("names the direction — the number alone can't tell them apart", () => {
     assert.equal(fightTitle("kill", "Fantom220TR", 26), "🪳 killed Fantom220TR — Zerg 26.0");
@@ -175,7 +198,7 @@ describe("page: meter only, and shared pins match live.mjs", () => {
       };
       assert.equal(pin(meter), pin(live), `${mod} pin`);
     }
-    assert.match(read("zerg-meter.html"), /zerg-meter\.mjs\?v=20261113-zm2/);
-    assert.match(meter, /zerg-meter-motion\.mjs\?v=20261113-zm2/);
+    assert.match(read("zerg-meter.html"), /zerg-meter\.mjs\?v=20261113-zm3/);
+    assert.match(meter, /zerg-meter-motion\.mjs\?v=20261113-zm3/);
   });
 });
