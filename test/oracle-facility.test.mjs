@@ -45,3 +45,28 @@ test("orders: take where the faction can reach, hold what it has", () => {
   assert.equal(s.orders.TR.move, "take"); // TR reaches Acan (next to Zotz)
   assert.equal(facilityState({ zone: 8, sub: "biolab", owners, t: 0, dur: 45 }), null, "Esamir has no 3 Biolabs");
 });
+
+test("reach: a faction that cannot capture its way in time gets no flip there", () => {
+  // NC holds Zotz; the path to Acan (VS's) is 4 captures = 12 min. VS holds Acan and Bitol.
+  const owners = { 302000: "VS", 303000: "VS", 304000: "NC" };
+  const adj = new Map([[304000, [9001]], [9001, [9002]], [9002, [9003]], [9003, [302000]], [302000, [303000]]]);
+  const short = facilityState({ zone: 4, sub: "biolab", owners, t: 35, dur: 45, adj }); // 10 min left
+  assert.equal(short.win.VS.pct, 100, "10 min: nobody can reach a biolab, the 2 held win");
+  assert.equal(short.win.NC.pct, 0);
+  const long = facilityState({ zone: 4, sub: "biolab", owners, t: 25, dur: 45, adj }); // 20 min left
+  assert.ok(long.win.NC.pct > 0 && long.win.VS.pct < 100, "20 min: NC can reach and the outcome is open");
+  assert.equal(facilityState({ zone: 4, sub: "biolab", owners, t: 35, dur: 45, adj: null }).win.NC.pct > 0, true, "no lattice: legacy odds");
+});
+
+test("reach uses each facility's own capture minutes (1 min hexes reach where 5 min hexes do not)", () => {
+  const owners = { 302000: "VS", 303000: "VS", 304000: "NC" };
+  const adj = new Map([[304000, [9001]], [9001, [9002]], [9002, [9003]], [9003, [302000]], [302000, [303000]]]);
+  const path = [9001, 9002, 9003, 302000];
+  const fast = Object.fromEntries(path.map((f) => [f, 1]));
+  const slow = Object.fromEntries(path.map((f) => [f, 5]));
+  // 10 min left: 4 hexes at 1 min = 4 min (reachable); at 5 min each = 20 min (not)
+  assert.ok(facilityState({ zone: 4, sub: "biolab", owners, t: 35, dur: 45, adj, capMin: fast }).win.NC.pct > 0);
+  assert.equal(facilityState({ zone: 4, sub: "biolab", owners, t: 35, dur: 45, adj, capMin: slow }).win.NC.pct, 0);
+  // 20 min left: 4 x 5 min = 20 fits exactly
+  assert.ok(facilityState({ zone: 4, sub: "biolab", owners, t: 25, dur: 45, adj, capMin: slow }).win.NC.pct > 0);
+});
