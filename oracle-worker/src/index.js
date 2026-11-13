@@ -11,7 +11,7 @@
  *     with sudden death (events 236-240) deciding draws.
  *
  * No LLM, no paste step: the state the UI reads is the state the engine wrote.
- * Read API (CORS *): /health /live /alert?key= /history
+ * Read API (CORS *): /health /live /alert?key= /history /locate?name=
  * Key API (X-Oracle-Key): /export, POST /commander, GET /privacy/list
  * Self-service removal (Bearer, #61): GET /privacy/me, POST /privacy/remove, POST /privacy/restore
  */
@@ -32,6 +32,7 @@ import { mixPlan, underwayCheck } from "./modes.js";
 import { heatPlan } from "./heatmode.js";
 import { cutAwareDefends } from "./defend.js";
 import { liveHeat } from "./heat.js";
+import { handleLocate } from "./locate.js";
 import { computePockets } from "./pockets.js";
 import { liveActivity, fightsOf, fightRow, ensureFightTable, PUBLIC_SPAWNS } from "./fights.js";
 import { liveChances, livePf } from "./capture-live.js";
@@ -955,6 +956,8 @@ async function handle(request, env) {
   if (url.pathname === "/crash") {
     return json({ last_crash: await getMeta(db, "last_crash"), cron_seen: await getMeta(db, "cron_seen") }, 200, { "Cache-Control": "no-store" });
   }
+
+  if (url.pathname === "/locate") return handleLocate(request, env, url, json, now);
 
   if (url.pathname === "/live") {
     const [res, last, lastOk, lastCmd] = await Promise.all([

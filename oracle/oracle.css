@@ -124,6 +124,15 @@ dialog.auth::backdrop { background: rgba(0,0,0,.6); }
 .auth .qr svg { display: block; width: 100%; height: auto; }
 .auth .bar { height: 6px; background: var(--panel2); border-radius: 0; overflow: hidden; margin-top: var(--s-2); } .auth .bar span { display: block; height: 100%; background: var(--accent); }
 footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
+/* 📍 Locate one character (hidden in ⓘ About): same quiet form language as the auth dialog. */
+.locate { margin-top: var(--s-3); max-width: 560px; }
+.locate label { display: block; font-weight: 700; color: var(--text); font-size: var(--fs-14); margin-bottom: var(--s-2); }
+.locaterow { display: flex; gap: var(--s-2); }
+.locaterow input { flex: 1; min-width: 0; background: #0f1114; border: 1px solid var(--border); color: var(--text); border-radius: 0; padding: var(--s-2) var(--s-3); font: inherit; min-height: 44px; }
+.locaterow button { min-height: 44px; padding: 0 var(--s-3); background: var(--panel2); border: 1px solid var(--border); color: var(--text); border-radius: 0; font: inherit; font-weight: 700; cursor: pointer; }
+.locaterow button:disabled { opacity: .5; cursor: default; }
+.locate .note { margin-top: var(--s-2); }
+.locate #locateOut:empty { display: none; }
 .hoverline { min-height: 18px; font-size: var(--fs-14); color: var(--muted); margin-top: var(--s-2); font-variant-numeric: tabular-nums; }
 .chart svg { touch-action: pan-y; }
 .more { margin-top: var(--s-3); background: var(--panel2); border: 1px solid var(--border); color: var(--text); border-radius: 0; padding: var(--s-2) var(--s-3); cursor: pointer; font: inherit; font-size: var(--fs-14); }

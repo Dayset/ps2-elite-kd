@@ -201,7 +201,16 @@
     <button id="histMore" class="more" type="button" hidden data-i18n="or.showMore0">Show more</button>
   </section>
 
-  <footer><div id="footSkill" class="mini-skill" hidden></div><details class="det info" data-d="foot"><summary data-i18n="or.about">ⓘ About these numbers</summary><div data-i18n="or.aboutText">Win chances update every minute from Census map data. Results settle 10 minutes after an alert ends, from Census's own final scores (sudden death decides draws). Percentages are model estimates, not guarantees.</div></details>
+  <footer><div id="footSkill" class="mini-skill" hidden></div><details class="det info" data-d="foot"><summary data-i18n="or.about">ⓘ About these numbers</summary><div data-i18n="or.aboutText">Win chances update every minute from Census map data. Results settle 10 minutes after an alert ends, from Census's own final scores (sudden death decides draws). Percentages are model estimates, not guarantees.</div>
+    <div class="locate" id="locateBox">
+      <label for="locateName" data-i18n="or.locate.label">📍 Where is a player right now?</label>
+      <form id="locateForm" class="locaterow">
+        <input id="locateName" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="32" data-i18n-placeholder="or.locate.ph" placeholder="Character name">
+        <button id="locateBtn" type="submit" data-i18n="or.locate.go">Locate</button>
+      </form>
+      <div id="locateOut" class="note" aria-live="polite"></div>
+      <p class="note" data-i18n="or.locate.note">Only players acting in the last hour can be placed — from the same live event stream as ⚔️ Live fights. A player doing nothing has no position. Exact = capture, defence or vehicle kill at the base; near = placed from a nearby fight.</p>
+    </div></details>
     <p class="note foot-credits" data-i18n-html="or.credits">Data from the Daybreak Census API · alert history from <a href="https://ps2alerts.com/" target="_blank" rel="noopener noreferrer">PS2Alerts</a> · player details from <a href="https://wt.honu.pw/" target="_blank" rel="noopener noreferrer">Honu</a> · second opinions from <a href="https://ps2radar.com/" target="_blank" rel="noopener noreferrer">PS2 Radar</a>. Not affiliated with or endorsed by Daybreak Game Company. PlanetSide 2 is a registered trademark of Daybreak Game Company LLC. · <a href="../privacy.html">🔒 Privacy</a></p></footer>
 </div>
 

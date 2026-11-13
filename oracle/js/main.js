@@ -13,6 +13,7 @@ import { reportPanel } from "./players.js?v=20261102-layout1";
 import { benchPanel, initResults, refreshHistory, renderHist, finalNum, finalUnit } from "./results.js?v=20261109-fin1";
 import { renderAlertSkill } from "./skill-foot.js?v=20261102-globfoot1";
 import { initAuth } from "./auth.js?v=20261028-dev82";
+import { initLocate } from "./locate.js?v=20261112-locate1";
 import { enhance, onSectionExpand, refreshSummary } from "./collapse.js?v=20261026-pulse1";
 import { t as tr, ready } from "../../i18n.mjs";
 import { patchLine, kindName, kindNoteHtml, facilityCmdHtml } from "./other.js?v=20261111-flat1";
@@ -413,6 +414,7 @@ document.addEventListener("oracle-voices", () => S.hooks.rerender && S.hooks.rer
 S.hooks.rerender = () => render(Math.floor(Date.now() / 1000));   // map faction switch
 initResults();
 initAuth();
+initLocate();
 
 refreshLive(); refreshHistory();
 setInterval(() => { lockTick(); const c = document.querySelector("#lockHere .card"); if (c) refreshSummary(c); fightsGoneTick(); }, 1000); // ⏱ live countdown ticks every second, no re-render
