@@ -39,12 +39,13 @@ export function clampZerg(v) {
 }
 
 /**
- * The meter's reading (owner 2026-11-13): the plain session 🪳 once it
- * exists — no lifetime anchor, no 10-kill floor — else the lifetime 🪳 as
- * the resting position (null when neither exists). The anchored total
- * changes too slowly to read live: each fight moves it ~1/(100+kills),
- * so deaths were invisible. The session value moves on every kill and
- * every death (both feed the session Inflation: victims and killers alike).
+ * The meter's reading (owner 2026-11-13): the last opponent's lifetime 🪳
+ * once one is known — the victim's on a kill, the killer's on a death —
+ * else the followed player's lifetime 🪳 as the resting position (null when
+ * neither exists). The session value it replaced changed too slowly to
+ * read live (anchored) and pinned near 0 whenever the session's mean enemy
+ * was at the player's own level (plain session); the last opponent's own
+ * score moves on every fight, by construction.
  */
 export function meterValue(lifeZerg, zerg) {
   if (Number.isFinite(zerg)) return zerg;

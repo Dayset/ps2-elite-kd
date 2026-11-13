@@ -52,12 +52,12 @@ describe("meter geometry (measured off assets/zerg-meter-bg.jpg)", () => {
   });
 });
 
-describe("meter reading: plain session value, lifetime only as the rest", () => {
-  it("shows the session value once it exists, never the anchored blend", () => {
-    assert.equal(meterValue(1, 42), 42, "session wins over lifetime");
-    assert.equal(meterValue(1, 0), 0, "a session 0 is a reading, not a missing one");
-    assert.equal(meterValue(1, null), 1, "rests at lifetime before the first kill");
-    assert.equal(meterValue(null, 30), 30, "no lifetime needed once the session scores");
+describe("meter reading: last opponent's Zerg, own lifetime only as the rest", () => {
+  it("shows the last opponent once known, never the followed player's own score", () => {
+    assert.equal(meterValue(1, 42), 42, "last opponent wins over the resting value");
+    assert.equal(meterValue(1, 0), 0, "an opponent Zerg of 0 is a reading, not a missing one");
+    assert.equal(meterValue(1, null), 1, "rests at own lifetime before the first known opponent");
+    assert.equal(meterValue(null, 30), 30, "no own lifetime needed once an opponent scores");
     assert.equal(meterValue(null, null), null, "nothing to show for an unranked player yet");
     assert.equal(meterValue(null, NaN), null);
   });
@@ -99,7 +99,7 @@ describe("page: meter only, and shared pins match live.mjs", () => {
   it("the meter module shares live.mjs's pinned imports (no silent drift)", () => {
     const meter = read("zerg-meter.mjs");
     const live = read("live.mjs");
-    for (const mod of ["live-model.mjs", "config.mjs", "live-session.mjs", "trait-scores.mjs"]) {
+    for (const mod of ["live-model.mjs", "config.mjs", "trait-scores.mjs"]) {
       const pin = (src) => {
         const m = src.match(new RegExp(`"\\./${mod}\\?v=([^"]+)"`));
         assert.ok(m, `${mod} pinned in source`);

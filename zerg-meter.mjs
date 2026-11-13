@@ -3,23 +3,21 @@
 // site CSS or background image, solid black page (the meter image is pure
 // black, so it blends into the page).
 //
-// The value is the plain session 🪳 (owner 2026-11-13): sessionZerg from the
-// session Inflation and session apk, with no lifetime anchor and no 10-kill
-// floor — the meter must move on every kill and death, and the anchored
-// total changes too slowly to read live. Session Inflation covers every
-// enemy met: victims (killed) and killers (died to) alike. Before the
-// session's first kill the meter rests at the lifetime 🪳 (the anchor);
-// deaths alone can't score yet (apk needs kills). Session = since this page
-// opened; a reload restarts it. It is the same session formula the live
-// page's 🪳 cell uses underneath its anchor, so the two agree once the
-// session has kills.
+// The value is the LAST OPPONENT's lifetime 🪳 (owner 2026-11-13): on a
+// kill the meter jumps to the victim's Zerg, on a death to the killer's
+// Zerg — the most recent Death event decides. It is the opponent's lifetime
+// score from the rankings; a live session value doesn't exist for the
+// opponent (only the followed player is tracked). Before the first fight
+// the meter rests at the followed player's own lifetime 🪳. An opponent
+// with no lifetime 🪳 leaves the meter where it was. Assists can't move it
+// (GainExperience carries no victim), so the stream subscribes to Death
+// only. Session = since this page opened; a reload restarts it.
 //
 // ?names=Zewgie — the followed enemy (first name wins, like live.html).
 // ?demo=1 — no network: a simulated Zerg (sine + jumps) to preview the
 // motion and to verify the page headlessly.
-import { classifyDeath, DPS_ASSIST_XP, cidNameEntry, slugKey } from "./live-model.mjs?v=20261108-neg2";
+import { classifyDeath, cidNameEntry, slugKey } from "./live-model.mjs?v=20261108-neg2";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
-import { sessionApk, sessionInflation, sessionZerg } from "./live-session.mjs?v=20261108-anch1";
 import { traitPools, zergScore } from "./trait-scores.mjs?v=20261027-z79";
 import { valueToY, roachTop, createMotion, meterValue } from "./zerg-meter-motion.mjs?v=20261113-zm1";
 
@@ -36,12 +34,10 @@ const motion = createMotion();
 
 let me = null; // { cid, name, cached: { adjs, zerg } | null }
 let ranks = null; // slug -> { name, adjs, zerg }
-let sessTp = null; // traitPools for the session 🪳
 let ranksP = null;
 let cidNamesP = null;
-let sessFights = []; // { cid, iv, won } — iv fills late when the opponent resolves
-let sessAssists = 0;
-let sKills = 0;
+let lifeZerg = null; // the followed player's lifetime 🪳 (the resting value)
+let lastOppZerg = null; // the last opponent's lifetime 🪳 (null until a known opponent)
 let currentValue = null; // the target the motion chases (null = no reading yet)
 let displayName = target || "Zerg meter";
 
@@ -62,7 +58,6 @@ function loadRanks() {
     const iF = ci("inflation"), iAp = ci("apk"), iR = ci("rvp"), iC = ci("crp");
     const colOf = (id) => (ci(id) >= 0 ? j.rows.map((r) => r[ci(id)]) : []);
     const tp = traitPools({ adjs: colOf("adjs"), ivi: colOf("ivi"), inflation: colOf("inflation"), apk: colOf("apk") });
-    sessTp = tp;
     ranks = new Map(j.rows.map((r) => {
       const o = { name: r[iN], adjs: r[iA] };
       const z = zergScore(tp, iF >= 0 ? r[iF] : null, iAp >= 0 ? r[iAp] : null, iR >= 0 ? r[iR] : null, iC >= 0 ? r[iC] : null);
@@ -79,12 +74,11 @@ function loadCidNames() {
   return cidNamesP;
 }
 
-// One lookup per enemy cid (live.mjs person() pattern, trimmed to what the
-// 🪳 needs: the opponent's lifetime adjs for the session Inflation).
-// A resolve fills every still-unknown fight against that cid, then the
-// value is recomputed — the same late-fill live.mjs does via luckFill.
+// One lookup per opponent cid (live.mjs person() pattern, trimmed to what
+// the meter needs: the opponent's lifetime 🪳). Returns { name, zerg } or
+// null (unknown name, or no lifetime 🪳 in the rankings).
 const peopleP = new Map();
-function opponentIv(cid) {
+function opponentZerg(cid) {
   if (peopleP.has(cid)) return peopleP.get(cid);
   const pr = (async () => {
     let name = "";
@@ -102,37 +96,25 @@ function opponentIv(cid) {
     if (!name) return null;
     await loadRanks();
     const c = ranks.get(slugKey(name));
-    return c && Number.isFinite(c.adjs) ? c.adjs : null;
+    return c && Number.isFinite(c.zerg) ? { name, zerg: c.zerg } : null;
   })();
   peopleP.set(cid, pr);
   pr.catch(() => peopleP.delete(cid));
   return pr;
 }
 
-function recompute() {
-  if (!sessTp) return;
-  const myIvi = me && me.cached && me.cached.adjs;
-  const lifeZerg = me && me.cached && Number.isFinite(me.cached.zerg) ? me.cached.zerg : null;
-  // Plain session 🪳 (owner 2026-11-13): no anchor, no floor. A kill moves
-  // it through the new victim (Inflation) and the kills count (apk); a
-  // death moves it through the killer (Inflation). Assists move it through
-  // apk. Before the first kill there is no session value yet (apk needs
-  // kills), so the meter rests at the lifetime 🪳.
-  const zerg = sessionZerg(sessTp, sessionInflation(myIvi, sessFights), sessionApk(sessAssists, sKills));
-  currentValue = meterValue(lifeZerg, zerg);
-}
-
+// The most recent Death event decides the meter: ev.opp is the victim on
+// a kill, the killer on a death. A slow lookup must not overwrite a newer
+// fight that already landed (sequence guard).
+let zergSeq = 0;
 function onDeath(ev) {
-  const isKill = ev.kind === "kill";
-  sessFights.push({ cid: ev.opp, iv: null, won: isKill });
-  if (isKill) sKills++;
-  opponentIv(ev.opp).then((iv) => {
-    if (iv == null) return;
-    let filled = false;
-    for (const f of sessFights) if (f.cid === ev.opp && f.iv == null) { f.iv = iv; filled = true; }
-    if (filled) recompute();
+  const seq = ++zergSeq;
+  opponentZerg(ev.opp).then((o) => {
+    if (!o || seq !== zergSeq) return;
+    lastOppZerg = o.zerg;
+    currentValue = meterValue(lifeZerg, lastOppZerg);
+    displayName = o.name;
   });
-  recompute();
 }
 
 let ws = null;
@@ -151,18 +133,13 @@ function connect() {
   ws.onopen = () => {
     backoff = 2000;
     openedAt = Date.now();
-    ws.send(JSON.stringify({ service: "event", action: "subscribe", characters: [me.cid], eventNames: ["Death", "GainExperience_experience_id_1", "GainExperience_experience_id_278", "GainExperience_experience_id_279", "GainExperience_experience_id_2", "GainExperience_experience_id_3", "GainExperience_experience_id_371", "GainExperience_experience_id_372"] }));
+    ws.send(JSON.stringify({ service: "event", action: "subscribe", characters: [me.cid], eventNames: ["Death"] }));
   };
   ws.onmessage = (m) => {
     let j;
     try { j = JSON.parse(m.data); } catch { return; }
     if (j.type !== "serviceMessage") return;
-    const p = j.payload || {};
-    if (p.event_name === "GainExperience") {
-      if (String(p.character_id) === me.cid && DPS_ASSIST_XP.has(Number(p.experience_id))) { sessAssists++; recompute(); }
-      return;
-    }
-    const ev = classifyDeath(p, me.cid);
+    const ev = classifyDeath(j.payload, me.cid);
     if (ev) onDeath(ev);
   };
   ws.onclose = () => {
@@ -191,7 +168,8 @@ async function startLive() {
     document.title = `🪳 Zerg meter — ${me.name}`;
     await loadRanks();
     me.cached = ranks.get(slugKey(me.name)) || null;
-    recompute(); // rest at the lifetime 🪳 until the first kill
+    lifeZerg = me.cached && Number.isFinite(me.cached.zerg) ? me.cached.zerg : null;
+    currentValue = meterValue(lifeZerg, lastOppZerg); // rest at own lifetime 🪳 until the first fight
     connect();
   } catch { /* Census / ranks unreachable: the meter stays empty */ }
 }
