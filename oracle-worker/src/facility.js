@@ -19,8 +19,10 @@
 // The AI Commander's move per faction: the target whose capture (or loss) moves that faction's odds
 // most, attacks only where the faction owns a lattice neighbour (it needs a way in).
 
+import { CAPTURE_MINUTES } from "./capture-minutes.gen.js";
+
 export const FAC_LAMBDA = 0.012;
-export const CAPTURE_MIN = 3; // minutes per hex captured on the way in (engine.js MIN_PER_BASE)
+export const CAPTURE_MIN = 3; // fallback minutes per hex captured on the way in, where the facility's timer is unknown
 export const FACS3 = ["VS", "NC", "TR"];
 
 // Targets per zone and alert type. Generated from oracle/backend/<slug>_regions.json (facility types
@@ -108,7 +110,7 @@ function captureCosts(f, owners, adj, capMin) {
  * Reach per target: [VS, NC, TR] bools, a faction reaches a target if the minutes of captures on its way
  * (capMin[fid] per facility, CAPTURE_MIN where unknown) fit in T. null without a lattice.
  */
-export function reachOf(owners, list, T, adj, capMin = {}) {
+export function reachOf(owners, list, T, adj, capMin = CAPTURE_MINUTES) {
   if (!adj) return null;
   const cost = Object.fromEntries(FACS3.map((f) => [f, captureCosts(f, owners, adj, capMin)]));
   return list.map(([fid]) => FACS3.map((f) => (cost[f].get(+fid) ?? Infinity) <= T));
@@ -122,7 +124,7 @@ const round1 = (x) => Math.round(x * 10) / 10;
  *  adj: Map fid -> [fid] (lattice) or null
  * Returns { targets: [{fid, name, owner}], count, win: {f: {pct}}, orders: {f: {move, fid, name, gain} | null} } or null.
  */
-export function facilityState({ zone, sub, owners, t, dur, adj = null, lam = FAC_LAMBDA, capMin = {} }) {
+export function facilityState({ zone, sub, owners, t, dur, adj = null, lam = FAC_LAMBDA, capMin = CAPTURE_MINUTES }) {
   const list = targetsFor(zone, sub);
   if (!list) return null;
   const T = Math.max(0, dur - t);
