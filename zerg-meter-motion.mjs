@@ -64,7 +64,11 @@ export function clampZerg(v) {
  * value counter underneath the meter — black housing, white digits on
  * black wheels, like a car odometer. It shows the same value the roach
  * and the laser show, rounded to a whole number (000–100); the title
- * carries the decimal. A dash when there is no value yet.
+ * carries the decimal. A dash when there is no value yet. The wheels
+ * roll in the direction the value moved, wrapping cyclically — a rise
+ * 9→0 is one step forward (never the long way back through 8, 7, …),
+ * a fall 0→9 is one step back — and the roll is driven by JS timers,
+ * so it scrolls even with animations disabled.
  *
  * Decay (owner 2026-11-13): 10 s with no kills or deaths, then the next
  * 10 s sinking (or rising) back to the followed player's own lifetime 🪳
@@ -190,6 +194,18 @@ export function odoDigits(value) {
   if (value == null || Number.isNaN(value)) return null;
   const n = Math.max(0, Math.min(100, Math.round(value)));
   return String(n).padStart(3, "0");
+}
+
+/** Odometer wheel step (owner 2026-11-13): signed digit-steps from `from`
+    to `to`, in the direction the value moved — forward (wrapping 9→0 as
+    one step) when the value rose, backward (wrapping 0→9 as one step)
+    when it fell. So a rise 9→0 is +1, not −9, and a fall 0→9 is −1, not
+    +9; a fall 20→19 moves the tens wheel 2→1 (−1) and the ones wheel
+    0→9 (−1). The wheel never goes the long way round. Pure. */
+export function odoStep(from, to, increasing) {
+  if (from === to) return 0;
+  if (increasing) return (to - from + 10) % 10;
+  return -((from - to + 10) % 10);
 }
 
 /** Value → height fraction (0 = top of the image) of the value's level. */

@@ -10,7 +10,7 @@ import { readFileSync } from "node:fs";
 import {
   METER, clampZerg, valueToY, roachHeight, roachTop, createMotion, meterValue,
   parseLastEventRow, createFightQueue, fightTitle, shouldFadeDown, FADE_IDLE_MS,
-  hasArrived, MARK_ARRIVE_EPS, DECAY_MS, odoDigits,
+  hasArrived, MARK_ARRIVE_EPS, DECAY_MS, odoDigits, odoStep,
 } from "../zerg-meter-motion.mjs";
 
 const read = (f) => readFileSync(new URL(`../${f}`, import.meta.url), "utf8");
@@ -193,6 +193,21 @@ describe("odometer counter: whole number, three wheels, dashes when unknown", ()
     assert.equal(odoDigits(undefined), null);
     assert.equal(odoDigits(NaN), null);
   });
+  it("wheels roll in the direction the value moved, wrapping as one step", () => {
+    // A rise 9→0 is one step forward, never the long way back through 8, 7, …
+    assert.equal(odoStep(9, 0, true), 1, "rise 9→0");
+    assert.equal(odoStep(8, 9, true), 1, "rise 8→9");
+    assert.equal(odoStep(0, 1, true), 1, "rise 0→1");
+    // A fall 0→9 is one step back, never the long way round through 1, 2, …
+    assert.equal(odoStep(0, 9, false), -1, "fall 0→9");
+    assert.equal(odoStep(9, 8, false), -1, "fall 9→8");
+    assert.equal(odoStep(1, 0, false), -1, "fall 1→0");
+    // A fall 20→19: the tens wheel 2→1 (−1) and the ones wheel 0→9 (−1).
+    assert.equal(odoStep(2, 1, false), -1, "fall 20→19, tens");
+    assert.equal(odoStep(0, 9, false), -1, "fall 20→19, ones");
+    assert.equal(odoStep(5, 5, true), 0, "unchanged digit does not move");
+    assert.equal(odoStep(5, 5, false), 0);
+  });
 });
 
 describe("meter reading: last opponent's Zerg, own lifetime only as the rest", () => {
@@ -277,7 +292,7 @@ describe("page: meter only, and shared pins match live.mjs", () => {
       };
       assert.equal(pin(meter), pin(live), `${mod} pin`);
     }
-    assert.match(read("zerg-meter.html"), /zerg-meter\.mjs\?v=20261113-zm14/);
-    assert.match(meter, /zerg-meter-motion\.mjs\?v=20261113-zm9/);
+    assert.match(read("zerg-meter.html"), /zerg-meter\.mjs\?v=20261113-zm15/);
+    assert.match(meter, /zerg-meter-motion\.mjs\?v=20261113-zm10/);
   });
 });

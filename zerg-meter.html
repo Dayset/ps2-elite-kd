@@ -72,9 +72,10 @@
      number — still correct. The black housing keeps it readable on a
      stream overlay. */
   .zm-odo { display: flex; gap: 0.4em; align-items: center; padding: 0.35em 0.6em; background: #000; border: 2px solid #1c1c1c; border-radius: 0.35em; font-size: 4.2vh; line-height: 1; }
-  .zm-odo-digit { width: 0.62em; height: 1em; overflow: hidden; background: #0b0b0b; border-radius: 0.1em; box-shadow: inset 0 0.14em 0.18em rgba(255,255,255,0.22), inset 0 -0.14em 0.18em rgba(0,0,0,0.9); }
-  .zm-odo-strip { display: flex; flex-direction: column; transition: transform 0.45s cubic-bezier(0.25, 0.7, 0.3, 1); will-change: transform; }
+  .zm-odo-digit { position: relative; width: 0.62em; height: 1em; overflow: hidden; background: #0b0b0b; border-radius: 0.1em; box-shadow: inset 0 0.14em 0.18em rgba(255,255,255,0.22), inset 0 -0.14em 0.18em rgba(0,0,0,0.9); }
+  .zm-odo-strip { display: flex; flex-direction: column; will-change: transform; }
   .zm-odo-strip span { height: 1em; display: flex; align-items: center; justify-content: center; color: #fff; font: 700 1em/1 ui-monospace, "Cascadia Mono", Consolas, monospace; }
+  .zm-odo-dash { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font: 700 1em/1 ui-monospace, "Cascadia Mono", Consolas, monospace; }
 </style>
 </head>
 <body>
@@ -84,6 +85,6 @@
     <img class="zm-roach" id="zmRoach" src="assets/zerg-roach.png?v=20261113-roach3" alt="" hidden>
   </main>
   <div class="zm-odo" id="zmOdo" aria-hidden="true"></div>
-  <script type="module" src="zerg-meter.mjs?v=20261113-zm14"></script>
+  <script type="module" src="zerg-meter.mjs?v=20261113-zm15"></script>
 </body>
 </html>

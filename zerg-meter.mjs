@@ -19,7 +19,7 @@
 import { classifyDeath, cidNameEntry, slugKey } from "./live-model.mjs?v=20261108-neg2";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { traitPools, zergScore } from "./trait-scores.mjs?v=20261027-z79";
-import { valueToY, roachTop, createMotion, meterValue, parseLastEventRow, createFightQueue, fightTitle, shouldFadeDown, hasArrived, odoDigits, DECAY_MS } from "./zerg-meter-motion.mjs?v=20261113-zm9";
+import { valueToY, roachTop, createMotion, meterValue, parseLastEventRow, createFightQueue, fightTitle, shouldFadeDown, hasArrived, odoDigits, odoStep, DECAY_MS } from "./zerg-meter-motion.mjs?v=20261113-zm10";
 
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
@@ -34,38 +34,95 @@ const laserEl = document.getElementById("zmLaser");
 const motion = createMotion();
 
 // Odometer counter (owner 2026-11-13): three digit wheels underneath the
-// meter, each a 0–9 strip (plus a dash at index 10) that slides to the
-// digit. It shows the same value the roach and laser show, as a whole
-// number (odoDigits); a dash when there is no value yet. data-value
+// meter. Each wheel is a 0–9 strip repeated 3 times, so the wheel can roll
+// forward past 9→0 and backward past 0→9 without ever going the long way
+// round (odoStep: a rise 9→0 is +1, a fall 0→9 is −1). A dash span covers
+// the wheel when there is no value yet. The roll is driven by JS (the
+// frame loop below), not a CSS transition — a transition might not run on
+// the user's phone, which runs with animations disabled. data-value
 // carries the reading for the test harness (the strip's text is all ten
 // digits, so it can't be read from the text alone).
 const odoEl = document.getElementById("zmOdo");
 const odoStrips = [];
+const odoWins = [];
+const odoDashes = [];
 for (let i = 0; i < 3; i++) {
   const win = document.createElement("div");
   win.className = "zm-odo-digit";
   const strip = document.createElement("div");
   strip.className = "zm-odo-strip";
-  for (const ch of "0123456789–") {
-    const s = document.createElement("span");
-    s.textContent = ch;
-    strip.appendChild(s);
+  for (let copy = 0; copy < 3; copy++) {
+    for (const ch of "0123456789") {
+      const s = document.createElement("span");
+      s.textContent = ch;
+      strip.appendChild(s);
+    }
   }
+  const dash = document.createElement("div");
+  dash.className = "zm-odo-dash";
+  dash.textContent = "–";
+  dash.hidden = true;
   win.appendChild(strip);
+  win.appendChild(dash);
   odoEl.appendChild(win);
   odoStrips.push(strip);
+  odoWins.push(win);
+  odoDashes.push(dash);
 }
-let lastOdo = null;
-function updateOdo(value) {
+// Wheel position, in strip-index units (a float while rolling). The middle
+// copy (indices 10–19) is home, so a wheel can roll up to 9 steps either
+// way without leaving the strip; it is re-centred when settled.
+const odoPos = [10, 10, 10];
+const odoTarget = [10, 10, 10];
+const ODO_TAU_MS = 90; // the roll eases into its target
+let lastOdo = null; // last 3-digit reading ("024") or null (dashes)
+let lastOdoMs = null;
+function updateOdo(value, nowMs) {
   const digits = odoDigits(value); // "024" or null (dashes)
   const text = digits ?? "–––";
   if (text === lastOdo) return;
+  const prev = lastOdo == null ? null : Number(lastOdo);
+  const next = digits == null ? null : Number(digits);
   lastOdo = text;
   odoEl.dataset.value = text;
-  const h = odoStrips[0].parentElement.clientHeight;
+  if (digits == null) {
+    // No value: dashes, no roll (a state change, not a digit step).
+    odoDashes.forEach((d) => { d.hidden = false; });
+    return;
+  }
+  odoDashes.forEach((d) => { d.hidden = true; });
+  // Coming out of dashes, the wheels have no position — snap them to the
+  // reading (no roll from a dash). Otherwise roll each wheel in the
+  // direction the value moved (odoStep).
+  const increasing = prev != null && next > prev;
   odoStrips.forEach((strip, i) => {
-    const d = text[i] === "–" ? 10 : Number(text[i]);
-    strip.style.transform = `translateY(${-d * h}px)`;
+    const to = Number(digits[i]);
+    if (prev == null) {
+      odoPos[i] = 10 + to;
+      odoTarget[i] = 10 + to;
+    } else {
+      const from = ((Math.round(odoPos[i]) % 10) + 10) % 10;
+      odoTarget[i] = odoPos[i] + odoStep(from, to, increasing);
+    }
+  });
+}
+function stepOdo(nowMs) {
+  if (lastOdoMs == null) { lastOdoMs = nowMs; return; }
+  const dt = Math.max(0, nowMs - lastOdoMs);
+  lastOdoMs = nowMs;
+  if (dt === 0) return;
+  const h = odoWins[0].clientHeight;
+  if (h === 0) return;
+  odoStrips.forEach((strip, i) => {
+    odoPos[i] += (odoTarget[i] - odoPos[i]) * (1 - Math.exp(-dt / ODO_TAU_MS));
+    if (Math.abs(odoTarget[i] - odoPos[i]) < 0.005) odoPos[i] = odoTarget[i];
+    // Re-centre when settled: the strip repeats every 10, so shifting by
+    // 10 changes nothing on screen but keeps the wheel in the middle copy.
+    if (odoPos[i] === odoTarget[i]) {
+      if (odoPos[i] < 5) { odoPos[i] += 10; odoTarget[i] += 10; }
+      else if (odoPos[i] > 25) { odoPos[i] -= 10; odoTarget[i] -= 10; }
+    }
+    strip.style.transform = `translateY(${-odoPos[i] * h}px)`;
   });
 }
 
@@ -464,7 +521,8 @@ function frame(nowMs) {
     const t = fightTitle(displayKind, displayName, displayUnknown ? null : shown);
     if (t !== lastTitle) { document.title = t; lastTitle = t; }
   }
-  updateOdo(displayUnknown ? null : shown); // unknown fight: dashes, like the "?" in the title
+  updateOdo(displayUnknown ? null : shown, nowMs); // unknown fight: dashes, like the "?" in the title
+  stepOdo(nowMs);
   requestAnimationFrame(frame);
 }
 
