@@ -60,6 +60,15 @@
     position: absolute; inset: -1px; will-change: opacity;
     background: radial-gradient(circle closest-side at 50% 50%, transparent 66.5%, #000 67%);
   }
+
+  /* ---- shared site nav (portal header, flat style; copy of styles.css .site-nav) ---- */
+  .site-nav { display: flex; align-items: center; flex-wrap: wrap; gap: 0; background: var(--panel); border-bottom: 1px solid var(--border); padding: 0 10px; position: sticky; top: 0; z-index: 60; }
+  .site-nav a { padding: 10px 10px; font-size: 0.85rem; color: var(--dim); text-decoration: none; border-bottom: 2px solid transparent; border-top: 2px solid transparent; white-space: nowrap; }
+  .site-nav a:hover { color: var(--text); }
+  .site-nav a.sn-active { color: var(--text); font-weight: 600; border-bottom-color: var(--accent); }
+  .site-nav .sn-brand { font-weight: 700; color: var(--text); margin-right: 10px; }
+  .site-nav .sn-spacer { flex: 1; }
+  @media (max-width: 700px) { .site-nav a { padding: 9px 7px; font-size: 0.78rem; } .site-nav .sn-hide-m { display: none; } }
 </style>
 <script>
   (function () {
@@ -172,13 +181,26 @@
       parsed.then(ready, ready);
     })();
   </script>
+  <header class="site-nav" aria-label="Site sections">
+    <nav style="display:contents" aria-label="Main">
+        <a class="sn-brand" href="../index.html">⚔️ PS2 Elite</a>
+        <a href="../index.html">📊 Players</a>
+        <a href="../weapon-compare.html">⚖️ Weapons</a>
+        <a href="./" class="sn-active">🔮 Oracle</a>
+        <a href="../outfits.html">🛡️ Outfits</a>
+        <a href="../columns.html" class="sn-hide-m">📖 Columns</a>
+        <a href="../dense-advanced-infantry-guide.html">🎯 Guide</a>
+        <a href="../archive.html">📚 Archive</a>
+        <a href="../updates.html" class="sn-hide-m">📝 Updates</a>
+        <a href="../privacy.html" class="sn-hide-m">🔒 Privacy</a>
+    </nav>
+  </header>
 <div class="wrap">
   <header>
     <h1>PS2<span>Map</span>Oracle</h1>
     <div class="status"><span id="dot" class="dot"></span><span id="statusText" data-i18n="or.connecting">connecting…</span></div>
     <div class="spacer"></div>
     <div id="who" class="who"></div>
-    <a class="back" href="../" data-i18n="or.back">⚔️ Player comparison</a>
   </header>
 
   <dialog id="auth" class="auth">
