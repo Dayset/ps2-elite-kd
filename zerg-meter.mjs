@@ -19,7 +19,7 @@
 import { classifyDeath, cidNameEntry, slugKey } from "./live-model.mjs?v=20261108-neg2";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { traitPools, zergScore } from "./trait-scores.mjs?v=20261027-z79";
-import { valueToY, roachTop, createMotion, meterValue, parseLastEventRow, createFightQueue, fightTitle, shouldFadeDown, hasArrived, DECAY_MS } from "./zerg-meter-motion.mjs?v=20261113-zm8";
+import { valueToY, roachTop, createMotion, meterValue, parseLastEventRow, createFightQueue, fightTitle, shouldFadeDown, hasArrived, odoDigits, DECAY_MS } from "./zerg-meter-motion.mjs?v=20261113-zm9";
 
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
@@ -32,6 +32,42 @@ const meterEl = document.getElementById("zergMeter");
 const roachEl = document.getElementById("zmRoach");
 const laserEl = document.getElementById("zmLaser");
 const motion = createMotion();
+
+// Odometer counter (owner 2026-11-13): three digit wheels underneath the
+// meter, each a 0–9 strip (plus a dash at index 10) that slides to the
+// digit. It shows the same value the roach and laser show, as a whole
+// number (odoDigits); a dash when there is no value yet. data-value
+// carries the reading for the test harness (the strip's text is all ten
+// digits, so it can't be read from the text alone).
+const odoEl = document.getElementById("zmOdo");
+const odoStrips = [];
+for (let i = 0; i < 3; i++) {
+  const win = document.createElement("div");
+  win.className = "zm-odo-digit";
+  const strip = document.createElement("div");
+  strip.className = "zm-odo-strip";
+  for (const ch of "0123456789–") {
+    const s = document.createElement("span");
+    s.textContent = ch;
+    strip.appendChild(s);
+  }
+  win.appendChild(strip);
+  odoEl.appendChild(win);
+  odoStrips.push(strip);
+}
+let lastOdo = null;
+function updateOdo(value) {
+  const digits = odoDigits(value); // "024" or null (dashes)
+  const text = digits ?? "–––";
+  if (text === lastOdo) return;
+  lastOdo = text;
+  odoEl.dataset.value = text;
+  const h = odoStrips[0].parentElement.clientHeight;
+  odoStrips.forEach((strip, i) => {
+    const d = text[i] === "–" ? 10 : Number(text[i]);
+    strip.style.transform = `translateY(${-d * h}px)`;
+  });
+}
 
 // Laser colours (owner 2026-11-13): the live laser takes the fight's
 // colour — green on a kill, red on a death (the base, no class), yellow on
@@ -428,6 +464,7 @@ function frame(nowMs) {
     const t = fightTitle(displayKind, displayName, displayUnknown ? null : shown);
     if (t !== lastTitle) { document.title = t; lastTitle = t; }
   }
+  updateOdo(displayUnknown ? null : shown); // unknown fight: dashes, like the "?" in the title
   requestAnimationFrame(frame);
 }
 

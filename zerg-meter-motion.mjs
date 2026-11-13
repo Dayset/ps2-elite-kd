@@ -60,6 +60,12 @@ export function clampZerg(v) {
  * dwell (2 s), oldest first; the title says which it was ("killed X" vs
  * "killed by Y") because the number alone can't tell them apart.
  *
+ * Odometer counter (owner 2026-11-13): a simple odometer-style Zerg
+ * value counter underneath the meter — black housing, white digits on
+ * black wheels, like a car odometer. It shows the same value the roach
+ * and the laser show, rounded to a whole number (000–100); the title
+ * carries the decimal. A dash when there is no value yet.
+ *
  * Decay (owner 2026-11-13): 10 s with no kills or deaths, then the next
  * 10 s sinking (or rising) back to the followed player's own lifetime 🪳
  * on a slow linear glide — gradually, not the fall motion — and the laser
@@ -174,6 +180,16 @@ export function fightTitle(kind, name, value) {
   if (kind === "kill") return `🪳 killed ${name} — Zerg ${v}`;
   if (kind === "death") return `🪳 killed by ${name} — Zerg ${v}`;
   return `🪳 ${name} Zerg ${v}`;
+}
+
+/** Odometer counter: the displayed value as 3 wheels (000–100), rounded
+    to a whole number; null when there is no value yet (the wheels show
+    dashes). The title carries the decimal; the counter is the whole
+    number. Pure — unit-tested in test/zerg-meter.test.mjs. */
+export function odoDigits(value) {
+  if (value == null || Number.isNaN(value)) return null;
+  const n = Math.max(0, Math.min(100, Math.round(value)));
+  return String(n).padStart(3, "0");
 }
 
 /** Value → height fraction (0 = top of the image) of the value's level. */

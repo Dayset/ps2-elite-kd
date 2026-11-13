@@ -17,8 +17,8 @@
      and the stream shows through everywhere else. Set by the inline script
      in <head> before the first paint, so there is no black flash. */
   html.zm-transparent, html.zm-transparent body { background: transparent; }
-  body { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; overflow: hidden; }
-  .zm { position: relative; height: min(96vh, 96dvh); aspect-ratio: 480 / 2239; outline: 2px solid #000; border-radius: 12px; }
+  body { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.2vh; overflow: hidden; }
+  .zm { position: relative; height: min(87vh, 87dvh); aspect-ratio: 480 / 2239; outline: 2px solid #000; border-radius: 12px; }
   /* 2px black outline for the meter itself (owner 2026-11-13): it frames
      the meter on a stream overlay (invisible on the black page, where the
      background is already black). An outline, not a border, so it adds no
@@ -62,6 +62,19 @@
   .zm-mark-num { position: absolute; transform: translateY(-50%); font: 700 1.2vh/1 system-ui, sans-serif; color: #ff2020; text-shadow: 0 0 3px #000, 0 0 6px #000; pointer-events: none; }
   .zm-mark-num.zm-green { color: #22ff22; }
   .zm-mark-num.zm-yellow { color: #ffd21f; }
+  /* Odometer counter (owner 2026-11-13): a simple odometer-style Zerg
+     value counter underneath the meter — black housing, white digits on
+     black wheels, like a car odometer. It shows the same value the roach
+     and the laser show, rounded to a whole number (000–100); the title
+     carries the decimal. A dash when there is no value yet. The wheels
+     are a 0–9 strip (plus a dash) that slides to the digit; the slide is
+     a CSS transition, so with animations disabled it just jumps to the
+     number — still correct. The black housing keeps it readable on a
+     stream overlay. */
+  .zm-odo { display: flex; gap: 0.4em; align-items: center; padding: 0.35em 0.6em; background: #000; border: 2px solid #1c1c1c; border-radius: 0.35em; font-size: 4.2vh; line-height: 1; }
+  .zm-odo-digit { width: 0.62em; height: 1em; overflow: hidden; background: #0b0b0b; border-radius: 0.1em; box-shadow: inset 0 0.14em 0.18em rgba(255,255,255,0.22), inset 0 -0.14em 0.18em rgba(0,0,0,0.9); }
+  .zm-odo-strip { display: flex; flex-direction: column; transition: transform 0.45s cubic-bezier(0.25, 0.7, 0.3, 1); will-change: transform; }
+  .zm-odo-strip span { height: 1em; display: flex; align-items: center; justify-content: center; color: #fff; font: 700 1em/1 ui-monospace, "Cascadia Mono", Consolas, monospace; }
 </style>
 </head>
 <body>
@@ -70,6 +83,7 @@
     <div class="zm-laser" id="zmLaser" hidden></div>
     <img class="zm-roach" id="zmRoach" src="assets/zerg-roach.png?v=20261113-roach3" alt="" hidden>
   </main>
-  <script type="module" src="zerg-meter.mjs?v=20261113-zm13"></script>
+  <div class="zm-odo" id="zmOdo" aria-hidden="true"></div>
+  <script type="module" src="zerg-meter.mjs?v=20261113-zm14"></script>
 </body>
 </html>

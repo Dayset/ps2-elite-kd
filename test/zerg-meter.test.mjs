@@ -10,7 +10,7 @@ import { readFileSync } from "node:fs";
 import {
   METER, clampZerg, valueToY, roachHeight, roachTop, createMotion, meterValue,
   parseLastEventRow, createFightQueue, fightTitle, shouldFadeDown, FADE_IDLE_MS,
-  hasArrived, MARK_ARRIVE_EPS, DECAY_MS,
+  hasArrived, MARK_ARRIVE_EPS, DECAY_MS, odoDigits,
 } from "../zerg-meter-motion.mjs";
 
 const read = (f) => readFileSync(new URL(`../${f}`, import.meta.url), "utf8");
@@ -179,6 +179,22 @@ describe("fight title: kills and deaths read differently", () => {
   });
 });
 
+describe("odometer counter: whole number, three wheels, dashes when unknown", () => {
+  it("rounds to a whole number and pads to three wheels", () => {
+    assert.equal(odoDigits(1), "001", "resting at the player's own 1");
+    assert.equal(odoDigits(24.3), "024");
+    assert.equal(odoDigits(24.7), "025", "rounds, it does not floor");
+    assert.equal(odoDigits(100), "100");
+    assert.equal(odoDigits(150), "100", "clamps to the top of the scale");
+    assert.equal(odoDigits(0), "000");
+  });
+  it("a missing value reads dashes, never a number that isn't the value", () => {
+    assert.equal(odoDigits(null), null);
+    assert.equal(odoDigits(undefined), null);
+    assert.equal(odoDigits(NaN), null);
+  });
+});
+
 describe("meter reading: last opponent's Zerg, own lifetime only as the rest", () => {
   it("shows the last opponent once known, never the followed player's own score", () => {
     assert.equal(meterValue(1, 42), 42, "last opponent wins over the resting value");
@@ -261,7 +277,7 @@ describe("page: meter only, and shared pins match live.mjs", () => {
       };
       assert.equal(pin(meter), pin(live), `${mod} pin`);
     }
-    assert.match(read("zerg-meter.html"), /zerg-meter\.mjs\?v=20261113-zm13/);
-    assert.match(meter, /zerg-meter-motion\.mjs\?v=20261113-zm8/); // motion module unchanged this round
+    assert.match(read("zerg-meter.html"), /zerg-meter\.mjs\?v=20261113-zm14/);
+    assert.match(meter, /zerg-meter-motion\.mjs\?v=20261113-zm9/);
   });
 });
