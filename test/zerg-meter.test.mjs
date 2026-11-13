@@ -10,7 +10,7 @@ import { readFileSync } from "node:fs";
 import {
   METER, clampZerg, valueToY, roachHeight, roachTop, createMotion, meterValue,
   parseLastEventRow, createFightQueue, fightTitle, shouldFadeDown, FADE_IDLE_MS,
-  hasArrived, MARK_ARRIVE_EPS,
+  hasArrived, MARK_ARRIVE_EPS, DECAY_MS,
 } from "../zerg-meter-motion.mjs";
 
 const read = (f) => readFileSync(new URL(`../${f}`, import.meta.url), "utf8");
@@ -209,6 +209,31 @@ describe("DPS-meter motion: slowed jump up, slide down", () => {
     assert.equal(m.update(null, 20000), 40);
     assert.equal(m.update(150, 21000), 100, "clamps to the top of the scale");
   });
+
+  it("decay: 10 s wait, then 10 s sinking (or rising) gradually to rest", () => {
+    // Sink 12 -> 1 over DECAY_MS: halfway through it is halfway there,
+    // and exactly at rest when the 10 s are up — not the fast fall (which
+    // would already be at ~1.3 after 2.4 s).
+    const m = createMotion();
+    m.update(12, 0);
+    m.startDecay(1, DECAY_MS, 0);
+    assert.ok(Math.abs(m.update(1, 5000) - 6.5) < 0.01, `halfway: ${m.displayed}`);
+    assert.equal(m.update(1, 10000), 1, "at rest when the 10 s are up");
+    assert.equal(m.update(1, 11000), 1, "stays at rest after the glide");
+    // A rise works the same way (the player's own value can be higher).
+    const r = createMotion();
+    r.update(1, 0);
+    r.startDecay(26, DECAY_MS, 0);
+    assert.ok(Math.abs(r.update(26, 5000) - 13.5) < 0.01, `rising halfway: ${r.displayed}`);
+    assert.equal(r.update(26, 10000), 26);
+    // A new fight interrupts the glide at once — the exponential takes over.
+    const c = createMotion();
+    c.update(12, 0);
+    c.startDecay(1, DECAY_MS, 0);
+    c.update(1, 5000);
+    c.cancelDecay();
+    assert.ok(c.update(26, 5250) - 6.5 > 0.6 * 19.5, `jumped toward the new fight: ${c.displayed}`);
+  });
 });
 
 describe("page: meter only, and shared pins match live.mjs", () => {
@@ -236,7 +261,7 @@ describe("page: meter only, and shared pins match live.mjs", () => {
       };
       assert.equal(pin(meter), pin(live), `${mod} pin`);
     }
-    assert.match(read("zerg-meter.html"), /zerg-meter\.mjs\?v=20261113-zm11/);
-    assert.match(meter, /zerg-meter-motion\.mjs\?v=20261113-zm7/); // motion module unchanged this round
+    assert.match(read("zerg-meter.html"), /zerg-meter\.mjs\?v=20261113-zm12/);
+    assert.match(meter, /zerg-meter-motion\.mjs\?v=20261113-zm8/);
   });
 });

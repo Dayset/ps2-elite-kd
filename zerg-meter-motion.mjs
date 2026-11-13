@@ -60,10 +60,12 @@ export function clampZerg(v) {
  * dwell (2 s), oldest first; the title says which it was ("killed X" vs
  * "killed by Y") because the number alone can't tell them apart.
  *
- * Decay (owner 2026-11-13): when no kills or deaths have shown for 10 s
- * the meter fades down to rest — the roach slides back to the followed
- * player's own lifetime 🪳 (the fall motion, so it glides rather than
- * jumps). Marks (owner 2026-11-13): on a kill or death the roach leaves
+ * Decay (owner 2026-11-13): 10 s with no kills or deaths, then the next
+ * 10 s sinking (or rising) back to the followed player's own lifetime 🪳
+ * on a slow linear glide — gradually, not the fall motion — and the laser
+ * goes blue. When the meter goes back to blue the marks clear and the
+ * notch counter resets to 0, so the next burst starts at 1; a new fight
+ * interrupts the glide at once. Marks (owner 2026-11-13): on a kill or death the roach leaves
  * a laser mark at that level — placed when the roach ARRIVES there (not
  * when the fight starts showing, while the roach is still travelling),
  * or when it departs to the next fight, whichever comes first — plus a
@@ -198,16 +200,35 @@ export function roachTop(v) {
 // time constant per direction — rise τ 250 ms (a slowed jump, ~95% in
 // ~0.75 s), fall τ 800 ms (a slide, ~95% in ~2.4 s). The displayed value
 // is what the roach and the laser both show, so the two never disagree.
+// Decay (owner 2026-11-13): after 10 s with no fights, the meter takes
+// the NEXT 10 s to sink (or rise) back to the player's own value — a slow
+// linear glide, not the fall motion — so it descends gradually instead of
+// dropping in ~2 s.
 export const RISE_TAU_MS = 250;
 export const FALL_TAU_MS = 800;
+export const DECAY_MS = 10000;
 
 /** Stateful motion: createMotion().update(target, nowMs) → displayed value. */
 export function createMotion({ riseTauMs = RISE_TAU_MS, fallTauMs = FALL_TAU_MS } = {}) {
   let displayed = null;
   let last = null;
+  let decay = null; // { from, to, startMs, durationMs } — a slow linear glide back to rest
   return {
     get displayed() {
       return displayed;
+    },
+    // Start a slow, gradual glide from the current displayed value to `to`
+    // over `durationMs` (the decay back to the player's own value, whether
+    // that means sinking or rising). While a decay is active, update()
+    // follows the ramp, not the exponential approach.
+    startDecay(to, durationMs, nowMs) {
+      if (displayed == null) { displayed = to; return; }
+      decay = { from: displayed, to, startMs: nowMs, durationMs };
+    },
+    // A new fight interrupts the decay at once — the exponential approach
+    // to the new fight's value takes over from wherever the roach is.
+    cancelDecay() {
+      decay = null;
     },
     update(target, nowMs) {
       const t = clampZerg(target);
@@ -220,6 +241,12 @@ export function createMotion({ riseTauMs = RISE_TAU_MS, fallTauMs = FALL_TAU_MS 
       const dt = Math.max(0, nowMs - last);
       last = nowMs;
       if (dt === 0) return displayed;
+      if (decay) {
+        const p = (nowMs - decay.startMs) / decay.durationMs;
+        if (p >= 1) { displayed = decay.to; decay = null; }
+        else displayed = decay.from + (decay.to - decay.from) * p;
+        return displayed;
+      }
       const tau = t > displayed ? riseTauMs : fallTauMs;
       displayed += (t - displayed) * (1 - Math.exp(-dt / tau));
       if (Math.abs(t - displayed) < 0.005) displayed = t;

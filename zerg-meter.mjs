@@ -19,7 +19,7 @@
 import { classifyDeath, cidNameEntry, slugKey } from "./live-model.mjs?v=20261108-neg2";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { traitPools, zergScore } from "./trait-scores.mjs?v=20261027-z79";
-import { valueToY, roachTop, createMotion, meterValue, parseLastEventRow, createFightQueue, fightTitle, shouldFadeDown, hasArrived } from "./zerg-meter-motion.mjs?v=20261113-zm7";
+import { valueToY, roachTop, createMotion, meterValue, parseLastEventRow, createFightQueue, fightTitle, shouldFadeDown, hasArrived, DECAY_MS } from "./zerg-meter-motion.mjs?v=20261113-zm8";
 
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
@@ -348,6 +348,7 @@ function frame(nowMs) {
   // opponents can share a Zerg), so it gets its own check below.
   const next = demo ? null : fightQueue.tick(nowMs);
   if (next) {
+    motion.cancelDecay(); // a new fight interrupts the slow decay at once
     // The roach leaves the previous fight's mark as it departs (it got as
     // close as the dwell allowed); the new fight's mark waits for arrival.
     if (pendingMark) scheduleMark(pendingMark.zerg, pendingMark.kind);
@@ -398,6 +399,10 @@ function frame(nowMs) {
     pendingMark = null;
     stopMirroring();
     setLaserColor("rest"); // back at the player's own value: blue
+    // The decay itself is slow and gradual (owner 2026-11-13): 10 s of
+    // waiting, then the next 10 s sinking (or rising) to the player's
+    // value on a linear glide — not the fast fall motion.
+    motion.startDecay(lifeZerg, DECAY_MS, nowMs);
     currentValue = lifeZerg;
     displayName = me.name;
     displayKind = null;
