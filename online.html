@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>🟢 Online now — PS2 Elite</title>
+  <meta name="description" content="Every PlanetSide 2 player online right now (Honu), with server and the PS2 Elite stats we collect: ⚔️ iVi, K/D, KPM, 🤝 Assists, 🪖 Infantry, 🪳 Zerg and 🧘 Pure iVi." />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" href="favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="manifest" href="site.webmanifest" />
+  <meta name="theme-color" content="#202020" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <meta name="apple-mobile-web-app-title" content="PS2Elite" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="PS2 Elite" />
+  <meta property="og:title" content="PS2 Elite — who is online now" />
+  <meta property="og:description" content="Every PlanetSide 2 player online right now (Honu), with server and the PS2 Elite stats we collect." />
+  <meta property="og:url" content="https://dayset.github.io/ps2-elite-kd/online.html" />
+  <meta property="og:image" content="https://dayset.github.io/ps2-elite-kd/assets/placeholder-graph.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="PS2 Elite — who is online now" />
+  <meta name="twitter:description" content="Every PlanetSide 2 player online right now (Honu), with server and the PS2 Elite stats we collect." />
+  <meta name="twitter:image" content="https://dayset.github.io/ps2-elite-kd/assets/placeholder-graph.png" />
+  <link rel="stylesheet" href="styles.css?v=20261103-replay1" />
+  <style>
+    /* Online page only: filter bar + table tweaks on top of styles.css. */
+    .online-head { max-width: 1180px; margin: 0 auto; padding: 18px 14px 0; }
+    .online-head h1 { font-size: 1.5em; margin: 0 0 4px; }
+    .online-head p { margin: 0 0 12px; }
+    .online-crumbs { font-size: 0.95em; margin-bottom: 10px; }
+    .online-filters { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: end;
+      max-width: 1180px; margin: 0 auto; padding: 0 14px 10px; }
+    .online-filters label { display: flex; flex-direction: column; gap: 3px; font-size: 0.9em; }
+    .online-filters select, .online-filters input[type="search"] {
+      font: inherit; padding: 5px 8px; border: 1px solid var(--border, #888);
+      border-radius: 6px; background: var(--bg, #fff); color: var(--text, #111); }
+    .online-filters .chk { flex-direction: row; align-items: center; gap: 6px; }
+    .online-filters button { font: inherit; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+    .online-status { max-width: 1180px; margin: 0 auto; padding: 0 14px 10px; font-size: 0.95em; }
+    .online-status .err { color: #c00; }
+    .online-wrap { max-width: 1180px; margin: 0 auto; padding: 0 14px 18px; overflow-x: auto; }
+    #onlineTable { width: 100%; }
+    #onlineTable th[data-sort] { cursor: pointer; white-space: nowrap; }
+    #onlineTable th[data-sort]:hover { text-decoration: underline; }
+    #onlineTable td { white-space: nowrap; }
+    #onlineTable td .on-name { font-weight: 600; }
+    #onlineTable td .on-tag { opacity: 0.75; }
+    #onlineTable td .on-since { font-size: 0.85em; opacity: 0.75; }
+    #onlineTable td .on-dash { opacity: 0.5; }
+    .online-note { max-width: 1180px; margin: 0 auto; padding: 0 14px 22px; font-size: 0.9em; }
+  </style>
+</head>
+<body class="main-page">
+  <header class="online-head">
+    <p class="online-crumbs"><a href="index.html">⚔️ Players</a> · <a href="live.html">🎥 Live feed</a> · <a href="columns.html">📖 What the columns mean</a></p>
+    <h1>🟢 Online now</h1>
+    <p>Every player Honu sees online right now, with the server they are actually playing on and the stats we collect for them. Ranked names open their sheet on the Players page; unranked names open their Honu profile. The list refreshes every 60 seconds.</p>
+  </header>
+
+  <div class="online-filters" id="onlineFilters">
+    <label>Server
+      <select id="onlineServer">
+        <option value="all">All servers</option>
+      </select>
+    </label>
+    <label>Faction
+      <select id="onlineFaction">
+        <option value="all">All factions</option>
+        <option value="1">VS</option>
+        <option value="2">NC</option>
+        <option value="3">TR</option>
+        <option value="4">NS</option>
+      </select>
+    </label>
+    <label>Sort by
+      <select id="onlineSort">
+        <option value="ivi">⚔️ iVi (high first)</option>
+        <option value="pure">🧘 Pure iVi (high first)</option>
+        <option value="kd">K/D (high first)</option>
+        <option value="kpm">KPM (high first)</option>
+        <option value="zerg">🪳 Zerg (low first)</option>
+        <option value="assists">🤝 Assists (low first)</option>
+        <option value="br">Battle rank (high first)</option>
+        <option value="name">Name (A–Z)</option>
+        <option value="session">Longest online first</option>
+      </select>
+    </label>
+    <label>Search
+      <input type="search" id="onlineSearch" placeholder="player name" autocomplete="off" />
+    </label>
+    <label class="chk"><input type="checkbox" id="onlineRankedOnly" /> Ranked only</label>
+    <button type="button" id="onlineRefresh">↻ Refresh now</button>
+  </div>
+
+  <p class="online-status" id="onlineStatus" role="status">Loading the online list…</p>
+
+  <div class="online-wrap">
+    <table class="ranks-table" id="onlineTable" aria-label="Players online now">
+      <thead>
+        <tr>
+          <th scope="col" data-sort="name">Player</th>
+          <th scope="col" data-sort="faction">Faction</th>
+          <th scope="col" data-sort="server">Server</th>
+          <th scope="col" data-sort="zone">Continent</th>
+          <th scope="col" data-sort="br" title="Battle rank ~ prestige, as Honu shows it">BR</th>
+          <th scope="col" data-sort="ivi" title="Evened ⚔️ iVi from the Rankings table (data/ranks.json, adj)">⚔️ iVi</th>
+          <th scope="col" data-sort="kd" title="Lifetime K/D (Census)">K/D</th>
+          <th scope="col" data-sort="kpm" title="Lifetime KPM (Census)">KPM</th>
+          <th scope="col" data-sort="assists" title="🤝 Assists per kill in recent Honu sessions">🤝 Assists</th>
+          <th scope="col" data-sort="inf" title="🪖 Infantry: share of kills on foot">🪖 Infantry</th>
+          <th scope="col" data-sort="zerg" title="🪳 Zerg, same score as the Rankings table (lower is more solo)">🪳 Zerg</th>
+          <th scope="col" data-sort="pure" title="🧘 Pure iVi: plain ⚔️ iVi with the uncentered 🪳 charge, adjs × (1 − 0.00436 × 🪳)">🧘 Pure</th>
+          <th scope="col" data-sort="session">Session</th>
+        </tr>
+      </thead>
+      <tbody id="onlineBody">
+        <tr><td colspan="13">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="online-note">
+    Online list: <a href="https://wt.honu.pw/online" target="_blank" rel="noopener noreferrer">Honu / Online</a>
+    (<code>GET /api/character/online/players</code>, fetched live from your browser — no Honu quota used, no snapshot to go stale).
+    Server is the world Honu sees them on right now, not the home server in our ranks.
+    Stats come from <code>data/ranks.json</code> (same numbers as the Rankings table); PlayStation players have no PC ranks, so their stats show “—”, never 0.
+    🌈 G lives on the player sheet — open a ranked name to see it.
+    Session “view” opens the Honu session; the time under it is how long ago they logged in.
+  </p>
+
+  <footer>
+    <section class="footer-block" aria-label="About, links and options">
+      <div class="foot-grid">
+        <div class="foot-col foot-about">
+          <div class="foot-brand">⚔️ PS2 Elite</div>
+        </div>
+        <nav class="foot-col foot-links" aria-label="More pages">
+          <div class="foot-h">Learn more</div>
+          <a href="index.html">⚔️ Players</a>
+          <a href="live.html">🎥 Live feed</a>
+          <a href="columns.html">📖 What the columns mean</a>
+          <a href="outfits.html">🛡️ Outfits</a>
+          <a href="privacy.html">🔒 Privacy</a>
+          <a href="https://github.com/Dayset/ps2-elite-kd" target="_blank" rel="noopener noreferrer">💻 Dayset</a>
+        </nav>
+        <div class="foot-col foot-opts footer-row">
+          <div class="foot-h">Options</div>
+          <div class="foot-stats-block">
+            <p class="footer-thanks"><span>Data from the Daybreak Census API</span></p>
+            <p class="footer-thanks"><span>Thanks to</span> <a href="https://wt.honu.pw/" target="_blank" rel="noopener noreferrer">HONU</a> / Varunda</p>
+          </div>
+        </div>
+      </div>
+      <div class="foot-bottom">
+        <details class="disclaimer">
+          <summary>Disclaimer</summary>
+          <p>All numbers, ratings, charts and flags on this site are automated estimates from public data (the Daybreak Census API and Honu). They can be wrong, incomplete or out of date, and they are not facts, proof or accusations about any player. Don't take them seriously, and don't use them to harass anyone.</p>
+          <p>Not affiliated with or endorsed by Daybreak Game Company or Honu. PlanetSide and PlanetSide 2 are registered trademarks of Daybreak Game Company LLC; game images and names belong to Daybreak.</p>
+        </details>
+        <span class="foot-legal">MIT licensed · not affiliated with Daybreak</span>
+      </div>
+    </section>
+  </footer>
+
+  <script type="module" src="online.mjs?v=20261113-online1"></script>
+</body>
+</html>
