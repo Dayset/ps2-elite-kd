@@ -10,6 +10,7 @@ const BY_TYPE = {
   4: { name: "Tech Plant", minutes: 7, confidence: "medium" },
   2: { name: "Amp Station", minutes: 7, confidence: "medium" },
   3: { name: "Bio Lab", minutes: 3, confidence: "low" },
+  9: { name: "Construction Outpost (vehicle outpost)", minutes: 1, confidence: "user-stated" },
   7: { name: "Warpgate", capturable: false },
   0: { name: "untyped", capturable: false },
 };

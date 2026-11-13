@@ -165,6 +165,7 @@ export const CAPTURE_MINUTES = {
   231000: 4, // Crystal Ridge Comm Array
   232000: 4, // Haven Outpost
   233000: 4, // Aurora Materials Lab
+  235000: 1, // Stillwater Watch
   236000: 7, // Grey Heron Shipping
   239000: 4, // Pale Canyon Chemical
   240000: 4, // Old Shore Checkpoint
@@ -179,6 +180,7 @@ export const CAPTURE_MINUTES = {
   244610: 4, // Rime Analytics
   244620: 4, // The Rink
   245000: 7, // Snowshear Fort
+  247000: 1, // Northpoint Ruins
   248000: 7, // Saerro Listening Post
   249000: 7, // Waterson's Redemption
   252010: 4, // Elli Tower
@@ -189,6 +191,7 @@ export const CAPTURE_MINUTES = {
   255030: 4, // Esper Research Station
   256000: 4, // Nott Communications
   256030: 4, // Genudine Gardens
+  257000: 1, // Ymir
   258000: Infinity, // Esamir Northern Warpgate
   259000: Infinity, // Esamir Southern Warpgate
   260000: Infinity, // Esamir Eastern Warpgate
@@ -279,25 +282,47 @@ export const CAPTURE_MINUTES = {
   308000: Infinity, // Hossin Western Warpgate
   309000: Infinity, // Hossin Eastern Warpgate
   310000: Infinity, // Hossin Southern Warpgate
+  400128: 1, // Solus Nature Annex
+  400129: 1, // Cobalt Geological Outpost
+  400130: 1, // Berjess Overlook
+  400131: 1, // Sunken Relay Station
+  400132: 1, // Lowland Trading Post
+  400133: 1, // BL-4 Recovery Point
+  400134: 1, // Tapp Waystation
+  400135: 1, // Untapped Reservoir
+  400315: 1, // Vidar Observation Site
+  400329: 1, // Centri Import Hub
   400330: 4, // Astira Hydroelectric
   400331: 4, // Pommel Gardens
+  400332: 1, // Bathala Overlook
+  400334: 1, // Ligalai Station
   400335: 4, // Outpost Kalis
+  400336: 1, // Seaside Bluffs
   400337: 7, // Viridian Genetics Lab
+  400338: 1, // Viridian Decontamination
   400339: 7, // Centri Mining Operation
   400340: 4, // Mirror Bay Checkpoint
   400342: 4, // Lamplight Security
+  400343: 1, // Hopeswell Beachhead
+  400344: 1, // Wavecrest Beachhead
   400346: 4, // Gildad Cliffs
   400347: 4, // Sage R&D Labs
   400348: 7, // Tannae Power
+  400349: 1, // Hunter's Ravine
   400350: 4, // K&H Tech Station
   400351: 4, // High Ridge Security
+  400353: 1, // Astira Solar Station
+  400354: 1, // Southpeak Meadows
   400355: 4, // Emerald Research Co.
+  400356: 1, // Remnant Cove
   400357: 4, // Viridian East Terrace
+  400358: 1, // South Viridian Beachhead
   400359: 4, // Terran Genetics Inc.
   400361: 7, // Wellerman Watch
   400362: 4, // Palaso Supply Depot
   400363: 7, // Fort Arceo
   400364: 4, // Eagle Outpost
+  400365: 1, // Meridian Listening Post
   400367: 4, // Nascent Shipping and Storage
   400368: 7, // Emerald Arboretum
   400369: Infinity, // Oshur West Flotilla
@@ -306,6 +331,9 @@ export const CAPTURE_MINUTES = {
   400390: 4, // Seapost J5
   400391: 4, // Seapost K10
   400392: 4, // Seapost K12
+  400404: 1, // Veridad Pass
+  400405: 1, // Solstice Pass
+  400407: 1, // Wakerift Plateau
   400409: 4, // Seapost L8 - Cliffdive
   400410: 4, // Seapost J7 - Garden
   400411: 4, // Seapost J8 - Delve
@@ -321,5 +349,6 @@ export const CAPTURE_MINUTES = {
   400426: 4, // Seapost L5
   400427: 7, // Excavion Cleanup Site
   400428: 4, // HMS Technologies
+  400430: 1, // Hunter's Respite
   400431: 4, // Leif Biochemical
 };
