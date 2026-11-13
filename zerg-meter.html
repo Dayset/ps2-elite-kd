@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>🪳 Zerg meter</title>
+<style>
+  /* Meter only. Nothing else: no nav, no links, no header/footer, no
+     background image. Solid black — the meter image is pure black, so it
+     blends into the page with no visible edge. */
+  html, body { margin: 0; padding: 0; background: #000; height: 100%; }
+  body { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; overflow: hidden; }
+  .zm { position: relative; height: min(96vh, 96dvh); aspect-ratio: 480 / 2239; }
+  .zm-bg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  /* Roach rides the bar (bar centre 35.27% of the image width); the laser
+     runs at its eye level (41.4% of the sprite height) from just behind the
+     face to just left of the scale digits. Both are positioned from JS in
+     % of the meter, so they track the image at any size. */
+  .zm-roach { position: absolute; left: 35.27%; width: 35%; transform: translateX(-50%); }
+  .zm-laser {
+    position: absolute; left: 46%; width: 15.5%; height: 3px;
+    transform: translateY(-50%); border-radius: 2px;
+    background: #ff2020;
+    box-shadow: 0 0 8px 2px rgba(255, 32, 32, 0.85), 0 0 18px 5px rgba(255, 32, 32, 0.4);
+  }
+</style>
+</head>
+<body>
+  <main class="zm" id="zergMeter" role="img" aria-label="Live Zerg meter">
+    <img class="zm-bg" src="assets/zerg-meter-bg.jpg" alt="">
+    <div class="zm-laser" id="zmLaser" hidden></div>
+    <img class="zm-roach" id="zmRoach" src="assets/zerg-roach.png" alt="" hidden>
+  </main>
+  <script type="module" src="zerg-meter.mjs?v=20261113-zm1"></script>
+</body>
+</html>
