@@ -19,7 +19,7 @@
 import { classifyDeath, cidNameEntry, slugKey } from "./live-model.mjs?v=20261108-neg2";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { traitPools, zergScore } from "./trait-scores.mjs?v=20261027-z79";
-import { valueToY, roachTop, createMotion, meterValue } from "./zerg-meter-motion.mjs?v=20261113-zm1";
+import { valueToY, roachTop, createMotion, meterValue, parseLastEventRow, pickLatest, isStaleEvent } from "./zerg-meter-motion.mjs?v=20261113-zm1";
 
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
@@ -104,17 +104,51 @@ function opponentZerg(cid) {
 }
 
 // The most recent Death event decides the meter: ev.opp is the victim on
-// a kill, the killer on a death. A slow lookup must not overwrite a newer
-// fight that already landed (sequence guard).
+// a kill, the killer on a death. Two guards: a stale event (older than the
+// newest already applied — a slow poll response must not overwrite a newer
+// stream event) never starts a lookup, and a slow lookup must not
+// overwrite a newer fight that already landed (sequence guard). The same
+// event re-polled every second is a no-op (same opponent + timestamp).
+let lastTs = null;
+let lastOppCid = null;
 let zergSeq = 0;
-function onDeath(ev) {
+function applyOpponent(oppCid, ts) {
+  if (isStaleEvent(lastTs, ts)) return;
+  if (ts === lastTs && oppCid === lastOppCid) return;
+  if (ts != null) lastTs = ts;
+  lastOppCid = oppCid;
   const seq = ++zergSeq;
-  opponentZerg(ev.opp).then((o) => {
+  opponentZerg(oppCid).then((o) => {
     if (!o || seq !== zergSeq) return;
     lastOppZerg = o.zerg;
     currentValue = meterValue(lifeZerg, lastOppZerg);
     displayName = o.name;
   });
+}
+
+function onDeath(ev, ts) {
+  applyOpponent(ev.opp, ts);
+}
+
+// 1-second refresh of "last" (owner 2026-11-13): the latest KILL and the
+// latest DEATH from Census characters_event, the newer wins. This is what
+// keeps the meter a live stream: it catches up on load (the last fight
+// shows even if it happened before the page opened) and it self-heals when
+// the stream stalls or drops — the stream is kept for instant updates, the
+// poll is the backstop. A failed tick just skips; the next second retries.
+// Hidden tabs don't poll (nobody is watching; resumes instantly on return).
+function pollLast() {
+  if (!me || document.hidden) return;
+  const base = `${CENSUS}characters_event/?character_id=${me.cid}`;
+  Promise.all([
+    getJson(`${base}&type=KILL&c:limit=1&c:sort=timestamp:-1`),
+    getJson(`${base}&type=DEATH&c:limit=1&c:sort=timestamp:-1`),
+  ]).then(([k, d]) => {
+    const ek = parseLastEventRow((k.characters_event_list || [])[0], "kill");
+    const ed = parseLastEventRow((d.characters_event_list || [])[0], "death");
+    const best = pickLatest(ek, ed);
+    if (best) applyOpponent(best.opp, best.ts);
+  }).catch(() => { /* next second retries */ });
 }
 
 let ws = null;
@@ -140,7 +174,7 @@ function connect() {
     try { j = JSON.parse(m.data); } catch { return; }
     if (j.type !== "serviceMessage") return;
     const ev = classifyDeath(j.payload, me.cid);
-    if (ev) onDeath(ev);
+    if (ev) onDeath(ev, Number(j.payload.timestamp) || null);
   };
   ws.onclose = () => {
     const lived = openedAt && Date.now() - openedAt > 5000;
@@ -171,6 +205,9 @@ async function startLive() {
     lifeZerg = me.cached && Number.isFinite(me.cached.zerg) ? me.cached.zerg : null;
     currentValue = meterValue(lifeZerg, lastOppZerg); // rest at own lifetime 🪳 until the first fight
     connect();
+    pollLast(); // catch up on load: the last fight shows at once, no waiting
+    setInterval(pollLast, 1000); // refresh "last" every second
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) pollLast(); });
   } catch { /* Census / ranks unreachable: the meter stays empty */ }
 }
 

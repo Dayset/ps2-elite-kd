@@ -9,6 +9,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   METER, clampZerg, valueToY, roachHeight, roachTop, createMotion, meterValue,
+  parseLastEventRow, pickLatest, isStaleEvent,
 } from "../zerg-meter-motion.mjs";
 
 const read = (f) => readFileSync(new URL(`../${f}`, import.meta.url), "utf8");
@@ -49,6 +50,39 @@ describe("meter geometry (measured off assets/zerg-meter-bg.jpg)", () => {
     assert.ok(METER.laser.x0 > METER.barX, "laser starts right of the bar centre");
     assert.ok(METER.laser.x1 < 0.627, "laser ends left of the digits");
     assert.ok(METER.laser.x1 - METER.laser.x0 > 0.1, "laser is visible, not a dot");
+  });
+});
+
+describe("1-second refresh: parsing the latest kill/death from characters_event", () => {
+  const killRow = { character_id: "8261280742797131393", attacker_character_id: "5428010917269715233", timestamp: "1794530283" };
+  const deathRow = { character_id: "5428010917269715233", attacker_character_id: "5429683080379828913", timestamp: "1794530346" };
+  it("a kill row's opponent is the victim, a death row's is the killer", () => {
+    assert.deepEqual(parseLastEventRow(killRow, "kill"), { opp: "8261280742797131393", ts: 1794530283 });
+    assert.deepEqual(parseLastEventRow(deathRow, "death"), { opp: "5429683080379828913", ts: 1794530346 });
+  });
+  it("rows with no opponent or no timestamp are not a last fight", () => {
+    assert.equal(parseLastEventRow({ character_id: "0", timestamp: "1794530283" }, "kill"), null);
+    assert.equal(parseLastEventRow({ character_id: "8261280742797131393" }, "kill"), null);
+    assert.equal(parseLastEventRow({ character_id: "8261280742797131393", timestamp: "soon" }, "kill"), null);
+    assert.equal(parseLastEventRow(null, "kill"), null);
+    assert.equal(parseLastEventRow(killRow, "login"), null);
+  });
+  it("the newer of the latest kill and latest death wins, ties go to the kill", () => {
+    const k = parseLastEventRow(killRow, "kill");
+    const d = parseLastEventRow(deathRow, "death");
+    assert.equal(pickLatest(k, d), d, "the death is 63 s newer");
+    assert.equal(pickLatest(d, k), d);
+    assert.equal(pickLatest(k, null), k);
+    assert.equal(pickLatest(null, d), d);
+    assert.equal(pickLatest(null, null), null);
+    assert.equal(pickLatest({ opp: "1", ts: 100 }, { opp: "2", ts: 100 }).opp, "1");
+  });
+  it("an event older than the newest applied is stale; same-second is not", () => {
+    assert.equal(isStaleEvent(1794530346, 1794530283), true);
+    assert.equal(isStaleEvent(1794530346, 1794530346), false);
+    assert.equal(isStaleEvent(1794530346, 1794530400), false);
+    assert.equal(isStaleEvent(null, 1794530283), false, "nothing applied yet");
+    assert.equal(isStaleEvent(1794530346, null), false, "an event with no timestamp still applies");
   });
 });
 

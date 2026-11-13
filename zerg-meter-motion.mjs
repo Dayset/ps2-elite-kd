@@ -46,11 +46,48 @@ export function clampZerg(v) {
  * read live (anchored) and pinned near 0 whenever the session's mean enemy
  * was at the player's own level (plain session); the last opponent's own
  * score moves on every fight, by construction.
+ *
+ * "Last" is refreshed every second (owner 2026-11-13): the page polls
+ * Census characters_event for the followed player's latest KILL and latest
+ * DEATH and takes the newer — so the meter catches up on load (it shows
+ * the last fight even if it happened before the page opened) and can never
+ * freeze on a stale value if the live stream stalls. The stream is kept
+ * for instant updates; both sources go through the same newest-wins
+ * ordering below.
  */
 export function meterValue(lifeZerg, zerg) {
   if (Number.isFinite(zerg)) return zerg;
   if (Number.isFinite(lifeZerg)) return lifeZerg;
   return null;
+}
+
+/**
+ * Parse one characters_event row into the meter's "last fight" shape.
+ * kind is which query returned it: "kill" (the followed player is the
+ * attacker, so the opponent is the victim in character_id) or "death"
+ * (the followed player is the victim, so the opponent is the killer in
+ * attacker_character_id). Returns null when the row has no opponent or
+ * no usable timestamp. Pure — unit-tested in test/zerg-meter.test.mjs.
+ */
+export function parseLastEventRow(row, kind) {
+  if (!row || typeof row !== "object") return null;
+  const opp = kind === "kill" ? row.character_id : kind === "death" ? row.attacker_character_id : null;
+  const ts = Number(row.timestamp);
+  if (typeof opp !== "string" || !/^[1-9]\d*$/.test(opp)) return null;
+  if (!Number.isFinite(ts)) return null;
+  return { opp, ts };
+}
+
+/** The newer of two parsed last-fight events (ties go to the first). */
+export function pickLatest(a, b) {
+  if (!a) return b || null;
+  if (!b) return a;
+  return b.ts > a.ts ? b : a;
+}
+
+/** True when an event is older than the newest one already applied. */
+export function isStaleEvent(lastTs, ts) {
+  return lastTs != null && ts != null && ts < lastTs;
 }
 
 /** Value → height fraction (0 = top of the image) of the value's level. */
