@@ -244,7 +244,7 @@ describe("page: meter only, and shared pins match live.mjs", () => {
     assert.doesNotMatch(html, /styles\.css/, "no site stylesheet");
     assert.doesNotMatch(html, /background-image/, "no page background image");
     assert.match(html, /background: #000/, "solid black page by default");
-    assert.match(html, /assets\/zerg-meter-bg\.png/, "clean meter background (transparent PNG)");
+    assert.match(html, /assets\/zerg-meter-bg\.png\?v=20261113-bg2/, "clean meter background (transparent PNG, hollow bar)");
     assert.match(html, /transparent/, "?transparent=1 overlay mode (transparent page for a stream)");
     assert.match(html, /zm-transparent/, "transparent page class");
     assert.match(html, /assets\/zerg-roach\.png/, "outlined roach");
