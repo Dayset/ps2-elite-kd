@@ -33,6 +33,23 @@ const roachEl = document.getElementById("zmRoach");
 const laserEl = document.getElementById("zmLaser");
 const motion = createMotion();
 
+// Name line (owner 2026-11-13): the little text between the meter and the
+// odometer naming the victim (on a kill) or the killer (on a death) whose
+// lifetime 🪳 is on the meter; at rest it names the followed player, whose
+// own value is on the meter. An unknown fight gets a " ?" (the title
+// carries the same "?"). Same wording as the title, without the value
+// (the odometer already shows it).
+const nameEl = document.getElementById("zmName");
+let lastName = "";
+function updateName() {
+  let text;
+  if (displayKind === "kill") text = `killed ${displayName}`;
+  else if (displayKind === "death") text = `killed by ${displayName}`;
+  else text = displayName; // rest: the followed player
+  if (displayUnknown) text += " ?";
+  if (text !== lastName) { nameEl.textContent = text; lastName = text; }
+}
+
 // Odometer counter (owner 2026-11-13): three digit wheels underneath the
 // meter. Each wheel is a 0–9 strip repeated 5 times, so the wheel can roll
 // forward past 9→0 and backward past 0→9 without ever going the long way
@@ -527,6 +544,7 @@ function frame(nowMs) {
     const t = fightTitle(displayKind, displayName, displayUnknown ? null : shown);
     if (t !== lastTitle) { document.title = t; lastTitle = t; }
   }
+  updateName(); // the victim/killer line between the meter and the odometer
   updateOdo(displayUnknown ? null : shown, nowMs); // unknown fight: no value — the wheels hold their last reading, never dashes
   stepOdo(nowMs);
   requestAnimationFrame(frame);
