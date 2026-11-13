@@ -18,7 +18,11 @@
      in <head> before the first paint, so there is no black flash. */
   html.zm-transparent, html.zm-transparent body { background: transparent; }
   body { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; overflow: hidden; }
-  .zm { position: relative; height: min(96vh, 96dvh); aspect-ratio: 480 / 2239; }
+  .zm { position: relative; height: min(96vh, 96dvh); aspect-ratio: 480 / 2239; outline: 2px solid #000; }
+  /* 2px black outline for the meter itself (owner 2026-11-13): it frames
+     the meter on a stream overlay (invisible on the black page, where the
+     background is already black). An outline, not a border, so it adds no
+     size and cannot push the meter off the viewport. */
   .zm-bg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
   /* Roach rides the bar (bar centre 35.27% of the image width); the laser
      runs at its eye level (41.4% of the sprite height) from just behind the
@@ -63,8 +67,8 @@
   <main class="zm" id="zergMeter" role="img" aria-label="Live Zerg meter">
     <img class="zm-bg" src="assets/zerg-meter-bg.png" alt="">
     <div class="zm-laser" id="zmLaser" hidden></div>
-    <img class="zm-roach" id="zmRoach" src="assets/zerg-roach.png?v=20261113-roach1" alt="" hidden>
+    <img class="zm-roach" id="zmRoach" src="assets/zerg-roach.png?v=20261113-roach2" alt="" hidden>
   </main>
-  <script type="module" src="zerg-meter.mjs?v=20261113-zm9"></script>
+  <script type="module" src="zerg-meter.mjs?v=20261113-zm11"></script>
 </body>
 </html>

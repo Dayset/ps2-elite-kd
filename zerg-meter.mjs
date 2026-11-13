@@ -19,7 +19,7 @@
 import { classifyDeath, cidNameEntry, slugKey } from "./live-model.mjs?v=20261108-neg2";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { traitPools, zergScore } from "./trait-scores.mjs?v=20261027-z79";
-import { valueToY, roachTop, createMotion, meterValue, parseLastEventRow, createFightQueue, fightTitle, shouldFadeDown, hasArrived } from "./zerg-meter-motion.mjs?v=20261113-zm6";
+import { valueToY, roachTop, createMotion, meterValue, parseLastEventRow, createFightQueue, fightTitle, shouldFadeDown, hasArrived } from "./zerg-meter-motion.mjs?v=20261113-zm7";
 
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
@@ -52,9 +52,11 @@ setLaserColor("rest"); // resting at the player's own value: blue
 // roach arrives at the level, 1 s after it departs, 1 s after an unknown
 // fight shows. The mark then stays 4 s from placement (placeMark).
 const MARK_DELAY_MS = 1000;
-function scheduleMark(zerg, kind, no) {
+let markGen = 0; // increments when the meter goes back to rest — cancels pending mark placements
+function scheduleMark(zerg, kind) {
   if (zerg == null) return;
-  setTimeout(() => placeMark(zerg, kind, no), MARK_DELAY_MS);
+  const gen = markGen;
+  setTimeout(() => { if (gen === markGen) placeMark(zerg, kind); }, MARK_DELAY_MS);
 }
 
 // Mirror (owner 2026-11-13): an unknown opponent — a killer or victim
@@ -82,8 +84,16 @@ function stopMirroring() {
 }
 const MARK_MS = 10000; // kill/death marks stay 10 s (owner 2026-11-13)
 const MARK_UNKNOWN_MS = 4000; // unknown marks stay 4 s
-const marks = []; // { line, num } pairs — the line and its queue number go together
-function placeMark(zerg, kind, no) {
+const marks = []; // { line, num } pairs, oldest first — the line and its queue number go together
+// Queue numbers (owner 2026-11-13): a mark's number is its position among
+// the marks on screen — 1 for the oldest visible mark, then 2, 3, … — so a
+// lone mark is always 1 and the value only climbs above 1 while multiple
+// marks are visible. When a mark expires the rest renumber; when all marks
+// are gone the count is 0 and the next mark is 1 again.
+function renumberMarks() {
+  marks.forEach((m, i) => { m.num.textContent = String(i + 1); });
+}
+function placeMark(zerg, kind) {
   const y = valueToY(zerg);
   if (y == null) return;
   const line = document.createElement("div");
@@ -92,7 +102,6 @@ function placeMark(zerg, kind, no) {
   line.style.top = `${(y * 100).toFixed(3)}%`;
   const num = document.createElement("div");
   num.className = "zm-mark-num" + (kind === "unknown" ? " zm-yellow" : kind === "kill" ? " zm-green" : "");
-  num.textContent = String(no);
   num.style.top = line.style.top;
   if (kind === "unknown") num.style.right = "93%"; // just left of the left-side line
   else num.style.left = "62.5%"; // just right of the laser-side line
@@ -100,10 +109,11 @@ function placeMark(zerg, kind, no) {
   meterEl.appendChild(num);
   const pair = { line, num };
   marks.push(pair);
-  if (marks.length > 8) { const old = marks.shift(); old.line.remove(); old.num.remove(); }
+  renumberMarks();
+  if (marks.length > 8) { const old = marks.shift(); old.line.remove(); old.num.remove(); renumberMarks(); }
   setTimeout(() => {
     const i = marks.indexOf(pair);
-    if (i >= 0) marks.splice(i, 1);
+    if (i >= 0) { marks.splice(i, 1); renumberMarks(); }
     line.remove();
     num.remove();
   }, kind === "unknown" ? MARK_UNKNOWN_MS : MARK_MS);
@@ -332,17 +342,15 @@ let lastTitle = "";
 let faded = false; // the meter has faded down to rest after the idle window
 let pendingMark = null; // the fight on display whose mark isn't placed yet
 let displayUnknown = false; // the fight on display has no lifetime 🪳 to show
-let fightNo = 0; // queue number: 1 for the first fight shown, then 2, 3, … — each mark carries its fight's number
 function frame(nowMs) {
   // The queue's turn: one fight per dwell, in fight order. The title is
   // rebuilt for every new fight even when the value is unchanged (two
   // opponents can share a Zerg), so it gets its own check below.
   const next = demo ? null : fightQueue.tick(nowMs);
   if (next) {
-    next.no = ++fightNo;
     // The roach leaves the previous fight's mark as it departs (it got as
     // close as the dwell allowed); the new fight's mark waits for arrival.
-    if (pendingMark) scheduleMark(pendingMark.zerg, pendingMark.kind, pendingMark.no);
+    if (pendingMark) scheduleMark(pendingMark.zerg, pendingMark.kind);
     pendingMark = null;
     if (next.zerg == null) {
       // Unknown opponent (no lifetime 🪳): the roach stays where it is
@@ -356,7 +364,7 @@ function frame(nowMs) {
       faded = false;
       setLaserColor("unknown"); // yellow
       startMirroring();
-      scheduleMark(motion.displayed, "unknown", next.no); // unknown mark: left side, yellow
+      scheduleMark(motion.displayed, "unknown"); // unknown mark: left side, yellow
     } else {
       stopMirroring();
       currentValue = meterValue(lifeZerg, next.zerg);
@@ -380,7 +388,13 @@ function frame(nowMs) {
     faded,
   })) {
     faded = true;
-    if (pendingMark) scheduleMark(pendingMark.zerg, pendingMark.kind, pendingMark.no); // leave the last mark behind
+    // Back to blue (rest): the burst is over — clear the marks and reset
+    // the notch counter, so the next burst starts at 1. Pending mark
+    // placements are cancelled (the generation bump), and the departing
+    // fight leaves no mark (it was 10 s ago; the meter is at rest).
+    markGen++;
+    for (const m of marks) { m.line.remove(); m.num.remove(); }
+    marks.length = 0;
     pendingMark = null;
     stopMirroring();
     setLaserColor("rest"); // back at the player's own value: blue
@@ -394,7 +408,7 @@ function frame(nowMs) {
   // before it moved. (A big fall can outlast the dwell; the departure
   // above covers that case.)
   if (pendingMark && hasArrived(shown, pendingMark.zerg)) {
-    scheduleMark(pendingMark.zerg, pendingMark.kind, pendingMark.no);
+    scheduleMark(pendingMark.zerg, pendingMark.kind);
     pendingMark = null;
   }
   if (shown != null && (lastShown == null || Math.abs(shown - lastShown) > 0.005)) {

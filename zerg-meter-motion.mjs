@@ -70,12 +70,16 @@ export function clampZerg(v) {
  * further 1 s delay (owner 2026-11-13), so the mark lands a second after
  * the roach is there; a kill or death mark stays 10 s from placement, an
  * unknown mark 4 s, then disappears outright. Each mark carries a small
- * queue number beside it (1 for the first fight shown, then 2, 3, …) in
- * the mark's colour. Unknown opponents (owner 2026-11-13): a killer or
- * victim with no lifetime 🪳 still joins the queue — when it shows, the
- * roach mirrors horizontally back and forth a few times (an indicator of
- * unknown value) and leaves a laser mark at the level it's standing on,
- * and the title reads "Zerg ?" instead of a number.
+ * queue number beside it in the mark's colour — its position among the
+ * marks on screen (1 for the oldest visible mark, then 2, 3, …), so a
+ * lone mark is always 1 and the number only climbs while multiple marks
+ * are visible; when a mark expires the rest renumber, and when all marks
+ * are gone the count is 0 and the next mark is 1 again. Unknown
+ * opponents (owner 2026-11-13): a killer or victim with no lifetime 🪳
+ * still joins the queue — when it shows, the roach mirrors horizontally
+ * back and forth a few times (an indicator of unknown value) and leaves
+ * a laser mark at the level it's standing on, and the title reads
+ * "Zerg ?" instead of a number.
  */
 export function meterValue(lifeZerg, zerg) {
   if (Number.isFinite(zerg)) return zerg;
