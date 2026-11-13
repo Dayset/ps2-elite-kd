@@ -3,26 +3,25 @@
 // site CSS or background image, solid black page (the meter image is pure
 // black, so it blends into the page).
 //
-// The value is the SAME live session 🪳 the live page shows (live.mjs
-// renderSessVals, 🪳 cell): sessionZerg from the session Inflation and
-// session apk, anchored on the lifetime 🪳 with W=100 from the first kill,
-// else the plain session value once 10 kills are in. It is computed here
-// from the same Census stream (Death + assist GainExperience) and the same
-// shared pure functions — not re-derived — so the meter and the live page
-// can never disagree. Session = since this page opened; a reload restarts
-// it. Before the first kill the meter rests at the lifetime 🪳 (the anchor);
-// a player with no lifetime 🪳 shows nothing until 10 session kills.
+// The value is the plain session 🪳 (owner 2026-11-13): sessionZerg from the
+// session Inflation and session apk, with no lifetime anchor and no 10-kill
+// floor — the meter must move on every kill and death, and the anchored
+// total changes too slowly to read live. Session Inflation covers every
+// enemy met: victims (killed) and killers (died to) alike. Before the
+// session's first kill the meter rests at the lifetime 🪳 (the anchor);
+// deaths alone can't score yet (apk needs kills). Session = since this page
+// opened; a reload restarts it. It is the same session formula the live
+// page's 🪳 cell uses underneath its anchor, so the two agree once the
+// session has kills.
 //
 // ?names=Zewgie — the followed enemy (first name wins, like live.html).
 // ?demo=1 — no network: a simulated Zerg (sine + jumps) to preview the
 // motion and to verify the page headlessly.
 import { classifyDeath, DPS_ASSIST_XP, cidNameEntry, slugKey } from "./live-model.mjs?v=20261108-neg2";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
-import {
-  sessionReady, sessionApk, sessionInflation, sessionZerg, anchorValue,
-} from "./live-session.mjs?v=20261108-anch1";
+import { sessionApk, sessionInflation, sessionZerg } from "./live-session.mjs?v=20261108-anch1";
 import { traitPools, zergScore } from "./trait-scores.mjs?v=20261027-z79";
-import { METER, valueToY, roachTop, createMotion } from "./zerg-meter-motion.mjs?v=20261113-zm1";
+import { valueToY, roachTop, createMotion, meterValue } from "./zerg-meter-motion.mjs?v=20261113-zm1";
 
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
@@ -114,14 +113,13 @@ function recompute() {
   if (!sessTp) return;
   const myIvi = me && me.cached && me.cached.adjs;
   const lifeZerg = me && me.cached && Number.isFinite(me.cached.zerg) ? me.cached.zerg : null;
-  const started = sKills >= 1;
+  // Plain session 🪳 (owner 2026-11-13): no anchor, no floor. A kill moves
+  // it through the new victim (Inflation) and the kills count (apk); a
+  // death moves it through the killer (Inflation). Assists move it through
+  // apk. Before the first kill there is no session value yet (apk needs
+  // kills), so the meter rests at the lifetime 🪳.
   const zerg = sessionZerg(sessTp, sessionInflation(myIvi, sessFights), sessionApk(sessAssists, sKills));
-  // The live page's exact 🪳 formula (renderSessVals): anchored from the
-  // first kill when the lifetime anchor exists, else the plain session
-  // value once 10 kills are in. Rest at the lifetime value before that.
-  const aZerg = started && lifeZerg != null ? anchorValue(lifeZerg, zerg != null ? zerg * sKills : 0, sKills) : null;
-  const value = aZerg != null ? aZerg : (sessionReady(sKills) ? zerg : null);
-  currentValue = value != null ? value : lifeZerg;
+  currentValue = meterValue(lifeZerg, zerg);
 }
 
 function onDeath(ev) {

@@ -38,6 +38,20 @@ export function clampZerg(v) {
   return Math.min(100, Math.max(0, v));
 }
 
+/**
+ * The meter's reading (owner 2026-11-13): the plain session 🪳 once it
+ * exists — no lifetime anchor, no 10-kill floor — else the lifetime 🪳 as
+ * the resting position (null when neither exists). The anchored total
+ * changes too slowly to read live: each fight moves it ~1/(100+kills),
+ * so deaths were invisible. The session value moves on every kill and
+ * every death (both feed the session Inflation: victims and killers alike).
+ */
+export function meterValue(lifeZerg, zerg) {
+  if (Number.isFinite(zerg)) return zerg;
+  if (Number.isFinite(lifeZerg)) return lifeZerg;
+  return null;
+}
+
 /** Value → height fraction (0 = top of the image) of the value's level. */
 export function valueToY(v) {
   const c = clampZerg(v);

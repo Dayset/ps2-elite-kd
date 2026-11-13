@@ -8,7 +8,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
-  METER, clampZerg, valueToY, roachHeight, roachTop, createMotion,
+  METER, clampZerg, valueToY, roachHeight, roachTop, createMotion, meterValue,
 } from "../zerg-meter-motion.mjs";
 
 const read = (f) => readFileSync(new URL(`../${f}`, import.meta.url), "utf8");
@@ -49,6 +49,17 @@ describe("meter geometry (measured off assets/zerg-meter-bg.jpg)", () => {
     assert.ok(METER.laser.x0 > METER.barX, "laser starts right of the bar centre");
     assert.ok(METER.laser.x1 < 0.627, "laser ends left of the digits");
     assert.ok(METER.laser.x1 - METER.laser.x0 > 0.1, "laser is visible, not a dot");
+  });
+});
+
+describe("meter reading: plain session value, lifetime only as the rest", () => {
+  it("shows the session value once it exists, never the anchored blend", () => {
+    assert.equal(meterValue(1, 42), 42, "session wins over lifetime");
+    assert.equal(meterValue(1, 0), 0, "a session 0 is a reading, not a missing one");
+    assert.equal(meterValue(1, null), 1, "rests at lifetime before the first kill");
+    assert.equal(meterValue(null, 30), 30, "no lifetime needed once the session scores");
+    assert.equal(meterValue(null, null), null, "nothing to show for an unranked player yet");
+    assert.equal(meterValue(null, NaN), null);
   });
 });
 
