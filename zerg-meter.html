@@ -76,6 +76,10 @@
   .zm-odo-strip { display: flex; flex-direction: column; will-change: transform; }
   .zm-odo-strip span { height: 1em; display: flex; align-items: center; justify-content: center; color: #fff; font: 700 1em/1 ui-monospace, "Cascadia Mono", Consolas, monospace; }
   .zm-odo-dash { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font: 700 1em/1 ui-monospace, "Cascadia Mono", Consolas, monospace; }
+  /* The dash must actually hide: `display: flex` above beats the UA's
+     `display: none` for [hidden], so without this the dash draws a bar
+     across the middle of every digit. */
+  .zm-odo-dash[hidden] { display: none; }
 </style>
 </head>
 <body>
@@ -85,6 +89,6 @@
     <img class="zm-roach" id="zmRoach" src="assets/zerg-roach.png?v=20261113-roach3" alt="" hidden>
   </main>
   <div class="zm-odo" id="zmOdo" aria-hidden="true"></div>
-  <script type="module" src="zerg-meter.mjs?v=20261113-zm15"></script>
+  <script type="module" src="zerg-meter.mjs?v=20261113-zm18"></script>
 </body>
 </html>
