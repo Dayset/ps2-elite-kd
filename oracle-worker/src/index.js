@@ -23,6 +23,7 @@ import { binGetter, hasTree, regionMap, latticeFor, captureModel, resistanceMode
 import { runCommander, ownership, applyElimination } from "./commander.js";
 import { handleAuth, CHALLENGE_KEEP_S, ensureAuthTables } from "./auth.js";
 import { handleVote, settleStatements } from "./vote.js";
+import { handleVotelog, votelogTick } from "./votelog.js";
 import { handlePrivacy } from "./privacy.js";
 import { namePlayers } from "./players.js";
 import { cutAwareSnap } from "./cut.js";
@@ -665,6 +666,9 @@ export async function runCycle(env, nowMs = Date.now()) {
     WHERE v.status = 'open' AND a.status IN ('settled','canceled','unresolved','interrupted')`).all()).results) || [];
   if (toSettle.length) { await db.batch(settleStatements(db, toSettle, now)); report.votes_settled = toSettle.length; }
 
+  // 4d) Public vote log: commit settlements, root finished days, stamp them with OpenTimestamps (votelog.js).
+  try { report.votelog = await votelogTick(db, now); } catch (e) { report.votelog_error = String(e && e.message).slice(0, 200); }
+
   // 5) Daily pruning at 04:07 UTC: raw snapshots 30 days, flips 90 days,
   //    sign-in challenges (character + keyed IP hash) 1 day (#61, PRIVACY.md).
   const d = new Date(nowMs);
@@ -927,6 +931,7 @@ async function handle(request, env) {
   }
   if (url.pathname.startsWith("/auth/")) return handleAuth(request, env, url, json, now);
   if (url.pathname.startsWith("/vote/")) return handleVote(request, env, url, json, now);
+  if (url.pathname === "/votelog" || url.pathname.startsWith("/votelog/")) return handleVotelog(request, env, url);
   if (url.pathname.startsWith("/privacy/")) return handlePrivacy(request, env, url, json, now, authed);
 
   if (url.pathname === "/" || url.pathname === "/health") {

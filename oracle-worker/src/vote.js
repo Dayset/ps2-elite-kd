@@ -28,6 +28,7 @@
  */
 import { FACS } from "./engine.js";
 import { accountFromRequest } from "./auth.js";
+import { commitPlaced, commitsFor } from "./votelog.js";
 
 export const VOTE = Object.freeze({
   LIQUIDITY: 2000, AMOUNTS: [25, 50, 100, 200], START_BALANCE: 1000,
@@ -159,8 +160,11 @@ export async function handleVote(request, env, url, json, now = Math.floor(Date.
     const w = await wallet(db, acct.cid, now);
     const votes = (await db.prepare("SELECT id, key, outcome, amount, fee, net, potential, pct, progress, placed_ts, status, reward FROM vote WHERE cid=? ORDER BY placed_ts DESC LIMIT 50").bind(acct.cid).all()).results || [];
     const settledRows = votes.filter((v) => v.status !== "open");
+    // commits: salt (only the voter sees it), hash, day, and the Merkle path to the day's root (votelog.js).
+    const commits = await commitsFor(db, votes.map((v) => v.id));
     return json({ balance: r2(w.balance), bonus_available: w.last_manual_day !== day(now),
-      own_faction: acct.faction, votes, gain: r2(settledRows.reduce((s, v) => s + v.reward - v.amount, 0)), server_ts: now }, 200, ns);
+      own_faction: acct.faction, votes: votes.map((v) => ({ ...v, commits: commits[v.id] || null })),
+      gain: r2(settledRows.reduce((s, v) => s + v.reward - v.amount, 0)), server_ts: now }, 200, ns);
   }
 
   if (p === "/vote/bonus" && request.method === "POST") {
@@ -227,6 +231,10 @@ export async function handleVote(request, env, url, json, now = Math.floor(Date.
       if (other) return json({ error: "already_voted", vote: other, balance: await balanceNow() }, 409, ns);
       return json({ error: "insufficient_balance", balance: await balanceNow() }, 409, ns);
     }
+    // Public commitment to this vote as placed (votelog.js). The stored values are read back from the same numbers.
+    // Not fatal: the vote is already debited; the cron backfills any missing commit (votelogTick).
+    await commitPlaced(db, { id: vid, cid: String(acct.cid), key: a.key, outcome, amount, fee: q.fee, net: q.net, potential: q.reward,
+      pct, progress: Math.round(m.progress * 1000) / 1000, placed_ts: now }, now).catch((e) => console.warn("votelog commit:", String(e && e.message)));
     const w = await db.prepare("SELECT balance FROM wallet WHERE cid=?").bind(acct.cid).first();
     return json({ ok: true, vote: { id: vid, key: a.key, outcome, ...q }, balance: r2(w.balance) }, 200, ns);
   }
