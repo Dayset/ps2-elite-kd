@@ -86,12 +86,13 @@ const MARK_MS = 10000; // kill/death marks stay 10 s (owner 2026-11-13)
 const MARK_UNKNOWN_MS = 4000; // unknown marks stay 4 s
 const marks = []; // { line, num } pairs, oldest first — the line and its queue number go together
 // Queue numbers (owner 2026-11-13): a mark's number is its position among
-// the marks on screen — 1 for the oldest visible mark, then 2, 3, … — so a
-// lone mark is always 1 and the value only climbs above 1 while multiple
-// marks are visible. When a mark expires the rest renumber; when all marks
-// are gone the count is 0 and the next mark is 1 again.
+// the marks on screen — 1 for the oldest visible mark, then 2, 3, … — and
+// only while multiple marks are visible. A lone mark carries no number
+// at all (owner 2026-11-13); the number only means something when there
+// are several marks to tell apart. When a mark expires the rest renumber;
+// when all marks are gone the count is 0 and the next mark is 1 again.
 function renumberMarks() {
-  marks.forEach((m, i) => { m.num.textContent = String(i + 1); });
+  marks.forEach((m, i) => { m.num.textContent = marks.length > 1 ? String(i + 1) : ""; });
 }
 function placeMark(zerg, kind) {
   const y = valueToY(zerg);

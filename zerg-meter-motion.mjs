@@ -73,10 +73,10 @@ export function clampZerg(v) {
  * the roach is there; a kill or death mark stays 10 s from placement, an
  * unknown mark 4 s, then disappears outright. Each mark carries a small
  * queue number beside it in the mark's colour — its position among the
- * marks on screen (1 for the oldest visible mark, then 2, 3, …), so a
- * lone mark is always 1 and the number only climbs while multiple marks
- * are visible; when a mark expires the rest renumber, and when all marks
- * are gone the count is 0 and the next mark is 1 again. Unknown
+ * marks on screen (1 for the oldest visible mark, then 2, 3, …) — but
+ * only while multiple marks are visible; a lone mark carries no number.
+ * When a mark expires the rest renumber, and when all marks are gone the
+ * count is 0 and the next mark is 1 again. Unknown
  * opponents (owner 2026-11-13): a killer or victim with no lifetime 🪳
  * still joins the queue — when it shows, the roach mirrors horizontally
  * back and forth a few times (an indicator of unknown value) and leaves
