@@ -10,6 +10,7 @@ import { readFileSync } from "node:fs";
 import {
   METER, clampZerg, valueToY, roachHeight, roachTop, createMotion, meterValue,
   parseLastEventRow, createFightQueue, fightTitle, shouldFadeDown, FADE_IDLE_MS,
+  hasArrived, MARK_ARRIVE_EPS,
 } from "../zerg-meter-motion.mjs";
 
 const read = (f) => readFileSync(new URL(`../${f}`, import.meta.url), "utf8");
@@ -135,6 +136,32 @@ describe("decay: the meter fades down to rest after 10 s with no fights", () => 
   });
 });
 
+describe("marks: placed when the roach arrives, never before it moved", () => {
+  it("arrival means within one Zerg point of the level", () => {
+    assert.equal(MARK_ARRIVE_EPS, 1.0);
+    assert.equal(hasArrived(25.0, 26), true, "exactly one point away counts");
+    assert.equal(hasArrived(25.2, 26), true);
+    assert.equal(hasArrived(24.9, 26), false, "more than a point away is still travelling");
+    assert.equal(hasArrived(22.6, 26), false, "half a second into a rise from 1");
+    assert.equal(hasArrived(null, 26), false);
+    assert.equal(hasArrived(26, null), false);
+  });
+  it("a big fall outlasts the dwell, so the mark waits for departure", () => {
+    // Fall 26 -> 6 (tau 800 ms): after the 2 s dwell the roach is at ~7.6,
+    // still 1.6 away — not arrived. A rise 1 -> 26 (tau 250 ms) arrives
+    // in ~0.8 s, inside the dwell.
+    const fall = createMotion();
+    let shown = fall.update(26, 0);
+    shown = fall.update(6, 2000);
+    assert.equal(hasArrived(shown, 6), false, `roach at ${shown.toFixed(1)}, not at 6 yet`);
+    const rise = createMotion();
+    shown = rise.update(1, 0);
+    assert.equal(hasArrived(rise.update(26, 800), 26), false, "0.80 s in, still a point away");
+    shown = rise.update(26, 900);
+    assert.equal(hasArrived(shown, 26), true, `roach at ${shown.toFixed(1)}, arrived`);
+  });
+});
+
 describe("fight title: kills and deaths read differently", () => {
   it("names the direction — the number alone can't tell them apart", () => {
     assert.equal(fightTitle("kill", "Fantom220TR", 26), "🪳 killed Fantom220TR — Zerg 26.0");
@@ -198,7 +225,7 @@ describe("page: meter only, and shared pins match live.mjs", () => {
       };
       assert.equal(pin(meter), pin(live), `${mod} pin`);
     }
-    assert.match(read("zerg-meter.html"), /zerg-meter\.mjs\?v=20261113-zm3/);
-    assert.match(meter, /zerg-meter-motion\.mjs\?v=20261113-zm3/);
+    assert.match(read("zerg-meter.html"), /zerg-meter\.mjs\?v=20261113-zm4/);
+    assert.match(meter, /zerg-meter-motion\.mjs\?v=20261113-zm4/);
   });
 });

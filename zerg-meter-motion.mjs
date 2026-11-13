@@ -64,8 +64,10 @@ export function clampZerg(v) {
  * the meter fades down to rest — the roach slides back to the followed
  * player's own lifetime 🪳 (the fall motion, so it glides rather than
  * jumps). Marks (owner 2026-11-13): on a kill or death the roach leaves
- * a laser mark at that level; the mark stays 4 s from when the fight
- * came from the queue, then disappears outright.
+ * a laser mark at that level — placed when the roach ARRIVES there (not
+ * when the fight starts showing, while the roach is still travelling),
+ * or when it departs to the next fight, whichever comes first; the mark
+ * stays 4 s from placement, then disappears outright.
  */
 export function meterValue(lifeZerg, zerg) {
   if (Number.isFinite(zerg)) return zerg;
@@ -139,6 +141,14 @@ export const FADE_IDLE_MS = 10000;
  */
 export function shouldFadeDown({ queueEmpty, hasCurrent, currentSinceMs, nowMs, faded }) {
   return queueEmpty && hasCurrent && currentSinceMs != null && !faded && nowMs - currentSinceMs >= FADE_IDLE_MS;
+}
+
+/** How close the roach must be to a fight's level before it leaves the mark there (one Zerg point — visually on the line). */
+export const MARK_ARRIVE_EPS = 1.0;
+
+/** True when the roach has arrived at a level (visually on it). Pure — unit-tested in test/zerg-meter.test.mjs. */
+export function hasArrived(shown, target) {
+  return shown != null && target != null && Math.abs(shown - target) <= MARK_ARRIVE_EPS;
 }
 
 /** Tab title for the fight on display — kills and deaths read differently. */

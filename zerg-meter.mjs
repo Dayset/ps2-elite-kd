@@ -19,7 +19,7 @@
 import { classifyDeath, cidNameEntry, slugKey } from "./live-model.mjs?v=20261108-neg2";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { traitPools, zergScore } from "./trait-scores.mjs?v=20261027-z79";
-import { valueToY, roachTop, createMotion, meterValue, parseLastEventRow, createFightQueue, fightTitle, shouldFadeDown } from "./zerg-meter-motion.mjs?v=20261113-zm3";
+import { valueToY, roachTop, createMotion, meterValue, parseLastEventRow, createFightQueue, fightTitle, shouldFadeDown, hasArrived } from "./zerg-meter-motion.mjs?v=20261113-zm4";
 
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
@@ -34,9 +34,12 @@ const laserEl = document.getElementById("zmLaser");
 const motion = createMotion();
 
 // Laser marks: on a kill or death the roach leaves a laser mark at that
-// level (owner 2026-11-13). A mark stays 4 s from when its fight came
-// from the queue, then disappears outright. At most two are alive at
-// once (4 s life / 2 s dwell); the cap is insurance only.
+// level (owner 2026-11-13). The mark is placed when the roach ARRIVES
+// there — not when the fight starts showing, while the roach is still
+// travelling — or when it departs to the next fight, whichever comes
+// first. A mark stays 4 s from placement, then disappears outright. At
+// most a few are alive at once (4 s life / 2 s dwell, plus late
+// departures); the cap is insurance only.
 const MARK_MS = 4000;
 const marks = [];
 function placeMark(zerg) {
@@ -254,17 +257,21 @@ function demoTarget(nowMs) {
 let lastShown = null;
 let lastTitle = "";
 let faded = false; // the meter has faded down to rest after the idle window
+let pendingMark = null; // the fight on display whose mark isn't placed yet
 function frame(nowMs) {
   // The queue's turn: one fight per dwell, in fight order. The title is
   // rebuilt for every new fight even when the value is unchanged (two
   // opponents can share a Zerg), so it gets its own check below.
   const next = demo ? null : fightQueue.tick(nowMs);
   if (next) {
+    // The roach leaves the previous fight's mark as it departs (it got as
+    // close as the dwell allowed); the new fight's mark waits for arrival.
+    if (pendingMark) placeMark(pendingMark.zerg);
     currentValue = meterValue(lifeZerg, next.zerg);
     displayName = next.name;
     displayKind = next.kind;
     faded = false;
-    placeMark(next.zerg); // the roach leaves a laser mark at that level
+    pendingMark = next;
   }
   // Decay (owner 2026-11-13): no kills or deaths shown for 10 s and the
   // queue empty — the meter fades down to rest (own lifetime 🪳). The
@@ -278,11 +285,20 @@ function frame(nowMs) {
     faded,
   })) {
     faded = true;
+    if (pendingMark) placeMark(pendingMark.zerg); // leave the last mark behind
+    pendingMark = null;
     currentValue = lifeZerg;
     displayName = me.name;
     displayKind = null;
   }
   const shown = motion.update(demo ? demoTarget(nowMs) : currentValue, nowMs);
+  // The mark goes down when the roach arrives at the level — never before
+  // it moved. (A big fall can outlast the dwell; the departure above
+  // covers that case.)
+  if (pendingMark && hasArrived(shown, pendingMark.zerg)) {
+    placeMark(pendingMark.zerg);
+    pendingMark = null;
+  }
   if (shown != null && (lastShown == null || Math.abs(shown - lastShown) > 0.005)) {
     lastShown = shown;
     roachEl.style.top = `${(roachTop(shown) * 100).toFixed(3)}%`;
