@@ -188,7 +188,7 @@ describe("odometer counter: whole number, three wheels, dashes when unknown", ()
     assert.equal(odoDigits(150), "100", "clamps to the top of the scale");
     assert.equal(odoDigits(0), "000");
   });
-  it("a missing value reads dashes, never a number that isn't the value", () => {
+  it("a missing value reads as no value — the wheels hold their last reading, never a number that isn't the value", () => {
     assert.equal(odoDigits(null), null);
     assert.equal(odoDigits(undefined), null);
     assert.equal(odoDigits(NaN), null);
@@ -292,7 +292,7 @@ describe("page: meter only, and shared pins match live.mjs", () => {
       };
       assert.equal(pin(meter), pin(live), `${mod} pin`);
     }
-    assert.match(read("zerg-meter.html"), /zerg-meter\.mjs\?v=20261113-zm18/);
+    assert.match(read("zerg-meter.html"), /zerg-meter\.mjs\?v=20261113-zm19/);
     assert.match(meter, /zerg-meter-motion\.mjs\?v=20261113-zm10/); // motion module unchanged this round
   });
 });

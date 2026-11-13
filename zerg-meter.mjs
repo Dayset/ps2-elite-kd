@@ -38,21 +38,23 @@ const motion = createMotion();
 // forward past 9→0 and backward past 0→9 without ever going the long way
 // round (odoStep: a rise 9→0 is +1, a fall 0→9 is −1) and without ever
 // running off the end of the strip (a wheel can move up to 9 steps from
-// the middle copy and still be on the strip). A dash span covers the
-// wheel when there is no value yet. The roll is driven by JS (the frame
-// loop below), not a CSS transition — a transition might not run on the
-// user's phone, which runs with animations disabled. data-value carries
-// the reading for the test harness (the strip's text is all ten digits,
-// so it can't be read from the text alone).
+// the middle copy and still be on the strip). The roll is driven by JS
+// (the frame loop below), not a CSS transition — a transition might not
+// run on the user's phone, which runs with animations disabled.
+// data-value carries the reading for the test harness (the strip's text
+// is all ten digits, so it can't be read from the text alone). There are
+// NO dashes: a still odometer (unknown fight, or no value yet) keeps its
+// last reading, and before the first reading the wheels are simply blank
+// (hidden) — never "–––".
 const odoEl = document.getElementById("zmOdo");
 const odoStrips = [];
 const odoWins = [];
-const odoDashes = [];
 for (let i = 0; i < 3; i++) {
   const win = document.createElement("div");
   win.className = "zm-odo-digit";
   const strip = document.createElement("div");
   strip.className = "zm-odo-strip";
+  strip.style.visibility = "hidden"; // blank until the first reading
   for (let copy = 0; copy < 5; copy++) {
     for (const ch of "0123456789") {
       const s = document.createElement("span");
@@ -60,16 +62,10 @@ for (let i = 0; i < 3; i++) {
       strip.appendChild(s);
     }
   }
-  const dash = document.createElement("div");
-  dash.className = "zm-odo-dash";
-  dash.textContent = "–";
-  dash.hidden = true;
   win.appendChild(strip);
-  win.appendChild(dash);
   odoEl.appendChild(win);
   odoStrips.push(strip);
   odoWins.push(win);
-  odoDashes.push(dash);
 }
 // Wheel position, in strip-index units (a float while rolling). The middle
 // copy (indices 20–29) is home, so a wheel can roll up to 9 steps either
@@ -77,28 +73,27 @@ for (let i = 0; i < 3; i++) {
 const odoPos = [20, 20, 20];
 const odoTarget = [20, 20, 20];
 const ODO_TAU_MS = 90; // the roll eases into its target
-let lastOdo = null; // last 3-digit reading ("024") or null (dashes)
+let lastOdo = null; // last 3-digit reading ("024"), or null (never had one)
 let lastOdoMs = null;
 function updateOdo(value, nowMs) {
-  const digits = odoDigits(value); // "024" or null (dashes)
-  const text = digits ?? "–––";
-  if (text === lastOdo) return;
-  const prev = lastOdo == null ? null : Number(lastOdo);
-  const next = digits == null ? null : Number(digits);
-  lastOdo = text;
-  odoEl.dataset.value = text;
+  const digits = odoDigits(value); // "024" or null (no value)
   if (digits == null) {
-    // No value: dashes, no roll (a state change, not a digit step).
-    odoDashes.forEach((d) => { d.hidden = false; });
+    // No value (unknown fight, or no value yet): the wheels stay where
+    // they are — a still odometer keeps its last reading, never dashes.
+    // Before the first reading the wheels stay blank (hidden).
     return;
   }
-  odoDashes.forEach((d) => { d.hidden = true; });
-  // Coming out of dashes, the wheels have no position — snap them to the
-  // reading (no roll from a dash). Otherwise roll each wheel in the
-  // direction the value moved (odoStep). The target is always an integer:
-  // it is built from the ROUNDED position, not the mid-roll float — a
-  // target built from the float keeps its fractional part, so the wheel
-  // settles between two digits (a bar across the middle, numbers unread).
+  const text = digits;
+  if (text === lastOdo) return;
+  const prev = lastOdo == null ? null : Number(lastOdo);
+  const next = Number(digits);
+  lastOdo = text;
+  odoEl.dataset.value = text;
+  // First reading: reveal the wheels (they start hidden/blank).
+  odoStrips.forEach((strip) => { strip.style.visibility = ""; });
+  // Coming out of blank, the wheels have no position — snap them to the
+  // reading (no roll from blank). Otherwise roll each wheel in the
+  // direction the value moved (odoStep).
   const increasing = prev != null && next > prev;
   odoStrips.forEach((strip, i) => {
     const to = Number(digits[i]);
@@ -531,7 +526,7 @@ function frame(nowMs) {
     const t = fightTitle(displayKind, displayName, displayUnknown ? null : shown);
     if (t !== lastTitle) { document.title = t; lastTitle = t; }
   }
-  updateOdo(displayUnknown ? null : shown, nowMs); // unknown fight: dashes, like the "?" in the title
+  updateOdo(displayUnknown ? null : shown, nowMs); // unknown fight: no value — the wheels hold their last reading, never dashes
   stepOdo(nowMs);
   requestAnimationFrame(frame);
 }

@@ -187,9 +187,10 @@ export function fightTitle(kind, name, value) {
 }
 
 /** Odometer counter: the displayed value as 3 wheels (000–100), rounded
-    to a whole number; null when there is no value yet (the wheels show
-    dashes). The title carries the decimal; the counter is the whole
-    number. Pure — unit-tested in test/zerg-meter.test.mjs. */
+    to a whole number; null when there is no value yet (the wheels hold
+    their last reading, or stay blank before the first — never dashes).
+    The title carries the decimal; the counter is the whole number. Pure —
+    unit-tested in test/zerg-meter.test.mjs. */
 export function odoDigits(value) {
   if (value == null || Number.isNaN(value)) return null;
   const n = Math.max(0, Math.min(100, Math.round(value)));
