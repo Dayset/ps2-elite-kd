@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>🧬 Player archetypes — PS2 Elite</title>
+  <meta name="description" content="PlanetSide 2 player archetypes from the stats PS2 Elite already collects: elite solo, fast grinder, zerg-rider, peaky, selective, vehicle-heavy and more — every group with its medians." />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" href="favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="manifest" href="site.webmanifest" />
+  <meta name="theme-color" content="#202020" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <meta name="apple-mobile-web-app-title" content="PS2Elite" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="PS2 Elite" />
+  <meta property="og:title" content="PS2 Elite — player archetypes" />
+  <meta property="og:description" content="Groups of PlanetSide 2 players by how they actually play, with the medians behind every group." />
+  <meta property="og:url" content="https://dayset.github.io/ps2-elite-kd/archetypes.html" />
+  <meta property="og:image" content="https://dayset.github.io/ps2-elite-kd/assets/placeholder-graph.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="PS2 Elite — player archetypes" />
+  <meta name="twitter:description" content="Groups of PlanetSide 2 players by how they actually play, with the medians behind every group." />
+  <meta name="twitter:image" content="https://dayset.github.io/ps2-elite-kd/assets/placeholder-graph.png" />
+  <link rel="stylesheet" href="styles.css?v=20261103-replay1" />
+  <style>
+    /* Archetypes page only: summary table + detail panel on top of styles.css. */
+    .arch-head { max-width: 1180px; margin: 0 auto; padding: 18px 14px 0; }
+    .arch-head h1 { font-size: 1.5em; margin: 0 0 4px; }
+    .arch-head p { margin: 0 0 12px; }
+    .arch-crumbs { font-size: 0.95em; margin-bottom: 10px; }
+    .arch-controls { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: end;
+      max-width: 1180px; margin: 0 auto; padding: 0 14px 10px; }
+    .arch-controls button { font: inherit; padding: 6px 12px; border-radius: 0; cursor: pointer; }
+    .arch-controls button[aria-pressed="true"] { font-weight: 700; }
+    .arch-controls label { display: flex; flex-direction: column; gap: 3px; font-size: 0.9em; }
+    .arch-controls input[type="search"] {
+      font: inherit; padding: 5px 8px; border: 1px solid var(--border, #888);
+      border-radius: 0; background: var(--bg, #fff); color: var(--text, #111); }
+    .arch-status { max-width: 1180px; margin: 0 auto; padding: 0 14px 10px; font-size: 0.95em; }
+    .arch-found { max-width: 1180px; margin: 0 auto; padding: 0 14px 10px; font-size: 0.95em; }
+    .arch-wrap { max-width: 1180px; margin: 0 auto; padding: 0 14px 18px; overflow-x: auto; }
+    #archTable { width: 100%; }
+    #archTable tbody tr[data-arch] { cursor: pointer; }
+    #archTable tbody tr[data-arch]:hover td { background: var(--grid); }
+    #archTable tbody tr.arch-selected td { background: var(--grid); font-weight: 600; }
+    #archTable td { white-space: nowrap; }
+    #archTable td .arch-rule { font-size: 0.85em; opacity: 0.75; }
+    .arch-detail { max-width: 1180px; margin: 0 auto; padding: 0 14px 18px; }
+    .arch-detail h2 { font-size: 1.25em; margin: 0 0 6px; }
+    .arch-detail p { margin: 0 0 10px; }
+    .arch-rule-line { font-size: 0.95em; }
+    .arch-note { max-width: 1180px; margin: 0 auto; padding: 0 14px 22px; font-size: 0.9em; }
+  </style>
+</head>
+<body class="main-page">
+  <header class="site-nav" aria-label="Site sections">
+    <nav style="display:contents" aria-label="Main">
+        <a class="sn-brand" href="index.html">⚔️ PS2 Elite</a>
+        <a href="index.html">📊 Players</a>
+        <a href="weapon-compare.html">⚖️ Weapons</a>
+        <a href="oracle/">🔮 Oracle</a>
+        <a href="outfits.html">🛡️ Outfits</a>
+        <a href="columns.html" class="sn-hide-m">📖 Columns</a>
+        <a href="dense-advanced-infantry-guide.html">🎯 Guide</a>
+        <a href="archive.html">📚 Archive</a>
+        <a href="updates.html" class="sn-hide-m">📝 Updates</a>
+        <a href="privacy.html" class="sn-hide-m">🔒 Privacy</a>
+    </nav>
+  </header>
+  <header class="arch-head">
+    <p class="arch-crumbs"><a href="index.html">⚔️ Players</a> · <a href="live.html">🎥 Live feed</a> · <a href="columns.html">📖 What the columns mean</a> · <a href="online.html">🟢 Online now</a></p>
+    <h1>🧬 Player archetypes</h1>
+    <p>Groups of players by how they actually play, from the stats this site already collects. The rules run in order and the first match wins, so every player lands in exactly one group. Click a row to see the group in detail — its medians and its top 10 players by ⚔️ iVi. Type a name to find your own archetype.</p>
+  </header>
+
+  <div class="arch-controls">
+    <button type="button" id="archRoomPc" aria-pressed="true">PC</button>
+    <button type="button" id="archRoomPs" aria-pressed="false">PlayStation</button>
+    <label>Find a player
+      <input type="search" id="archSearch" placeholder="player name" autocomplete="off" />
+    </label>
+  </div>
+
+  <p class="arch-status" id="archStatus" role="status">Loading ranks…</p>
+  <div class="arch-found" id="archFound" role="status"></div>
+
+  <div class="arch-wrap">
+    <table class="ranks-table" id="archTable" aria-label="Player archetypes">
+      <thead>
+        <tr>
+          <th scope="col">Archetype</th>
+          <th scope="col">Players</th>
+          <th scope="col">Share</th>
+          <th scope="col" title="Median adjusted ⚔️ iVi before the 🪳 evening-out (ranks.json adjs)">⚔️ iVi</th>
+          <th scope="col" title="Median 🧘 Pure iVi: adjs × (1 − 0.00436 × 🪳)">🧘 Pure</th>
+          <th scope="col" title="Median realistic K/D">☠️ K/D</th>
+          <th scope="col" title="Median lifetime K/D (Census)">K/D</th>
+          <th scope="col" title="Median own KPM">own KPM</th>
+          <th scope="col" title="Median 🦁 Brave">🦁 Brave</th>
+          <th scope="col" title="Median 🪳 Zerg (lower is more solo)">🪳 Zerg</th>
+          <th scope="col" title="Median 🪖 Infantry %">🪖 Infantry</th>
+        </tr>
+      </thead>
+      <tbody id="archBody">
+        <tr><td colspan="11">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="arch-detail" id="archDetail"></div>
+
+  <p class="arch-note" id="archNote">
+    PC room. 🪳 Zerg and 🧘 Pure use the same formulas as the Rankings table.
+  </p>
+  <p class="arch-note">
+    How the groups were made: a plain k-means over the same fields mostly just re-sorted players by skill, so these groups are a decision tree on the site's own numbers instead — reproducible from <code>ranks.json</code> alone. Medians are computed live from the current snapshot, so they move when the data refreshes. Hidden players are already left out of <code>ranks.json</code>. Archetypes are automated groupings from public stats, not verdicts about any player — see the disclaimer in the footer.
+  </p>
+
+  <footer>
+    <section class="footer-block" aria-label="About, links and options">
+      <div class="foot-grid">
+        <div class="foot-col foot-about">
+          <div class="foot-brand">⚔️ PS2 Elite</div>
+        </div>
+        <nav class="foot-col foot-links" aria-label="More pages">
+          <div class="foot-h">Learn more</div>
+          <a href="index.html">⚔️ Players</a>
+          <a href="live.html">🎥 Live feed</a>
+          <a href="columns.html">📖 What the columns mean</a>
+          <a href="outfits.html">🛡️ Outfits</a>
+          <a href="privacy.html">🔒 Privacy</a>
+          <a href="https://github.com/Dayset/ps2-elite-kd" target="_blank" rel="noopener noreferrer">💻 Dayset</a>
+        </nav>
+        <div class="foot-col foot-opts footer-row">
+          <div class="foot-h">Options</div>
+          <div class="foot-stats-block">
+            <p class="footer-thanks"><span>Data from the Daybreak Census API</span></p>
+            <p class="footer-thanks"><span>Thanks to</span> <a href="https://wt.honu.pw/" target="_blank" rel="noopener noreferrer">HONU</a> / Varunda</p>
+          </div>
+        </div>
+      </div>
+      <div class="foot-bottom">
+        <details class="disclaimer">
+          <summary>Disclaimer</summary>
+          <p>All numbers, ratings, charts and flags on this site are automated estimates from public data (the Daybreak Census API and Honu). They can be wrong, incomplete or out of date, and they are not facts, proof or accusations about any player. Don't take them seriously, and don't use them to harass anyone.</p>
+          <p>Not affiliated with or endorsed by Daybreak Game Company or Honu. PlanetSide and PlanetSide 2 are registered trademarks of Daybreak Game Company LLC; game images and names belong to Daybreak.</p>
+        </details>
+        <span class="foot-legal">MIT licensed · not affiliated with Daybreak</span>
+      </div>
+    </section>
+  </footer>
+
+  <script type="module" src="archetypes.mjs?v=20261114-arch1"></script>
+</body>
+</html>
