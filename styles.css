@@ -3101,6 +3101,40 @@ body.main-page .dist-section { margin-bottom: 0.34rem; }
 body.main-page footer { margin-top: 0.4rem; }
 body.main-page footer .footer-block { margin-top: 0.3rem; }
 
+/* Side pages (fresh, online, archetypes): explanatory text sits in the same
+ * bordered panel as the main page's filter bar, so it never floats bare. */
+.pg-box {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  padding: 0.6rem 0.9rem;
+  margin: 0 0 0.5rem;
+  line-height: 1.5;
+}
+.pg-box h1, .pg-box h2 { margin: 0 0 0.3rem; }
+.pg-box p { margin: 0 0 0.4rem; }
+.pg-box p:last-child { margin-bottom: 0; }
+
+/* One content column for the side pages, with the Guide's header block
+ * (big title, dek, mono meta rule) so the header and every box and table
+ * share the same left and right edges. */
+.pg-wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px 18px; }
+.pg-lead { padding: 28px 0 10px; }
+.pg-lead h1 {
+  font-size: clamp(30px, 5.4vw, 52px);
+  line-height: 1.02; font-weight: 900; letter-spacing: -0.02em;
+  margin: 0 0 12px;
+}
+.pg-lead p.pg-dek { font-size: clamp(15px, 2vw, 18px); max-width: 68ch; margin: 0 0 14px; }
+.pg-meta {
+  display: flex; flex-wrap: wrap; gap: 6px 20px;
+  font-family: ui-monospace, "IBM Plex Mono", monospace; font-size: 12.5px;
+  border-top: 2px solid var(--text); border-bottom: 1px solid var(--grid);
+  padding: 8px 0; margin: 0 0 14px;
+}
+.pg-meta b { font-weight: 600; }
+.pg-wrap .ranks-table-wrap { max-height: none; }
+
 /* PC | PlayStation rooms (#55). The PS room is marked on <html data-room="ps">
  * so a visitor always sees which room they are in; Live (PC only) never shows. */
 html[data-room="ps"] #liveBtn { display: none !important; }

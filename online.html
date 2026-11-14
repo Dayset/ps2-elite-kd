@@ -26,25 +26,17 @@
   <meta name="twitter:title" content="PS2 Elite — who is online now" />
   <meta name="twitter:description" content="Every PlanetSide 2 player online right now (Honu), with server and the PS2 Elite stats we collect." />
   <meta name="twitter:image" content="https://dayset.github.io/ps2-elite-kd/assets/placeholder-graph.png" />
-  <link rel="stylesheet" href="styles.css?v=20261103-replay1" />
+  <link rel="stylesheet" href="styles.css?v=20261114-pgbox" />
   <style>
-    /* Online page only: filter bar + table tweaks on top of styles.css. */
-    .online-head { max-width: 1180px; margin: 0 auto; padding: 18px 14px 0; }
-    .online-head h1 { font-size: 1.5em; margin: 0 0 4px; }
-    .online-head p { margin: 0 0 12px; }
-    .online-crumbs { font-size: 0.95em; margin-bottom: 10px; }
-    .online-filters { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: end;
-      max-width: 1180px; margin: 0 auto; padding: 0 14px 10px; }
+    /* Online page only: filter controls and sortable headers on top of styles.css. */
+    .online-filters { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: end; }
     .online-filters label { display: flex; flex-direction: column; gap: 3px; font-size: 0.9em; }
     .online-filters select, .online-filters input[type="search"] {
       font: inherit; padding: 5px 8px; border: 1px solid var(--border, #888);
-      border-radius: 6px; background: var(--bg, #fff); color: var(--text, #111); }
+      border-radius: 0; background: var(--bg, #fff); color: var(--text, #111); }
     .online-filters .chk { flex-direction: row; align-items: center; gap: 6px; }
-    .online-filters button { font: inherit; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
-    .online-status { max-width: 1180px; margin: 0 auto; padding: 0 14px 10px; font-size: 0.95em; }
+    .online-filters button { font: inherit; padding: 6px 12px; border-radius: 0; cursor: pointer; }
     .online-status .err { color: #c00; }
-    .online-wrap { max-width: 1180px; margin: 0 auto; padding: 0 14px 18px; overflow-x: auto; }
-    #onlineTable { width: 100%; }
     #onlineTable th[data-sort] { cursor: pointer; white-space: nowrap; }
     #onlineTable th[data-sort]:hover { text-decoration: underline; }
     #onlineTable td { white-space: nowrap; }
@@ -52,86 +44,106 @@
     #onlineTable td .on-tag { opacity: 0.75; }
     #onlineTable td .on-since { font-size: 0.85em; opacity: 0.75; }
     #onlineTable td .on-dash { opacity: 0.5; }
-    .online-note { max-width: 1180px; margin: 0 auto; padding: 0 14px 22px; font-size: 0.9em; }
   </style>
 </head>
 <body class="main-page">
-  <header class="online-head">
-    <p class="online-crumbs"><a href="index.html">⚔️ Players</a> · <a href="live.html">🎥 Live feed</a> · <a href="columns.html">📖 What the columns mean</a></p>
-    <h1>🟢 Online now</h1>
-    <p>Every player Honu sees online right now, with the server they are actually playing on and the stats we collect for them. Ranked names open their sheet on the Players page; unranked names open their Honu profile. The list refreshes every 60 seconds.</p>
+  <header class="site-nav" aria-label="Site sections">
+    <nav style="display:contents" aria-label="Main">
+        <a class="sn-brand" href="index.html">⚔️ PS2 Elite</a>
+        <a href="index.html">📊 Players</a>
+        <a href="weapon-compare.html">⚖️ Weapons</a>
+        <a href="oracle/">🔮 Oracle</a>
+        <a href="outfits.html">🛡️ Outfits</a>
+        <a href="columns.html" class="sn-hide-m">📖 Columns</a>
+        <a href="dense-advanced-infantry-guide.html">🎯 Guide</a>
+        <a href="archive.html">📚 Archive</a>
+        <a href="updates.html" class="sn-hide-m">📝 Updates</a>
+        <a href="privacy.html" class="sn-hide-m">🔒 Privacy</a>
+    </nav>
   </header>
 
-  <div class="online-filters" id="onlineFilters">
-    <label>Server
-      <select id="onlineServer">
-        <option value="all">All servers</option>
-      </select>
-    </label>
-    <label>Faction
-      <select id="onlineFaction">
-        <option value="all">All factions</option>
-        <option value="1">VS</option>
-        <option value="2">NC</option>
-        <option value="3">TR</option>
-        <option value="4">NS</option>
-      </select>
-    </label>
-    <label>Sort by
-      <select id="onlineSort">
-        <option value="ivi">⚔️ iVi (high first)</option>
-        <option value="pure">🧘 Pure iVi (high first)</option>
-        <option value="kd">K/D (high first)</option>
-        <option value="kpm">KPM (high first)</option>
-        <option value="zerg">🪳 Zerg (low first)</option>
-        <option value="assists">🤝 Assists (low first)</option>
-        <option value="br">Battle rank (high first)</option>
-        <option value="name">Name (A–Z)</option>
-        <option value="session">Longest online first</option>
-      </select>
-    </label>
-    <label>Search
-      <input type="search" id="onlineSearch" placeholder="player name" autocomplete="off" />
-    </label>
-    <label class="chk"><input type="checkbox" id="onlineRankedOnly" /> Ranked only</label>
-    <button type="button" id="onlineRefresh">↻ Refresh now</button>
-  </div>
+  <main class="pg-wrap">
+    <header class="pg-lead">
+      <h1>🟢 Online now</h1>
+      <p class="pg-dek">Every player Honu sees online right now, with the server they are actually playing on and the stats we collect for them. Ranked names open their sheet on the Players page; unranked names open their Honu profile. The list refreshes every 60 seconds.</p>
+      <div class="pg-meta">
+        <a href="index.html">⚔️ Players</a>
+        <a href="live.html">🎥 Live feed</a>
+        <a href="columns.html">📖 What the columns mean</a>
+      </div>
+    </header>
 
-  <p class="online-status" id="onlineStatus" role="status">Loading the online list…</p>
+    <div class="pg-box online-filters" id="onlineFilters">
+      <label>Server
+        <select id="onlineServer">
+          <option value="all">All servers</option>
+        </select>
+      </label>
+      <label>Faction
+        <select id="onlineFaction">
+          <option value="all">All factions</option>
+          <option value="1">VS</option>
+          <option value="2">NC</option>
+          <option value="3">TR</option>
+          <option value="4">NS</option>
+        </select>
+      </label>
+      <label>Sort by
+        <select id="onlineSort">
+          <option value="ivi">⚔️ iVi (high first)</option>
+          <option value="pure">🧘 Pure iVi (high first)</option>
+          <option value="kd">K/D (high first)</option>
+          <option value="kpm">KPM (high first)</option>
+          <option value="zerg">🪳 Zerg (low first)</option>
+          <option value="assists">🤝 Assists (low first)</option>
+          <option value="br">Battle rank (high first)</option>
+          <option value="name">Name (A–Z)</option>
+          <option value="session">Longest online first</option>
+        </select>
+      </label>
+      <label>Search
+        <input type="search" id="onlineSearch" placeholder="player name" autocomplete="off" />
+      </label>
+      <label class="chk"><input type="checkbox" id="onlineRankedOnly" /> Ranked only</label>
+      <button type="button" id="onlineRefresh">↻ Refresh now</button>
+    </div>
 
-  <div class="online-wrap">
-    <table class="ranks-table" id="onlineTable" aria-label="Players online now">
-      <thead>
-        <tr>
-          <th scope="col" data-sort="name">Player</th>
-          <th scope="col" data-sort="faction">Faction</th>
-          <th scope="col" data-sort="server">Server</th>
-          <th scope="col" data-sort="zone">Continent</th>
-          <th scope="col" data-sort="br" title="Battle rank ~ prestige, as Honu shows it">BR</th>
-          <th scope="col" data-sort="ivi" title="Evened ⚔️ iVi from the Rankings table (data/ranks.json, adj)">⚔️ iVi</th>
-          <th scope="col" data-sort="kd" title="Lifetime K/D (Census)">K/D</th>
-          <th scope="col" data-sort="kpm" title="Lifetime KPM (Census)">KPM</th>
-          <th scope="col" data-sort="assists" title="🤝 Assists per kill in recent Honu sessions">🤝 Assists</th>
-          <th scope="col" data-sort="inf" title="🪖 Infantry: share of kills on foot">🪖 Infantry</th>
-          <th scope="col" data-sort="zerg" title="🪳 Zerg, same score as the Rankings table (lower is more solo)">🪳 Zerg</th>
-          <th scope="col" data-sort="pure" title="🧘 Pure iVi: plain ⚔️ iVi with the uncentered 🪳 charge, adjs × (1 − 0.00436 × 🪳)">🧘 Pure</th>
-          <th scope="col" data-sort="session">Session</th>
-        </tr>
-      </thead>
-      <tbody id="onlineBody">
-        <tr><td colspan="13">Loading…</td></tr>
-      </tbody>
-    </table>
-  </div>
+    <p class="ranks-status online-status" id="onlineStatus" role="status">Loading the online list…</p>
 
-  <p class="online-note">
-    Online list: <a href="https://wt.honu.pw/online" target="_blank" rel="noopener noreferrer">Honu / Online</a>
-    (<code>GET /api/character/online/players</code>, fetched live from your browser — no Honu quota used, no snapshot to go stale).
-    Server is the world Honu sees them on right now, not the home server in our ranks.
-    Stats come from <code>data/ranks.json</code> (same numbers as the Rankings table); PlayStation players have no PC ranks, so their stats show “—”, never 0.
-    🌈 G lives on the player sheet — open a ranked name to see it.
-    Session “view” opens the Honu session; the time under it is how long ago they logged in.
-  </p>
+    <div class="ranks-table-wrap">
+      <table class="ranks-table" id="onlineTable" aria-label="Players online now">
+        <thead>
+          <tr>
+            <th scope="col" data-sort="name">Player</th>
+            <th scope="col" data-sort="faction">Faction</th>
+            <th scope="col" data-sort="server">Server</th>
+            <th scope="col" data-sort="zone">Continent</th>
+            <th scope="col" data-sort="br" title="Battle rank ~ prestige, as Honu shows it">BR</th>
+            <th scope="col" data-sort="ivi" title="Evened ⚔️ iVi from the Rankings table (data/ranks.json, adj)">⚔️ iVi</th>
+            <th scope="col" data-sort="kd" title="Lifetime K/D (Census)">K/D</th>
+            <th scope="col" data-sort="kpm" title="Lifetime KPM (Census)">KPM</th>
+            <th scope="col" data-sort="assists" title="🤝 Assists per kill in recent Honu sessions">🤝 Assists</th>
+            <th scope="col" data-sort="inf" title="🪖 Infantry: share of kills on foot">🪖 Infantry</th>
+            <th scope="col" data-sort="zerg" title="🪳 Zerg, same score as the Rankings table (lower is more solo)">🪳 Zerg</th>
+            <th scope="col" data-sort="pure" title="🧘 Pure iVi: plain ⚔️ iVi with the uncentered 🪳 charge, adjs × (1 − 0.00436 × 🪳)">🧘 Pure</th>
+            <th scope="col" data-sort="session">Session</th>
+          </tr>
+        </thead>
+        <tbody id="onlineBody">
+          <tr><td colspan="13">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pg-box">
+      <p>Online list: <a href="https://wt.honu.pw/online" target="_blank" rel="noopener noreferrer">Honu / Online</a>
+      (<code>GET /api/character/online/players</code>, fetched live from your browser — no Honu quota used, no snapshot to go stale).
+      Server is the world Honu sees them on right now, not the home server in our ranks.
+      Stats come from <code>data/ranks.json</code> (same numbers as the Rankings table); PlayStation players have no PC ranks, so their stats show “—”, never 0.
+      🌈 G lives on the player sheet — open a ranked name to see it.
+      Session “view” opens the Honu session; the time under it is how long ago they logged in.</p>
+    </div>
+  </main>
 
   <footer>
     <section class="footer-block" aria-label="About, links and options">

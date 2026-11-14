@@ -26,35 +26,25 @@
   <meta name="twitter:title" content="PS2 Elite — player archetypes" />
   <meta name="twitter:description" content="Groups of PlanetSide 2 players by how they actually play, with the medians behind every group." />
   <meta name="twitter:image" content="https://dayset.github.io/ps2-elite-kd/assets/placeholder-graph.png" />
-  <link rel="stylesheet" href="styles.css?v=20261103-replay1" />
+  <link rel="stylesheet" href="styles.css?v=20261114-pgbox" />
   <style>
-    /* Archetypes page only: summary table + detail panel on top of styles.css. */
-    .arch-head { max-width: 1180px; margin: 0 auto; padding: 18px 14px 0; }
-    .arch-head h1 { font-size: 1.5em; margin: 0 0 4px; }
-    .arch-head p { margin: 0 0 12px; }
-    .arch-crumbs { font-size: 0.95em; margin-bottom: 10px; }
-    .arch-controls { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: end;
-      max-width: 1180px; margin: 0 auto; padding: 0 14px 10px; }
+    /* Archetypes page only: room buttons, search, clickable rows and the detail panel on top of styles.css. */
+    .arch-controls { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: end; }
     .arch-controls button { font: inherit; padding: 6px 12px; border-radius: 0; cursor: pointer; }
     .arch-controls button[aria-pressed="true"] { font-weight: 700; }
     .arch-controls label { display: flex; flex-direction: column; gap: 3px; font-size: 0.9em; }
     .arch-controls input[type="search"] {
       font: inherit; padding: 5px 8px; border: 1px solid var(--border, #888);
       border-radius: 0; background: var(--bg, #fff); color: var(--text, #111); }
-    .arch-status { max-width: 1180px; margin: 0 auto; padding: 0 14px 10px; font-size: 0.95em; }
-    .arch-found { max-width: 1180px; margin: 0 auto; padding: 0 14px 10px; font-size: 0.95em; }
-    .arch-wrap { max-width: 1180px; margin: 0 auto; padding: 0 14px 18px; overflow-x: auto; }
-    #archTable { width: 100%; }
+    .arch-wrap { overflow-x: auto; }
     #archTable tbody tr[data-arch] { cursor: pointer; }
     #archTable tbody tr[data-arch]:hover td { background: var(--grid); }
     #archTable tbody tr.arch-selected td { background: var(--grid); font-weight: 600; }
     #archTable td { white-space: nowrap; }
     #archTable td .arch-rule { font-size: 0.85em; opacity: 0.75; }
-    .arch-detail { max-width: 1180px; margin: 0 auto; padding: 0 14px 18px; }
+    .arch-detail:empty { display: none; }
     .arch-detail h2 { font-size: 1.25em; margin: 0 0 6px; }
-    .arch-detail p { margin: 0 0 10px; }
     .arch-rule-line { font-size: 0.95em; }
-    .arch-note { max-width: 1180px; margin: 0 auto; padding: 0 14px 22px; font-size: 0.9em; }
   </style>
 </head>
 <body class="main-page">
@@ -72,54 +62,60 @@
         <a href="privacy.html" class="sn-hide-m">🔒 Privacy</a>
     </nav>
   </header>
-  <header class="arch-head">
-    <p class="arch-crumbs"><a href="index.html">⚔️ Players</a> · <a href="live.html">🎥 Live feed</a> · <a href="columns.html">📖 What the columns mean</a> · <a href="online.html">🟢 Online now</a></p>
-    <h1>🧬 Player archetypes</h1>
-    <p>Groups of players by how they actually play, from the stats this site already collects. The rules run in order and the first match wins, so every player lands in exactly one group. Click a row to see the group in detail — its medians and its top 10 players by ⚔️ iVi. Type a name to find your own archetype.</p>
-  </header>
 
-  <div class="arch-controls">
-    <button type="button" id="archRoomPc" aria-pressed="true">PC</button>
-    <button type="button" id="archRoomPs" aria-pressed="false">PlayStation</button>
-    <label>Find a player
-      <input type="search" id="archSearch" placeholder="player name" autocomplete="off" />
-    </label>
-  </div>
+  <main class="pg-wrap">
+    <header class="pg-lead">
+      <h1>🧬 Player archetypes</h1>
+      <p class="pg-dek">Groups of players by how they actually play, from the stats this site already collects. The rules run in order and the first match wins, so every player lands in exactly one group. Click a row to see the group in detail — its medians and its top 10 players by ⚔️ iVi. Type a name to find your own archetype.</p>
+      <div class="pg-meta">
+        <a href="index.html">⚔️ Players</a>
+        <a href="live.html">🎥 Live feed</a>
+        <a href="columns.html">📖 What the columns mean</a>
+        <a href="online.html">🟢 Online now</a>
+      </div>
+    </header>
 
-  <p class="arch-status" id="archStatus" role="status">Loading ranks…</p>
-  <div class="arch-found" id="archFound" role="status"></div>
+    <div class="pg-box arch-controls">
+      <button type="button" id="archRoomPc" aria-pressed="true">PC</button>
+      <button type="button" id="archRoomPs" aria-pressed="false">PlayStation</button>
+      <label>Find a player
+        <input type="search" id="archSearch" placeholder="player name" autocomplete="off" />
+      </label>
+    </div>
 
-  <div class="arch-wrap">
-    <table class="ranks-table" id="archTable" aria-label="Player archetypes">
-      <thead>
-        <tr>
-          <th scope="col">Archetype</th>
-          <th scope="col">Players</th>
-          <th scope="col">Share</th>
-          <th scope="col" title="Median adjusted ⚔️ iVi before the 🪳 evening-out (ranks.json adjs)">⚔️ iVi</th>
-          <th scope="col" title="Median 🧘 Pure iVi: adjs × (1 − 0.00436 × 🪳)">🧘 Pure</th>
-          <th scope="col" title="Median realistic K/D">☠️ K/D</th>
-          <th scope="col" title="Median lifetime K/D (Census)">K/D</th>
-          <th scope="col" title="Median own KPM">own KPM</th>
-          <th scope="col" title="Median 🦁 Brave">🦁 Brave</th>
-          <th scope="col" title="Median 🪳 Zerg (lower is more solo)">🪳 Zerg</th>
-          <th scope="col" title="Median 🪖 Infantry %">🪖 Infantry</th>
-        </tr>
-      </thead>
-      <tbody id="archBody">
-        <tr><td colspan="11">Loading…</td></tr>
-      </tbody>
-    </table>
-  </div>
+    <p class="ranks-status" id="archStatus" role="status">Loading ranks…</p>
+    <p class="ranks-meta" id="archFound" role="status"></p>
 
-  <div class="arch-detail" id="archDetail"></div>
+    <div class="ranks-table-wrap">
+      <table class="ranks-table" id="archTable" aria-label="Player archetypes">
+        <thead>
+          <tr>
+            <th scope="col">Archetype</th>
+            <th scope="col">Players</th>
+            <th scope="col">Share</th>
+            <th scope="col" title="Median adjusted ⚔️ iVi before the 🪳 evening-out (ranks.json adjs)">⚔️ iVi</th>
+            <th scope="col" title="Median 🧘 Pure iVi: adjs × (1 − 0.00436 × 🪳)">🧘 Pure</th>
+            <th scope="col" title="Median realistic K/D">☠️ K/D</th>
+            <th scope="col" title="Median lifetime K/D (Census)">K/D</th>
+            <th scope="col" title="Median own KPM">own KPM</th>
+            <th scope="col" title="Median 🦁 Brave">🦁 Brave</th>
+            <th scope="col" title="Median 🪳 Zerg (lower is more solo)">🪳 Zerg</th>
+            <th scope="col" title="Median 🪖 Infantry %">🪖 Infantry</th>
+          </tr>
+        </thead>
+        <tbody id="archBody">
+          <tr><td colspan="11">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
 
-  <p class="arch-note" id="archNote">
-    PC room. 🪳 Zerg and 🧘 Pure use the same formulas as the Rankings table.
-  </p>
-  <p class="arch-note">
-    How the groups were made: a plain k-means over the same fields mostly just re-sorted players by skill, so these groups are a decision tree on the site's own numbers instead — reproducible from <code>ranks.json</code> alone. Medians are computed live from the current snapshot, so they move when the data refreshes. Hidden players are already left out of <code>ranks.json</code>. Archetypes are automated groupings from public stats, not verdicts about any player — see the disclaimer in the footer.
-  </p>
+    <div class="pg-box arch-detail" id="archDetail"></div>
+
+    <div class="pg-box">
+      <p id="archNote">PC room. 🪳 Zerg and 🧘 Pure use the same formulas as the Rankings table.</p>
+      <p>How the groups were made: a plain k-means over the same fields mostly just re-sorted players by skill, so these groups are a decision tree on the site's own numbers instead — reproducible from <code>ranks.json</code> alone. Medians are computed live from the current snapshot, so they move when the data refreshes. Hidden players are already left out of <code>ranks.json</code>. Archetypes are automated groupings from public stats, not verdicts about any player — see the disclaimer in the footer.</p>
+    </div>
+  </main>
 
   <footer>
     <section class="footer-block" aria-label="About, links and options">
