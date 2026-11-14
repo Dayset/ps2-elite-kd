@@ -270,6 +270,11 @@ footer { color: var(--dim); font-size: var(--fs-12); margin-top: var(--s-5); }
   .det.info[open] > :not(summary) { position: absolute; z-index: 10; left: 0; bottom: calc(100% + 6px); width: min(440px, 80vw); background: var(--panel2); border: 1px solid var(--border); border-radius: 0; padding: var(--s-3) var(--s-3); box-shadow: 0 8px 24px rgba(0,0,0,.55); margin: 0; }
   .det.info[open] > :not(summary) .note, .det.info[open] > .note { margin: 0; }
   footer .det.info[open] > :not(summary) { bottom: calc(100% + 6px); }
+/* About popup: one panel holding locate + the original text below it (2026-11-14).
+   The popup rule above positions every non-summary child absolutely, so two
+   children stacked on the same spot — locate painted over the text. */
+.det.info .aboutpop > .locate { margin-top: 0; }
+.det.info .aboutpop > * + * { margin-top: var(--s-3); }
 }
 
 /* ---------------------------------------------------------------- states + a11y (#18) */
