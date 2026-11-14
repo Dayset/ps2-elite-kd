@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title data-i18n="on.title">PS2 Elite: available outfit names</title>
+  <script>
+    // Same theme key as the main page (set before paint).
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") {
+        document.documentElement.classList.add("no-bg-image");
+      }
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="styles.css?v=20261031-fr1" />
+  <style>
+    /* 🆓 Available outfit names. Shared table look from styles.css (.ranks-table); only the page-specific bits here. */
+    body { overflow: auto; }
+    .st-wrap { max-width: none; margin: 0 auto; padding: 0; }
+    .st-head { position: relative; background: var(--panel); border: 1px solid var(--border); border-radius: 0; padding: 12px 14px 12px 4.75rem; margin-bottom: 12px; }
+    .st-head .lang-select { position: absolute; top: 10px; right: 12px; }
+    .st-back { position: absolute; top: 10px; left: 12px; width: 3rem; height: 3rem; display: inline-flex; align-items: center; justify-content: center; font-size: 1.7rem; line-height: 1; text-decoration: none; background: var(--ctrl-btn-bg); border: 1px solid var(--border); border-radius: 0; }
+    .st-back:hover { border-color: var(--accent); }
+    .st-head h1 { font-size: 1.25rem; margin: 0 0 4px; padding-right: 8.5rem; }
+    .st-sub { color: var(--dim); font-size: 0.85rem; margin: 0; }
+    .st-wrap a { color: var(--accent); }
+    .st-dim { color: var(--dim); }
+    .st-err { color: var(--bad, #ff8a8a); }
+    .on-check { background: var(--panel); border: 1px solid var(--border); border-radius: 0; padding: 10px 12px; margin: 0 0 12px; }
+    .on-check h2 { font-size: 1rem; margin: 0 0 8px; }
+    .on-check-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+    .on-field { display: flex; flex-direction: column; gap: 3px; font-size: 0.8rem; color: var(--dim); }
+    .on-field input, .on-field select { font: inherit; font-size: 0.9rem; color: var(--text); background: var(--panel); border: 1px solid var(--border); border-radius: 0; padding: 5px 8px; box-sizing: border-box; }
+    .on-field input:focus, .on-field select:focus { outline: none; border-color: var(--accent); }
+    .on-name-input { width: 18rem; max-width: 100%; }
+    .on-tag-input { width: 6rem; }
+    .on-check-btn { font: inherit; color: var(--text); background: var(--ctrl-btn-bg); border: 1px solid var(--border); border-radius: 0; padding: 6px 12px; cursor: pointer; }
+    .on-check-btn:hover { border-color: var(--accent); }
+    .on-check-btn:disabled { opacity: 0.6; cursor: default; }
+    .on-result { margin: 8px 0 0; font-size: 0.9rem; }
+    .on-result .on-copy { margin-left: 8px; }
+    .on-copy, .on-recheck { font: inherit; font-size: 0.8rem; color: var(--text); background: var(--ctrl-btn-bg); border: 1px solid var(--border); border-radius: 0; padding: 2px 8px; cursor: pointer; white-space: nowrap; }
+    .on-copy:hover, .on-recheck:hover { border-color: var(--accent); }
+    .on-copy:disabled, .on-recheck:disabled { opacity: 0.6; cursor: default; }
+    .of-bar { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; margin: 0 0 8px; font-size: 0.85rem; }
+    .of-bar #onStatus { flex: 1 1 20rem; }
+    .of-filter { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--border); border-radius: 0; padding: 4px 8px; width: 14rem; max-width: 100%; box-sizing: border-box; }
+    .of-filter:focus { outline: none; border-color: var(--accent); }
+    .on-select { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--border); border-radius: 0; padding: 4px 8px; box-sizing: border-box; }
+    .on-select:focus { outline: none; border-color: var(--accent); }
+    .of-count { color: var(--dim); }
+    /* No pick column here: # sits at the left edge, the outfit name right after it. */
+    .of-table { --rk-fixed: 35rem; }
+    .of-table th.rk-num, .of-table td.rk-num { left: 0; }
+    .of-table th.rk-name, .of-table td.rk-name { left: 2.6rem; }
+    @media (max-width: 600px) { .of-table th.rk-name, .of-table td.rk-name { left: auto; } }
+    .of-table col.of-num { width: 2.6rem; }
+    .of-table col.of-fac { width: 4.5rem; }
+    .of-table col.of-srv { width: 7rem; }
+    .of-table col.of-tag { width: 5rem; }
+    .of-fac { font-weight: 600; }
+    .of-empty { color: var(--dim); text-align: center; }
+    .on-status-cell { font-size: 0.85rem; }
+    .on-status-cell .on-recheck { margin-left: 6px; }
+    .of-notes { color: var(--dim); font-size: 0.8rem; margin: 10px 0 0; }
+    .of-notes p { margin: 0 0 4px; }
+  </style>
+</head>
+<body class="site-page">
+  <main class="st-wrap">
+    <div class="st-head">
+      <a class="st-back" href="outfits.html" aria-label="Back to the outfits" data-i18n-aria-label="on.backOutfits">🔙</a>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+      <h1 data-i18n="on.h1">🆓 Available outfit names</h1>
+      <p class="st-sub" data-i18n="on.sub">Outfit names and tags no one uses yet on PC — checked against the outfits we know and against Daybreak Census. Faction and server are the suggested home for each name: sort by either.</p>
+    </div>
+
+    <section class="on-check" aria-labelledby="onCheckH">
+      <h2 id="onCheckH" data-i18n="on.checkH">Check a name</h2>
+      <div class="on-check-row">
+        <label class="on-field"><span data-i18n="on.nameLabel">Outfit name</span><input id="onName" class="on-name-input" type="text" autocomplete="off" maxlength="32" data-i18n-placeholder="on.namePh" placeholder="e.g. Aurora Relay Division" /></label>
+        <label class="on-field"><span data-i18n="on.tagLabel">Tag (optional)</span><input id="onTag" class="on-tag-input" type="text" autocomplete="off" maxlength="4" data-i18n-placeholder="on.tagPh" placeholder="e.g. ARD" /></label>
+        <label class="on-field"><span data-i18n="on.facLabel">Faction</span><select id="onFac"><option value="vs">VS</option><option value="nc">NC</option><option value="tr">TR</option><option value="nso">NS</option></select></label>
+        <label class="on-field"><span data-i18n="on.srvLabel">Server</span><select id="onSrv"><option value="osprey">Osprey</option><option value="wainwright">Wainwright</option></select></label>
+        <button id="onCheckBtn" class="on-check-btn" type="button" data-i18n="on.checkBtn">Check availability</button>
+      </div>
+      <p id="onResult" class="on-result st-dim" aria-live="polite"></p>
+    </section>
+
+    <div class="of-bar">
+      <span id="onStatus" class="st-dim" aria-live="polite" data-i18n="on.loading">Loading…</span>
+      <input id="onFilter" class="of-filter" type="search" autocomplete="off" placeholder="Filter by tag or name" aria-label="Filter by tag or name" data-i18n-placeholder="on.filter" data-i18n-aria-label="on.filter" />
+      <select id="onFacFilter" class="on-select" aria-label="Filter by faction"><option value="all" data-i18n="on.allFac">All factions</option><option value="vs">VS</option><option value="nc">NC</option><option value="tr">TR</option><option value="nso">NS</option></select>
+      <select id="onSrvFilter" class="on-select" aria-label="Filter by server"><option value="all" data-i18n="on.allSrv">All servers</option><option value="osprey">Osprey</option><option value="wainwright">Wainwright</option></select>
+      <button id="onCheckAllBtn" class="on-check-btn" type="button" data-i18n="on.checkAll">Check all live</button>
+      <span id="onCount" class="of-count"></span>
+    </div>
+
+    <div id="onTableBox">
+      <div id="onScroll" class="ranks-table-wrap">
+        <table id="onTable" class="ranks-table of-table">
+          <colgroup><col class="of-num" /><col class="rk-name-col" /><col class="of-fac" /><col class="of-srv" /><col class="of-tag" /><col /></colgroup>
+          <thead id="onHead"></thead>
+          <tbody id="onBody"></tbody>
+        </table>
+      </div>
+      <div class="of-notes">
+        <p data-i18n="on.noteWide">Names and tags are checked PC-wide: a name taken anywhere on PC is taken everywhere, on either server. Faction and server on a suggestion are where it fits, not a separate availability.</p>
+        <p data-i18n="on.noteSpace">Names that only differ by extra spaces count as taken here — “Recursion” exists three times that way, one per faction, and suggesting a spaced twin would only cause confusion.</p>
+        <p data-i18n="on.noteFresh">Check live again before you create the outfit: someone can take a name after this list was built. The game’s Naming Policy still applies.</p>
+        <p data-i18n="on.noteDaily">PC only for now. PlayStation outfits are a separate namespace.</p>
+        <p><a href="player-names.html" data-i18n="pn.link">🪪 Player name checker</a> · <a href="outfits.html" data-i18n="on.backOutfits">🛡️ Outfits</a> · <a href="index.html" data-i18n="cp.back">Back to the stats</a> · <a href="columns.html" data-i18n="columnsLink">📖 What the columns mean</a> · <a href="privacy.html" data-i18n="foot.privacy">🔒 Privacy</a></p>
+      </div>
+    </div>
+  </main>
+  <script type="module" src="i18n.mjs"></script>
+  <script type="module" src="outfit-names-page.mjs?v=20261114-on1"></script>
+</body>
+</html>
