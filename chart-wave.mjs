@@ -2,7 +2,7 @@
  * The 🌊 wave (the y-scale slider swinging on its own, drawn at most ~120 times a second) and the K/D ⇄ iVi y-scale
  * switch (#66: moved out of app.js unchanged).
  */
-import { isFiniteNum } from "./math.mjs?v=20261027-z79";
+import { isFiniteNum } from "./math.mjs?v=20261114-ysc1";
 import { escapeHtml } from "./app-util.mjs?v=20261027-z79";
 
 /**

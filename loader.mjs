@@ -9,7 +9,7 @@ import { parsePsKey, censusNsBase, PS_SERVERS, nsOfBase } from "./rooms.mjs?v=20
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { t as tr } from "./i18n.mjs";
 import { censusRequest, OPPONENT_TOP_N, fetchPlayerCensus } from "./census-fetch.mjs?v=20261010-sav1";
-import { kpmCurve } from "./math.mjs?v=20261027-z79";
+import { kpmCurve } from "./math.mjs?v=20261114-ysc1";
 import { accountTimes } from "./flairs.mjs?v=20261010-sav1";
 import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261023-short1";
 import { removedList } from "./opt-out.mjs?v=20261023-proof1";

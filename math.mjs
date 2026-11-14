@@ -285,7 +285,15 @@ export function yScale(yvals) {
     return { lo: floor, hi: hi * 1.12, log: true };
   }
   // Always extend to true max so no series paints above the plot.
-  const span = Math.max(hi - lo, 0.15);
+  // The 0.15 minimum span is sized for ordinary K/D (~1): for near-zero
+  // values it would stretch the axis far past the data and squash every
+  // line to the bottom — a weak outfit's pace-adjusted K/D tops out near
+  // 0.005 ([C0C], own KPM ~0.05–0.16, so the (kpm/2)^2 pace penalty
+  // crushes raw K/D ~0.1–0.2), and a flat 0.15 floor put the axis at
+  // 0–0.023 with the top line on ~7% of the plot. So the floor scales
+  // down with hi (25% of hi); only the all-zero case keeps the flat 0.15,
+  // and hi >= 0.6 keeps the old floor exactly.
+  const span = Math.max(hi - lo, hi > 0 ? Math.min(0.15, 0.25 * hi) : 0.15);
   return {
     lo: Math.max(0, lo - 0.1 * span),
     hi: hi + 0.12 * span,

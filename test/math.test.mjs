@@ -264,8 +264,24 @@ describe("yScale contains outliers / cheaters / bad players", () => {
     assert.ok(s.lo >= 0);
     assert.ok(s.hi >= Math.max(...ys));
     assert.ok(s.lo <= Math.min(...ys));
-    // Padding uses min span 0.15 even when data is tighter — axis stays readable.
+    // Padding floor scales with the data (25% of hi, capped at 0.15), so
+    // the axis stays close to the values instead of stretching to 0.15.
     assert.ok(s.hi > s.lo);
+    assert.ok(s.hi < 0.2, `hi ${s.hi} stretches past near-zero data`);
+    assert.ok(scaleContains(s, ys));
+  });
+
+  it("[C0C]-style weak outfit: pace-adjusted K/D ~0.005 still fills the plot", () => {
+    // Weak outfit, barely playing: own KPM ~0.05–0.16, so the (kpm/2)^2
+    // pace penalty crushes raw K/D ~0.1–0.2 down to ~0.001–0.005. A flat
+    // 0.15 minimum span put the axis at 0–0.023 and every line on the
+    // bottom ~7–25% of the plot (owner 2026-11-14: [C0C] after [1KPM]).
+    const ys = [0.00007, 0.00047, 0.00126, 0.002, 0.0048];
+    const s = yScale(ys);
+    assert.equal(s.log, false);
+    assert.equal(s.lo, 0);
+    assert.ok(s.hi >= Math.max(...ys));
+    assert.ok(s.hi < 2 * Math.max(...ys), `hi ${s.hi} leaves the top line squashed at the bottom`);
     assert.ok(scaleContains(s, ys));
   });
 

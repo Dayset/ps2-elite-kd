@@ -5,7 +5,7 @@
 import { slugKey, bareName } from "./app-util.mjs?v=20261027-z79";
 import { confirmedPadderSlugs } from "./padding.mjs?v=20261023-short1";
 import { parsePsKey } from "./rooms.mjs?v=20261022-ps1";
-import { isFiniteNum } from "./math.mjs?v=20261027-z79";
+import { isFiniteNum } from "./math.mjs?v=20261114-ysc1";
 
 /**
  * $ = app.js state and functions this part uses, as live getters (and setters for state it changes), so app.js

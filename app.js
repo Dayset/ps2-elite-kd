@@ -33,7 +33,7 @@ import {
   windowYValues,
   kpmBandCurve,
   bandReliability,
-} from "./math.mjs?v=20261027-z79";
+} from "./math.mjs?v=20261114-ysc1";
 import { formatClock, fmtNum, slugKey, bareName, parseNames, namesEqualIgnoreCase, namesSetKey, niceLinTicks, niceNum, niceLogTicks, formatTick, escapeHtml, makeAbortError, isAbortError, checkAborted, readJsonLS, writeJsonLS } from "./app-util.mjs?v=20261027-z79";
 import { createAnalyze } from "./analyze.mjs?v=20261101-bg1";
 import { createShareAdd } from "./share-add.mjs?v=20261027-z79";

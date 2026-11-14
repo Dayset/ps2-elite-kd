@@ -5,7 +5,7 @@
 import { playMinutes, HUT_TIP, HUT_MARK, hutMarkOf } from "./hut.mjs?v=20261030-hs1";
 import { slugKey, escapeHtml, fmtNum } from "./app-util.mjs?v=20261027-z79";
 import { newbieFactor, newPlayerHours } from "./newbie-diff.mjs?v=20261023-nbh1";
-import { isFiniteNum } from "./math.mjs?v=20261027-z79";
+import { isFiniteNum } from "./math.mjs?v=20261114-ysc1";
 import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261027-z79";
 import { zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { zergChargedAdjs, zergFresh } from "./zerg-charge.mjs?v=20261029-zadj2";

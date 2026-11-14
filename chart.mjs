@@ -5,7 +5,7 @@
 import { playerMetrics } from "./player-metrics.mjs?v=20261027-z79";
 import { bandGhost, cumulativeGhost } from "./ghost.mjs?v=20261027-z79";
 import GHOST_MODEL from "./data/ghost-model.mjs?v=20261010-sav1";
-import { kpmBandCurve, isFiniteNum, X_MAX, bandReliability, clampYZoom, Y_ZOOM_DEFAULT, yScale, windowYValues, applyYZoom, xMaxForZoom, EASY_MAX, HARD_MIN } from "./math.mjs?v=20261027-z79";
+import { kpmBandCurve, isFiniteNum, X_MAX, bandReliability, clampYZoom, Y_ZOOM_DEFAULT, yScale, windowYValues, applyYZoom, xMaxForZoom, EASY_MAX, HARD_MIN } from "./math.mjs?v=20261114-ysc1";
 import { niceLogTicks, niceLinTicks, formatTick, slugKey } from "./app-util.mjs?v=20261027-z79";
 import { POOP_MARK, POOP_TIP, isPenalizedPadder } from "./padding.mjs?v=20261023-short1";
 import { hutMarkOf } from "./hut.mjs?v=20261030-hs1";

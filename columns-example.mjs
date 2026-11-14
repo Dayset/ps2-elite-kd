@@ -10,7 +10,7 @@
  */
 import { t as tr } from "./i18n.mjs";
 import { normalizePlayer, playerMetrics, consistencyParts, MIN_FIGHTS_RULE } from "./player-metrics.mjs?v=20261027-z79";
-import { RF_SOFT, SPEED_BAND_LOW, SPEED_BAND_HIGH, speedSlowFactor, speedAdjustment, SLOPE_FLOOR, SLOPE_EPS } from "./math.mjs?v=20261027-z79";
+import { RF_SOFT, SPEED_BAND_LOW, SPEED_BAND_HIGH, speedSlowFactor, speedAdjustment, SLOPE_FLOOR, SLOPE_EPS } from "./math.mjs?v=20261114-ysc1";
 import { rfBaseFor } from "./ps-baseline.mjs?v=20261027-z79";
 import { percentileOf, quantile } from "./dist.mjs?v=20261010-sav1";
 import { slugKey, bareName } from "./rank-row.mjs?v=20261101-opsrv1";
