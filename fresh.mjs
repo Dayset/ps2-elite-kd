@@ -4,6 +4,8 @@
  * Two lists from the same snapshot, both computed live from ranks.json:
  *  1. fresh accounts in the top 1% Pure — the intersection (the headline);
  *  2. every fresh account with a Pure value, best Pure first.
+ *  3. fresh accounts in the bottom 1% Pure — the other end of the same
+ *     list, worst first (same cut, mirrored).
  *
  * Definitions (same numbers as the Rankings table, no lookalikes):
  * - Fresh = Census character age at the snapshot ≤ 30 days:
@@ -19,6 +21,8 @@
  *   (players without 🤝 assists have no 🪳, so no Pure — they cannot be
  *   ranked on it). n = ceil(1% × withPure); cutoff = the Pure of rank n;
  *   every player at or above the cutoff counts (ties included).
+ *   Bottom 1% mirrors it: n = ceil(1% × withPure); bottom cutoff = the
+ *   Pure of rank (withPure − n + 1); every player at or below it counts.
  * - PC and PlayStation are computed separately, from their own ranks.json
  *   (owner rule: no PC constant carried onto PlayStation).
  *
@@ -74,18 +78,19 @@ export function isFreshAge(ageDays, days = FRESH_DAYS) {
 }
 
 /**
- * ranks.json → { updatedAt, total, withPure, topN, cutoff,
- *   fresh, freshPure, freshNoPure, topFresh, byName }.
+ * ranks.json → { updatedAt, total, withPure, topN, cutoff, bottomN,
+ *   bottomCutoff, fresh, freshPure, freshNoPure, topFresh, worstFresh, byName }.
  * `fresh` = every fresh account (with or without Pure); `freshPure` =
  * the fresh ones with a Pure value, best first; `topFresh` = the fresh
- * ones in the room's top 1% Pure. `overallRank` is the player's rank
+ * ones in the room's top 1% Pure; `worstFresh` = the fresh ones in the
+ * room's bottom 1% Pure, worst first. `overallRank` is the player's rank
  * among everyone with a Pure value (1 = best Pure). Exported for tests.
  */
 export function buildFresh(ranksJson) {
   const out = {
     updatedAt: (ranksJson && ranksJson.updatedAt) || null,
-    total: 0, withPure: 0, topN: 0, cutoff: null,
-    players: [], fresh: [], freshPure: [], freshNoPure: 0, topFresh: [],
+    total: 0, withPure: 0, topN: 0, cutoff: null, bottomN: 0, bottomCutoff: null,
+    players: [], fresh: [], freshPure: [], freshNoPure: 0, topFresh: [], worstFresh: [],
     byName: new Map(),
   };
   if (!ranksJson || !Array.isArray(ranksJson.cols) || !Array.isArray(ranksJson.rows)) return out;
@@ -118,6 +123,7 @@ export function buildFresh(ranksJson) {
       adjs,
       pure,
       top1: false,
+      worst1: false,
       overallRank: null,
       zerg: z ? z.score : null,
       kd: num(r, iKd),
@@ -140,11 +146,18 @@ export function buildFresh(ranksJson) {
     p.overallRank = i + 1;
     p.top1 = fin(out.cutoff) && p.pure >= out.cutoff;
   });
+  out.bottomN = Math.max(0, Math.ceil(ranked.length * 0.01));
+  out.bottomCutoff = out.bottomN > 0 ? ranked[ranked.length - out.bottomN].pure : null;
+  ranked.forEach((p) => {
+    p.worst1 = fin(out.bottomCutoff) && p.pure <= out.bottomCutoff;
+  });
   out.fresh = players.filter((p) => p.fresh);
   out.freshPure = out.fresh.filter((p) => fin(p.pure))
     .sort((a, b) => (b.pure - a.pure) || String(a.name).localeCompare(String(b.name)));
   out.freshNoPure = out.fresh.length - out.freshPure.length;
   out.topFresh = out.freshPure.filter((p) => p.top1);
+  out.worstFresh = out.freshPure.filter((p) => p.worst1)
+    .sort((a, b) => (a.pure - b.pure) || String(a.name).localeCompare(String(b.name)));
   return out;
 }
 
@@ -171,7 +184,7 @@ function rowHtml(p, i) {
     `<td>${i + 1}</td>` +
     `<td><a href="${esc(playerSheetUrl(p.name))}">${esc(p.name)}</a></td>` +
     `<td>${fmtAge(p.ageDays)}</td><td>${fmtDateSec(p.created)}</td><td>${esc(serverLabel(p.srv))}</td>` +
-    `<td>${p.top1 ? "★ " : ""}${fmtInt(p.pure)}</td><td>${fin(p.overallRank) ? `#${p.overallRank}` : "—"}</td>` +
+    `<td>${p.top1 ? "★ " : p.worst1 ? "▼ " : ""}${fmtInt(p.pure)}</td><td>${fin(p.overallRank) ? `#${p.overallRank}` : "—"}</td>` +
     `<td>${fmtInt(p.adjs)}</td><td>${fmtInt(p.zerg)}</td>` +
     `<td>${fmt2(p.rkd)}</td><td>${fmt2(p.kd)}</td><td>${fmt2(p.ownKpm)}</td>` +
     `<td>${fmt2(p.pvs)}</td><td>${fin(p.inf) ? `${Math.round(p.inf)}%` : "—"}</td></tr>`;
@@ -179,10 +192,10 @@ function rowHtml(p, i) {
 
 export function startFresh() {
   const $ = (id) => document.getElementById(id);
-  const topBody = $("freshTopBody"), body = $("freshBody"), statusEl = $("freshStatus");
+  const topBody = $("freshTopBody"), body = $("freshBody"), worstBody = $("freshWorstBody"), statusEl = $("freshStatus");
   const roomPc = $("freshRoomPc"), roomPs = $("freshRoomPs"), searchEl = $("freshSearch"), foundEl = $("freshFound");
   const noteEl = $("freshNote");
-  if (!topBody || !body || !statusEl) return;
+  if (!topBody || !body || !worstBody || !statusEl) return;
 
   let room = "pc";
   let data = null;
@@ -192,6 +205,7 @@ export function startFresh() {
     if (!data) {
       topBody.innerHTML = `<tr><td colspan="${COLS}">Loading…</td></tr>`;
       body.innerHTML = `<tr><td colspan="${COLS}">Loading…</td></tr>`;
+      worstBody.innerHTML = `<tr><td colspan="${COLS}">Loading…</td></tr>`;
       return;
     }
     topBody.innerHTML = data.topFresh.length
@@ -200,10 +214,15 @@ export function startFresh() {
     body.innerHTML = data.freshPure.length
       ? data.freshPure.map((p, i) => rowHtml(p, i)).join("")
       : `<tr><td colspan="${COLS}">No fresh account with a 🧘 Pure value in this room yet.</td></tr>`;
+    worstBody.innerHTML = data.worstFresh.length
+      ? data.worstFresh.map((p, i) => rowHtml(p, i)).join("")
+      : `<tr><td colspan="${COLS}">No fresh account in the bottom 1% 🧘 Pure in this room — the worst fresh Pure here is above the cutoff.</td></tr>`;
     statusEl.textContent = `${data.total.toLocaleString("en-US")} players · snapshot ${fmtDate(data.updatedAt)} · ` +
       `${data.fresh.length.toLocaleString("en-US")} fresh (≤${FRESH_DAYS}d), ${data.freshPure.length.toLocaleString("en-US")} with 🧘 Pure · ` +
       `top 1% Pure = ${data.topN.toLocaleString("en-US")} players at 🧘 ≥ ${fmtInt(data.cutoff)} · ` +
-      `${data.topFresh.length} fresh in the top 1%`;
+      `${data.topFresh.length} fresh in the top 1% · ` +
+      `bottom 1% Pure = ${data.bottomN.toLocaleString("en-US")} players at 🧘 ≤ ${fmtInt(data.bottomCutoff)} · ` +
+      `${data.worstFresh.length} fresh in the bottom 1%`;
     if (noteEl) {
       noteEl.textContent = room === "pc"
         ? "PC room. 🪳 Zerg and 🧘 Pure use the same formulas as the Rankings table; the top-1% cutoff is computed from this room's own players."

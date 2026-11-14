@@ -46,8 +46,8 @@
     .fresh-wrap { max-width: 1180px; margin: 0 auto; padding: 0 14px 18px; overflow-x: auto; }
     .fresh-wrap h2 { font-size: 1.25em; margin: 0 0 6px; }
     .fresh-wrap p { margin: 0 0 10px; }
-    #freshTopTable, #freshTable { width: 100%; }
-    #freshTopTable td, #freshTable td { white-space: nowrap; }
+    #freshTopTable, #freshTable, #freshWorstTable { width: 100%; }
+    #freshTopTable td, #freshTable td, #freshWorstTable td { white-space: nowrap; }
     #freshTopTable tbody tr.fresh-top1 td, #freshTable tbody tr.fresh-top1 td { background: var(--grid); }
     .fresh-note { max-width: 1180px; margin: 0 auto; padding: 0 14px 22px; font-size: 0.9em; }
   </style>
@@ -70,7 +70,7 @@
   <header class="fresh-head">
     <p class="fresh-crumbs"><a href="index.html">⚔️ Players</a> · <a href="live.html">🎥 Live feed</a> · <a href="columns.html">📖 What the columns mean</a> · <a href="online.html">🟢 Online now</a> · <a href="archetypes.html">🧬 Archetypes</a></p>
     <h1>😈 Top fresh iVi demons</h1>
-    <p>Best new fighters of the month — accounts created in the last 30 days, sorted by 🧘 Pure iVi, cut at the top 1%. The first table is the cut: fresh accounts already in the top 1% Pure overall. The second is every fresh account with a Pure value, best first. A fresh account with a huge Pure is usually not a new player who got good in a month — it is an experienced player on a new account, an alt, or a peaky low-🦁-Brave sheet — which is why 🦁 Brave sits next to Pure.</p>
+    <p>Best new fighters of the month — accounts created in the last 30 days, sorted by 🧘 Pure iVi, cut at the top 1%. The first table is the top cut: fresh accounts already in the top 1% Pure overall. The second is every fresh account with a Pure value, best first. The third is the bottom cut: fresh accounts in the bottom 1% Pure, worst first. A fresh account with a huge Pure is usually not a new player who got good in a month — it is an experienced player on a new account, an alt, or a peaky low-🦁-Brave sheet — which is why 🦁 Brave sits next to Pure.</p>
   </header>
 
   <div class="fresh-controls">
@@ -140,11 +140,39 @@
     </table>
   </div>
 
+  <div class="fresh-wrap">
+    <h2>▼ Fresh accounts in the bottom 1% 🧘 Pure</h2>
+    <p>The other end of the same list, worst first. Most of these are genuine new players still learning the game — the same low numbers also show up on accounts parked for someone else to farm, and this table does not tell those apart.</p>
+    <table class="ranks-table" id="freshWorstTable" aria-label="Fresh accounts in the bottom 1 percent Pure">
+      <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Player</th>
+          <th scope="col" title="Account age at the snapshot: snapshot date minus Census created date">Age</th>
+          <th scope="col">Created</th>
+          <th scope="col">Server</th>
+          <th scope="col" title="🧘 Pure iVi: adjs × (1 − 0.00436 × 🪳)">🧘 Pure</th>
+          <th scope="col" title="Rank among everyone with a 🧘 Pure value in this room">Pure rank</th>
+          <th scope="col" title="Adjusted ⚔️ iVi before the 🪳 evening-out (ranks.json adjs)">⚔️ iVi</th>
+          <th scope="col" title="🪳 Zerg (lower is more solo)">🪳 Zerg</th>
+          <th scope="col" title="Realistic K/D">☠️ K/D</th>
+          <th scope="col" title="Lifetime K/D (Census)">K/D</th>
+          <th scope="col" title="Own KPM">own KPM</th>
+          <th scope="col" title="🦁 Brave">🦁 Brave</th>
+          <th scope="col" title="🪖 Infantry %">🪖 Infantry</th>
+        </tr>
+      </thead>
+      <tbody id="freshWorstBody">
+        <tr><td colspan="14">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
   <p class="fresh-note" id="freshNote">
     PC room. 🪳 Zerg and 🧘 Pure use the same formulas as the Rankings table.
   </p>
   <p class="fresh-note">
-    How the lists are made: fresh is a Census character age of at most 30 days at the snapshot (<code>ranks.json</code> <code>updatedAt</code> minus <code>created</code>), and the top 1% is the top 1% of the players with a 🧘 Pure value in the same room — both recomputed live from the current snapshot, so the cutoff and the names move when the data refreshes. The site's other "new" windows are wider (discovery queue 91 days, forensics 90 days); this page uses 30 days. Hidden players are already left out of <code>ranks.json</code>, and the fresh-account auto-hide (≤ 7 days old with adj ≥ 2200 and ekpm ≤ 0.729) hides fresh-exceptional accounts permanently — this page shows the survivors. Fresh accounts are automated groupings from public stats, not verdicts about any player — see the disclaimer in the footer.
+    How the lists are made: fresh is a Census character age of at most 30 days at the snapshot (<code>ranks.json</code> <code>updatedAt</code> minus <code>created</code>), and the top 1% is the top 1% of the players with a 🧘 Pure value in the same room — the bottom 1% mirrors it at the other end — both recomputed live from the current snapshot, so the cutoffs and the names move when the data refreshes. The site's other "new" windows are wider (discovery queue 91 days, forensics 90 days); this page uses 30 days. Hidden players are already left out of <code>ranks.json</code>, and the fresh-account auto-hide (≤ 7 days old with adj ≥ 2200 and ekpm ≤ 0.729) hides fresh-exceptional accounts permanently — this page shows the survivors. Fresh accounts are automated groupings from public stats, not verdicts about any player — see the disclaimer in the footer.
   </p>
 
   <footer>

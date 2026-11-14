@@ -79,6 +79,11 @@ test("fixture: fresh set, Pure ranking, top-1% cutoff and dedupe", () => {
   assert.equal(d.withPure, 7);
   assert.equal(d.topN, 1); // ceil(1% of 7)
   assert.equal(d.cutoff, 1000);
+  assert.equal(d.bottomN, 1); // ceil(1% of 7)
+  assert.equal(d.bottomCutoff, 100); // worst Pure in the fixture
+  assert.deepEqual(d.worstFresh.map((p) => p.name), ["FreshLow"]);
+  assert.equal(d.byName.get(normName("FreshLow")).worst1, true);
+  assert.equal(d.byName.get(normName("FreshTop")).worst1, false);
   assert.equal(d.fresh.length, 5);
   assert.equal(d.freshNoPure, 2); // NoAdjs + FreshNoZerg
   assert.deepEqual(d.freshPure.map((p) => p.name), ["FreshTop", "FreshMid", "FreshLow"]);
@@ -100,8 +105,8 @@ test("fixture: fresh set, Pure ranking, top-1% cutoff and dedupe", () => {
 
 test("empty or malformed input builds an empty result, never throws", () => {
   assert.deepEqual(buildFresh(null), {
-    updatedAt: null, total: 0, withPure: 0, topN: 0, cutoff: null,
-    players: [], fresh: [], freshPure: [], freshNoPure: 0, topFresh: [], byName: new Map(),
+    updatedAt: null, total: 0, withPure: 0, topN: 0, cutoff: null, bottomN: 0, bottomCutoff: null,
+    players: [], fresh: [], freshPure: [], freshNoPure: 0, topFresh: [], worstFresh: [], byName: new Map(),
   });
   assert.equal(buildFresh({ cols: [], rows: [] }).total, 0);
 });
@@ -111,6 +116,18 @@ function checkLiveShape(d, label, minTotal, minWithPure, minFresh) {
   assert.ok(d.withPure > minWithPure, `${label}: withPure ${d.withPure}`);
   assert.equal(d.topN, Math.ceil(d.withPure * 0.01), `${label}: topN`);
   assert.ok(d.cutoff > 1000, `${label}: cutoff ${d.cutoff}`);
+  assert.equal(d.bottomN, Math.ceil(d.withPure * 0.01), `${label}: bottomN`);
+  assert.ok(d.bottomCutoff < 0, `${label}: bottomCutoff ${d.bottomCutoff}`);
+  assert.ok(d.bottomCutoff < d.cutoff, `${label}: bottom below top`);
+  assert.deepEqual(
+    d.worstFresh.map((p) => p.name),
+    d.freshPure.filter((p) => p.pure <= d.bottomCutoff).sort((a, b) => a.pure - b.pure).map((p) => p.name),
+    `${label}: worstFresh is exactly the fresh players at/below the bottom cutoff, worst first`,
+  );
+  for (let i = 1; i < d.worstFresh.length; i++) {
+    assert.ok(d.worstFresh[i - 1].pure <= d.worstFresh[i].pure, `${label}: worstFresh sorted worst-first`);
+  }
+  for (const p of d.worstFresh) assert.equal(p.worst1, true, `${label}: ${p.name} flagged worst1`);
   assert.ok(d.fresh.length > minFresh, `${label}: fresh ${d.fresh.length}`);
   assert.ok(d.freshPure.length > 0, `${label}: freshPure`);
   assert.equal(d.fresh.length, d.freshPure.length + d.freshNoPure, `${label}: fresh split`);
