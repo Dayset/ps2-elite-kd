@@ -64,7 +64,10 @@ export function clampZerg(v) {
  * value counter underneath the meter — black housing, white digits on
  * black wheels, like a car odometer. It shows the same value the roach
  * and the laser show, rounded to a whole number (000–100); the title
- * carries the decimal. A dash when there is no value yet. The wheels
+ * carries the decimal. ?odo=2 is the default (owner 2026-11-14): two
+ * whole-number wheels (00–99). ?odo=float switches the counter to one
+ * decimal place (00.0–99.9), ?odo=3 restores the three whole-number
+ * wheels (000–100) — see odoDigits. The wheels
  * roll in the direction the value moved, wrapping cyclically — a rise
  * 9→0 is one step forward (never the long way back through 8, 7, …),
  * a fall 0→9 is one step back — and the roll is driven by JS timers,
@@ -186,15 +189,38 @@ export function fightTitle(kind, name, value) {
   return `🪳 ${name} Zerg ${v}`;
 }
 
-/** Odometer counter: the displayed value as 3 wheels (000–100), rounded
-    to a whole number; null when there is no value yet (the wheels hold
-    their last reading, or stay blank before the first — never dashes).
-    The title carries the decimal; the counter is the whole number. Pure —
-    unit-tested in test/zerg-meter.test.mjs. */
-export function odoDigits(value) {
+/** Odometer counter: the displayed value as wheels, rounded; null when
+    there is no value yet (the wheels hold their last reading, or stay
+    blank before the first — never dashes). Mode "2" (the default, owner
+    2026-11-14) is two whole-number wheels (00–99; 100 reads 99) — the
+    hundreds wheel it drops never moves (0 for 0–99, 1 only at exactly
+    100). Mode "3" is the old three whole-number wheels (000–100); the
+    title carries the decimal. Mode "float" (?odo=float) keeps three
+    wheels but spends the dead hundreds wheel on tenths instead:
+    00.0–99.9, one decimal place, precise like the title (100 reads
+    99.9). Pure — unit-tested in test/zerg-meter.test.mjs. */
+export function odoDigits(value, mode = "2") {
   if (value == null || Number.isNaN(value)) return null;
+  if (mode === "2") {
+    const n = Math.max(0, Math.min(99, Math.round(value)));
+    return String(n).padStart(2, "0");
+  }
+  if (mode === "float") {
+    const n = Math.max(0, Math.min(99.9, Math.round(value * 10) / 10));
+    return n.toFixed(1).padStart(4, "0");
+  }
   const n = Math.max(0, Math.min(100, Math.round(value)));
   return String(n).padStart(3, "0");
+}
+
+/** Odometer layout for a mode: how many digit wheels to build, and after
+    how many wheels the decimal point sits (-1 = no point). "float" is
+    tens, ones, point, tenths — the point sits after the second wheel.
+    Pure — unit-tested in test/zerg-meter.test.mjs. */
+export function odoLayout(mode) {
+  if (mode === "3") return { wheels: 3, dotAfter: -1 };
+  if (mode === "float") return { wheels: 3, dotAfter: 2 };
+  return { wheels: 2, dotAfter: -1 }; // default (and any unknown mode): two wheels
 }
 
 /** Odometer wheel step (owner 2026-11-13): signed digit-steps from `from`

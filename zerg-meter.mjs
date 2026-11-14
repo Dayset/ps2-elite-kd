@@ -16,10 +16,16 @@
 // ?names=Zewgie — the followed enemy (first name wins, like live.html).
 // ?demo=1 — no network: a simulated Zerg (sine + jumps) to preview the
 // motion and to verify the page headlessly.
+// ?odo=2 — odometer on two whole-number wheels (00–99; 100 reads 99).
+// ?odo=float — odometer with one decimal place (00.0–99.9; 100 reads
+// 99.9). ?odo=3 — the old three whole-number wheels (000–100).
+// Default (no ?odo) is two wheels (owner 2026-11-14).
+// The switch exists because the hundreds wheel never moves: it sits at 0
+// for every value 0–99 and only ever reads 1 at exactly 100.
 import { classifyDeath, cidNameEntry, slugKey } from "./live-model.mjs?v=20261108-neg2";
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { traitPools, zergScore } from "./trait-scores.mjs?v=20261027-z79";
-import { valueToY, roachTop, createMotion, meterValue, parseLastEventRow, createFightQueue, fightTitle, shouldFadeDown, hasArrived, odoDigits, odoStep, DECAY_MS } from "./zerg-meter-motion.mjs?v=20261113-zm10";
+import { valueToY, roachTop, createMotion, meterValue, parseLastEventRow, createFightQueue, fightTitle, shouldFadeDown, hasArrived, odoDigits, odoLayout, odoStep, DECAY_MS } from "./zerg-meter-motion.mjs?v=20261113-zm12";
 
 const CENSUS = `https://census.daybreakgames.com/s:${CENSUS_SERVICE_ID}/get/ps2:v2/`;
 const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=s:${CENSUS_SERVICE_ID}`;
@@ -27,6 +33,7 @@ const STREAM = `wss://push.planetside2.com/streaming?environment=ps2&service-id=
 const params = new URLSearchParams(location.search);
 const target = (params.get("names") || "").split(",")[0].trim();
 const demo = params.get("demo") === "1";
+const odoMode = params.get("odo") === "float" ? "float" : params.get("odo") === "3" ? "3" : "2";
 
 const meterEl = document.getElementById("zergMeter");
 const roachEl = document.getElementById("zmRoach");
@@ -50,7 +57,7 @@ function updateName() {
   if (text !== lastName) { nameEl.textContent = text; lastName = text; }
 }
 
-// Odometer counter (owner 2026-11-13): three digit wheels underneath the
+// Odometer counter (owner 2026-11-13): digit wheels underneath the
 // meter. Each wheel is a 0–9 strip repeated 5 times, so the wheel can roll
 // forward past 9→0 and backward past 0→9 without ever going the long way
 // round (odoStep: a rise 9→0 is +1, a fall 0→9 is −1) and without ever
@@ -62,11 +69,14 @@ function updateName() {
 // is all ten digits, so it can't be read from the text alone). There are
 // NO dashes: a still odometer (unknown fight, or no value yet) keeps its
 // last reading, and before the first reading the wheels are simply blank
-// (hidden) — never "–––".
+// (hidden) — never "–––". The wheel count and the decimal point come
+// from ?odo (odoLayout): "3" is three whole-number wheels, "2" is two,
+// "float" is three wheels with a point after the second (00.0–99.9).
 const odoEl = document.getElementById("zmOdo");
 const odoStrips = [];
 const odoWins = [];
-for (let i = 0; i < 3; i++) {
+const { wheels: odoWheels, dotAfter: odoDotAfter } = odoLayout(odoMode);
+for (let i = 0; i < odoWheels; i++) {
   const win = document.createElement("div");
   win.className = "zm-odo-digit";
   const strip = document.createElement("div");
@@ -83,17 +93,23 @@ for (let i = 0; i < 3; i++) {
   odoEl.appendChild(win);
   odoStrips.push(strip);
   odoWins.push(win);
+  if (i + 1 === odoDotAfter) {
+    const dot = document.createElement("div");
+    dot.className = "zm-odo-dot";
+    dot.textContent = ".";
+    odoEl.appendChild(dot);
+  }
 }
 // Wheel position, in strip-index units (a float while rolling). The middle
 // copy (indices 20–29) is home, so a wheel can roll up to 9 steps either
 // way without leaving the strip; it is re-centred when settled.
-const odoPos = [20, 20, 20];
-const odoTarget = [20, 20, 20];
+const odoPos = Array(odoWheels).fill(20);
+const odoTarget = Array(odoWheels).fill(20);
 const ODO_TAU_MS = 90; // the roll eases into its target
 let lastOdo = null; // last 3-digit reading ("024"), or null (never had one)
 let lastOdoMs = null;
 function updateOdo(value, nowMs) {
-  const digits = odoDigits(value); // "024" or null (no value)
+  const digits = odoDigits(value, odoMode); // "024" / "24" / "24.3", or null (no value)
   if (digits == null) {
     // No value (unknown fight, or no value yet): the wheels stay where
     // they are — a still odometer keeps its last reading, never dashes.
@@ -112,8 +128,11 @@ function updateOdo(value, nowMs) {
   // reading (no roll from blank). Otherwise roll each wheel in the
   // direction the value moved (odoStep).
   const increasing = prev != null && next > prev;
+  // The wheels show digits only — in "float" mode the point in the
+  // reading ("55.5") is a fixed dot element between wheels, not a wheel.
+  const wheelDigits = digits.replace(".", "");
   odoStrips.forEach((strip, i) => {
-    const to = Number(digits[i]);
+    const to = Number(wheelDigits[i]);
     if (prev == null) {
       odoPos[i] = 20 + to;
       odoTarget[i] = 20 + to;

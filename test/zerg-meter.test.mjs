@@ -10,7 +10,7 @@ import { readFileSync } from "node:fs";
 import {
   METER, clampZerg, valueToY, roachHeight, roachTop, createMotion, meterValue,
   parseLastEventRow, createFightQueue, fightTitle, shouldFadeDown, FADE_IDLE_MS,
-  hasArrived, MARK_ARRIVE_EPS, DECAY_MS, odoDigits, odoStep,
+  hasArrived, MARK_ARRIVE_EPS, DECAY_MS, odoDigits, odoLayout, odoStep,
 } from "../zerg-meter-motion.mjs";
 
 const read = (f) => readFileSync(new URL(`../${f}`, import.meta.url), "utf8");
@@ -179,14 +179,14 @@ describe("fight title: kills and deaths read differently", () => {
   });
 });
 
-describe("odometer counter: whole number, three wheels, dashes when unknown", () => {
+describe("odometer counter: whole number, three wheels (?odo=3), dashes when unknown", () => {
   it("rounds to a whole number and pads to three wheels", () => {
-    assert.equal(odoDigits(1), "001", "resting at the player's own 1");
-    assert.equal(odoDigits(24.3), "024");
-    assert.equal(odoDigits(24.7), "025", "rounds, it does not floor");
-    assert.equal(odoDigits(100), "100");
-    assert.equal(odoDigits(150), "100", "clamps to the top of the scale");
-    assert.equal(odoDigits(0), "000");
+    assert.equal(odoDigits(1, "3"), "001", "resting at the player's own 1");
+    assert.equal(odoDigits(24.3, "3"), "024");
+    assert.equal(odoDigits(24.7, "3"), "025", "rounds, it does not floor");
+    assert.equal(odoDigits(100, "3"), "100");
+    assert.equal(odoDigits(150, "3"), "100", "clamps to the top of the scale");
+    assert.equal(odoDigits(0, "3"), "000");
   });
   it("a missing value reads as no value — the wheels hold their last reading, never a number that isn't the value", () => {
     assert.equal(odoDigits(null), null);
@@ -207,6 +207,43 @@ describe("odometer counter: whole number, three wheels, dashes when unknown", ()
     assert.equal(odoStep(0, 9, false), -1, "fall 20→19, ones");
     assert.equal(odoStep(5, 5, true), 0, "unchanged digit does not move");
     assert.equal(odoStep(5, 5, false), 0);
+  });
+});
+
+describe("odometer ?odo switch: two wheels, or one decimal place", () => {
+  it("?odo=2 drops the dead hundreds wheel: two whole-number wheels, 00–99", () => {
+    assert.equal(odoDigits(1, "2"), "01", "resting at the player's own 1");
+    assert.equal(odoDigits(7, "2"), "07", "Zugie's 7 reads on both wheels");
+    assert.equal(odoDigits(24.3, "2"), "24");
+    assert.equal(odoDigits(24.7, "2"), "25", "rounds, it does not floor");
+    assert.equal(odoDigits(99.6, "2"), "99", "rounds up to 100, then clamps to 99");
+    assert.equal(odoDigits(100, "2"), "99", "100 has no third wheel to read on");
+    assert.equal(odoDigits(0, "2"), "00");
+    assert.equal(odoDigits(null, "2"), null);
+  });
+  it("?odo=float spends the dead hundreds wheel on tenths: 00.0–99.9", () => {
+    assert.equal(odoDigits(1, "float"), "01.0", "resting at the player's own 1");
+    assert.equal(odoDigits(7, "float"), "07.0", "Zugie's 7.0, precise like the title");
+    assert.equal(odoDigits(55.5, "float"), "55.5");
+    assert.equal(odoDigits(24.34, "float"), "24.3");
+    assert.equal(odoDigits(24.36, "float"), "24.4", "rounds to the tenth");
+    assert.equal(odoDigits(100, "float"), "99.9", "100 has no fourth wheel to read on");
+    assert.equal(odoDigits(0, "float"), "00.0");
+    assert.equal(odoDigits(null, "float"), null);
+  });
+  it("the layout tells the page how many wheels to build and where the point sits", () => {
+    assert.deepEqual(odoLayout("3"), { wheels: 3, dotAfter: -1 }, "old three whole-number wheels");
+    assert.deepEqual(odoLayout("2"), { wheels: 2, dotAfter: -1 });
+    assert.deepEqual(odoLayout("float"), { wheels: 3, dotAfter: 2 }, "point after the second wheel");
+    assert.deepEqual(odoLayout("bogus"), { wheels: 2, dotAfter: -1 }, "unknown mode falls back to the default");
+    assert.deepEqual(odoLayout(undefined), { wheels: 2, dotAfter: -1 });
+  });
+  it("the default is two wheels (owner 2026-11-14); ?odo=3 restores the old three", () => {
+    assert.equal(odoDigits(7), "07");
+    assert.equal(odoDigits(7, "2"), "07");
+    assert.equal(odoDigits(7, "3"), "007");
+    assert.equal(odoDigits(100), "99");
+    assert.equal(odoDigits(100, "3"), "100");
   });
 });
 
@@ -292,7 +329,17 @@ describe("page: meter only, and shared pins match live.mjs", () => {
       };
       assert.equal(pin(meter), pin(live), `${mod} pin`);
     }
-    assert.match(read("zerg-meter.html"), /zerg-meter\.mjs\?v=20261113-zm21/);
-    assert.match(meter, /zerg-meter-motion\.mjs\?v=20261113-zm10/); // motion module unchanged this round
+    assert.match(read("zerg-meter.html"), /zerg-meter\.mjs\?v=20261113-zm23/);
+    assert.match(meter, /zerg-meter-motion\.mjs\?v=20261113-zm12/); // motion module changed this round (2-digit default)
+  });
+
+  it("the ?odo switch is wired: two wheels, or one decimal place", () => {
+    const html = read("zerg-meter.html");
+    const meter = read("zerg-meter.mjs");
+    assert.match(html, /zm-odo-dot/, "decimal-point style for ?odo=float");
+    assert.match(meter, /\?odo=2/, "two-wheel odometer (now the default)");
+    assert.match(meter, /\?odo=float/, "one-decimal odometer switch");
+    assert.match(meter, /\?odo=3/, "?odo=3 restores the old three-wheel counter");
+    assert.match(meter, /odoLayout\(odoMode\)/, "wheel count comes from the ?odo mode");
   });
 });
