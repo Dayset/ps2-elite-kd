@@ -3135,6 +3135,17 @@ body.main-page footer .footer-block { margin-top: 0.3rem; }
 .pg-meta b { font-weight: 600; }
 .pg-wrap .ranks-table-wrap { max-height: none; }
 
+/* Site pages (columns, updates, privacy, archive, outfits, ...): titles get the
+ * Oracle/Guide weight and size, and subtitle lines sit in a bordered panel. */
+body.site-page h1 { font-weight: 900; letter-spacing: -0.02em; line-height: 1.05; }
+body.site-page main > h1:first-child,
+body.site-page .st-wrap > h1:first-child { font-size: clamp(30px, 5.4vw, 52px); margin: 0 0 12px; }
+body.site-page .st-sub,
+body.site-page .arc-sub {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 0;
+  padding: 0.6rem 0.9rem; margin: 0 0 0.5rem; line-height: 1.5;
+}
+
 /* PC | PlayStation rooms (#55). The PS room is marked on <html data-room="ps">
  * so a visitor always sees which room they are in; Live (PC only) never shows. */
 html[data-room="ps"] #liveBtn { display: none !important; }
