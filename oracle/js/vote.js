@@ -177,6 +177,11 @@ function render() {
   };
   const sel = pick && q.quotes[pick] && q.quotes[pick][amount];
   const feeNote = (f) => (q.fee_rate[f] ? tr("or.v.fee", " · late fee {p}%", { p: Math.round(q.fee_rate[f] * 100) }) : "");
+  // Duration mark (owner 2026-11-14): full-time 90-min alerts pay full rewards,
+  // shorter/longer ones scale the profit ×dur/90. Shown before any pick is made.
+  const fmtMult = (m) => String(Math.round((m || 1) * 100) / 100);
+  const durText = q && q.dur ? (q.dur === 90 ? tr("or.v.full", "⏱️ FULL-TIME 90-min alert: full rewards")
+    : tr("or.v.durMult", "{n}-min alert: rewards ×{m}", { n: q.dur, m: fmtMult(q.reward_mult) })) : "";
   let action;
   if (!me) action = `<button class="btn" id="voteSignIn">${tr("or.v.signIn", "Sign in with your character to vote")}</button>`;
   else if (!wallet) action = `<div class="note">${tr("or.v.loadingBC", "Loading your BonusCheques…")}</div>`;
@@ -188,6 +193,7 @@ function render() {
     <div class="facrow">${FACS.map(facBtn).join("")}</div>
     ${ownOnly ? `<div class="note">${tr("or.v.ownOnly", "You fly {f}: vote for your faction, then go help it win.", { f: esc(own) })}</div>` : ""}
     <div class="amounts">${AMOUNTS.map((s) => `<button class="amount ${s === amount ? "on" : ""}" data-s="${s}" aria-pressed="${s === amount}">${s}</button>`).join("")}</div>
+    ${durText ? `<div class="note">${durText}</div>` : ""}
     ${sel ? `<div class="note">${tr("or.v.quote", "{n} back if {f} wins · your win chance {p}% (oracle {o}%)", { n: `<b>${pts(sel.reward)}</b>`, f: pick, p: (sel.odds * 100).toFixed(1), o: sel.pct })}${feeNote(pick)}</div>` : ""}
     <div class="row2">${action}</div>
     ${msg ? `<div class="note votemsg">${esc(msg)}</div>` : ""}

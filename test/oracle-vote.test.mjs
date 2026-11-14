@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { quote, feeRate, VOTE } from "../oracle-worker/src/vote.js";
+import { quote, feeRate, durationMult, VOTE } from "../oracle-worker/src/vote.js";
 
 let sqlite = null;
 try { sqlite = await import("node:sqlite"); } catch {}
@@ -26,6 +26,28 @@ test("fee ladder: 0 / 5 / 15 / 30 % by progress, +10 % above 75 %", () => {
   assert.equal(feeRate(0.92, 50), 0.3);
   assert.equal(feeRate(0.2, 80), 0.1);
   assert.equal(quote(100, 60, 0.85).fee, 15);
+});
+
+test("duration reward: mult = dur/90, profit only (owner 2026-11-14)", () => {
+  assert.equal(durationMult(90), 1);
+  assert.equal(durationMult(45), 0.5);
+  assert.equal(durationMult(180), 2);
+  assert.equal(durationMult(9), 0.1);
+  assert.ok(Math.abs(durationMult(30) - 1 / 3) < 0.0001);
+  assert.equal(durationMult(null), 1);
+  assert.equal(durationMult(0), 1);
+  assert.equal(durationMult(undefined), 1);
+  const base = quote(100, 50, 0.1);
+  assert.ok(base.reward > 190 && base.reward < 200, JSON.stringify(base));
+  const half = quote(100, 50, 0.1, 2000, 0.5);
+  assert.equal(half.mult, 0.5);
+  assert.equal(half.base_reward, base.reward);
+  assert.equal(half.reward, Math.round((100 + (base.reward - 100) * 0.5) * 100) / 100);
+  assert.ok(half.reward > 140 && half.reward < 150, JSON.stringify(half)); // ~148: profit halved, stake back
+  assert.equal(half.odds, base.odds, "market odds unscaled");
+  const dbl = quote(100, 50, 0.1, 2000, 2);
+  assert.equal(dbl.reward, Math.round((100 + (base.reward - 100) * 2) * 100) / 100);
+  assert.equal(quote(100, 50, 0.1).reward, base.reward, "mult 1 is the old quote");
 });
 
 function fakeD1() {
@@ -79,6 +101,8 @@ test("place, guard, settle and pay out exactly once", { skip }, async () => {
 
   const qt = await call("GET", "/vote/quote?key=1-4-1", now);
   assert.equal(qt.body.open, true);
+  assert.equal(qt.body.dur, 90);
+  assert.equal(qt.body.reward_mult, 1);
   assert.equal(qt.body.quotes.VS["100"].fee, 0);
 
   assert.equal(VOTE.OWN_FACTION_ONLY, false, "owner 2026-10-23: any faction");
@@ -133,6 +157,28 @@ test("place, guard, settle and pay out exactly once", { skip }, async () => {
   assert.deepEqual(lb.body.leaders.map((l) => l.name).sort(), ["Enn", "Vee"]);
   assert.ok(lb.body.leaders[0].gain >= lb.body.leaders[1].gain, JSON.stringify(lb.body.leaders));
   assert.equal(lb.body.leaders.find((l) => l.name === "Vee").gain, me.body.gain);
+});
+
+test("45-min alert: quotes and payouts scale the profit ×0.5, 90-min unchanged", { skip }, async () => {
+  const { DB, call, settleStatements, T0 } = await setup();
+  const state45 = JSON.stringify({ ts: T0 + 600, win: { VS: { pct: 50 }, NC: { pct: 30 }, TR: { pct: 20 } } });
+  DB.raw.prepare("INSERT INTO alert (key, world, zone, instance_id, event_id, start_ts, dur, status, state, updated) VALUES ('1-4-2',1,4,2,176,?,45,'live',?,0)").run(T0, state45);
+  const now = T0 + 620;
+  const qt = await call("GET", "/vote/quote?key=1-4-2", now);
+  assert.equal(qt.body.open, true, JSON.stringify(qt.body));
+  assert.equal(qt.body.dur, 45);
+  assert.equal(qt.body.reward_mult, 0.5);
+  const q100 = qt.body.quotes.VS["100"];
+  const base = quote(100, 50, qt.body.progress);
+  assert.equal(q100.reward, Math.round((100 + (base.reward - 100) * 0.5) * 100) / 100);
+  const ok = await call("POST", "/vote/place", now, { key: "1-4-2", outcome: "VS", amount: 100, seen_pct: 50 }, "VS");
+  assert.equal(ok.status, 200, JSON.stringify(ok.body));
+  assert.equal(ok.body.vote.reward, q100.reward, "placed potential is the scaled quote");
+  DB.raw.prepare("UPDATE alert SET status='settled', winner='VS' WHERE key='1-4-2'").run();
+  await DB.batch(settleStatements(DB, [{ key: "1-4-2", status: "settled", winner: "VS" }], T0 + 6000));
+  await DB.batch(settleStatements(DB, [], T0 + 6060));
+  const me = await call("GET", "/vote/me", T0 + 6100, null, "VS");
+  assert.equal(me.body.balance, Math.round((900 + q100.reward) * 100) / 100);
 });
 
 test("a draw or cancellation gives the full amount back, fee included", { skip }, async () => {

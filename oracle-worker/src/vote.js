@@ -25,6 +25,13 @@
  * alert, 15 % after 80 %, 30 % after 90 %, +10 % when the pick is above 75 %. Fees
  * just disappear (refunded in full when a vote is voided). Voting closes at 95 % of
  * the alert and while the live map data looks corrupt; decided outcomes can't be voted.
+ *
+ * Duration reward (owner 2026-11-14): only the PROFIT scales with alert length, vs a
+ * full-time 90-min alert: mult = dur / 90. A 45-min alert pays half the profit
+ * (100 at 50 % returns ~150, not ~200), a 30-min alert a third, a 9-min alert a
+ * tenth, a 180-min alert double the profit. The stake itself always comes back on
+ * a win, so being right never loses money. Votes already placed keep the potential
+ * they were quoted (scaling applies at quote/place time, settlement pays potential).
  */
 import { FACS } from "./engine.js";
 import { accountFromRequest } from "./auth.js";
@@ -43,14 +50,28 @@ export function feeRate(progress, pct) {
   return f;
 }
 
-/** LMSR odds seeded at the model probabilities. pct = outcome win % (0-100). */
-export function quote(amount, pct, progress, b = VOTE.LIQUIDITY) {
+/** Full-time alert length (min): the 90-min territory alert is the reward baseline. */
+export const FULL_ALERT_MIN = 90;
+
+/** Duration reward multiplier: dur / 90 (45 min -> 0.5, 30 -> 1/3, 9 -> 0.1, 180 -> 2). Unknown/invalid dur pays full. */
+export function durationMult(dur) {
+  const d = +dur;
+  if (!Number.isFinite(d) || d <= 0) return 1;
+  return Math.round((d / FULL_ALERT_MIN) * 10000) / 10000;
+}
+
+/** LMSR odds seeded at the model probabilities. pct = outcome win % (0-100).
+ * `mult` scales only the profit (reward - amount), never the stake: a win always
+ * returns at least the stake. `odds` stays the unscaled market odds. */
+export function quote(amount, pct, progress, b = VOTE.LIQUIDITY, mult = 1) {
   const p = pct / 100;
   const fee = Math.round(amount * feeRate(progress, pct) * 100) / 100;
   const net = amount - fee;
   const shares = b * Math.log(1 + (Math.exp(net / b) - 1) / p);
-  const back = Math.round(shares * 100) / 100;
-  return { amount, fee, net, reward: back, odds: Math.round((net / shares) * 10000) / 10000, pct };
+  const base = Math.round(shares * 100) / 100;
+  const m = Number.isFinite(+mult) && +mult > 0 ? +mult : 1;
+  const reward = Math.max(0, Math.round((amount + (base - amount) * m) * 100) / 100);
+  return { amount, fee, net, reward, base_reward: base, mult: m, odds: Math.round((net / shares) * 10000) / 10000, pct };
 }
 
 /** #82: created lazily (schema.sql is not applied on deploy). Live D1 had no duplicates on 2026-10-28. */
@@ -96,7 +117,7 @@ export function marketFor(alert, now) {
   if (now - st.ts > 180) return { open: false, reason: "odds_stale", progress };
   if (st.suspect && st.suspect.length) return { open: false, reason: "data_suspect", progress, suspect: st.suspect };
   const pcts = Object.fromEntries(FACS.map((f) => [f, st.win[f].pct]));
-  return { open: true, pcts, progress, state_ts: st.ts };
+  return { open: true, pcts, progress, dur: alert.dur, reward_mult: durationMult(alert.dur), state_ts: st.ts };
 }
 
 /**
@@ -136,10 +157,10 @@ export async function handleVote(request, env, url, json, now = Math.floor(Date.
     const out = {};
     for (const f of FACS) {
       out[f] = m.pcts[f] < VOTE.MIN_PCT || m.pcts[f] > VOTE.MAX_PCT ? null
-        : Object.fromEntries(VOTE.AMOUNTS.map((s) => [s, quote(s, m.pcts[f], m.progress)]));
+        : Object.fromEntries(VOTE.AMOUNTS.map((s) => [s, quote(s, m.pcts[f], m.progress, VOTE.LIQUIDITY, m.reward_mult)]));
     }
     return json({ open: true, progress: Math.round(m.progress * 1000) / 1000, fee_rate: Object.fromEntries(FACS.map((f) => [f, feeRate(m.progress, m.pcts[f])])),
-      pcts: m.pcts, quotes: out, own_faction_only: VOTE.OWN_FACTION_ONLY }, 200, ns);
+      pcts: m.pcts, dur: m.dur, reward_mult: m.reward_mult, quotes: out, own_faction_only: VOTE.OWN_FACTION_ONLY }, 200, ns);
   }
 
   if (p === "/vote/leaderboard") {
@@ -207,7 +228,7 @@ export async function handleVote(request, env, url, json, now = Math.floor(Date.
     if (pct < VOTE.MIN_PCT || pct > VOTE.MAX_PCT) return json({ error: "decided" }, 409, ns);
     if (body.seen_pct != null && Math.abs(+body.seen_pct - pct) > VOTE.MAX_DRIFT_PCT) return json({ error: "odds_changed", pct }, 409, ns);
     await wallet(db, acct.cid, now);
-    const q = quote(amount, pct, m.progress);
+    const q = quote(amount, pct, m.progress, VOTE.LIQUIDITY, m.reward_mult);
     let debit;
     try {
       // One transaction: debit only if the balance covers it AND this faction isn't backed yet, insert only after

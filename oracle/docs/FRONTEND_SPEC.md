@@ -195,7 +195,7 @@ Full JSON schema is in the action definition; key sub-objects:
 ### Settlement (triple-check)
 1. Alert ends → status `settling`, UI shows "settling…".
 2. Backend sends `record_final_check` at +0/+5/+10 min with pre-end snapshots.
-3. Checks 1–2: hold. Check 3: reward = shared-pool share × time weight (1.0/0.8/0.6).
+3. Checks 1–2: hold. Check 3: reward = the vote's stored LMSR potential (profit scaled ×dur/90 at placement; full-time 90-min = ×1).
 4. `settleposition` (or auto) credits bankroll; History shows WON/LOST (+`· corrected` if repaired).
 5. Tie → `record_sudden_death_result` after 15-min overtime instead.
 

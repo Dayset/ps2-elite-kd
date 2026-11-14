@@ -10,7 +10,7 @@ import { modeFocus, ownerLookup, heatLookup, spawnLookup, pickMode, MODE_KEY, pi
 import { nextPoll } from "./poll.js?v=20261026-mode1";
 import { voiceToggle, voiceTick, bindVoiceMenu } from "./voice.js?v=20261027-say1";
 import { reportPanel } from "./players.js?v=20261102-layout1";
-import { benchPanel, initResults, refreshHistory, renderHist, finalNum, finalUnit } from "./results.js?v=20261109-fin1";
+import { benchPanel, initResults, refreshHistory, renderHist, finalNum, finalUnit } from "./results.js?v=20261114-dur1";
 import { renderAlertSkill } from "./skill-foot.js?v=20261102-globfoot1";
 import { initAuth } from "./auth.js?v=20261028-dev82";
 import { initLocate } from "./locate.js?v=20261112-locate1";
@@ -49,6 +49,13 @@ function badgeLabel(st) {
     settled: tr("or.badge.settled", "settled"), unresolved: tr("or.badge.unresolved", "unresolved"), interrupted: tr("or.badge.interrupted", "interrupted") })[st] || st.replace("_", " ");
 }
 const minLeft = (n) => tr("or.minLeft", "{n} min left", { n });
+/** Duration mark (owner 2026-11-14): a full-time 90-min alert is the reward baseline (×1);
+ * shorter/longer alerts show their profit multiplier (×dur/90). */
+function durMark(dur) {
+  if (!dur) return "";
+  if (dur === 90) return tr("or.durFull", "⏱️ FULL-TIME 90-min alert");
+  return tr("or.durMult", "{n}-min alert · ×{m} reward", { n: dur, m: String(Math.round((dur / 90) * 100) / 100) });
+}
 /** #135: time left, or "overdue" once a live alert is past its scheduled end with no end row yet. */
 const leftLabel = (a, now) => now > a.start_ts + a.dur * 60 ? tr("or.overdue", "{n} min overdue, waiting for Census", { n: mins(now - a.start_ts - a.dur * 60) }) : minLeft(mins(a.start_ts + a.dur * 60 - now));
 
@@ -220,7 +227,7 @@ function render2(now) {
   const decidedCmd = facilityCmdHtml(a) || (s && s.decided ? `<section class="card cmd idle"><h2 data-sec="ai-commander">${tr("or.h.cmd", "🎖️ AI Commander")}</h2><div class="note">${tr("or.c.decided", "No orders: one faction holds the whole continent.")}</div></section>` : "");
   const cmdHtml = a.status === "live" ? commander(cmdView, a.commander_ts, now, lead, cmdMode, heatOn, liveTop, conduitsOn) || decidedCmd : reportPanel(a);
   $("main").innerHTML = `
-    <div class="title"><b>${esc(a.world_name)} · ${esc(a.zone_name)}${a.kind === "meltdown" ? " Meltdown" : ""}${kindName(a) ? ` · ${esc(kindName(a))}` : ""}</b><span class="badge ${a.status}">${esc(badgeLabel(a.status))}</span><span class="note">${esc(left)} · ${tr("or.durAlert", "{n}-min alert", { n: a.dur })}</span><button type="button" class="more linkbtn" id="copyLink" title="${linkTip}" aria-label="${linkTip}">🔗</button>${liveA ? "" : `<button type="button" class="more backlive" id="backLive">${tr("or.backLive", "← Back to live")}</button>`}</div>
+    <div class="title"><b>${esc(a.world_name)} · ${esc(a.zone_name)}${a.kind === "meltdown" ? " Meltdown" : ""}${kindName(a) ? ` · ${esc(kindName(a))}` : ""}</b><span class="badge ${a.status}">${esc(badgeLabel(a.status))}</span><span class="note">${esc(left)} · ${durMark(a.dur)}</span><button type="button" class="more linkbtn" id="copyLink" title="${linkTip}" aria-label="${linkTip}">🔗</button>${liveA ? "" : `<button type="button" class="more backlive" id="backLive">${tr("or.backLive", "← Back to live")}</button>`}</div>
     <div class="grid">
       <section class="card map"><h2 data-sec="map">${tr("or.h.map", "Map")}</h2><div id="replayTag" class="replaytag" hidden></div><div id="map"></div></section>
       <div class="side">

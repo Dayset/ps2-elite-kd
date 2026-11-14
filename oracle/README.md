@@ -108,6 +108,7 @@ ps2maporacle/
 - **Visibility is the king.** Probability dynamics on live charts, not raw numbers.
 - **No PP anywhere.** All momentum displays use relative %, never percentage points.
 - **Time-weighted pot shares:** 1.0 / 0.8 / 0.6 for t0–30 / t30–60 / t60–90 (from measured leader hit rates).
+- **Duration-scaled rewards:** only the profit scales ×dur/90 vs a full-time 90-min alert (45-min ×0.5, 30-min ×0.33, 180-min ×2); 90-min alerts carry a ⏱️ FULL-TIME mark.
 - **BonusCheques:** +5/hr auto top-up when broke (<20, capped at 20); +25 manual once/day.
 - **Second-place market** opens at 100% lock; tree marginals renormalized between the pair.
 - **Kingmaker lines** show resulting win% (now → then); −% lines are warnings.

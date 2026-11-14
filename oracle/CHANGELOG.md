@@ -395,3 +395,7 @@ approved it, "shipped" means it is live in the running pipeline.
   Early ends on a running server (Osprey 1-6-49426) still settle, tagged "ended early".
   Win chances freeze while a server is down. "Server offline" is shown for unannounced
   outages, "maintenance" only when Daybreak announced it. 9 languages.
+
+## 2026-11-14
+
+- **Duration-scaled rewards + FULL-TIME mark (owner 2026-11-14).** A full-time 90-min alert is the reward baseline (×1) and gets a ⏱️ FULL-TIME mark in the alert header, the vote card and history rows. Shorter/longer alerts scale only the profit ×dur/90: 45-min ×0.5 (100 at 50% returns ~148), 30-min ×0.33, 9-min ×0.1, 180-min ×2. The stake always comes back on a win, so being right never loses money. Scaling applies at quote/place time (`oracle-worker/src/vote.js`: `durationMult`, `quote(..., mult)`); settlement pays the stored potential, so votes already placed are unchanged. Last 7 days: only 27 of 262 settled alerts were 90-min (147×45, 88×30).
