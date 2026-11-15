@@ -26,7 +26,7 @@
   <meta name="twitter:title" content="PS2 Elite — player archetypes" />
   <meta name="twitter:description" content="Groups of PlanetSide 2 players by how they actually play, with the medians behind every group." />
   <meta name="twitter:image" content="https://dayset.github.io/ps2-elite-kd/assets/placeholder-graph.png" />
-  <link rel="stylesheet" href="styles.css?v=20261114-pgbox" />
+  <link rel="stylesheet" href="styles.css?v=20261114-ui2" />
   <style>
     /* Archetypes page only: room buttons, search, clickable rows and the detail panel on top of styles.css. */
     .arch-controls { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: end; }
@@ -87,7 +87,7 @@
     <p class="ranks-meta" id="archFound" role="status"></p>
 
     <div class="ranks-table-wrap">
-      <table class="ranks-table" id="archTable" aria-label="Player archetypes">
+      <table class="ranks-table sortable" id="archTable" aria-label="Player archetypes">
         <thead>
           <tr>
             <th scope="col">Archetype</th>
@@ -152,5 +152,7 @@
   </footer>
 
   <script type="module" src="archetypes.mjs?v=20261114-arch1"></script>
+<script type="module" src="page-settings.mjs"></script>
+<script type="module" src="table-sort.mjs"></script>
 </body>
 </html>

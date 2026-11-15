@@ -26,7 +26,7 @@
   <meta name="twitter:title" content="PS2 Elite — top fresh iVi demons" />
   <meta name="twitter:description" content="The best new fighters of the month: accounts created in the last 30 days, sorted by 🧘 Pure iVi, cut at the top 1%." />
   <meta name="twitter:image" content="https://dayset.github.io/ps2-elite-kd/assets/placeholder-graph.png" />
-  <link rel="stylesheet" href="styles.css?v=20261114-pgbox" />
+  <link rel="stylesheet" href="styles.css?v=20261114-ui2" />
   <style>
     /* Fresh page only: filter buttons and search on top of styles.css. */
     .fresh-controls { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: end; }
@@ -85,7 +85,7 @@
       <p>Top 1% means the top 1% of the players <em>with</em> a 🧘 Pure value in this room — the cutoff is computed live from the current snapshot, separately for PC and PlayStation.</p>
     </div>
     <div class="ranks-table-wrap">
-      <table class="ranks-table" id="freshTopTable" aria-label="Fresh accounts in the top 1 percent Pure">
+      <table class="ranks-table sortable" id="freshTopTable" aria-label="Fresh accounts in the top 1 percent Pure">
         <thead>
           <tr>
             <th scope="col">#</th>
@@ -115,7 +115,7 @@
       <p>Only accounts with a 🧘 Pure value are listed — Pure needs 🪳 Zerg, and Zerg needs 🤝 assists data, so fresh accounts without it are counted in the status line above but have no row here.</p>
     </div>
     <div class="ranks-table-wrap">
-      <table class="ranks-table" id="freshTable" aria-label="All fresh accounts by Pure">
+      <table class="ranks-table sortable" id="freshTable" aria-label="All fresh accounts by Pure">
         <thead>
           <tr>
             <th scope="col">#</th>
@@ -145,7 +145,7 @@
       <p>The other end of the same list, worst first. Most of these are genuine new players still learning the game — the same low numbers also show up on accounts parked for someone else to farm, and this table does not tell those apart.</p>
     </div>
     <div class="ranks-table-wrap">
-      <table class="ranks-table" id="freshWorstTable" aria-label="Fresh accounts in the bottom 1 percent Pure">
+      <table class="ranks-table sortable" id="freshWorstTable" aria-label="Fresh accounts in the bottom 1 percent Pure">
         <thead>
           <tr>
             <th scope="col">#</th>
@@ -211,5 +211,7 @@
   </footer>
 
   <script type="module" src="fresh.mjs?v=20261114-fresh1"></script>
+<script type="module" src="page-settings.mjs"></script>
+<script type="module" src="table-sort.mjs"></script>
 </body>
 </html>

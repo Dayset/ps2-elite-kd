@@ -3119,7 +3119,6 @@ body.main-page footer .footer-block { margin-top: 0.3rem; }
  * (big title, dek, mono meta rule) so the header and every box and table
  * share the same left and right edges. */
 .pg-wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px 18px; }
-.pg-lead { padding: 28px 0 10px; }
 .pg-lead h1 {
   font-size: clamp(30px, 5.4vw, 52px);
   line-height: 1.02; font-weight: 900; letter-spacing: -0.02em;
@@ -3127,12 +3126,27 @@ body.main-page footer .footer-block { margin-top: 0.3rem; }
 }
 .pg-lead p.pg-dek { font-size: clamp(15px, 2vw, 18px); max-width: 68ch; margin: 0 0 14px; }
 .pg-meta {
-  display: flex; flex-wrap: wrap; gap: 6px 20px;
-  font-family: ui-monospace, "IBM Plex Mono", monospace; font-size: 12.5px;
-  border-top: 2px solid var(--text); border-bottom: 1px solid var(--grid);
-  padding: 8px 0; margin: 0 0 14px;
+  display: flex; flex-wrap: wrap; gap: 6px;
+  border-top: 2px solid var(--text); padding: 10px 0 0; margin: 0 0 12px;
 }
-.pg-meta b { font-weight: 600; }
+.pg-meta a, .pg-wrap button, .pg-wrap select, .pg-wrap input[type="search"] {
+  font: inherit; font-size: 0.9rem; color: var(--text); background: var(--ctrl-btn-bg);
+  border: 1px solid var(--border); border-radius: 0; padding: 5px 12px; text-decoration: none; cursor: pointer;
+}
+.pg-meta a:hover, .pg-wrap button:hover { border-color: var(--accent); color: var(--accent); }
+.pg-wrap button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+.pg-wrap input[type="search"] { cursor: text; }
+.pg-wrap a:not(.pg-meta a), .pg-wrap a:visited:not(.pg-meta a) { color: var(--accent); text-decoration: none; }
+.pg-wrap a:not(.pg-meta a):hover { text-decoration: underline; }
+.pg-lead { display: block; text-align: left; margin: 28px 0 0.5rem; padding: 0.9rem 1.1rem 0.4rem; background: var(--panel); border: 1px solid var(--border); border-radius: 0; }
+.pg-lead h1 { margin-top: 0; }
+.pg-wrap .ranks-status, .pg-wrap .ranks-meta { background: var(--panel); border: 1px solid var(--border); padding: 0.45rem 0.9rem; margin: 0 0 0.5rem; }
+.pg-wrap .ranks-status:empty, .pg-wrap .ranks-meta:empty { display: none; }
+.pg-wrap .ranks-table td { max-width: 16rem; overflow: hidden; text-overflow: ellipsis; }
+table.sortable thead th { cursor: pointer; user-select: none; white-space: nowrap; }
+table.sortable thead th:hover { color: var(--accent); }
+table.sortable thead th[aria-sort="ascending"]::after { content: " ▲"; font-size: .7em; }
+table.sortable thead th[aria-sort="descending"]::after { content: " ▼"; font-size: .7em; }
 .pg-wrap .ranks-table-wrap { max-height: none; }
 
 /* Site pages (columns, updates, privacy, archive, outfits, ...): titles get the
@@ -3462,3 +3476,12 @@ td.luck-cell, td.luck-few { white-space: nowrap; }
 .site-nav .sn-brand { font-weight: 700; color: var(--text); margin-right: 10px; }
 .site-nav .sn-spacer { flex: 1; }
 @media (max-width: 700px) { .site-nav a { padding: 9px 7px; font-size: 0.78rem; } .site-nav .sn-hide-m { display: none; } }
+
+/* One back button everywhere: same size, same look (site pages, weapons, archive). */
+.st-back, .wc-back, .arc-back {
+  width: 2.75rem; height: 2.75rem; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; line-height: 1; text-decoration: none; color: var(--text);
+  background: var(--ctrl-btn-bg); border: 1px solid var(--border); border-radius: 0; padding: 0;
+}
+.st-back { position: absolute; top: 10px; left: 12px; }
+.st-back:hover, .wc-back:hover, .arc-back:hover { border-color: var(--accent); }

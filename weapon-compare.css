@@ -23,14 +23,11 @@ html, body { overflow: visible; overflow-x: clip; } /* hidden would make body th
 
 /* header: back button | title | language */
 .wc-head { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; }
-.wc-back { width: 2.75rem; height: 2.75rem; display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem; line-height: 1; text-decoration: none; background: var(--bg); border: 1px solid var(--border); border-radius: 0; color: var(--text); }
-.wc-back:hover { border-color: var(--accent); }
 .wc-head h1 { font-size: 1.2rem; margin: 0 0 2px; }
 .wc-sub { color: var(--dim); font-size: 0.85rem; }
 .wc-head .lang-select { align-self: start; }
 
 .wc-slim { padding-top: 8px; padding-bottom: 8px; }
-.wc-slim .wc-back { width: 2.25rem; height: 2.25rem; font-size: 1.2rem; }
 .wc-slim h1 { margin: 0; font-size: 1.1rem; }
 .wc-slim .lang-select { align-self: center; }
 

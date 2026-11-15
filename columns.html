@@ -17,7 +17,7 @@
       }
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261113-portal2" />
+  <link rel="stylesheet" href="styles.css?v=20261114-ui2" />
   <style>
     body { overflow: auto; }
     .st-wrap { max-width: none; margin: 0 auto; padding: 0; } /* Dayset 2026-10-19: same width as the main page — body.site-page already carries max-width: var(--page-w) (#29, site-layout.css); the wrapper no longer narrows it */
@@ -27,8 +27,6 @@
     /* Owner 2026-10-20: a good big visible way back — 🔙 only, no text,
        top-left of the header, mirroring the language menu top-right. */
     .st-head { padding-left: 4.75rem; }
-    .st-back { position: absolute; top: 10px; left: 12px; width: 3rem; height: 3rem; display: inline-flex; align-items: center; justify-content: center; font-size: 1.7rem; line-height: 1; text-decoration: none; background: var(--ctrl-btn-bg); border: 1px solid var(--border); border-radius: 0; }
-    .st-back:hover { border-color: var(--accent); }
     .st-head h1 { font-size: 1.25rem; margin: 0 0 4px; padding-right: 8.5rem; }
     .st-head .st-sub { margin-bottom: 0; }
     .st-sub { color: var(--dim); font-size: 0.85rem; margin-bottom: 16px; }
@@ -489,5 +487,6 @@
     syncToTop();
     toTop.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
   </script>
+<script type="module" src="page-settings.mjs"></script>
 </body>
 </html>
