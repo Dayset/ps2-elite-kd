@@ -17,3 +17,12 @@ test("rankings ⚔️ iVi has no floor: negative values render as-is", () => {
   assert.match(def, /digits: 0/);
   assert.doesNotMatch(def, /floorZero/);
 });
+
+test("server switch re-ranks the main table: # is the rank within the selected server (2026-11-15)", () => {
+  // The # column is the anchor for finding a player by rank + server, so a
+  // selected server must re-rank instead of keeping the global numbers
+  // (TheDarkEmpress: #1,305 on Wainwright vs #2,376 globally).
+  assert.match(src, /const sig = sortKey \+ ":" \+ sortDir \+ ":" \+ serverFilter;/, "rank cache key includes the server filter");
+  assert.match(src, /const pool = serverFilter === "all" \? data\.rows : data\.rows\.filter\(\(r\) => r\.srvKey === serverFilter\);/, "assignRanks ranks over the server pool");
+  assert.match(src, /assignRanks\(\) already ordered the server pool for the current sort/, "filtered view keeps the server rank numbers");
+});

@@ -487,22 +487,23 @@ export function initRankings(host) {
         list = list.filter((r) => !(fin(r.created) && r.created > 0 && r.created < cutoff));
       }
     }
-    // assignRanks() already ordered the whole population for the current
-    // sort; the filtered view keeps that order and the true rank numbers.
+    // assignRanks() already ordered the server pool for the current sort;
+    // the filtered view keeps that order and the server rank numbers.
     return list.slice().sort((a, b) => a.rank - b.rank);
   }
 
-  /** Assign 1-based ranks for the current sort over the whole population. */
+  /** Assign 1-based ranks for the current sort over the server pool (2026-11-15: a selected server re-ranks — # is the rank within that server, so a player is findable by rank + server; "All" ranks the whole population as before). */
   let rankedFor = "";
   function assignRanks() {
     if (!data) return;
-    const sig = sortKey + ":" + sortDir;
-    if (rankedFor === sig) return; // same sort → ranks unchanged (search / picks)
+    const sig = sortKey + ":" + sortDir + ":" + serverFilter;
+    if (rankedFor === sig) return; // same sort + server → ranks unchanged (search / picks)
     rankedFor = sig;
     const key = sortKey;
     const dir = sortDir === "asc" ? 1 : -1;
     const byName = (a, b) => compareByCharName(a.name, b.name); // shared helper (analyze-run.mjs)
-    const all = data.rows.slice().sort((a, b) => {
+    const pool = serverFilter === "all" ? data.rows : data.rows.filter((r) => r.srvKey === serverFilter);
+    const all = pool.slice().sort((a, b) => {
       if (key === "name") return byName(a, b) * dir; // Player: A→Z first (tag ignored)
       const av = a[key], bv = b[key];
       const aOk = fin(av), bOk = fin(bv);
