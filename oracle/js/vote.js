@@ -35,7 +35,8 @@ export const DISCLAIMER = `<details class="fair"><summary>${tr("or.fair.sum", "B
     <li>${tr("or.fair.3b", "One vote per faction per alert, from any of your devices.")}</li>
     <li>${tr("or.fair.4", "Signing in needs an in-game logout of your character. That proves the character is yours; we never ask for a password or email. We keep your character, a sign-in token, your BonusCheques and votes ({privacy}).", { privacy: `<a href="../privacy.html">${tr("or.fair.privacy", "privacy")}</a>` })}</li>
     <li>${tr("or.fair.5", "Fair play only. Riggers, alert throwers and cheaters aren't welcome, and their votes and leaderboard spots can be removed.")}</li>
-  </ul></details>`;
+  </ul></details>
+  <p class="note"><a href="../vote-check.html">${tr("or.v.check", "🔐 How to check a vote")}</a> — ${tr("or.v.checkNote", "votes are sealed daily and stamped into Bitcoin, so a vote can't be changed later.")}</p>`;
 
 let alert = null, me = null, wallet = null, quotes = null, pick = null, amount = 50, busy = false, msg = "", lastRefresh = 0;
 
