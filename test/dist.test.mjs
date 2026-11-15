@@ -126,6 +126,7 @@ describe("dist helpers", () => {
     const line = src.split("\n").find((l) => l.includes("histogram(vals, { floor:"));
     assert.ok(line && line.includes('scale: LOG1P_DIST.has(id) ? "log1p" : "linear"'), `getHist passes scale: ${line && line.trim()}`);
     assert.ok(src.includes('dist.nonLinear'), "axis labels the non-linear scale");
+    assert.ok(src.includes('dist.mjs?v=20261115-log1'), "rankings loads the log1p dist build (cache-bust pin, 2026-11-15)");
   });
 
   it("binIndexOf places values in the right log1p bin", () => {
