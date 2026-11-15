@@ -1,6 +1,8 @@
 // Negative ⚔️ iVi shows as-is in every player table (owner 2026-11-08: same as
 // All players — stats table, live page, latest-100-kills feed, Duels crowd).
-// The distribution graph keeps its floor: 0 + underflow bin (rankings.mjs:1046);
+// The distribution graph no longer floors everything at 0: pureivi (linear,
+// debug-only) still floors at 0, but adjs / combinedivi use symlog, which
+// shows the negatives and ignores the floor by design (2026-11-15);
 // 🎲 Luck stays null for iVi ≤ 0 (duelExpected) and Glicko keeps its flat seed;
 // the live feed's tier glyphs ("0" for opp ≤ 0) are bands, not values, and stay.
 import test from "node:test";
@@ -30,12 +32,13 @@ test("negative iVi is shown as-is in stats table, live page, kill feed and duels
   assert.match(read("columns.html"), /columns-example\.mjs\?v=20261110-swp1/);
 });
 
-test("distribution graph still floors at 0 (underflow bin), tier grouping unchanged", () => {
+test("distribution graph: pureivi still floors at 0, adjs / combinedivi use symlog (no floor), tier grouping unchanged", () => {
   const rk = read("rankings.mjs");
-  // The floor rule (adjs / pureivi → 0, everything else → null) still holds;
-  // the call now also carries the log1p scale for the skewed metrics (2026-11-15),
-  // so allow extra options after the floor.
-  assert.match(rk, /histogram\(vals, \{ floor: id === "adjs" \|\| id === "pureivi" \? 0 : null, scale: LOG1P_DIST\.has\(id\) \? "log1p" : "linear" \}\)/);
+  // The floor argument (adjs / pureivi → 0, everything else → null) still holds;
+  // the scale is now a variable: log1p for the skewed metrics, symlog for
+  // adjs / combinedivi — symlog ignores the floor by design (2026-11-15).
+  assert.match(rk, /histogram\(vals, \{ floor: id === "adjs" \|\| id === "pureivi" \? 0 : null, scale \}\)/);
+  assert.match(rk, /const SYMLOG_DIST = new Set\(\["adjs", "combinedivi"\]\)/);
   const tiers = read("tiers.mjs");
   assert.match(tiers, /if \(adjs <= 0\) return BELOW_TIER\.id;/);
 });

@@ -117,16 +117,76 @@ describe("dist helpers", () => {
     assert.equal(histogram([], { scale: "log1p" }).bins.length, 0);
   });
 
-  it("dist chart wiring: act / pvs / rkd / rf use log1p, the rest stay linear (2026-11-15)", () => {
+  it("histogram symlog: two-sided data spreads both ways, counts add up, stats unchanged (2026-11-15)", () => {
+    // ⚔️ iVi-like: a quarter negative with real spread, bulk positive —
+    // uniform in signed-log space on each side, so the transform (not the
+    // fixture) is what spreads the bars out.
+    const inv = (y) => Math.sign(y) * Math.expm1(Math.abs(y));
+    const vals = range(1000, (i) => (i < 270 ? inv(-7.2 + (i / 270) * 6.7) : inv(((i - 270) / 730) * 7.5)));
+    const lin = histogram(vals, { floor: 0 });
+    const sym = histogram(vals, { scale: "symlog" });
+    assert.equal(sym.scale, "symlog");
+    assert.equal(sym.digits, 2);
+    assert.equal(sym.step, niceStep(sym.step)); // nice step in signed-log units
+    assert.equal(sym.bins.reduce((a, b) => a + b.count, 0), 1000);
+    assert.equal(sym.bins.at(-1).cumPct, 100);
+    assert.equal(sym.median, lin.median);
+    assert.equal(sym.p90, lin.p90);
+    assert.equal(sym.p99, lin.p99);
+    const core = sym.bins.filter((b) => b.kind === "core");
+    assert.ok(core.length >= 12 && core.length <= 40, `symlog core bins ${core.length}`);
+    for (let i = 1; i < core.length; i++) assert.ok(core[i].x0 >= core[i - 1].x1 - 1e-9, "symlog edges increase");
+    assert.ok(core[0].x0 < 0 && core.at(-1).x1 > 0, "core spans zero both ways");
+    assert.ok(core.every((b) => b.x1 > b.x0), "every symlog bin has positive width");
+    // The point of the scale: the ≤0 lump is gone, the tallest bar drops.
+    const maxPct = (h) => Math.max(...h.bins.map((b) => b.pct));
+    assert.ok(maxPct(sym) < maxPct(lin) * 0.75, `symlog max ${maxPct(sym)} vs linear max ${maxPct(lin)}`);
+    assert.ok((sym.bins.find((b) => b.kind === "under")?.pct ?? 0) < 2, "no big underflow lump left");
+  });
+
+  it("histogram symlog ignores floor and equals log1p on ≥ 0 data", () => {
+    const vals = range(1000, (i) => (i < 700 ? i / 700 : 0.7 + ((i - 700) / 300) * 6));
+    const sym = histogram(vals, { scale: "symlog" });
+    const log = histogram(vals, { scale: "log1p" });
+    assert.deepEqual(sym.bins, log.bins, "all-≥0 data: symlog ≡ log1p");
+    assert.equal(sym.scale, "symlog");
+    // Floor must not clip the negative side: same bins with floor: 0 passed.
+    const neg = range(400, (i) => -800 + i * 4).concat(range(600, (i) => i * 3));
+    const a = histogram(neg, { scale: "symlog" });
+    const b = histogram(neg, { floor: 0, scale: "symlog" });
+    assert.deepEqual(a.bins, b.bins, "floor: 0 is ignored in symlog mode");
+    assert.ok(a.bins.some((x) => x.kind === "core" && x.x0 < 0), "core covers negatives");
+    assert.equal(histogram([3, 3, 3], { scale: "symlog" }).bins.reduce((x, y) => x + y.count, 0), 3);
+    assert.equal(histogram([], { scale: "symlog" }).bins.length, 0);
+  });
+
+  it("binIndexOf places values in the right symlog bin, negatives included", () => {
+    const vals = range(1000, (i) => (i < 270 ? -1300 + (i / 270) * 1250 : ((i - 270) / 730) * 1900));
+    const h = histogram(vals, { scale: "symlog" });
+    for (const v of [-1200, -500, -50, 0, 50, 500, 1500]) {
+      const i = binIndexOf(h, v);
+      assert.ok(i >= 0, `v=${v}`);
+      const b = h.bins[i];
+      if (b.kind === "core") assert.ok(v >= b.x0 && v <= b.x1, `v=${v} in ${b.x0}–${b.x1}`);
+    }
+    assert.equal(binIndexOf(h, NaN), -1);
+  });
+
+  it("dist chart wiring: act / pvs / rkd / rf use log1p, adjs / combinedivi use symlog, the rest stay linear (2026-11-15)", () => {
     const src = readFileSync(new URL("../rankings.mjs", import.meta.url), "utf8");
     const set = src.split("\n").find((l) => l.includes("LOG1P_DIST = new Set"));
     assert.ok(set, "LOG1P_DIST set present");
     for (const id of ["act", "pvs", "rkd", "rf"]) assert.ok(set.includes(`"${id}"`), `log1p covers ${id}: ${set.trim()}`);
     for (const id of ["adjs", "cons", "apk", "inf", "pureivi", "luck", "zerg"]) assert.ok(!set.includes(`"${id}"`), `log1p must not cover ${id}`);
-    const line = src.split("\n").find((l) => l.includes("histogram(vals, { floor:"));
-    assert.ok(line && line.includes('scale: LOG1P_DIST.has(id) ? "log1p" : "linear"'), `getHist passes scale: ${line && line.trim()}`);
+    const sym = src.split("\n").find((l) => l.includes("SYMLOG_DIST = new Set"));
+    assert.ok(sym, "SYMLOG_DIST set present");
+    for (const id of ["adjs", "combinedivi"]) assert.ok(sym.includes(`"${id}"`), `symlog covers ${id}: ${sym.trim()}`);
+    for (const id of ["act", "pvs", "rkd", "rf", "cons", "apk", "inf", "luck", "zerg", "pureivi"]) assert.ok(!sym.includes(`"${id}"`), `symlog must not cover ${id}`);
+    const scaleLine = src.split("\n").find((l) => l.includes("const scale = LOG1P_DIST.has(id)"));
+    assert.ok(scaleLine && scaleLine.includes('SYMLOG_DIST.has(id) ? "symlog" : "linear"'), `getHist picks symlog: ${scaleLine && scaleLine.trim()}`);
     assert.ok(src.includes('dist.nonLinear'), "axis labels the non-linear scale");
-    assert.ok(src.includes('dist.mjs?v=20261115-log1'), "rankings loads the log1p dist build (cache-bust pin, 2026-11-15)");
+    assert.ok(src.includes('dist.symlogHint'), "pill hint explains the symlog scale");
+    assert.ok(src.includes('dist.mjs?v=20261115-symlog1'), "rankings loads the symlog dist build (cache-bust pin, 2026-11-15)");
   });
 
   it("binIndexOf places values in the right log1p bin", () => {
