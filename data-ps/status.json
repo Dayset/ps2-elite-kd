@@ -2,43 +2,31 @@
   "room": "ps",
   "running": false,
   "lastRun": {
-    "runId": "43680669280",
+    "runId": "43681033922",
     "kind": "discovery",
-    "startedAt": "2026-11-15T05:21:03.812Z",
-    "endedAt": "2026-11-15T05:24:26.250Z",
-    "seconds": 202,
+    "startedAt": "2026-11-15T05:26:02.530Z",
+    "endedAt": "2026-11-15T05:28:15.967Z",
+    "seconds": 133,
     "added": [],
     "updated": [
-      "[BBRT] TechnoTiger",
-      "Rrrrr1230",
-      "[GVSX] S0l0ing",
-      "Rustolium",
-      "[SWT7] BaarathVS",
-      "[BCBG] IridescentIris",
-      "[WPGZ] Disglair",
-      "Emanuel132",
-      "[XTRE] BloodKill88NC",
-      "[BCBG] Yoyothekiller",
-      "[GVSX] RISKYvs",
-      "R1SKY",
-      "[TLMS] Hendlas",
-      "[TENX] Hybrida"
+      "Guaviare88",
+      "WantedVS",
+      "[FBBR] COMMAJOR57",
+      "[Opo] BlacQJaQ",
+      "[SWT7] OgerioVS",
+      "[BCBG] Deathmarkxs",
+      "[GVSX] Gustav5784",
+      "Regulardude24",
+      "RayondSanteiag"
     ],
-    "failed": [
-      {
-        "name": "ManNo351",
-        "key": "us-5429807367758078833",
-        "reason": "Census: no character 5429807367758078833 on Genudine",
-        "outage": false
-      }
-    ],
+    "failed": [],
     "stoppedEarly": null,
     "indexSize": 2377,
     "assists": {
       "calls": 1,
-      "rows": 99,
-      "players": 49,
-      "skipped": 46,
+      "rows": 5,
+      "players": 2,
+      "skipped": 3,
       "error": null
     },
     "servers": {
@@ -55,10 +43,10 @@
     }
   },
   "outlierGuard": {
-    "checkedAt": "2026-11-15T05:24:29.720Z",
+    "checkedAt": "2026-11-15T05:28:18.844Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 1,
-    "explained": 11,
+    "explained": 12,
     "items": [
       {
         "slug": "fghfgh1",
@@ -66,7 +54,7 @@
         "id": "ekpm",
         "value": 1.183,
         "bound": 1.079,
-        "z": 8.835,
+        "z": 8.847,
         "side": "high",
         "explained": false,
         "reason": "",
@@ -115,8 +103,8 @@
         "name": "MykeTR",
         "id": "inflation",
         "value": 70.362,
-        "bound": 23.503,
-        "z": 181.299,
+        "bound": 23.181,
+        "z": 181.355,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (rampage), listed there",
@@ -153,12 +141,24 @@
         ]
       },
       {
+        "slug": "jeremygc2",
+        "name": "JeremyGC2",
+        "id": "inflation",
+        "value": 23.382,
+        "bound": 23.181,
+        "z": 56.403,
+        "side": "high",
+        "explained": true,
+        "reason": "In 📉 chart anomalies only († adjusted — needs review)",
+        "red": []
+      },
+      {
         "slug": "myketr-us",
         "name": "MykeTR",
         "id": "ivi",
         "value": 5427.381,
-        "bound": 2615.01,
-        "z": 37.833,
+        "bound": 2614.533,
+        "z": 37.78,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (rampage), listed there",
@@ -224,14 +224,14 @@
         "explained": false,
         "reason": "",
         "red": [],
-        "maxZ": 8.835,
+        "maxZ": 8.847,
         "metrics": [
           {
             "id": "ekpm",
             "label": "eKPM",
             "value": 1.183,
             "bound": 1.079,
-            "z": 8.835,
+            "z": 8.847,
             "side": "high"
           }
         ]
@@ -280,14 +280,14 @@
         "red": [
           "rampage"
         ],
-        "maxZ": 181.299,
+        "maxZ": 181.355,
         "metrics": [
           {
             "id": "inflation",
             "label": "🎈 Inflation",
             "value": 70.362,
-            "bound": 23.503,
-            "z": 181.299,
+            "bound": 23.181,
+            "z": 181.355,
             "side": "high"
           },
           {
@@ -302,8 +302,8 @@
             "id": "ivi",
             "label": "IvI",
             "value": 5427.381,
-            "bound": 2615.01,
-            "z": 37.833,
+            "bound": 2614.533,
+            "z": 37.78,
             "side": "high"
           }
         ]
@@ -361,6 +361,24 @@
         ]
       },
       {
+        "slug": "jeremygc2",
+        "name": "JeremyGC2",
+        "explained": true,
+        "reason": "In 📉 chart anomalies only († adjusted — needs review)",
+        "red": [],
+        "maxZ": 56.403,
+        "metrics": [
+          {
+            "id": "inflation",
+            "label": "🎈 Inflation",
+            "value": 23.382,
+            "bound": 23.181,
+            "z": 56.403,
+            "side": "high"
+          }
+        ]
+      },
+      {
         "slug": "albert5",
         "name": "ALBERT5",
         "explained": true,
@@ -380,9 +398,9 @@
       }
     ],
     "playersUnexplained": 1,
-    "playersExplained": 5,
+    "playersExplained": 6,
     "playersAlsoRed": 2,
-    "playersChartOnly": 4
+    "playersChartOnly": 5
   },
   "hidden": {
     "count": 7,
@@ -446,18 +464,18 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-11-15T05:24:30.322Z",
+    "checkedAt": "2026-11-15T05:28:19.312Z",
     "red": 15,
     "padding": 0,
     "adjusted": 273,
-    "outlier": 6,
+    "outlier": 7,
     "chartOnly": 262,
     "both": 12,
     "session": 1,
     "forensics": 0
   },
   "sessionStats": {
-    "checkedAt": "2026-11-15T05:24:29.727Z",
+    "checkedAt": "2026-11-15T05:28:18.850Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -473,8 +491,8 @@
       "players": 2377,
       "withSessions": 1878,
       "measured": 1070,
-      "sessions": 25396,
-      "kills": 547184,
+      "sessions": 25398,
+      "kills": 547193,
       "xpPlayers": 0,
       "xpMeasured": 0,
       "xpSessions": 0
@@ -1022,7 +1040,7 @@
     "outliersUnexplained": 0
   },
   "forensics": {
-    "checkedAt": "2026-11-15T05:24:29.735Z",
+    "checkedAt": "2026-11-15T05:28:18.856Z",
     "candidates": [
       "thingzzvs",
       "wertytr",
@@ -1035,6 +1053,7 @@
       "gonvalsky67",
       "manlikes1",
       "albertv",
+      "jeremygc2",
       "xxjeampierrexx",
       "albert5",
       "fghfgh1",
@@ -1108,7 +1127,7 @@
     "players": []
   },
   "review": {
-    "checkedAt": "2026-11-15T05:24:29.746Z",
+    "checkedAt": "2026-11-15T05:28:18.864Z",
     "count": 281,
     "players": [
       {
@@ -1274,6 +1293,15 @@
         "cid": "5429841995343421937",
         "lists": [
           "outlier"
+        ]
+      },
+      {
+        "slug": "jeremygc2",
+        "name": "JeremyGC2",
+        "cid": "5428812946111814353",
+        "lists": [
+          "outlier",
+          "adjusted"
         ]
       },
       {
@@ -2218,14 +2246,6 @@
         "slug": "jeampierrenc",
         "name": "JeampierreNC",
         "cid": "5429028231200437073",
-        "lists": [
-          "adjusted"
-        ]
-      },
-      {
-        "slug": "jeremygc2",
-        "name": "JeremyGC2",
-        "cid": "5428812946111814353",
         "lists": [
           "adjusted"
         ]
@@ -3388,12 +3408,12 @@
   "assistGroups": {
     "byTag": {
       "infantry": {
-        "count": 727,
+        "count": 728,
         "medApk": 0.306,
         "medShare": 0.586
       },
       "mixed": {
-        "count": 271,
+        "count": 270,
         "medApk": 0.285,
         "medShare": 0.57
       },
@@ -3420,12 +3440,12 @@
         "threshold": 0.554,
         "dir": "<=",
         "vehicleCaught": 0.571,
-        "infantryCleared": 0.799,
+        "infantryCleared": 0.798,
         "balanced": 0.685
       }
     },
     "tagMin": 20,
-    "checkedAt": "2026-11-15T05:24:29.843Z",
+    "checkedAt": "2026-11-15T05:28:18.940Z",
     "coverage": {
       "players": 2370,
       "withSessions": 1875,
@@ -3735,7 +3755,7 @@
     }
   },
   "padderPenalty": {
-    "checkedAt": "2026-11-15T05:24:29.751Z",
+    "checkedAt": "2026-11-15T05:28:18.868Z",
     "ranked": 2362,
     "penalty": 0.1,
     "ref": 610.6,
@@ -3745,7 +3765,7 @@
     "players": []
   },
   "vehicleCut": {
-    "checkedAt": "2026-11-15T05:24:29.760Z",
+    "checkedAt": "2026-11-15T05:28:18.876Z",
     "ranked": 2362,
     "cut": 1344,
     "buckets": {
@@ -4049,7 +4069,7 @@
         "before": 1741.7,
         "after": 1165.2,
         "rankBefore": 65,
-        "rankAfter": 281
+        "rankAfter": 282
       },
       {
         "slug": "genio479",
@@ -4094,7 +4114,7 @@
         "before": 1721.7,
         "after": 1162.1,
         "rankBefore": 73,
-        "rankAfter": 284
+        "rankAfter": 285
       },
       {
         "slug": "947genio",
@@ -4559,7 +4579,7 @@
         "before": 1499.8,
         "after": 1175.9,
         "rankBefore": 158,
-        "rankAfter": 279
+        "rankAfter": 280
       },
       {
         "slug": "t4m4l33",
@@ -5069,7 +5089,7 @@
         "before": 1319,
         "after": 1162.1,
         "rankBefore": 252,
-        "rankAfter": 285
+        "rankAfter": 286
       },
       {
         "slug": "liberalhorsetr",
@@ -5128,7 +5148,7 @@
         "cut": 1.6,
         "before": 1305.6,
         "after": 1284.7,
-        "rankBefore": 258,
+        "rankBefore": 257,
         "rankAfter": 220
       },
       {
@@ -5143,7 +5163,7 @@
         "cut": 24.8,
         "before": 1304.7,
         "after": 981.1,
-        "rankBefore": 259,
+        "rankBefore": 258,
         "rankAfter": 400
       },
       {
@@ -5158,7 +5178,7 @@
         "cut": 3.5,
         "before": 1303.6,
         "after": 1258,
-        "rankBefore": 261,
+        "rankBefore": 260,
         "rankAfter": 228
       },
       {
@@ -5173,7 +5193,7 @@
         "cut": 12.4,
         "before": 1301.7,
         "after": 1140.3,
-        "rankBefore": 262,
+        "rankBefore": 261,
         "rankAfter": 305
       },
       {
@@ -5564,7 +5584,7 @@
         "before": 1206.5,
         "after": 1166.6,
         "rankBefore": 319,
-        "rankAfter": 280
+        "rankAfter": 281
       },
       {
         "slug": "thablackpanther",
@@ -5624,7 +5644,7 @@
         "before": 1190.1,
         "after": 1163.9,
         "rankBefore": 328,
-        "rankAfter": 283
+        "rankAfter": 284
       },
       {
         "slug": "skywazznc",
@@ -5698,7 +5718,7 @@
         "cut": 29.6,
         "before": 1177.1,
         "after": 828.7,
-        "rankBefore": 338,
+        "rankBefore": 339,
         "rankAfter": 510
       },
       {
@@ -5713,7 +5733,7 @@
         "cut": 1.8,
         "before": 1176.9,
         "after": 1155.8,
-        "rankBefore": 339,
+        "rankBefore": 340,
         "rankAfter": 290
       },
       {
@@ -5728,7 +5748,7 @@
         "cut": 10.5,
         "before": 1175.5,
         "after": 1052.1,
-        "rankBefore": 341,
+        "rankBefore": 342,
         "rankAfter": 354
       },
       {
@@ -5743,7 +5763,7 @@
         "cut": 3.1,
         "before": 1174.9,
         "after": 1138.5,
-        "rankBefore": 342,
+        "rankBefore": 343,
         "rankAfter": 309
       },
       {
@@ -5758,7 +5778,7 @@
         "cut": 29.3,
         "before": 1172.5,
         "after": 829,
-        "rankBefore": 343,
+        "rankBefore": 344,
         "rankAfter": 509
       },
       {
@@ -5773,7 +5793,7 @@
         "cut": 1.8,
         "before": 1172.4,
         "after": 1151.3,
-        "rankBefore": 344,
+        "rankBefore": 345,
         "rankAfter": 296
       },
       {
@@ -5788,7 +5808,7 @@
         "cut": 22.6,
         "before": 1165.8,
         "after": 902.3,
-        "rankBefore": 345,
+        "rankBefore": 346,
         "rankAfter": 450
       },
       {
@@ -5803,7 +5823,7 @@
         "cut": 0.9,
         "before": 1162.1,
         "after": 1151.7,
-        "rankBefore": 347,
+        "rankBefore": 348,
         "rankAfter": 295
       },
       {
@@ -6021,11 +6041,11 @@
     "watch": []
   },
   "infantry": {
-    "checkedAt": "2026-11-15T05:24:30.587Z",
+    "checkedAt": "2026-11-15T05:28:19.515Z",
     "players": 2377,
     "counts": {
-      "infantry": 1518,
-      "mixed": 496,
+      "infantry": 1519,
+      "mixed": 495,
       "vehicle": 94,
       "low": 267,
       "none": 0
@@ -6040,7 +6060,7 @@
   },
   "burst": {
     "rule": "KPM ≥ 5 and ≥ 15 kills in ≥ 2 min (one stored session, no 10-minute floor); skipped when within the player's own normal (≥ 5 other sessions of ≥ 10 min, ≤ 2× their median KPM, career K/D < 10); 🛡️ established players (account ≥ 1 year, eKPM ≥ 0.75, ≥ 3 stored sessions) show as cleared automatically",
-    "checkedAt": "2026-11-15T05:24:30.954Z",
+    "checkedAt": "2026-11-15T05:28:19.789Z",
     "sessions": 23,
     "ownNormalSkipped": 0,
     "flaggedPlayers": 7,
@@ -6386,7 +6406,7 @@
     "caught": []
   },
   "hut": {
-    "builtAt": "2026-11-15T05:24:29.638Z",
+    "builtAt": "2026-11-15T05:28:18.772Z",
     "cuts": {
       "actMedian": 0.2242,
       "actMult": 1.333,
@@ -7091,7 +7111,7 @@
     "cleared": []
   },
   "newbieDiff": {
-    "builtAt": "2026-11-15T05:24:29.668Z",
+    "builtAt": "2026-11-15T05:28:18.794Z",
     "loH": 6.1,
     "hiH": 268.6,
     "n": 2361,
@@ -7101,7 +7121,7 @@
     "newH": 14.2,
     "newQ": 0.14,
     "newCount": 330,
-    "marked": 509,
+    "marked": 510,
     "graveHiddenCount": 0,
     "rule": "🐣 Newbie softening of a negative 🔀 Diff, gradual, ends from this build's 2361 players with a play time (lifetime kills ÷ lifetime KPM, the 🛖 estimate): lo = p5 (6.1 h), hi = p50 = the median (268.6 h). factor = 0 at/below lo, ln(h ÷ lo) ÷ ln(hi ÷ lo) between (log scale: the Impostor share drops by about the same step per doubling of play time), 1 at/above hi. Negative Diff × factor, rounded; positive Diff untouched; no play time → no change. 🐣 next to the name when the softening raised the Diff by 10+ points (hover “Softened from …”), and for every new player: play time below p14.000000000000002 (14.2 h, the end of the flat ~29% Impostor share at the start), whatever the Diff (hover “New player (about N h played)”). 🪦 inactive (no activity for over a year) wins: no 🐣 mark, the softened Diff stays. Owner override: \"newbieDiff\": \"cleared\" on the data/reviewed.json player entry (full negative Diff).",
     "players": [
@@ -7802,6 +7822,14 @@
         "diff": -16
       },
       {
+        "name": "Solder77inhot",
+        "slug": "solder77inhot",
+        "h": 6.6,
+        "factor": 0.024,
+        "diffRaw": -53,
+        "diff": -1
+      },
+      {
         "name": "Shorty53355gh",
         "slug": "shorty53355gh",
         "h": 8.4,
@@ -7864,14 +7892,6 @@
         "factor": 0.176,
         "diffRaw": -52,
         "diff": -9
-      },
-      {
-        "name": "Solder77inhot",
-        "slug": "solder77inhot",
-        "h": 6.6,
-        "factor": 0.024,
-        "diffRaw": -52,
-        "diff": -1
       },
       {
         "name": "Richgangboi",
@@ -8290,6 +8310,14 @@
         "diff": -20
       },
       {
+        "name": "Killerqwe21",
+        "slug": "killerqwe21",
+        "h": 12.2,
+        "factor": 0.183,
+        "diffRaw": -44,
+        "diff": -8
+      },
+      {
         "name": "BxLacK",
         "slug": "bxlack",
         "h": 6.3,
@@ -8312,14 +8340,6 @@
         "factor": 0.738,
         "diffRaw": -43,
         "diff": -32
-      },
-      {
-        "name": "Killerqwe21",
-        "slug": "killerqwe21",
-        "h": 12.2,
-        "factor": 0.183,
-        "diffRaw": -43,
-        "diff": -8
       },
       {
         "name": "Suunman",
@@ -9162,14 +9182,6 @@
         "diff": -28
       },
       {
-        "name": "OmarBazzoka",
-        "slug": "omarbazzoka",
-        "h": 46.6,
-        "factor": 0.538,
-        "diffRaw": -30,
-        "diff": -16
-      },
-      {
         "name": "SVDestroyer",
         "slug": "svdestroyer",
         "h": 23.4,
@@ -9240,6 +9252,14 @@
         "factor": 0.249,
         "diffRaw": -29,
         "diff": -7
+      },
+      {
+        "name": "OmarBazzoka",
+        "slug": "omarbazzoka",
+        "h": 46.6,
+        "factor": 0.538,
+        "diffRaw": -29,
+        "diff": -16
       },
       {
         "name": "IIRoger",
@@ -9440,14 +9460,6 @@
         "factor": 0.527,
         "diffRaw": -26,
         "diff": -14
-      },
-      {
-        "name": "Gustav5784",
-        "slug": "gustav5784",
-        "h": 12.6,
-        "factor": 0.193,
-        "diffRaw": -26,
-        "diff": -5
       },
       {
         "name": "AuhelliusNawhus",
@@ -9722,6 +9734,14 @@
         "diff": 0
       },
       {
+        "name": "Gustav5784",
+        "slug": "gustav5784",
+        "h": 14.9,
+        "factor": 0.236,
+        "diffRaw": -23,
+        "diff": -5
+      },
+      {
         "name": "Flashpaj07",
         "slug": "flashpaj07",
         "h": 61.7,
@@ -9850,6 +9870,14 @@
         "diff": -21
       },
       {
+        "name": "MyTJlo",
+        "slug": "mytjlo",
+        "h": 169.5,
+        "factor": 0.879,
+        "diffRaw": -22,
+        "diff": -19
+      },
+      {
         "name": "BobOtto",
         "slug": "bobotto",
         "h": 29.9,
@@ -9896,6 +9924,14 @@
         "factor": 0,
         "diffRaw": -22,
         "diff": 0
+      },
+      {
+        "name": "RandomSpace",
+        "slug": "randomspace",
+        "h": 10.7,
+        "factor": 0.148,
+        "diffRaw": -22,
+        "diff": -3
       },
       {
         "name": "Rayheybao",
@@ -9946,14 +9982,6 @@
         "diff": -20
       },
       {
-        "name": "MyTJlo",
-        "slug": "mytjlo",
-        "h": 169.5,
-        "factor": 0.879,
-        "diffRaw": -21,
-        "diff": -18
-      },
-      {
         "name": "xPROXYx",
         "slug": "xproxyx",
         "h": 50,
@@ -9992,14 +10020,6 @@
         "factor": 0.073,
         "diffRaw": -21,
         "diff": -2
-      },
-      {
-        "name": "RandomSpace",
-        "slug": "randomspace",
-        "h": 10.7,
-        "factor": 0.148,
-        "diffRaw": -21,
-        "diff": -3
       },
       {
         "name": "SirMattersNot",
@@ -11330,6 +11350,14 @@
         "diff": -4
       },
       {
+        "name": "nikta",
+        "slug": "nikta",
+        "h": 101.6,
+        "factor": 0.743,
+        "diffRaw": -8,
+        "diff": -6
+      },
+      {
         "name": "Fumblingthrough",
         "slug": "fumblingthrough",
         "h": 8.7,
@@ -11482,14 +11510,6 @@
         "diff": -6
       },
       {
-        "name": "BlacQJaQ",
-        "slug": "blacqjaq",
-        "h": 15.3,
-        "factor": 0.245,
-        "diffRaw": -7,
-        "diff": -2
-      },
-      {
         "name": "ToNostalgianed",
         "slug": "tonostalgianed",
         "h": 62.8,
@@ -11502,14 +11522,6 @@
         "slug": "argonautx",
         "h": 88.9,
         "factor": 0.708,
-        "diffRaw": -7,
-        "diff": -5
-      },
-      {
-        "name": "nikta",
-        "slug": "nikta",
-        "h": 101.6,
-        "factor": 0.743,
         "diffRaw": -7,
         "diff": -5
       },
@@ -11658,6 +11670,14 @@
         "diff": -5
       },
       {
+        "name": "BlacQJaQ",
+        "slug": "blacqjaq",
+        "h": 16,
+        "factor": 0.256,
+        "diffRaw": -6,
+        "diff": -2
+      },
+      {
         "name": "TurkoVS",
         "slug": "turkovs",
         "h": 85.4,
@@ -11802,6 +11822,14 @@
         "diff": -3
       },
       {
+        "name": "OgerioVS",
+        "slug": "ogeriovs",
+        "h": 3.4,
+        "factor": 0,
+        "diffRaw": -5,
+        "diff": 0
+      },
+      {
         "name": "Tontyaboii",
         "slug": "tontyaboii",
         "h": 182,
@@ -11854,14 +11882,6 @@
         "slug": "mobilebakery",
         "h": 6.5,
         "factor": 0.019,
-        "diffRaw": -5,
-        "diff": 0
-      },
-      {
-        "name": "OgerioVS",
-        "slug": "ogeriovs",
-        "h": 2.5,
-        "factor": 0,
         "diffRaw": -5,
         "diff": 0
       },
@@ -11997,7 +12017,7 @@
         "name": "Guaviare88",
         "slug": "guaviare88",
         "h": 11.2,
-        "factor": 0.161,
+        "factor": 0.162,
         "diffRaw": -4,
         "diff": -1
       },
@@ -12348,8 +12368,8 @@
       {
         "name": "WantedVS",
         "slug": "wantedvs",
-        "h": 8.2,
-        "factor": 0.079,
+        "h": 10.1,
+        "factor": 0.134,
         "diffRaw": -2,
         "diff": 0
       },
@@ -12579,13 +12599,6 @@
         "diff": 0
       },
       {
-        "name": "OgerioVS",
-        "slug": "ogeriovs",
-        "h": 2.5,
-        "diffRaw": -5,
-        "diff": 0
-      },
-      {
         "name": "AliceWetFart",
         "slug": "alicewetfart",
         "h": 2.6,
@@ -12689,6 +12702,13 @@
         "h": 3.2,
         "diffRaw": 49,
         "diff": 49
+      },
+      {
+        "name": "OgerioVS",
+        "slug": "ogeriovs",
+        "h": 3.4,
+        "diffRaw": -5,
+        "diff": 0
       },
       {
         "name": "MadonnaBestia",
@@ -13195,13 +13215,6 @@
         "diff": 0
       },
       {
-        "name": "COMMAJOR57",
-        "slug": "commajor57",
-        "h": 5.6,
-        "diffRaw": 25,
-        "diff": 25
-      },
-      {
         "name": "Goodguyz5",
         "slug": "goodguyz5",
         "h": 5.6,
@@ -13235,6 +13248,13 @@
         "h": 5.8,
         "diffRaw": -20,
         "diff": 0
+      },
+      {
+        "name": "COMMAJOR57",
+        "slug": "commajor57",
+        "h": 5.8,
+        "diffRaw": 24,
+        "diff": 24
       },
       {
         "name": "PetalzZz",
@@ -13471,7 +13491,7 @@
         "name": "Solder77inhot",
         "slug": "solder77inhot",
         "h": 6.6,
-        "diffRaw": -52,
+        "diffRaw": -53,
         "diff": -1
       },
       {
@@ -13830,13 +13850,6 @@
         "h": 8.2,
         "diffRaw": -24,
         "diff": -2
-      },
-      {
-        "name": "WantedVS",
-        "slug": "wantedvs",
-        "h": 8.2,
-        "diffRaw": -2,
-        "diff": 0
       },
       {
         "name": "SgtGusty",
@@ -14231,6 +14244,13 @@
         "diff": 10
       },
       {
+        "name": "WantedVS",
+        "slug": "wantedvs",
+        "h": 10.1,
+        "diffRaw": -2,
+        "diff": 0
+      },
+      {
         "name": "DeinSchatz",
         "slug": "deinschatz",
         "h": 10.2,
@@ -14311,7 +14331,7 @@
         "name": "RandomSpace",
         "slug": "randomspace",
         "h": 10.7,
-        "diffRaw": -21,
+        "diffRaw": -22,
         "diff": -3
       },
       {
@@ -14528,7 +14548,7 @@
         "name": "Killerqwe21",
         "slug": "killerqwe21",
         "h": 12.2,
-        "diffRaw": -43,
+        "diffRaw": -44,
         "diff": -8
       },
       {
@@ -14593,13 +14613,6 @@
         "h": 12.5,
         "diffRaw": -33,
         "diff": -6
-      },
-      {
-        "name": "Gustav5784",
-        "slug": "gustav5784",
-        "h": 12.6,
-        "diffRaw": -26,
-        "diff": -5
       },
       {
         "name": "GiuseppeAcciaio",
@@ -14768,13 +14781,20 @@
         "h": 14.1,
         "diffRaw": -8,
         "diff": -2
+      },
+      {
+        "name": "CyborgNinjaX",
+        "slug": "cyborgninjax",
+        "h": 14.2,
+        "diffRaw": -1,
+        "diff": 0
       }
     ],
     "graveHidden": [],
     "cleared": []
   },
   "vehDiff": {
-    "builtAt": "2026-11-15T05:24:29.652Z",
+    "builtAt": "2026-11-15T05:28:18.782Z",
     "start": 14.4,
     "damped": 558,
     "dieHardHut": 235,
@@ -15871,17 +15891,6 @@
         "diff": 31
       },
       {
-        "name": "EmperorNC",
-        "slug": "emperornc",
-        "veh": 56.6,
-        "factor": 0.507,
-        "hut": null,
-        "by": "veh",
-        "diffRaw": 40,
-        "diffHut": 40,
-        "diff": 20
-      },
-      {
         "name": "naarrdd",
         "slug": "naarrdd",
         "veh": 32.1,
@@ -16001,6 +16010,17 @@
         "diffRaw": 39,
         "diffHut": 39,
         "diff": 4
+      },
+      {
+        "name": "EmperorNC",
+        "slug": "emperornc",
+        "veh": 56.6,
+        "factor": 0.507,
+        "hut": null,
+        "by": "veh",
+        "diffRaw": 39,
+        "diffHut": 39,
+        "diff": 20
       },
       {
         "name": "JeampierreNC",
@@ -16850,6 +16870,17 @@
         "diff": 7
       },
       {
+        "name": "DenisroyNC",
+        "slug": "denisroync",
+        "veh": 32.6,
+        "factor": 0.787,
+        "hut": null,
+        "by": "veh",
+        "diffRaw": 31,
+        "diffHut": 31,
+        "diff": 24
+      },
+      {
         "name": "Om1nousPrime",
         "slug": "om1nousprime",
         "veh": 17,
@@ -16991,17 +17022,6 @@
         "diffRaw": 30,
         "diffHut": 30,
         "diff": 20
-      },
-      {
-        "name": "DenisroyNC",
-        "slug": "denisroync",
-        "veh": 32.6,
-        "factor": 0.787,
-        "hut": null,
-        "by": "veh",
-        "diffRaw": 30,
-        "diffHut": 30,
-        "diff": 24
       },
       {
         "name": "GenralHartman",
@@ -18555,17 +18575,6 @@
         "diff": 18
       },
       {
-        "name": "Gastricinfected",
-        "slug": "gastricinfected",
-        "veh": 25.6,
-        "factor": 0.869,
-        "hut": null,
-        "by": "veh",
-        "diffRaw": 21,
-        "diffHut": 21,
-        "diff": 18
-      },
-      {
         "name": "WoolPrawn",
         "slug": "woolprawn",
         "veh": 33.1,
@@ -18663,6 +18672,17 @@
         "diffRaw": 20,
         "diffHut": 20,
         "diff": 15
+      },
+      {
+        "name": "Gastricinfected",
+        "slug": "gastricinfected",
+        "veh": 25.6,
+        "factor": 0.869,
+        "hut": null,
+        "by": "veh",
+        "diffRaw": 20,
+        "diffHut": 20,
+        "diff": 17
       },
       {
         "name": "GoodbutVS",
@@ -20923,7 +20943,7 @@
     "cleared": []
   },
   "zergRevive": {
-    "builtAt": "2026-11-15T05:24:29.677Z",
+    "builtAt": "2026-11-15T05:28:18.800Z",
     "zergScored": 1066,
     "measured": 0,
     "measuredZerg": 0,
@@ -20947,7 +20967,7 @@
     "cleared": []
   },
   "assistGap": {
-    "checkedAt": "2026-11-15T05:24:29.844Z",
+    "checkedAt": "2026-11-15T05:28:18.941Z",
     "start": "2026-04-01T13:00:00.000Z",
     "end": "2026-05-07T05:00:00.000Z",
     "url": "https://www.planetside2.com/patch-notes/may-6-hotfix-2026",
@@ -20957,7 +20977,7 @@
     "players": []
   },
   "tractorMark": {
-    "checkedAt": "2026-11-15T05:24:29.681Z",
+    "checkedAt": "2026-11-15T05:28:18.804Z",
     "rule": "🚜 = infantry % < p25 (72.7%) and (vehicle repair/min ≥ p75 (null) or vehicle kills/min ≥ p75 (null) of the 0 players with 2+ h of XP detail), or infantry % < p2 (23%)",
     "cuts": {
       "cut": 72.7,
