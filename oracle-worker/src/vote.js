@@ -179,7 +179,7 @@ export async function handleVote(request, env, url, json, now = Math.floor(Date.
 
   if (p === "/vote/me") {
     const w = await wallet(db, acct.cid, now);
-    const votes = (await db.prepare("SELECT id, key, outcome, amount, fee, net, potential, pct, progress, placed_ts, status, reward FROM vote WHERE cid=? ORDER BY placed_ts DESC LIMIT 50").bind(acct.cid).all()).results || [];
+    const votes = (await db.prepare("SELECT id, cid, key, outcome, amount, fee, net, potential, pct, progress, placed_ts, status, reward, settled_ts FROM vote WHERE cid=? ORDER BY placed_ts DESC LIMIT 50").bind(acct.cid).all()).results || [];
     const settledRows = votes.filter((v) => v.status !== "open");
     // commits: salt (only the voter sees it), hash, day, and the Merkle path to the day's root (votelog.js).
     const commits = await commitsFor(db, votes.map((v) => v.id));

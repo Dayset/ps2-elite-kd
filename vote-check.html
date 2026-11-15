@@ -108,7 +108,7 @@
       <h2 id="vcVoter" data-i18n="vc.votersH">Step 2: check your own vote (voter)</h2>
       <ol class="st-list">
         <li data-i18n="vc.voter1">Sign in to the oracle and open "All my votes". It lists each vote with its alert, amount and result.</li>
-        <li data-i18n="vc.voter2">Showing each vote's fingerprint and secret number there — so you can check it in one tap — is still being built.</li>
+        <li data-i18n="vc.voter2">Tap 🔐 Check this vote under any vote in "All my votes". It shows the vote's fingerprint and secret number and checks them against the day's seal, in your browser — nothing is sent anywhere.</li>
         <li data-i18n="vc.voter3">The worked example below runs the same check in your browser, on sample votes.</li>
       </ol>
       <p class="st-dim" data-i18n="vc.voterNote">If you want someone else to check your vote, show them your details and salt only. Do not post the salt publicly.</p>
@@ -142,7 +142,7 @@
 
     <section class="st-card" aria-labelledby="vcMine">
       <h2 id="vcMine" data-i18n="vc.mineH">Check a vote record (stays in your browser)</h2>
-      <p data-i18n="vc.mine1">If you have your vote record as JSON — fingerprint, salt, path and seal — paste it here. The check runs in your browser; nothing is sent anywhere. The record is in this shape: {"kind":"placed","values":[...details in the order shown on the site...],"salt":"...","hash":"...","path":[...],"root":"..."}. The first fields come from your vote; path and root come from the public check for that hash.</p>
+      <p data-i18n="vc.mine1">If you have your vote record as JSON — fingerprint, salt, path and seal — paste it here. The check runs in your browser; nothing is sent anywhere. The record is in this shape: {"kind":"placed","values":[...details in the order shown on the site...],"salt":"...","hash":"...","path":[...],"root":"..."}. The first fields come from your vote; path and root come from the public check for that hash. You can also tap "Copy record" on a vote in "All my votes" to get its record.</p>
       <textarea id="mineIn" class="vc-area" spellcheck="false" aria-label="Your vote record" data-i18n-aria-label="vc.mineAria"></textarea>
       <button id="mineBtn" class="vc-btn" type="button" data-i18n="vc.mineBtn">Check</button>
       <p id="mineOk" class="vc-verdict vc-ok vc-hide" data-i18n="vc.mineOk">✅ Matches: your vote is inside the sealed record, unchanged since sealing.</p>
@@ -152,7 +152,7 @@
 
     <section class="st-card" aria-labelledby="vcStatus">
       <h2 id="vcStatus" data-i18n="vc.statusH">Status</h2>
-      <p data-i18n="vc.status1">Sealing and the public log are live, and this page now checks a day's Bitcoin confirmation for you (Step 1). The one-tap check of your own vote inside "All my votes" is still being built.</p>
+      <p data-i18n="vc.status1">Sealing and the public log are live, and this page now checks a day's Bitcoin confirmation for you (Step 1). The one-tap check of your own vote inside "All my votes" is live.</p>
       <p class="st-dim" data-i18n="vc.about">Run by Dayset as a free hobby project. Not affiliated with Daybreak Game Company.</p>
     </section>
   </main>

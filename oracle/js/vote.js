@@ -85,6 +85,82 @@ export function myVoteMark(votes, key) {
   return `🗳️ ${mine.map(one).join(" ")}`;
 }
 
+/**
+ * One-tap vote check (owner 2026-11-15): the fingerprint (hash) and salt for
+ * each vote already come back with /vote/me (v.commits, oracle-worker/src/
+ * votelog.js). The browser re-derives the hash from the vote's own details
+ * and salt — the same rule the Worker commits with — then walks the stored
+ * Merkle path to the day's seal. Nothing is sent anywhere: the check runs
+ * entirely in the voter's browser.
+ *   placed values:  [id, cid, key, outcome, amount, fee, net, potential, pct, progress, placed_ts]
+ *   settled values: [id, status, reward, settled_ts]   (same salt as placed)
+ * Statuses: ok (details match + path reaches the seal), not-rooted (details
+ * match, the day is sealed overnight), in-seal-only (the fingerprint is in
+ * the sealed record but the Worker reply predates cid/settled_ts, so the
+ * details could not be re-derived), mismatch (details or path don't fit),
+ * no-commit / no-crypto.
+ */
+const _enc = new TextEncoder();
+const _hexOf = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+const _sha256hex = async (s) => _hexOf(await crypto.subtle.digest("SHA-256", _enc.encode(s)));
+export const voteCommitHash = (kind, values, salt) => _sha256hex(`votelog/1|${kind}|${salt}|${JSON.stringify(values)}`);
+const _pairHash = (a, b) => _sha256hex(a + b);
+export const placedVoteValues = (v) => [v.id, v.cid, v.key, v.outcome, v.amount, v.fee, v.net, v.potential, v.pct, v.progress, v.placed_ts];
+export const settledVoteValues = (v) => [v.id, v.status, v.reward, v.settled_ts];
+async function _walkToRoot(leaf, path) {
+  let acc = leaf;
+  for (const s of path || []) acc = s.side === "left" ? await _pairHash(s.h, acc) : await _pairHash(acc, s.h);
+  return acc;
+}
+export async function verifyVoteCheck(v) {
+  const commits = (v && v.commits) || null;
+  if (!commits || !commits.placed) return { status: "no-commit", kinds: [] };
+  if (typeof crypto === "undefined" || !crypto.subtle) return { status: "no-crypto", kinds: [] };
+  const kinds = [];
+  for (const kind of ["placed", "settled"]) {
+    const c = commits[kind];
+    if (!c) continue;
+    const values = kind === "placed" ? placedVoteValues(v) : settledVoteValues(v);
+    const missing = values.some((x) => x === undefined || x === null);
+    let recomputed = null, match = null;
+    if (!missing) { recomputed = await voteCommitHash(kind, values, c.salt); match = recomputed === c.hash; }
+    let rootOk = null;
+    if (c.root && Array.isArray(c.path)) rootOk = (await _walkToRoot(c.hash, c.path)) === c.root;
+    kinds.push({ kind, values, salt: c.salt, hash: c.hash, recomputed, match, rootOk, day: c.day, root: c.root,
+      ots_status: c.ots_status, btc_height: c.btc_height, btc_time: c.btc_time, btc_block: c.btc_block, path: c.path });
+  }
+  let status;
+  if (kinds.some((k) => k.match === false || k.rootOk === false)) status = "mismatch";
+  else if (!kinds.some((k) => k.rootOk === true)) status = "not-rooted";
+  else if (!kinds.some((k) => k.match === true)) status = "in-seal-only";
+  else status = "ok";
+  return { status, kinds };
+}
+
+/** Check results by vote id, so a re-render (30 s refresh, live card) keeps them. */
+const checked = new Map();
+
+/** The check panel for one vote: fingerprint(s), salt, day, verdict, copy. */
+export function voteCheckHtml(v, result) {
+  const r = result || { status: "checking", kinds: [] };
+  if (r.status === "checking") return `<div class="vc-dim">${tr("or.v.checking", "Checking…")}</div>`;
+  if (r.status === "no-commit") return `<div class="vc-dim">${tr("or.v.noSeal", "🔐 Fingerprint not ready yet.")}</div>`;
+  if (r.status === "no-crypto") return `<div class="vc-bad">${tr("or.v.noCrypto", "This browser can't run the check (it needs a secure page).")}</div>`;
+  const k = r.kinds[0] || {};
+  const btc = (kk) => (kk.btc_height ? ` · <a href="https://mempool.space/block/${esc(kk.btc_block)}" target="_blank" rel="noopener noreferrer">${tr("or.v.btcBlock", "Bitcoin block {n}", { n: kk.btc_height })}</a>`
+    : kk.ots_status === "pending" ? ` · ${tr("or.v.btcPending", "submitted to Bitcoin, confirmation pending")}` : "");
+  const banner = r.status === "ok" ? `<div class="vc-ok">${tr("or.v.checkOk", "✅ Matches the sealed record for {d}.", { d: k.day })}${btc(k)}</div>`
+    : r.status === "not-rooted" ? `<div class="vc-ok">${tr("or.v.checkNotRooted", "✅ Fingerprint matches what was recorded. Day {d} is sealed overnight — check back tomorrow for the Bitcoin block.", { d: k.day })}</div>`
+    : r.status === "in-seal-only" ? `<div class="vc-ok">${tr("or.v.checkInSeal", "✅ This fingerprint is in the sealed record for {d}.", { d: k.day })}${btc(k)}</div><div class="vc-dim">${tr("or.v.checkInSealNote", "The detail check needs a fresh reply from the oracle — try again shortly.")}</div>`
+    : `<div class="vc-bad">${tr("or.v.checkBad", "❌ Does not match the sealed record. If nothing changed since sealing, tell us on the Oracle page.")}</div>`;
+  const kindRow = (kk) => `<div>${kk.kind === "placed" ? tr("or.v.fpPlaced", "Fingerprint when placed") : tr("or.v.fpSettled", "Fingerprint when settled")}: <code>${esc(kk.hash)}</code> ${kk.match === true ? "✅" : kk.match === false ? "❌" : ""}${kk.rootOk === false ? " ❌" : ""}</div>`;
+  return `${r.kinds.map(kindRow).join("")}
+    <div>${tr("or.v.salt", "Secret number (salt)")}: <code>${esc(k.salt)}</code></div>
+    <div class="vc-dim">${tr("or.v.saltNote", "Keep the salt private — anyone with it can check this vote. Don't post it publicly.")}</div>
+    ${banner}
+    <div><button type="button" class="vcheck-btn" data-vcopy="${esc(v.id)}">${tr("or.v.copyRecord", "📋 Copy record")}</button> <span class="vc-dim">${tr("or.v.copyNote", "Paste it into “Check a vote record” on the vote-check page.")}</span></div>`;
+}
+
 /** Tell the dashboard (history rows) the signed-in player's votes changed. Fires only on change, so the 30 s refresh doesn't re-render history for nothing. */
 let lastVotesJson = null;
 function emitVotes() {
@@ -107,10 +183,11 @@ export function voteListHtml(votes) {
     : v.status === "won" ? `<span class="mvst won">${STATUS.won} · +${pts((v.reward || 0) - v.amount)}</span>`
     : v.status === "lost" ? `<span class="mvst lost">${STATUS.lost} · −${pts(v.amount)}</span>`
     : `<span class="mvst void">${STATUS.void}</span>`);
-  // Two short lines per vote, no table (phones).
+  // Two short lines per vote, no table (phones), plus a one-tap seal check per vote.
   return `<div class="vlist">${vs.map((v) => `<div class="vrow ${esc(v.status)}">
     <div><b>${esc(when(v.placed_ts))}</b> · ${esc(alertName(v.key))} <span class="note">${tr("or.v.into", "{p}% into the alert", { p: Math.round((v.progress || 0) * 100) })}</span></div>
-    <div><span class="${esc(v.outcome)}">${esc(v.outcome)}</span> ${pts(v.amount)} <span class="note">${tr("or.v.at", "at {p}%", { p: esc(v.pct) })}</span> · ${res(v)}</div></div>`).join("")}</div>`;
+    <div><span class="${esc(v.outcome)}">${esc(v.outcome)}</span> ${pts(v.amount)} <span class="note">${tr("or.v.at", "at {p}%", { p: esc(v.pct) })}</span> · ${res(v)}</div>
+    <div>${v.commits && v.commits.placed ? `<button type="button" class="vcheck-btn" data-vcheck="${esc(v.id)}">${tr("or.v.checkBtn", "🔐 Check this vote")}</button><div class="vcheck">${checked.has(v.id) ? voteCheckHtml(v, checked.get(v.id)) : ""}</div>` : `<span class="note">${tr("or.v.noSeal", "🔐 Fingerprint not ready yet.")}</span>`}</div></div>`).join("")}</div>`;
 }
 
 /** Compact card: balance, net gain, last 10 settled votes (one line each). */
@@ -265,6 +342,13 @@ const css = `
 .mvrow .mvname { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mvrow .mvst { font-weight: 600; min-width: 3.2em; text-align: right; }
 .mvrow.won .mvst, .myvotescard b.won { color: var(--ok); } .mvrow.lost .mvst, .myvotescard b.lost { color: var(--err); } .mvrow.void .mvst { color: var(--dim); }
+.vcheck-btn { background: var(--panel2); border: 1px solid var(--border); border-radius: 0; color: var(--text); font: inherit; font-size: 13px; padding: 6px 10px; min-height: 36px; cursor: pointer; margin-top: 6px; }
+.vcheck-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.vcheck { margin-top: 6px; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.vcheck code { font-family: ui-monospace, Consolas, monospace; font-size: 11px; word-break: break-all; }
+.vcheck .vc-ok { color: var(--ok); font-weight: 600; }
+.vcheck .vc-bad { color: var(--err); font-weight: 600; }
+.vcheck .vc-dim { color: var(--dim); }
 `;
 
 function mount() {
@@ -279,6 +363,40 @@ function mount() {
     refresh();
   });
   addEventListener("oracle:auth", (e) => { me = e.detail || null; wallet = null; pick = null; refresh(); });
+  // One delegated listener for the per-vote seal check: it survives the
+  // innerHTML re-renders, and keeps the "All my votes" <details> open.
+  if (slotEl) slotEl.addEventListener("click", async (e) => {
+    const rerender = (wasOpen) => {
+      if (!slot()) return;
+      render();
+      const d = slot().querySelector("details.mylist");
+      if (d && wasOpen) d.open = true;
+    };
+    const copyBtn = e.target.closest ? e.target.closest("[data-vcopy]") : null;
+    if (copyBtn) {
+      const vote = (wallet && wallet.votes || []).find((x) => x.id === copyBtn.dataset.vcopy);
+      const res = vote && checked.get(vote.id);
+      const kind = res && res.kinds.find((kk) => kk.kind === "settled") ? "settled" : "placed";
+      const kk = res && res.kinds.find((x) => x.kind === kind);
+      if (!vote || !kk) return;
+      const record = JSON.stringify({ kind, values: kk.values, salt: kk.salt, hash: kk.hash, path: kk.path, root: kk.root });
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(record);
+        else throw new Error("no clipboard");
+        copyBtn.textContent = tr("or.v.copied", "Copied ✓");
+      } catch { copyBtn.textContent = tr("or.v.copyFail", "Copy failed — select the text above."); }
+      return;
+    }
+    const btn = e.target.closest ? e.target.closest("[data-vcheck]") : null;
+    if (!btn) return;
+    const vote = (wallet && wallet.votes || []).find((x) => x.id === btn.dataset.vcheck);
+    if (!vote || checked.get(vote.id)?.status === "checking") return;
+    const wasOpen = slotEl.querySelector("details.mylist")?.open;
+    checked.set(vote.id, { status: "checking", kinds: [] });
+    rerender(wasOpen);
+    checked.set(vote.id, await verifyVoteCheck(vote));
+    rerender(wasOpen);
+  });
   setInterval(refresh, 30000);
   // #82: switching from the PC to the phone (or back) shows what the other device did, right away.
   const soon = () => { if (Date.now() - lastRefresh > 2000) refresh(); };
