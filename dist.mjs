@@ -67,14 +67,25 @@ export function niceStep(raw) {
  *    overflow bin ("≥ hi"); each only appears when it has players.
  *  - opts.floor (e.g. 0 for ⚔️ iVi): the core never starts below it, so
  *    below-scale values (< 0) land in the underflow bin.
+ *  - opts.scale = "log1p" (2026-11-15, thin-graph fix): for right-skewed
+ *    ≥ 0 metrics (🏃 Activity, 🦁 Brave, ☠️ K/D, 🛡️ Resist) the bins are
+ *    equal on a log(1+x) scale instead of a linear one — narrow near 0,
+ *    wider in the tail — so the bulk where most players live gets most of
+ *    the plot instead of one 40–50% first bar and ~18 bins under 1%.
+ *    Bar height stays % of players per bin (linear Y); only the X spacing
+ *    is non-linear, and the chart labels it as such. log1p (not log) so 0
+ *    is a valid value; metrics with negatives fall back to linear.
+ *    In log1p mode out.step is the nice step in log(1+x) units, and
+ *    out.digits is the decimal places for edge labels (2 — the t-step
+ *    alone would round small edges to 1 decimal and collapse them).
  * Each bin: { x0, x1, count, pct, cumPct, kind: "under" | "core" | "over" }
  * (cumPct = % of players with value < x1, i.e. up to the end of the bin).
  */
 export function histogram(values, opts = {}) {
-  const { clip = [0.01, 0.99], minBins = 12, maxBins = 40, targetBins = 30, floor = null } = opts;
+  const { clip = [0.01, 0.99], minBins = 12, maxBins = 40, targetBins = 30, floor = null, scale = "linear" } = opts;
   const s = sortedFinite(values);
   const n = s.length;
-  const out = { n, bins: [], step: NaN, lo: NaN, hi: NaN, min: NaN, max: NaN, median: NaN, p90: NaN, p99: NaN, sorted: s };
+  const out = { n, bins: [], step: NaN, lo: NaN, hi: NaN, min: NaN, max: NaN, median: NaN, p90: NaN, p99: NaN, sorted: s, scale: "linear", digits: NaN };
   if (!n) return out;
   out.min = s[0];
   out.max = s[n - 1];
@@ -93,38 +104,78 @@ export function histogram(values, opts = {}) {
   }
   const span = b - a;
   const iqr = quantile(s, 0.75) - quantile(s, 0.25);
-  // ≈ targetBins bins over the core; with few players widen to Freedman–Diaconis
-  // (2·IQR·n^−1/3) so bins aren't mostly empty.
-  let raw = span / targetBins;
-  if (n < 200 && iqr > 0) raw = Math.max(raw, (2 * iqr) / Math.cbrt(n));
-  raw = Math.min(span / minBins, Math.max(span / maxBins, raw));
-  let step = niceStep(raw);
-  let lo = Math.floor(a / step) * step;
-  if (floor != null && lo < floor) lo = floor;
-  let hi = Math.ceil(b / step) * step;
-  if (hi <= lo) hi = lo + step;
-  lo = cleanEdge(lo, step);
-  hi = cleanEdge(hi, step);
-  // Nice rounding can overshoot the bin cap: coarsen until within maxBins.
-  while ((hi - lo) / step > maxBins) {
-    step = niceStep(step * 1.01);
-    lo = Math.floor(a / step) * step;
+  // log1p only for non-negative data with a real spread in log space.
+  const useLog = scale === "log1p" && a >= 0 && (floor == null || floor >= 0) && Math.log1p(b) > Math.log1p(a);
+  let edges;
+  if (useLog) {
+    // Same bin-count logic as linear, carried out in log(1+x) space.
+    const ta = Math.log1p(a);
+    const tb = Math.log1p(b);
+    const spanT = tb - ta;
+    const iqrT = Math.log1p(quantile(s, 0.75)) - Math.log1p(quantile(s, 0.25));
+    let rawT = spanT / targetBins;
+    if (n < 200 && iqrT > 0) rawT = Math.max(rawT, (2 * iqrT) / Math.cbrt(n));
+    rawT = Math.min(spanT / minBins, Math.max(spanT / maxBins, rawT));
+    let stepT = niceStep(rawT);
+    let loT = Math.floor(ta / stepT) * stepT;
+    if (floor != null) loT = Math.max(loT, Math.log1p(floor));
+    let hiT = Math.ceil(tb / stepT) * stepT;
+    if (hiT <= loT) hiT = loT + stepT;
+    while ((hiT - loT) / stepT > maxBins) {
+      stepT = niceStep(stepT * 1.01);
+      loT = Math.floor(ta / stepT) * stepT;
+      if (floor != null) loT = Math.max(loT, Math.log1p(floor));
+      hiT = Math.ceil(tb / stepT) * stepT;
+    }
+    const nbT = Math.max(1, Math.round((hiT - loT) / stepT));
+    edges = [];
+    for (let i = 0; i <= nbT; i++) edges.push(+Math.expm1(loT + i * stepT).toPrecision(12));
+    out.step = stepT;
+    out.scale = "log1p";
+    out.digits = 2;
+    out.lo = edges[0];
+    out.hi = edges[edges.length - 1];
+  } else {
+    // ≈ targetBins bins over the core; with few players widen to Freedman–Diaconis
+    // (2·IQR·n^−1/3) so bins aren't mostly empty.
+    let raw = span / targetBins;
+    if (n < 200 && iqr > 0) raw = Math.max(raw, (2 * iqr) / Math.cbrt(n));
+    raw = Math.min(span / minBins, Math.max(span / maxBins, raw));
+    let step = niceStep(raw);
+    let lo = Math.floor(a / step) * step;
     if (floor != null && lo < floor) lo = floor;
-    hi = Math.ceil(b / step) * step;
+    let hi = Math.ceil(b / step) * step;
+    if (hi <= lo) hi = lo + step;
+    lo = cleanEdge(lo, step);
+    hi = cleanEdge(hi, step);
+    // Nice rounding can overshoot the bin cap: coarsen until within maxBins.
+    while ((hi - lo) / step > maxBins) {
+      step = niceStep(step * 1.01);
+      lo = Math.floor(a / step) * step;
+      if (floor != null && lo < floor) lo = floor;
+      hi = Math.ceil(b / step) * step;
+    }
+    out.step = step;
+    out.scale = "linear";
+    out.digits = stepDigits(step);
+    out.lo = lo;
+    out.hi = hi;
+    const nb = Math.max(1, Math.round((hi - lo) / step));
+    edges = [];
+    for (let i = 0; i <= nb; i++) edges.push(i === 0 ? lo : i === nb ? hi : cleanEdge(lo + i * step, step));
   }
-  out.step = step;
-  out.lo = lo;
-  out.hi = hi;
+  const lo = out.lo;
+  const hi = out.hi;
 
   const pct = (c) => (100 * c) / n;
   const under = lowerBound(s, lo); // values < lo
   if (under > 0) {
     out.bins.push({ x0: s[0], x1: lo, count: under, pct: pct(under), cumPct: pct(under), kind: "under" });
   }
-  const nb = Math.max(1, Math.round((hi - lo) / step));
+  const nb = edges.length - 1;
   for (let i = 0; i < nb; i++) {
-    const x0 = i === 0 ? lo : cleanEdge(lo + i * step, step);
-    const x1 = i === nb - 1 ? hi : cleanEdge(lo + (i + 1) * step, step);
+    const x0 = edges[i];
+    const x1 = edges[i + 1];
     const iA = lowerBound(s, x0);
     // Last core bin is closed on the right ([x0, hi]); others are [x0, x1).
     const iB = i === nb - 1 ? upperBoundExclusive(s, hi) : lowerBound(s, x1);

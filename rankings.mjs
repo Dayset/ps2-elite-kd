@@ -1087,15 +1087,22 @@ export function initRankings(host) {
     if (text != null) el.textContent = text;
     return el;
   }
+  // 📊 log1p bins (2026-11-15): right-skewed ≥ 0 metrics whose linear first
+  // bar dwarfs the rest — measured on 2026-11-15 data/ranks.json (n=20,004):
+  // act first bin 49.4% (18/27 bins < 1%), pvs 43.8% (9/19 < 1%),
+  // rkd max bar 22.7%, rf 9/27 bins < 1%. adjs / pureivi / luck can be
+  // negative, cons / apk / inf / zerg are already readable — they stay linear.
+  const LOG1P_DIST = new Set(["act", "pvs", "rkd", "rf"]);
   function getHist(id) {
     if (!histCache.has(id)) {
       const vals = data.rows.map((r) => r[id]);
-      histCache.set(id, histogram(vals, { floor: id === "adjs" || id === "pureivi" ? 0 : null }));
+      histCache.set(id, histogram(vals, { floor: id === "adjs" || id === "pureivi" ? 0 : null, scale: LOG1P_DIST.has(id) ? "log1p" : "linear" }));
     }
     return histCache.get(id);
   }
   function fmtEdge(v, h) {
-    return fin(v) ? (+v).toFixed(stepDigits(h.step)) : "—";
+    const digits = h && Number.isFinite(h.digits) ? h.digits : stepDigits(h ? h.step : NaN);
+    return fin(v) ? (+v).toFixed(digits) : "—";
   }
   function fmtPct(p) {
     if (!fin(p)) return "—";
@@ -1464,7 +1471,7 @@ export function initRankings(host) {
     }
     if (h.bins[0].kind === "under") xl.appendChild(svgEl("text", { x: slotX(0) + slotW / 2, y: M.t + PH + 26 * ui }, `<${fmtEdge(h.lo, h)}`));
     if (h.bins[nb - 1].kind === "over") xl.appendChild(svgEl("text", { x: slotX(nb - 1) + slotW / 2, y: M.t + PH + 26 * ui }, `>${fmtEdge(h.hi, h)}`));
-    xl.appendChild(svgEl("text", { x: M.l + PW / 2, y: H - 3, fill: th.text, "font-size": fs + 1 }, col.label));
+    xl.appendChild(svgEl("text", { x: M.l + PW / 2, y: H - 3, fill: th.text, "font-size": fs + 1 }, h.scale === "log1p" ? `${col.label} · ${tr("dist.nonLinear", "non-linear scale")}` : col.label));
     svg.appendChild(xl);
 
     // cumulative line (right axis)
@@ -1561,6 +1568,7 @@ export function initRankings(host) {
     const lead = String(c.label || "").split(" ")[0];
     let tip = String(tipOf(c) || "");
     if (lead && /\p{Extended_Pictographic}/u.test(lead) && tip.startsWith(lead + " ")) tip = tip.slice(lead.length + 1);
+    if (c.id && LOG1P_DIST.has(c.id)) tip += " " + tr("dist.nonLinearHint", "Non-linear scale: bins get wider to the right, so the bulk is visible.");
     return tr("dist.hint", "{label}, all players: {tip}", { label: c.label, tip }).trim();
   }
   function showDistHint() {

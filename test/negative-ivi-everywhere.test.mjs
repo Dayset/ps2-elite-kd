@@ -32,7 +32,10 @@ test("negative iVi is shown as-is in stats table, live page, kill feed and duels
 
 test("distribution graph still floors at 0 (underflow bin), tier grouping unchanged", () => {
   const rk = read("rankings.mjs");
-  assert.match(rk, /histogram\(vals, \{ floor: id === "adjs" \|\| id === "pureivi" \? 0 : null \}\)/);
+  // The floor rule (adjs / pureivi → 0, everything else → null) still holds;
+  // the call now also carries the log1p scale for the skewed metrics (2026-11-15),
+  // so allow extra options after the floor.
+  assert.match(rk, /histogram\(vals, \{ floor: id === "adjs" \|\| id === "pureivi" \? 0 : null, scale: LOG1P_DIST\.has\(id\) \? "log1p" : "linear" \}\)/);
   const tiers = read("tiers.mjs");
   assert.match(tiers, /if \(adjs <= 0\) return BELOW_TIER\.id;/);
 });
