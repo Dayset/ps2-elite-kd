@@ -1406,7 +1406,12 @@ export function initRankings(host) {
     const nb = h.bins.length;
     const slotW = PW / nb;
     const slotX = (i) => M.l + i * slotW;
-    const maxPct = Math.max(...h.bins.map((b) => b.pct));
+    // 📊 y-scale caps at the tallest CORE bar (2026-11-15): the <0 underflow
+    // bar is representation only — letting its 27% set the axis squashes the
+    // positives into stubs (adjs: yTop 35%, tallest core 14.9% drew at 43%
+    // of plot height). The tail bar is drawn clipped at the plot top below.
+    const coreMax = Math.max(0, ...h.bins.filter((b) => b.kind === "core").map((b) => b.pct));
+    const maxPct = coreMax > 0 ? coreMax : Math.max(...h.bins.map((b) => b.pct));
     const yTop = Math.max(1, Math.ceil((maxPct * 1.12) / (maxPct > 20 ? 5 : maxPct > 6 ? 2 : 1)) * (maxPct > 20 ? 5 : maxPct > 6 ? 2 : 1));
     const yL = (p) => M.t + PH - (p / yTop) * PH;
     const yR = (p) => M.t + PH - (p / 100) * PH;
@@ -1458,7 +1463,7 @@ export function initRankings(host) {
     h.bins.forEach((b, i) => {
       const x = slotX(i) + 1;
       const w = Math.max(1, slotW - 2);
-      const y = yL(b.pct);
+      const y = Math.max(M.t, yL(b.pct)); // tail bars taller than yTop clip at the plot top
       const tail = b.kind !== "core";
       bars.appendChild(svgEl("rect", {
         x, y, width: w, height: Math.max(0, M.t + PH - y), rx: 0,

@@ -184,6 +184,11 @@ describe("dist helpers", () => {
     assert.ok(scaleLine && scaleLine.includes('LOG1P_DIST.has(id) ? "log1p" : "linear"'), `getHist picks log1p: ${scaleLine && scaleLine.trim()}`);
     assert.ok(src.includes('dist.nonLinear'), "axis labels the non-linear scale");
     assert.ok(src.includes('dist.mjs?v=20261115-symlog1'), "rankings loads the symlog dist build (cache-bust pin, 2026-11-15)");
+    // 📊 y-scale cap (2026-11-15): the axis tops out at the tallest CORE bar,
+    // tail bars (under/over) never set it — and a tail bar taller than the
+    // axis clips at the plot top instead of poking out of the chart.
+    assert.ok(src.includes('h.bins.filter((b) => b.kind === "core").map((b) => b.pct)'), "y-scale caps at the tallest core bar");
+    assert.ok(src.includes("Math.max(M.t, yL(b.pct))"), "tail bars clip at the plot top");
   });
 
   it("binIndexOf places values in the right log1p bin", () => {
