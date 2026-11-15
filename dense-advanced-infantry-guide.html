@@ -268,6 +268,7 @@
             <li><a href="#awareness">Awareness &amp; the net</a></li>
             <li><a href="#classes">Per-class essentials</a></li>
             <li><a href="#currency">What still holds</a></li>
+            <li><a href="#fpsdps">FPS and DPS</a></li>
           </ol>
         </nav>
 
@@ -989,6 +990,42 @@
               <p><strong>Angular size</strong> — marked 💀 DEAD by the Weapon Mechanics guide itself ("proven to be wrong. Do not use it."), which kills its burst-length calculation and effective-range tables; they are not reproduced here. <strong>Forward Grip making weapons worse</strong> — fixed in the 7 July 2016 patch, per the HRT article itself. Two smaller gaps, stated plainly: the articles' "CoF size increase speed is 50 degrees per second" line is unexplained and unclear next to per-shot bloom, so nothing here leans on it; and recoil recovery <em>acceleration</em> is explicitly unknown (a Wrel quote in the source: "We don't know much about this parameter"). The burst-weapon melee/grenade trick and the pump/bolt melee-during-chamber trick are described in the sources as bugs that may be fixed — possibly not working in 2026, so they are left out rather than taught.</p>
             </div>
             <p>One more honest gap: the beginner pages the Gunplay Guide links to ("how to kill / survive / capture a base") are <strong>lost</strong> — no snapshot exists in the archive. And the video links throughout the original articles are mostly dead or unverifiable; nothing in this guide depends on them.</p>
+          </section>
+
+          <!-- ============ 13 FPS AND DPS ============ -->
+          <section id="fpsdps">
+            <h2><span class="no">13</span> FPS and DPS</h2>
+            <p class="sub">DPS is what your gun can do on paper. FPS is what your machine lets you do with it. One is a weapon stat, the other is a performance stat — and the second caps the first.</p>
+
+            <h3>FPS — frames per second</h3>
+            <ul>
+              <li><strong>What it is.</strong> How many frames your PC draws each second. PlanetSide 2 leans on a single CPU thread, so frame rate in a big fight is mostly a CPU question — a strong graphics card alone will not fix a low frame rate in a 96+ battle.</li>
+              <li><strong>Frame time is the real number.</strong> Your input is sampled per frame, so at low FPS every action waits up to a full frame before the game even sees it — on top of network latency (<a href="#awareness">§10</a>). 30 FPS means 33.3 ms per frame; 60 FPS means 16.7 ms.</li>
+              <li><strong>Why it costs you kills.</strong> At low FPS your aim stutters — the target jumps between frames instead of moving smoothly — and semi-automatic weapons can lose shots: the game reads your clicks per frame, so a click that falls between frames at very low FPS may never fire. Your achieved fire rate drops below the weapon's cap, and with it your real DPS.</li>
+              <li><strong>What to do.</strong> Press <code>Alt+F</code> to show the in-game FPS counter. Treat <strong>60 FPS as the floor</strong> for infantry play; below 30 the machine is fighting you. The settings that cost the most frames are shadows, particles, render distance and flora — turn those down first; model and texture quality cost far less.</li>
+            </ul>
+            <div class="tblwrap">
+              <table>
+                <thead><tr><th>FPS</th><th>Frame time</th><th>What it means</th></tr></thead>
+                <tbody>
+                  <tr><td>30</td><td>33.3 ms</td><td>Input waits up to a full frame; aim stutters, semi-autos can drop clicks.</td></tr>
+                  <tr><td>60</td><td>16.7 ms</td><td>The floor for infantry play.</td></tr>
+                  <tr><td>120</td><td>8.3 ms</td><td>Noticeably smoother tracking.</td></tr>
+                  <tr><td>144</td><td>6.9 ms</td><td>Diminishing returns past here for most players.</td></tr>
+                  <tr><td>240</td><td>4.2 ms</td><td>Only matters if your monitor can show it.</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3>DPS — damage per second</h3>
+            <ul>
+              <li><strong>The formula</strong> (<a href="#damage">§01</a>): <code>DPS = damage × RoF ÷ 60</code>. The TRAC-5: 143 × 750 ÷ 60 = <strong>1787</strong>. The BTK calculator in §01 shows it live — change the damage or fire rate and the DPS updates with it.</li>
+              <li><strong>Paper DPS assumes every bullet hits.</strong> Real DPS = paper DPS × accuracy. At 30% accuracy the TRAC-5's 1787 becomes ~536. Headshots change it again: a headshot deals ×2, so the bullets that hit the head carry twice the DPS of body shots.</li>
+              <li><strong>DPS falls with range</strong> (<a href="#damage">§01</a> falloff) — quote DPS at the range you actually fight, not the card's max-damage number.</li>
+              <li><strong>DPS is not a ranking.</strong> A high-DPS weapon you cannot control (cone of fire <a href="#cof">§02</a>, recoil <a href="#recoil">§03</a>) loses to a lower-DPS weapon you can land. Burst discipline (<a href="#burst">§07</a>) protects DPS; spraying destroys it.</li>
+            </ul>
+
+            <p><strong>The short version:</strong> raise FPS first — it is the only change that improves every weapon you own, because it raises the accuracy that turns paper DPS into real DPS. Then pick the DPS you can actually land.</p>
           </section>
 
           <footer>
