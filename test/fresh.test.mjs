@@ -152,3 +152,18 @@ test("live PC snapshot: shape holds (relational, no pinned counts)", () => {
 test("live PS snapshot: shape holds (relational, no pinned counts)", () => {
   checkLiveShape(buildFresh(readRanks("data-ps/ranks.json")), "PS", 2000, 500, 50);
 });
+
+test("phones: 6 secondary columns hidden, kept columns sized to content", () => {
+  const html = readFileSync(join(ROOT, "fresh.html"), "utf8");
+  const m = html.match(/@media \(max-width: 700px\) \{([\s\S]*?)\n    \}/);
+  assert.ok(m, "phone media query in the Fresh page style");
+  const css = m[1];
+  for (const n of [4, 7, 9, 10, 12, 14]) {
+    assert.ok(css.includes(`nth-child(${n})`), `column ${n} hidden on phones`);
+  }
+  for (const n of [1, 2, 3, 5, 6, 8, 11, 13]) {
+    assert.ok(!css.includes(`nth-child(${n})`), `column ${n} kept on phones`);
+  }
+  assert.match(css, /table-layout: auto/, "auto layout, not fixed");
+  assert.match(css, /width: max-content/, "content width, so the wrap scrolls instead of squishing");
+});

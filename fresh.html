@@ -38,6 +38,34 @@
       border-radius: 0; background: var(--bg, #fff); color: var(--text, #111); }
     #freshTopTable td, #freshTable td, #freshWorstTable td { white-space: nowrap; }
     #freshTopTable tbody tr.fresh-top1 td, #freshTable tbody tr.fresh-top1 td { background: var(--grid); }
+    /* Phones (2026-11-15): 14 columns under table-layout: fixed + width 100%
+       split a ~366px screen into ~26px slices — names read "M…", numbers "7…",
+       and the wrap never scrolled because the table always fit it. On narrow
+       screens keep the 8 columns that identify and rank a fresh account
+       (#, Player, Age, Server, 🧘 Pure, ⚔️ iVi, K/D, 🦁 Brave) and size them
+       to their content, so the rest is a sideways swipe, not a squish.
+       Hidden: Created (Age says it), Pure rank, 🪳 Zerg, ☠️ K/D, own KPM, 🪖 Infantry. */
+    @media (max-width: 700px) {
+      #freshTopTable, #freshTable, #freshWorstTable { table-layout: auto; width: max-content; min-width: 100%; }
+      #freshTopTable th:nth-child(4), #freshTopTable td:nth-child(4),
+      #freshTable th:nth-child(4), #freshTable td:nth-child(4),
+      #freshWorstTable th:nth-child(4), #freshWorstTable td:nth-child(4),
+      #freshTopTable th:nth-child(7), #freshTopTable td:nth-child(7),
+      #freshTable th:nth-child(7), #freshTable td:nth-child(7),
+      #freshWorstTable th:nth-child(7), #freshWorstTable td:nth-child(7),
+      #freshTopTable th:nth-child(9), #freshTopTable td:nth-child(9),
+      #freshTable th:nth-child(9), #freshTable td:nth-child(9),
+      #freshWorstTable th:nth-child(9), #freshWorstTable td:nth-child(9),
+      #freshTopTable th:nth-child(10), #freshTopTable td:nth-child(10),
+      #freshTable th:nth-child(10), #freshTable td:nth-child(10),
+      #freshWorstTable th:nth-child(10), #freshWorstTable td:nth-child(10),
+      #freshTopTable th:nth-child(12), #freshTopTable td:nth-child(12),
+      #freshTable th:nth-child(12), #freshTable td:nth-child(12),
+      #freshWorstTable th:nth-child(12), #freshWorstTable td:nth-child(12),
+      #freshTopTable th:nth-child(14), #freshTopTable td:nth-child(14),
+      #freshTable th:nth-child(14), #freshTable td:nth-child(14),
+      #freshWorstTable th:nth-child(14), #freshWorstTable td:nth-child(14) { display: none; }
+    }
   </style>
 </head>
 <body class="main-page">
