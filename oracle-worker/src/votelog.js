@@ -82,12 +82,17 @@ const SCHEMA = [
   "CREATE TABLE IF NOT EXISTS vote_commit (vote_id TEXT NOT NULL, kind TEXT NOT NULL, salt TEXT NOT NULL, hash TEXT NOT NULL, day TEXT NOT NULL, ts INTEGER NOT NULL, PRIMARY KEY (vote_id, kind))",
   "CREATE INDEX IF NOT EXISTS vote_commit_day ON vote_commit (day)",
   "CREATE INDEX IF NOT EXISTS vote_commit_hash ON vote_commit (hash)",
-  "CREATE TABLE IF NOT EXISTS vote_root (day TEXT PRIMARY KEY, root TEXT NOT NULL, leaves INTEGER NOT NULL, ots TEXT, ots_status TEXT NOT NULL, created_ts INTEGER NOT NULL)",
+  "CREATE TABLE IF NOT EXISTS vote_root (day TEXT PRIMARY KEY, root TEXT NOT NULL, leaves INTEGER NOT NULL, ots TEXT, ots_status TEXT NOT NULL, created_ts INTEGER NOT NULL, btc_height INTEGER, btc_time INTEGER, btc_block TEXT)",
 ];
 const ready = new WeakSet();
 export async function ensureVotelog(db) {
   if (ready.has(db)) return;
   for (const sql of SCHEMA) await db.prepare(sql).run();
+  // Migration for days rooted before the confirmation columns existed.
+  for (const col of ["btc_height INTEGER", "btc_time INTEGER", "btc_block TEXT"]) {
+    try { await db.prepare(`ALTER TABLE vote_root ADD COLUMN ${col}`).run(); }
+    catch (e) { if (!/duplicate/i.test(String(e && e.message))) throw e; }
+  }
   ready.add(db);
 }
 
@@ -132,6 +137,183 @@ async function stamp(rootHex) {
 }
 const b64 = (u8) => { let s = ""; for (const b of u8) s += String.fromCharCode(b); return btoa(s); };
 
+// ---- OpenTimestamps proof parsing (python-opentimestamps format) ----
+// A serialized timestamp is a stream of [\xff X]* X, where X is either
+// 0x00 + an attestation, or an op + a child timestamp. Attestations are an
+// 8-byte tag + varbytes(payload):
+//   pending  83dfe30d2ef90c8e -> payload = varbytes(uri)
+//   bitcoin  0588960d73d71901 -> payload = varuint(block height)
+//   litecoin 06869a0d73d71b45 -> payload = varuint(block height)
+// Ops: f0 append, f1 prepend (varbytes arg), f2 reverse, f3 hexlify,
+// 02 sha1, 03 ripemd160, 08 sha256, 67 keccak256 (no arg).
+const OTS_PENDING_TAG = "83dfe30d2ef90c8e";
+const OTS_BITCOIN_TAG = "0588960d73d71901";
+const OTS_LITECOIN_TAG = "06869a0d73d71b45";
+const MEMPOOL = "https://mempool.space/api";
+const sha256bytes = async (data) => new Uint8Array(await crypto.subtle.digest("SHA-256", data));
+const concatBytes = (a, b) => { const o = new Uint8Array(a.length + b.length); o.set(a, 0); o.set(b, a.length); return o; };
+
+function readVaruint(bytes, pos) {
+  let value = 0;
+  let shift = 0;
+  while (pos < bytes.length) {
+    const b = bytes[pos++];
+    value += (b & 0x7f) * 2 ** shift;
+    if (!(b & 0x80)) return [value, pos];
+    shift += 7;
+    if (shift > 35) throw new Error("varuint too long");
+  }
+  throw new Error("truncated varuint");
+}
+
+/**
+ * Parse a serialized OTS timestamp for the given message (hex). Returns
+ * { attestations: [{ kind, uri?, height?, msg }], end }. `msg` is the message
+ * the attestation is attached to (hex), or null when an op on its path can't
+ * be computed here (RIPEMD160/keccak256 are not in WebCrypto).
+ */
+export async function parseOtsTimestamp(bytes, msgHex, depth = 0) {
+  if (depth > 256) throw new Error("ots timestamp too deep");
+  const data = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  const atts = [];
+  const msg = msgHex ? unhex(msgHex) : null;
+  async function parseNode(pos, nodeMsg, nodeDepth) {
+    if (nodeDepth > 256) throw new Error("ots timestamp too deep"); // measured: the live Nov 13 upgrade response reaches depth 67
+    const doElem = async () => {
+      if (pos >= data.length) throw new Error("truncated ots timestamp");
+      const tag = data[pos++];
+      if (tag === 0x00) {
+        if (pos + 8 > data.length) throw new Error("truncated attestation tag");
+        const atag = hex(data.slice(pos, pos + 8)); pos += 8;
+        const [len, p2] = readVaruint(data, pos); pos = p2;
+        if (pos + len > data.length) throw new Error("truncated attestation payload");
+        const payload = data.slice(pos, pos + len); pos += len;
+        if (atag === OTS_PENDING_TAG) {
+          const [ulen, up] = readVaruint(payload, 0);
+          atts.push({ kind: "pending", uri: new TextDecoder().decode(payload.slice(up, up + ulen)), msg: nodeMsg ? hex(nodeMsg) : null });
+        } else if (atag === OTS_BITCOIN_TAG || atag === OTS_LITECOIN_TAG) {
+          const [height] = readVaruint(payload, 0);
+          atts.push({ kind: atag === OTS_BITCOIN_TAG ? "bitcoin" : "litecoin", height, msg: nodeMsg ? hex(nodeMsg) : null });
+        } else {
+          atts.push({ kind: "unknown", tag: atag, msg: nodeMsg ? hex(nodeMsg) : null });
+        }
+        return pos;
+      }
+      let next = null;
+      if (tag === 0xf0 || tag === 0xf1) {
+        const [len, p2] = readVaruint(data, pos); pos = p2;
+        if (pos + len > data.length) throw new Error("truncated op arg");
+        const arg = data.slice(pos, pos + len); pos += len;
+        if (nodeMsg) next = tag === 0xf0 ? concatBytes(nodeMsg, arg) : concatBytes(arg, nodeMsg);
+      } else if (tag === 0xf2) {
+        if (nodeMsg) next = Uint8Array.from(nodeMsg).reverse();
+      } else if (tag === 0xf3) {
+        if (nodeMsg) next = enc.encode(hex(nodeMsg));
+      } else if (tag === 0x02) {
+        if (nodeMsg) next = new Uint8Array(await crypto.subtle.digest("SHA-1", nodeMsg));
+      } else if (tag === 0x08) {
+        if (nodeMsg) next = await sha256bytes(nodeMsg);
+      } else if (tag === 0x03 || tag === 0x67) {
+        next = null; // RIPEMD160 / keccak256: not in WebCrypto, path message uncomputable
+      } else {
+        throw new Error(`unknown op tag 0x${tag.toString(16)}`);
+      }
+      pos = await parseNode(pos, next, nodeDepth + 1);
+      return pos;
+    };
+    if (pos >= data.length) throw new Error("truncated ots timestamp");
+    let tag = data[pos++];
+    while (tag === 0xff) { pos = await doElem(); if (pos >= data.length) throw new Error("truncated ots timestamp"); tag = data[pos++]; }
+    pos--; // the last element has no \xff prefix
+    pos = await doElem();
+    return pos;
+  }
+  const end = await parseNode(0, msg, depth);
+  return { attestations: atts, end };
+}
+
+/** Parse a whole .ots file: { digest, attestations }. Header is magic(31) + version(1) + sha256 tag(1) + digest(32). */
+export async function parseOtsFile(bytes) {
+  const data = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  if (data.length < 65 || data[31] !== 0x01 || data[32] !== 0x08) throw new Error("not a sha256 .ots file");
+  const digest = hex(data.slice(33, 65));
+  const { attestations } = await parseOtsTimestamp(data.slice(65), digest);
+  return { digest, attestations };
+}
+
+const fetchTimeout = (url, opts = {}, ms = 8000) => fetch(url, { ...opts, signal: AbortSignal.timeout(ms) });
+const sha256d = async (data) => sha256bytes(await sha256bytes(data));
+
+/**
+ * Confirm one pending day against the calendar + Bitcoin. The stored .ots
+ * carries a pending attestation; its message is the calendar's aggregated
+ * digest, so GET <calendar>/timestamp/<that message> returns the upgraded
+ * timestamp, which carries a Bitcoin block-height attestation once confirmed.
+ * The height is verified end to end against the block header from
+ * mempool.space (double-SHA256 == block hash, merkle root == attested
+ * message) and the block time is taken from the header itself. Returns
+ * { height, time, block } or null when not (yet) confirmed. A Bitcoin
+ * proof carries no transaction id, so the block hash is stored instead.
+ */
+export async function confirmDay(row) {
+  const file = await parseOtsFile(Uint8Array.from(atob(row.ots), (ch) => ch.charCodeAt(0)));
+  const pendings = file.attestations.filter((a) => a.kind === "pending" && a.uri && a.msg);
+  for (const p of pendings) {
+    let up;
+    try {
+      const r = await fetchTimeout(`${p.uri}/timestamp/${p.msg}`, { headers: { Accept: "application/vnd.opentimestamps.v1" } });
+      if (!r.ok) continue;
+      up = new Uint8Array(await r.arrayBuffer());
+    } catch { continue; }
+    let upgraded;
+    try { upgraded = await parseOtsTimestamp(up, p.msg); } catch { continue; }
+    const btc = upgraded.attestations.find((a) => a.kind === "bitcoin" && a.msg);
+    if (!btc) continue;
+    try {
+      const hashRes = await fetchTimeout(`${MEMPOOL}/block-height/${btc.height}`);
+      if (!hashRes.ok) continue;
+      const block = (await hashRes.text()).trim();
+      if (!/^[0-9a-f]{64}$/.test(block)) continue;
+      const headRes = await fetchTimeout(`${MEMPOOL}/block/${block}/header`);
+      if (!headRes.ok) continue;
+      const headerHex = (await headRes.text()).trim();
+      const header = Uint8Array.from(headerHex.match(/../g).map((x) => parseInt(x, 16)));
+      if (header.length !== 80) continue;
+      if (hex(Uint8Array.from(await sha256d(header)).reverse()) !== block) continue;
+      if (hex(header.slice(36, 68)) !== btc.msg) continue;
+      const time = header[68] | (header[69] << 8) | (header[70] << 16) | (header[71] * 2 ** 24);
+      return { height: btc.height, time, block };
+    } catch { continue; }
+  }
+  return null;
+}
+
+/**
+ * Upgrade each `pending` day: ask the calendar for its Bitcoin attestation
+ * and, once verified, store the block height/time/hash with
+ * ots_status="confirmed". Until this ran, a day stayed "pending" forever —
+ * nothing ever revisited a rooted day. Days rooted <30 min ago are skipped:
+ * no confirmation can exist yet. A day that fails stays pending and is
+ * retried next tick.
+ */
+export async function upgradeDays(db, now) {
+  await ensureVotelog(db);
+  const rows = (await db.prepare("SELECT day, root, ots, created_ts FROM vote_root WHERE ots_status = 'pending' AND ots IS NOT NULL").all()).results || [];
+  let checked = 0, confirmed = 0;
+  for (const row of rows) {
+    if (row.created_ts > now - 1800) continue;
+    checked++;
+    try {
+      const conf = await confirmDay(row);
+      if (!conf) continue;
+      await db.prepare("UPDATE vote_root SET ots_status = 'confirmed', btc_height = ?, btc_time = ?, btc_block = ? WHERE day = ?")
+        .bind(conf.height, conf.time, conf.block, row.day).run();
+      confirmed++;
+    } catch { /* stays pending; retried next tick */ }
+  }
+  return { checked, confirmed };
+}
+
 /**
  * Root and stamp each finished UTC day (10 min after midnight, so late commits are in). A day that failed to
  * stamp stays "pending-submit" and is retried next cycle.
@@ -155,7 +337,7 @@ export async function rootDays(db, now) {
 
 /** Commit, root and stamp for the cron (index.js). */
 export async function votelogTick(db, now) {
-  return { ...(await commitMissing(db, now)), ...(await rootDays(db, now)) };
+  return { ...(await commitMissing(db, now)), ...(await rootDays(db, now)), ...(await upgradeDays(db, now)) };
 }
 
 /** Each vote's commits for /vote/me: salt (voter only), hash, day, root, and the Merkle path once the day is rooted. */
@@ -168,7 +350,7 @@ export async function commitsFor(db, voteIds) {
   const roots = {};
   const leavesByDay = {};
   for (const d of days) {
-    const root = await db.prepare("SELECT root, ots_status FROM vote_root WHERE day = ?").bind(d).first();
+    const root = await db.prepare("SELECT root, ots_status, btc_height, btc_time FROM vote_root WHERE day = ?").bind(d).first();
     if (!root) continue;
     roots[d] = root;
     leavesByDay[d] = (await db.prepare("SELECT hash FROM vote_commit WHERE day = ?").bind(d).all()).results.map((r) => r.hash);
@@ -177,7 +359,7 @@ export async function commitsFor(db, voteIds) {
   for (const r of rows) {
     const root = roots[r.day] || null;
     const path = root ? await merklePath(leavesByDay[r.day], r.hash) : null;
-    (out[r.vote_id] ||= {})[r.kind] = { hash: r.hash, salt: r.salt, day: r.day, root: root && root.root, ots_status: root && root.ots_status, path };
+    (out[r.vote_id] ||= {})[r.kind] = { hash: r.hash, salt: r.salt, day: r.day, root: root && root.root, ots_status: root && root.ots_status, btc_height: root && root.btc_height, btc_time: root && root.btc_time, path };
   }
   return out;
 }
@@ -190,7 +372,7 @@ export async function handleVotelog(request, env, url) {
   if (request.method !== "GET") return json({ error: "method" }, 405);
   await ensureVotelog(db);
   if (url.pathname === "/votelog") {
-    const rows = (await db.prepare("SELECT day, root, leaves, ots_status, created_ts FROM vote_root ORDER BY day DESC LIMIT 400").all()).results || [];
+    const rows = (await db.prepare("SELECT day, root, leaves, ots_status, created_ts, btc_height, btc_time, btc_block FROM vote_root ORDER BY day DESC LIMIT 400").all()).results || [];
     return json({ days: rows }, 200, { "Cache-Control": "public, max-age=60" });
   }
   if (url.pathname === "/votelog/proof") {
@@ -198,11 +380,11 @@ export async function handleVotelog(request, env, url) {
     if (!/^[0-9a-f]{64}$/.test(hash)) return json({ error: "bad_hash" }, 400);
     const c = await db.prepare("SELECT day, kind FROM vote_commit WHERE hash = ?").bind(hash).first();
     if (!c) return json({ error: "not_found" }, 404);
-    const root = await db.prepare("SELECT root, leaves, ots_status FROM vote_root WHERE day = ?").bind(c.day).first();
+    const root = await db.prepare("SELECT root, leaves, ots_status, btc_height, btc_time, btc_block FROM vote_root WHERE day = ?").bind(c.day).first();
     if (!root) return json({ day: c.day, kind: c.kind, rooted: false }, 200);
     const leaves = (await db.prepare("SELECT hash FROM vote_commit WHERE day = ?").bind(c.day).all()).results.map((r) => r.hash);
     const path = await merklePath(leaves, hash);
-    return json({ day: c.day, kind: c.kind, rooted: true, root: root.root, ots_status: root.ots_status, path, ots_url: `/votelog/${c.day}.ots` }, 200, { "Cache-Control": "public, max-age=300" });
+    return json({ day: c.day, kind: c.kind, rooted: true, root: root.root, ots_status: root.ots_status, btc_height: root.btc_height, btc_time: root.btc_time, btc_block: root.btc_block, path, ots_url: `/votelog/${c.day}.ots` }, 200, { "Cache-Control": "public, max-age=300" });
   }
   const m = url.pathname.match(/^\/votelog\/(\d{4}-\d{2}-\d{2})\.ots$/);
   if (m) {
