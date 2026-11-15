@@ -12,21 +12,18 @@ import { readOutfitRows } from "../outfit-stats.mjs";
 const root = new URL("../", import.meta.url);
 const readJson = (p) => JSON.parse(readFileSync(new URL(p, root), "utf8"));
 
-test("shipped list: 60 names, 15 per faction, no collision with the listed outfits", () => {
+test("shipped list: 60 names, flat best-60 (no per-faction quota), no collision with the listed outfits", () => {
   const json = readJson("data/outfit-names.json");
   assert.equal(json.v, 1);
   assert.match(json.verifiedAt, /^\d{4}-\d{2}-\d{2}T/, "verifiedAt is an ISO date");
   const rows = readNameRows(json);
   assert.equal(rows.length, 60);
-  const perFac = {};
   for (const r of rows) {
     assert.ok(validName(r.name), r.name);
     assert.ok(validTag(r.tag) && r.tag !== "", r.name);
     assert.ok(["vs", "nc", "tr", "nso"].includes(r.fac), r.name);
     assert.ok(["osprey", "wainwright"].includes(r.srv), r.name);
-    perFac[r.fac] = (perFac[r.fac] || 0) + 1;
   }
-  assert.deepEqual(perFac, { vs: 15, nc: 15, tr: 15, nso: 15 });
   assert.equal(new Set(rows.map((r) => normalizeName(r.name))).size, 60, "names unique");
   assert.equal(new Set(rows.map((r) => normalizeTag(r.tag))).size, 60, "tags unique");
   const taken = localTaken(readOutfitRows(readJson("data/outfits.json")));

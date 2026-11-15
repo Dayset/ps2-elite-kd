@@ -335,7 +335,7 @@ async function main() {
   const perFac = {};
   for (const r of rows) perFac[r.fac] = (perFac[r.fac] || 0) + 1;
   const perFacTxt = Object.entries(perFac).map(([f, n]) => `${FACTION_LABEL[f] || f} ${n}`).join(" · ");
-  status(esc(tr("on.meta", "List verified {when} · {n} names · {perFac} per faction", {
+  status(esc(tr("on.meta", "List verified {when} · {n} names · {perFac}", {
     when: verifiedAt ? new Date(verifiedAt).toLocaleDateString(lang(), { year: "numeric", month: "short", day: "numeric" }) : "—",
     n: int(rows.length), perFac: perFacTxt,
   })));
