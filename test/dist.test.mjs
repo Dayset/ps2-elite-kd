@@ -172,20 +172,17 @@ describe("dist helpers", () => {
     assert.equal(binIndexOf(h, NaN), -1);
   });
 
-  it("dist chart wiring: act / pvs / rkd / rf use log1p, adjs / combinedivi use symlog, the rest stay linear (2026-11-15)", () => {
+  it("dist chart wiring: act / pvs / rkd / rf / adjs / combinedivi use log1p, the rest stay linear (2026-11-15)", () => {
     const src = readFileSync(new URL("../rankings.mjs", import.meta.url), "utf8");
     const set = src.split("\n").find((l) => l.includes("LOG1P_DIST = new Set"));
     assert.ok(set, "LOG1P_DIST set present");
-    for (const id of ["act", "pvs", "rkd", "rf"]) assert.ok(set.includes(`"${id}"`), `log1p covers ${id}: ${set.trim()}`);
-    for (const id of ["adjs", "cons", "apk", "inf", "pureivi", "luck", "zerg"]) assert.ok(!set.includes(`"${id}"`), `log1p must not cover ${id}`);
-    const sym = src.split("\n").find((l) => l.includes("SYMLOG_DIST = new Set"));
-    assert.ok(sym, "SYMLOG_DIST set present");
-    for (const id of ["adjs", "combinedivi"]) assert.ok(sym.includes(`"${id}"`), `symlog covers ${id}: ${sym.trim()}`);
-    for (const id of ["act", "pvs", "rkd", "rf", "cons", "apk", "inf", "luck", "zerg", "pureivi"]) assert.ok(!sym.includes(`"${id}"`), `symlog must not cover ${id}`);
+    for (const id of ["act", "pvs", "rkd", "rf", "adjs", "combinedivi"]) assert.ok(set.includes(`"${id}"`), `log1p covers ${id}: ${set.trim()}`);
+    for (const id of ["cons", "apk", "inf", "pureivi", "luck", "zerg"]) assert.ok(!set.includes(`"${id}"`), `log1p must not cover ${id}`);
+    assert.ok(!src.includes("SYMLOG_DIST"), "no symlog wiring left (dropped 2026-11-15: negatives are one underflow bar)");
+    assert.ok(!src.includes("dist.symlogHint"), "no symlog pill hint left");
     const scaleLine = src.split("\n").find((l) => l.includes("const scale = LOG1P_DIST.has(id)"));
-    assert.ok(scaleLine && scaleLine.includes('SYMLOG_DIST.has(id) ? "symlog" : "linear"'), `getHist picks symlog: ${scaleLine && scaleLine.trim()}`);
+    assert.ok(scaleLine && scaleLine.includes('LOG1P_DIST.has(id) ? "log1p" : "linear"'), `getHist picks log1p: ${scaleLine && scaleLine.trim()}`);
     assert.ok(src.includes('dist.nonLinear'), "axis labels the non-linear scale");
-    assert.ok(src.includes('dist.symlogHint'), "pill hint explains the symlog scale");
     assert.ok(src.includes('dist.mjs?v=20261115-symlog1'), "rankings loads the symlog dist build (cache-bust pin, 2026-11-15)");
   });
 

@@ -1108,24 +1108,19 @@ export function initRankings(host) {
   // act first bin 49.4% (18/27 bins < 1%), pvs 43.8% (9/19 < 1%),
   // rkd max bar 22.7%, rf 9/27 bins < 1%. pureivi / luck can be
   // negative, cons / apk / inf / zerg are already readable — they stay linear.
-  const LOG1P_DIST = new Set(["act", "pvs", "rkd", "rf"]);
-  // 📊 symlog bins (2026-11-15): ⚔️ iVi and 🧼 Pure are the two barely-visible
-  // graphs — adjs is two-sided (27% negative with real spread, p10 of
-  // negatives ≈ −1000), so plain log1p + floor 0 would leave the whole
-  // negative tail in one ≤0 bar, the tallest on the chart, and an empty first
-  // core bin. Signed log1p spreads both tails; the floor: 0 below is ignored
-  // for these two (dist.mjs). 🧼 Pure (combinedivi) is ≥ 0 by construction
-  // (combinedIvI floors at 0), so symlog ≡ log1p there — but its linear
-  // first bar is still a 24% lump. Measured on 2026-11-15 data/ranks.json
-  // (n=20,311): adjs max bar 27.2% (the ≤0 lump) → 15.0%, underflow 27.2% →
-  // 0.2%; combinedivi max bar 24.3% → 16.7%, first bar now just the exact-0
-  // point mass (11.6% of players whose 🧘 Pure was ≤ 0) — no binning can
-  // spread identical values.
-  const SYMLOG_DIST = new Set(["adjs", "combinedivi"]);
+  // ⚔️ iVi + 🧼 Pure joined log1p 2026-11-15 (owner: below-0 players need no
+  // detail, just representation — one underflow bar; 0-to-top must read
+  // clearly, and the top is high and thin). Measured on 2026-11-15
+  // data/ranks.json (n=20,311): adjs underflow lump stays 27.2% (one grey
+  // bar) with 16 log bins for the positives; combinedivi max bar 24.3% →
+  // 16.7%, first bar the exact-0 point mass (11.6% of players whose 🧘 Pure
+  // was ≤ 0). (An earlier symlog build spread the negatives over half the
+  // chart; the owner dropped it the same day — dist.mjs keeps symlog support.)
+  const LOG1P_DIST = new Set(["act", "pvs", "rkd", "rf", "adjs", "combinedivi"]);
   function getHist(id) {
     if (!histCache.has(id)) {
       const vals = data.rows.map((r) => r[id]);
-      const scale = LOG1P_DIST.has(id) ? "log1p" : SYMLOG_DIST.has(id) ? "symlog" : "linear";
+      const scale = LOG1P_DIST.has(id) ? "log1p" : "linear";
       histCache.set(id, histogram(vals, { floor: id === "adjs" || id === "pureivi" ? 0 : null, scale }));
     }
     return histCache.get(id);
@@ -1501,7 +1496,7 @@ export function initRankings(host) {
     }
     if (h.bins[0].kind === "under") xl.appendChild(svgEl("text", { x: slotX(0) + slotW / 2, y: M.t + PH + 26 * ui }, `<${fmtEdge(h.lo, h)}`));
     if (h.bins[nb - 1].kind === "over") xl.appendChild(svgEl("text", { x: slotX(nb - 1) + slotW / 2, y: M.t + PH + 26 * ui }, `>${fmtEdge(h.hi, h)}`));
-    xl.appendChild(svgEl("text", { x: M.l + PW / 2, y: H - 3, fill: th.text, "font-size": fs + 1 }, h.scale !== "linear" ? `${col.label} · ${tr("dist.nonLinear", "non-linear scale")}` : col.label));
+    xl.appendChild(svgEl("text", { x: M.l + PW / 2, y: H - 3, fill: th.text, "font-size": fs + 1 }, h.scale === "log1p" ? `${col.label} · ${tr("dist.nonLinear", "non-linear scale")}` : col.label));
     svg.appendChild(xl);
 
     // cumulative line (right axis)
@@ -1599,7 +1594,6 @@ export function initRankings(host) {
     let tip = String(tipOf(c) || "");
     if (lead && /\p{Extended_Pictographic}/u.test(lead) && tip.startsWith(lead + " ")) tip = tip.slice(lead.length + 1);
     if (c.id && LOG1P_DIST.has(c.id)) tip += " " + tr("dist.nonLinearHint", "Non-linear scale: bins get wider to the right, so the bulk is visible.");
-    if (c.id && SYMLOG_DIST.has(c.id)) tip += " " + tr("dist.symlogHint", "Non-linear scale: bins get wider away from zero, so the bulk is visible.");
     return tr("dist.hint", "{label}, all players: {tip}", { label: c.label, tip }).trim();
   }
   function showDistHint() {
