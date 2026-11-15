@@ -138,3 +138,14 @@ test("live PS snapshot: same tree runs, zerg known only where assists exist", ()
   const assigned = d.total - d.unassigned;
   assert.ok(assigned / d.total > 0.95, `${assigned} assigned`);
 });
+
+test("phones: 5 secondary columns hidden, kept columns sized to content", () => {
+  const html = readFileSync(join(ROOT, "archetypes.html"), "utf8");
+  const m = html.match(/@media \(max-width: 700px\) \{([\s\S]*?)\n    \}/);
+  assert.ok(m, "phone media query in the Archetypes page style");
+  const css = m[1];
+  for (const n of [3, 6, 8, 10, 11]) assert.ok(css.includes(`#archTable th:nth-child(${n})`), `column ${n} hidden on phones`);
+  for (const n of [1, 2, 4, 5, 7, 9]) assert.ok(!css.includes(`#archTable th:nth-child(${n})`), `column ${n} kept on phones`);
+  assert.match(css, /#archTable \{ table-layout: auto; width: max-content; min-width: 100%; \}/);
+  for (const n of [5, 7, 9]) assert.ok(css.includes(`.arch-wrap .ranks-table th:nth-child(${n})`), `detail column ${n} hidden on phones`);
+});

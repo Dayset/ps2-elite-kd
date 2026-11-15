@@ -41,6 +41,20 @@
     #onlineTable th[data-sort]:hover { text-decoration: underline; }
     #onlineTable td { white-space: nowrap; }
     #onlineTable td .on-name { font-weight: 600; }
+    /* Phones (2026-11-15): 13 columns, same squish as Fresh/Archetypes.
+       Keep Player, Faction, Server, ⚔️ iVi, K/D, 🧘 Pure; the rest is a
+       sideways swipe. Hidden: Continent, BR, KPM, 🤝 Assists, 🪖 Infantry,
+       🪳 Zerg, Session. */
+    @media (max-width: 700px) {
+      #onlineTable { table-layout: auto; width: max-content; min-width: 100%; }
+      #onlineTable th:nth-child(4), #onlineTable td:nth-child(4),
+      #onlineTable th:nth-child(5), #onlineTable td:nth-child(5),
+      #onlineTable th:nth-child(8), #onlineTable td:nth-child(8),
+      #onlineTable th:nth-child(9), #onlineTable td:nth-child(9),
+      #onlineTable th:nth-child(10), #onlineTable td:nth-child(10),
+      #onlineTable th:nth-child(11), #onlineTable td:nth-child(11),
+      #onlineTable th:nth-child(13), #onlineTable td:nth-child(13) { display: none; }
+    }
     #onlineTable td .on-tag { opacity: 0.75; }
     #onlineTable td .on-since { font-size: 0.85em; opacity: 0.75; }
     #onlineTable td .on-dash { opacity: 0.5; }

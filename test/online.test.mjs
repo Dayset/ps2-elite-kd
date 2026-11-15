@@ -5,6 +5,9 @@
  */
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 import {
   WORLD_NAME, ZONE_NAME, FACTION_NAME,
   normName, honuProfileUrl, honuSessionUrl, playerSheetUrl,
@@ -156,4 +159,15 @@ test("countBy groups players per server", () => {
   const m = countBy(players, (r) => WORLD_NAME[r.world]);
   assert.equal(m.get("Wainwright"), 1);
   assert.equal(m.get("Ceres"), 1);
+});
+
+test("phones: 7 secondary columns hidden, kept columns sized to content", () => {
+  const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+  const html = readFileSync(join(ROOT, "online.html"), "utf8");
+  const m = html.match(/@media \(max-width: 700px\) \{([\s\S]*?)\n    \}/);
+  assert.ok(m, "phone media query in the Online page style");
+  const css = m[1];
+  for (const n of [4, 5, 8, 9, 10, 11, 13]) assert.ok(css.includes(`#onlineTable th:nth-child(${n})`), `column ${n} hidden on phones`);
+  for (const n of [1, 2, 3, 6, 7, 12]) assert.ok(!css.includes(`#onlineTable th:nth-child(${n})`), `column ${n} kept on phones`);
+  assert.match(css, /#onlineTable \{ table-layout: auto; width: max-content; min-width: 100%; \}/);
 });

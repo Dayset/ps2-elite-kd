@@ -42,6 +42,23 @@
     #archTable tbody tr.arch-selected td { background: var(--grid); font-weight: 600; }
     #archTable td { white-space: nowrap; }
     #archTable td .arch-rule { font-size: 0.85em; opacity: 0.75; }
+    /* Phones (2026-11-15): same 11-column squish as Fresh — fixed layout
+       splits the phone screen into ~30px slices. Keep Archetype, Players,
+       ⚔️ iVi, 🧘 Pure, K/D, 🦁 Brave; the rest is a sideways swipe.
+       Hidden: Share, ☠️ K/D, own KPM, 🪳 Zerg, 🪖 Infantry. */
+    @media (max-width: 700px) {
+      #archTable { table-layout: auto; width: max-content; min-width: 100%; }
+      #archTable th:nth-child(3), #archTable td:nth-child(3),
+      #archTable th:nth-child(6), #archTable td:nth-child(6),
+      #archTable th:nth-child(8), #archTable td:nth-child(8),
+      #archTable th:nth-child(10), #archTable td:nth-child(10),
+      #archTable th:nth-child(11), #archTable td:nth-child(11) { display: none; }
+      /* Detail panel top-10 table (9 cols): same treatment. */
+      .arch-wrap .ranks-table { table-layout: auto; width: max-content; min-width: 100%; }
+      .arch-wrap .ranks-table th:nth-child(5), .arch-wrap .ranks-table td:nth-child(5),
+      .arch-wrap .ranks-table th:nth-child(7), .arch-wrap .ranks-table td:nth-child(7),
+      .arch-wrap .ranks-table th:nth-child(9), .arch-wrap .ranks-table td:nth-child(9) { display: none; }
+    }
     .arch-detail:empty { display: none; }
     .arch-detail h2 { font-size: 1.25em; margin: 0 0 6px; }
     .arch-rule-line { font-size: 0.95em; }
