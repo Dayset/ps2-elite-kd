@@ -2325,6 +2325,15 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
 /* Toolbar Ranks toggle button (Dayset 2026-10-30): same box as Find player;
  * pressed (tiers shown) reads as an accent-bordered, shaded button. */
 .rk-filter-row .rk-find-btn[aria-pressed="true"] { border-color: var(--accent); background: var(--grid); color: var(--text); }
+/* Server switch (3 states: All / Osprey / Wainwright; PS: Genudine / Ceres).
+ * One joined segment in the filter row; the pressed button reads like the
+ * Ranks toggle (accent border, shaded). The short labels (first letters)
+ * stay hidden until the phone rule below swaps them in. */
+.rk-filter-row .rk-server-switch { display: inline-flex; flex: 0 0 auto; }
+.rk-filter-row .rk-server-btn { font-size: 0.8rem; padding: 0.3rem 0.6rem; border: 1px solid var(--border); border-radius: 0; background: var(--panel); color: var(--text); }
+.rk-filter-row .rk-server-btn + .rk-server-btn { margin-left: -1px; }
+.rk-filter-row .rk-server-btn[aria-pressed="true"] { position: relative; z-index: 1; border-color: var(--accent); background: var(--grid); color: var(--text); }
+.rk-filter-row .rk-server-btn .srv-short { display: none; }
 /* Table stepper (Dayset 2026-10-30): "Age" is a normal label beside the
  * stepper's box, which holds only −, value, +. Scoped here so
  * the ⚙️ Settings stepper keeps its own (larger) shape. */
@@ -2341,6 +2350,9 @@ html[data-theme="light"] .cache-chips .chip.selected:hover {
   .rk-filter-row { gap: 0.5rem; justify-content: space-between; }
   .rk-filter-row .rk-remove-ranks, .rk-filter-row .rk-locate { flex: 0 1 auto; flex-direction: row; }
   .rk-filter-row .rk-max-age { flex: 0 1 auto; }
+  /* Server switch on phones: first letters only (All / O / W), full names off. */
+  .rk-filter-row .rk-server-btn .srv-full { display: none; }
+  .rk-filter-row .rk-server-btn .srv-short { display: inline; }
 }
 .rk-filter-row input[type="search"] {
   box-sizing: border-box; width: 100%; max-width: 28rem;

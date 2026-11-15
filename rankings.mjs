@@ -63,6 +63,7 @@ export function initRankings(host) {
   const LS_HIDE_ZERO_IVI = "ps2-elite-kd-hide-zero-ivi";
   const LS_HIDE_INACTIVE = "ps2-elite-kd-hide-inactive";
   const LS_REMOVE_RANKS = "ps2-elite-kd-remove-ranks";
+  const LS_SERVER_FILTER = "ps2-elite-kd-server-filter";
   const MONTH_S = 365.25 * 86400 / 12;
   // Same limit as the names box (app.js MAX_NAMES, 6 since t400u; this said 10, so the
   // table let you tick a 7th name the box then refused — issue #35). Read live via
@@ -169,6 +170,16 @@ export function initRankings(host) {
     } catch { return null; }
   }
 
+  /** Server switch (3 states): "all" or a srvKey of this room (PC: osprey /
+   * wainwright; PS: genudine / ceres). A value saved in the other room never
+   * matches here, so it falls back to "all" instead of emptying the table. */
+  function readServerFilter() {
+    try {
+      const v = localStorage.getItem(LS_SERVER_FILTER);
+      return v === "all" || serversOfRoom(ROOM === "ps").includes(v) ? v : "all";
+    } catch { return "all"; }
+  }
+
   /** America/Winnipeg label for an ISO / ms timestamp. */
   function fmtUpdated(iso) {
     if (!iso) return "—";
@@ -198,6 +209,7 @@ export function initRankings(host) {
   let hideInactive = readHideInactive();
   let removeRanks = readRemoveRanks();
   let maxAgeMonths = readMaxAgeMonths();
+  let serverFilter = readServerFilter(); // "all" | srvKey ("osprey" / "wainwright", PS: "genudine" / "ceres")
   let sortKey = "adjs";
   let sortDir = "desc"; // Inflation starts asc on first click
   let filter = "";
@@ -446,6 +458,10 @@ export function initRankings(host) {
     if (!data) return [];
     const q = bare(filter); // "[RITE] shlo" → "shlo"
     let list = data.rows;
+    // Server switch: one server only, or all. Applies to a name search too
+    // (not just browsing), and rows with no server on file stay out of a
+    // single-server view — only players from that server are shown.
+    if (serverFilter !== "all") list = list.filter((r) => r.srvKey === serverFilter);
     if (q) {
       // Name only — the outfit tag is ignored ("rite" doesn't list every [RITE] member).
       list = list.filter((r) => r._bare.includes(q));
@@ -1653,6 +1669,37 @@ export function initRankings(host) {
       render();
     });
   }
+
+  // Server switch (3 states: All / Osprey / Wainwright; PS: All / Genudine /
+  // Ceres). The markup ships the PC servers; this room's pair is written in
+  // (labels + first letters + hover) so the same toolbar serves both rooms.
+  // A tap re-renders the table only — the names box / chart never filter.
+  const serverBtns = [...document.querySelectorAll("#serverSwitch .rk-server-btn")];
+  function syncServerSwitch() {
+    const servers = serversOfRoom(ROOM === "ps");
+    serverBtns.forEach((b, i) => {
+      const key = i === 0 ? "all" : servers[i - 1];
+      if (!key) return;
+      b.dataset.server = key;
+      b.setAttribute("aria-pressed", String(serverFilter === key));
+      if (i > 0) {
+        const label = SERVER_LABEL[key] || key;
+        const full = b.querySelector(".srv-full"), short = b.querySelector(".srv-short");
+        if (full) full.textContent = label;
+        if (short) short.textContent = label.slice(0, 1);
+        b.title = tr("ranks.serverTitle", "Show only {server} players", { server: label });
+      }
+    });
+  }
+  for (const b of serverBtns) b.addEventListener("click", () => {
+    const next = b.dataset.server || "all";
+    if (next === serverFilter) return;
+    serverFilter = next;
+    try { localStorage.setItem(LS_SERVER_FILTER, next); } catch {}
+    syncServerSwitch();
+    render();
+  });
+  syncServerSwitch();
 
   const ageInput = $("maxAgeInput");
   if (ageInput) ageInput.addEventListener("change", () => {

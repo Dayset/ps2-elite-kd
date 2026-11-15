@@ -77,7 +77,7 @@
       });
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="styles.css?v=20261115-subnav1" />
+  <link rel="stylesheet" href="styles.css?v=20261115-srv1" />
   <style>
     /* Installed-app launch splash (t465u). Android draws its own launch splash first:
        the maskable icon (big medal on black) seen through a 192 px circle, on the
@@ -596,6 +596,12 @@
         <button type="button" id="ranksFindMe" class="rk-find-me" hidden title="👤 Find this player in the table" aria-label="👤 Find this player in the table" data-i18n-title="ranks.findMe" data-i18n-aria-label="ranks.findMe">👤</button>
       </span>
       <button type="button" class="rk-find-btn rk-remove-ranks" id="removeRanksToggle" aria-pressed="false" title="Show the tier separators in the Rankings table" data-i18n-title="ranks.showRanksTitle" data-i18n="ranks.showRanks">Ranks</button>
+      <!-- Server switch (3 states: All / Osprey / Wainwright; PS: All / Genudine / Ceres) — full names on PC, first letters on phones. -->
+      <span class="rk-server-switch" id="serverSwitch" role="group" aria-label="Server" data-i18n-aria-label="ranks.serverGroup">
+        <button type="button" class="rk-server-btn" data-server="all" aria-pressed="true" data-i18n="ranks.serverAll" data-i18n-title="ranks.serverAllTitle" title="Show players from all servers">All</button>
+        <button type="button" class="rk-server-btn" data-server="osprey" aria-pressed="false" title="Show only Osprey players"><span class="srv-full">Osprey</span><span class="srv-short">O</span></button>
+        <button type="button" class="rk-server-btn" data-server="wainwright" aria-pressed="false" title="Show only Wainwright players"><span class="srv-full">Wainwright</span><span class="srv-short">W</span></button>
+      </span>
       <!-- owner 2026-10-30: Find player button — only with exactly ONE name entered (same rule as 👤); a tap scrolls the table to that row once (no sticky mode). -->
       <span class="rk-locate" id="locateWrap" hidden>
         <button type="button" class="rk-find-btn" id="findPlayerBtn" title="Scroll the table to this player's row" data-i18n-title="ranks.findPlayerTitle" data-i18n="ranks.findPlayer">Find player</button>
@@ -691,7 +697,7 @@
   </footer>
 
   <script type="module" src="i18n.mjs"></script>
-  <script type="module" src="app.js?v=20261115-log1"></script>
+  <script type="module" src="app.js?v=20261115-srv1"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(function () {});

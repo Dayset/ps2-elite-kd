@@ -23,7 +23,10 @@ for (const [file, self] of Object.entries(PAGES)) {
     for (const href of LINKS) assert.ok(m[1].includes(`href="${href}"`), `links ${href}`);
     assert.match(m[1], new RegExp(`href="${self}" class="sn-active"`), "current page active");
     assert.equal((m[1].match(/class="sn-active"/g) || []).length, 1, "exactly one active link");
-    assert.ok(html.includes("styles.css?v=20261115-subnav1"), "styles.css pin bumped");
+    // styles.css pin: index/live/columns moved to 20261115-srv1 with the server switch;
+    // the other Players pages keep the sub-nav pin.
+    const pin = ["index.html", "live.html", "columns.html"].includes(file) ? "20261115-srv1" : "20261115-subnav1";
+    assert.ok(html.includes(`styles.css?v=${pin}`), "styles.css pin bumped");
     assert.doesNotMatch(html, /<div class="pg-meta">/, "old pg-meta links removed");
   });
 }
