@@ -26,7 +26,7 @@
   <meta name="twitter:title" content="PS2 Elite — who is online now" />
   <meta name="twitter:description" content="Every PlanetSide 2 player online right now (Honu), with server and the PS2 Elite stats we collect." />
   <meta name="twitter:image" content="https://dayset.github.io/ps2-elite-kd/assets/placeholder-graph.png" />
-  <link rel="stylesheet" href="styles.css?v=20261114-ui2" />
+  <link rel="stylesheet" href="styles.css?v=20261115-subnav1" />
   <style>
     /* Online page only: filter controls and sortable headers on top of styles.css. */
     .online-filters { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: end; }
@@ -62,15 +62,20 @@
     </nav>
   </header>
 
+  <nav class="sub-nav" aria-label="Players">
+    <a href="index.html">📊 Players</a>
+    <a href="live.html">🎥 Live feed</a>
+    <a href="columns.html">📖 Columns</a>
+    <a href="online.html" class="sn-active">🟢 Online now</a>
+    <a href="archetypes.html">🧬 Archetypes</a>
+    <a href="fresh.html">😈 Fresh</a>
+  </nav>
+
+
   <main class="pg-wrap">
     <header class="pg-lead">
       <h1>🟢 Online now</h1>
       <p class="pg-dek">Every player Honu sees online right now, with the server they are actually playing on and the stats we collect for them. Ranked names open their sheet on the Players page; unranked names open their Honu profile. The list refreshes every 60 seconds.</p>
-      <div class="pg-meta">
-        <a href="index.html">⚔️ Players</a>
-        <a href="live.html">🎥 Live feed</a>
-        <a href="columns.html">📖 What the columns mean</a>
-      </div>
     </header>
 
     <div class="pg-box online-filters" id="onlineFilters">

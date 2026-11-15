@@ -3477,6 +3477,14 @@ td.luck-cell, td.luck-few { white-space: nowrap; }
 .site-nav .sn-spacer { flex: 1; }
 @media (max-width: 700px) { .site-nav a { padding: 9px 7px; font-size: 0.78rem; } .site-nav .sn-hide-m { display: none; } }
 
+/* Players sub-nav: second row under the main nav, Players pages only (2026-11-15).
+   Same flat style as .site-nav, smaller; every link stays visible on phones. */
+.sub-nav { display: flex; align-items: center; flex-wrap: wrap; gap: 0; background: var(--panel); border-bottom: 1px solid var(--border); padding: 0 10px; }
+.sub-nav a { padding: 7px 10px; font-size: 0.8rem; color: var(--dim); text-decoration: none; border-bottom: 2px solid transparent; white-space: nowrap; }
+.sub-nav a:hover { color: var(--text); }
+.sub-nav a.sn-active { color: var(--text); font-weight: 600; border-bottom-color: var(--accent); }
+@media (max-width: 700px) { .sub-nav a { padding: 7px 7px; font-size: 0.75rem; } }
+
 /* One back button everywhere: same size, same look (site pages, weapons, archive). */
 .st-back, .wc-back, .arc-back {
   width: 2.75rem; height: 2.75rem; display: inline-flex; align-items: center; justify-content: center;
