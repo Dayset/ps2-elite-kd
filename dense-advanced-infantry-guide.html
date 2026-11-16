@@ -199,7 +199,8 @@
       .st-cover { position: absolute; bottom: 0; width: 84px; height: 210px; background: var(--ink-2); border: 1px solid var(--ink); z-index: 4; }
       .st-cover.left { left: 4%; }
       .st-cover.right { right: 4%; }
-      .st-enemy { position: absolute; bottom: 24%; left: var(--st-start, 12%); width: 64px; height: 110px; z-index: 3; transform: translateX(-50%); transition: left .55s ease; }
+      .st-enemy { position: absolute; bottom: 24%; left: var(--st-start, 12%); width: 64px; height: 110px; z-index: 3; transform: translateX(-50%); }
+      /* No left transition: the enemy JUMPS to centre instantly when he appears — a slow slide would telegraph the cue. Position is set directly in JS, so the jump works with reduced motion too. */
       .st-enemy.show { left: 50%; }
       .st-enemy svg { display: block; width: 100%; height: auto; }
       .st-ring { position: absolute; left: 50%; top: 58%; width: 200px; height: 200px; margin: -100px 0 0 -100px; z-index: 5; pointer-events: none; color: var(--ink); opacity: .75; }
@@ -239,7 +240,6 @@
       }
       @media (prefers-reduced-motion: reduce) {
         .st-arena.sprinting .st-floor { animation: none; }
-        .st-enemy { transition: none; }
       }
 
       /* ---------- class blocks ---------- */
@@ -649,10 +649,10 @@
             <div class="calc" id="sprintAdsTrainer">
               <div class="calc-head">
                 <h3>Sprint → ADS → fire trainer</h3>
-                <span class="hint">Perfect: RMB at sprint exit · fire at 300 ms</span>
+                <span class="hint">React to the enemy — release Shift, ADS, fire</span>
               </div>
               <div class="calc-body">
-                <p>Hold <strong>Shift</strong> (or hold <strong>SPRINT</strong> below) to sprint. Release to stop — that is t0, and the enemy steps out from behind the cover to the centre. Press <strong>RMB</strong> to ADS, <strong>LMB</strong> to fire. Sprint recovery is 300 ms and scope-in is 150 ms, so the earliest accurate shot is 300 ms after you stop — <em>if</em> you ADS at once. Fire earlier and the shot goes out of a bloomed cone. Watch the cross: huge while sprinting, closing over the 300 ms recovery, tight once the scope is up.</p>
+                <p>Hold <strong>Shift</strong> (or hold <strong>SPRINT</strong> below) to sprint. At a random moment, 1–3 s in, the enemy <strong>jumps out from behind the cover to the centre</strong> — that jump is your cue. Release <strong>Shift</strong> to stop, press <strong>RMB</strong> to ADS, <strong>LMB</strong> to fire. Sprint recovery is 300 ms and scope-in is 150 ms, so the earliest accurate shot is 300 ms after you stop — <em>if</em> you ADS at once. Release before the enemy appears and the rep is wasted. Fire earlier than the recovery or the scope-in and the shot goes out of a bloomed cone. Watch the cross: huge while sprinting, closing over the 300 ms recovery, tight once the scope is up.</p>
                 <div class="st-arena" id="stArena">
                   <div class="st-wall"></div>
                   <div class="st-floor"></div>
@@ -675,20 +675,20 @@
                   <button type="button" class="st-pad" id="stAdsPad">ADS<small>right-click</small></button>
                   <button type="button" class="st-pad" id="stFirePad">FIRE<small>left-click</small></button>
                 </div>
-                <p class="st-live" id="stLive">Exit → RMB — · RMB → LMB — · Total —</p>
+                <p class="st-live" id="stLive">Enemy → release — · RMB → LMB — · Total —</p>
                 <div class="st-verdict" id="stVerdict">Run a rep to get your verdict — reaction tier, execution grade and your biggest leak.</div>
                 <div class="results">
-                  <div class="result"><span class="k">Avg reaction</span><span class="v"><span id="stAvgReact">—</span><span class="st-pill" id="stAvgReactTier">—</span></span><span class="st-sub">Exit → RMB, averaged over your reps.</span></div>
+                  <div class="result"><span class="k">Avg reaction</span><span class="v"><span id="stAvgReact">—</span><span class="st-pill" id="stAvgReactTier">—</span></span><span class="st-sub">Enemy appears → Shift release, averaged over your reps.</span></div>
                   <div class="result"><span class="k">How clean is your execution</span><span class="v" id="stClean">—</span><span class="st-sub" id="stCleanSub">Average score across reps.</span></div>
                   <div class="result"><span class="k">Avg exit → RMB</span><span class="v"><span id="stAvgRmb">—</span><span class="st-pill" id="stAvgRmbLabel">—</span></span><span class="st-sub">Press RMB the instant you stop sprinting.</span></div>
                   <div class="result"><span class="k">Avg RMB → LMB</span><span class="v"><span id="stAvgFire">—</span><span class="st-pill" id="stAvgFireLabel">—</span></span><span class="st-sub">Perfect wait is 150 ms after RMB, and never before 300 ms from exit.</span></div>
                   <div class="result"><span class="k">Perfect reps</span><span class="v" id="stPerfectRate">—</span><span class="st-sub" id="stPerfectSub">Share of reps graded PERFECT.</span></div>
-                  <div class="result"><span class="k">Best total</span><span class="v" id="stBest">—</span><span class="st-sub">Fastest sprint-exit-to-accurate-shot.</span></div>
+                  <div class="result"><span class="k">Best total</span><span class="v" id="stBest">—</span><span class="st-sub">Fastest enemy-appearance-to-accurate-shot.</span></div>
                 </div>
                 <ol class="st-hist" id="stHistory"></ol>
                 <button type="button" class="st-reset" id="stReset">Reset history</button>
               </div>
-              <div class="foot"><p>One open question: this trainer grades on the <strong>overlap model</strong> — ADS starting during the 300 ms sprint recovery, so the earliest accurate shot is 300 ms from exit. That is not settled fact; a VR Training check is the deciding test for it. If ADS turns out to be blocked until recovery ends, perfect becomes 450 ms instead.</p><p>Reaction tiers: ELITE ≤250 ms · SHARP ≤350 · STEADY ≤500 · SLOW ≤800 · VERY SLOW 800+. Cleanliness: CLEAN 90+ · MOSTLY CLEAN 75+ · ROUGH 55+ · SLOPPY under 55.</p></div>
+              <div class="foot"><p>The enemy jumps out 1–3 s into your sprint at random — he never appears on sprint exit, so you react to him instead of timing a fixed delay. Perfect fire is 300 ms after you stop sprinting, with 150 ms of scope-in after you ADS. One open question: this trainer grades on the <strong>overlap model</strong> — ADS starting during the 300 ms sprint recovery, so the earliest accurate shot is 300 ms from exit. That is not settled fact; a VR Training check is the deciding test for it. If ADS turns out to be blocked until recovery ends, perfect becomes 450 ms instead.</p><p>Reaction tiers: ELITE ≤250 ms · SHARP ≤350 · STEADY ≤500 · SLOW ≤800 · VERY SLOW 800+. Cleanliness: CLEAN 90+ · MOSTLY CLEAN 75+ · ROUGH 55+ · SLOPPY under 55.</p></div>
             </div>
 
             <div class="note dated">
@@ -1222,10 +1222,14 @@
         ccRun();
 
         /* ---- Sprint → ADS → fire trainer ----
-           Single model: sprint recovery 300 ms, scope-in 150 ms.
-           Perfect = RMB at sprint exit, fire at 300 ms after exit.
-           Firing before 300 ms = recovery not done; firing before
-           RMB + 150 ms = scope not up. No MAX suit, no second model. */
+           The ORIGINAL loop: you sprint, and at a RANDOM moment 1-3 s
+           in the enemy JUMPS out from behind the cover to the centre.
+           That jump is the cue — release Shift, ADS, fire. The enemy
+           NEVER appears on sprint exit; releasing before he appears
+           wastes the rep. Sprint recovery 300 ms, scope-in 150 ms.
+           Perfect fire = 300 ms after exit (with RMB + 150 ms).
+           Reaction is enemy-appearance -> Shift release. No MAX suit,
+           no second model. */
         (function () {
           var arena = document.getElementById("stArena");
           if (!arena) return;
@@ -1245,6 +1249,9 @@
           var firePad = document.getElementById("stFirePad");
           var state = "idle"; // idle | sprinting | exited | ads | done
           var t0 = 0, rmbAt = 0;
+          // Random-appearance cue: the enemy jumps out 1-3 s into the
+          // sprint, while you are still holding Shift.
+          var appearAt = 0, releaseAt = 0, appeared = false, appearTimer = null;
           var reps = [];
           var gap = GAP_HIP, gapAnim = null;
 
@@ -1283,16 +1290,35 @@
             enemy.style.setProperty("--st-start", cx + "px");
             enemy.classList.remove("show");
           }
+          function clearAppearTimer() {
+            if (appearTimer !== null) { clearTimeout(appearTimer); appearTimer = null; }
+          }
+          function showEnemy() {
+            // The JUMP: final position set directly, no CSS transition
+            // involved, so it lands instantly — including with
+            // prefers-reduced-motion, where transitions are off anyway.
+            appearTimer = null;
+            appeared = true;
+            appearAt = performance.now();
+            enemy.classList.add("show");
+            setPhase("ENEMY OUT — RELEASE SHIFT");
+            liveEl.textContent = "Enemy jumped out — release Shift now, then ADS + fire.";
+          }
           function startSprint() {
             if (state === "sprinting") return;
+            clearAppearTimer();
+            appeared = false; appearAt = 0; releaseAt = 0;
             pickCoverSide();
             state = "sprinting";
             arena.classList.add("sprinting");
             arena.classList.remove("ads");
             if (gapAnim) { cancelAnimationFrame(gapAnim); gapAnim = null; }
             setGap(GAP_SPRINT);
-            setPhase("SPRINTING — RELEASE TO STOP");
-            liveEl.textContent = "Sprinting… release Shift (or SPRINT) to stop.";
+            // The enemy appears at a RANDOM 1-3 s into the sprint.
+            // He never appears on sprint exit — that was the bug.
+            appearTimer = setTimeout(showEnemy, Math.round(1000 + Math.random() * 2000));
+            setPhase("SPRINTING — WAIT FOR THE ENEMY");
+            liveEl.textContent = "Sprinting… the enemy jumps out at a random moment (1–3 s). Wait for him.";
             sprintPad.classList.add("held");
           }
           function exitSprint() {
@@ -1302,14 +1328,28 @@
             rmbAt = 0;
             arena.classList.remove("sprinting");
             sprintPad.classList.remove("held");
-            enemy.classList.add("show");
+            if (!appeared) {
+              // Released before the enemy appeared: the rep is wasted.
+              // No cue, no shot — start again and wait for the jump.
+              clearAppearTimer();
+              state = "done";
+              var voidRep = { total: null, reactMs: null, rmbDelay: null, fireDelay: null, waitNeeded: RECOVERY, perfect: false, score: 0, verdict: "TOO SOON — ENEMY HADN'T APPEARED YET", leakCat: "early" };
+              reps.push(voidRep);
+              setPhase(voidRep.verdict);
+              liveEl.textContent = "Released before the enemy appeared — wait for the jump. Rep wasted, score 0.";
+              animateGap(GAP_HIP, 200);
+              renderStats();
+              renderHistory();
+              return;
+            }
+            releaseAt = performance.now();
             animateGap(GAP_RECOVERY_END, RECOVERY);
             setPhase("ADS NOW — FIRE AT 300 MS");
-            liveEl.textContent = "Sprint exit — ADS now, fire at 300 ms.";
+            liveEl.textContent = "Released " + Math.round(releaseAt - appearAt) + " ms after the enemy appeared — ADS now, fire at 300 ms from exit.";
           }
           function updateLive() {
-            var rmb = rmbAt ? Math.round(rmbAt - t0) + " ms" : "—";
-            liveEl.textContent = "Exit → RMB " + rmb + " · RMB → LMB — · Total —";
+            var react = releaseAt ? Math.round(releaseAt - appearAt) + " ms" : "—";
+            liveEl.textContent = "Enemy → release " + react + " · RMB → LMB — · Total —";
           }
           function pressRmb() {
             if (state === "sprinting") exitSprint(); // RMB cancels the sprint
@@ -1364,16 +1404,20 @@
               return;
             }
             var fireAt = performance.now();
-            var total = Math.round(fireAt - t0);
+            // Total is enemy-appearance -> fire (the whole reaction).
+            // Recovery / scope-in are measured from sprint exit (t0).
+            var total = Math.round(fireAt - appearAt);
+            var exitTotal = Math.round(fireAt - t0);
+            var reactMs = Math.round(releaseAt - appearAt);
             var rmbDelay = rmbAt ? Math.round(rmbAt - t0) : null;
             var fireDelay = rmbDelay === null ? null : Math.round(fireAt - rmbAt);
             var waitNeeded = rmbDelay === null ? RECOVERY : Math.max(RECOVERY, rmbDelay + SCOPE_IN);
-            var rep = { total: total, rmbDelay: rmbDelay, fireDelay: fireDelay, waitNeeded: waitNeeded, perfect: false, score: 0, verdict: "", leakCat: "" };
+            var rep = { total: total, reactMs: reactMs, rmbDelay: rmbDelay, fireDelay: fireDelay, waitNeeded: waitNeeded, perfect: false, score: 0, verdict: "", leakCat: "" };
             if (rmbDelay === null) {
               rep.verdict = "NO ADS — FIRED FROM THE HIP";
               rep.score = 0;
               rep.leakCat = "no-ads";
-            } else if (total < RECOVERY) {
+            } else if (exitTotal < RECOVERY) {
               rep.verdict = "TOO EARLY — SPRINT RECOVERY NOT DONE";
               rep.score = 30;
               rep.leakCat = "early";
@@ -1382,10 +1426,11 @@
               rep.score = 45;
               rep.leakCat = "early";
             } else {
-              var late = total - waitNeeded;
-              var rmbPen = rmbDelay <= 100 ? 0 : Math.min(20, (rmbDelay - 100) / 20);
+              var late = exitTotal - waitNeeded;
+              // Reaction penalty is on enemy-appearance -> Shift release.
+              var reactPen = reactMs <= 250 ? 0 : Math.min(20, (reactMs - 250) / 25);
               var latePen = late <= PERFECT_SLACK ? 0 : Math.min(25, (late - PERFECT_SLACK) / 20);
-              rep.score = Math.max(0, Math.round(100 - rmbPen - latePen));
+              rep.score = Math.max(0, Math.round(100 - reactPen - latePen));
               if (late <= PERFECT_SLACK) {
                 rep.perfect = true;
                 rep.verdict = "PERFECT";
@@ -1400,7 +1445,7 @@
             sprintPad.classList.remove("held");
             animateGap(GAP_HIP, 200);
             setPhase(rep.verdict);
-            liveEl.textContent = "Exit → RMB " + (rmbDelay === null ? "—" : rmbDelay + " ms") + " · RMB → LMB " + (fireDelay === null ? "—" : fireDelay + " ms") + " · Total " + total + " ms — " + rep.verdict;
+            liveEl.textContent = "Enemy → release " + reactMs + " ms · RMB → LMB " + (fireDelay === null ? "—" : fireDelay + " ms") + " · Total " + total + " ms — " + rep.verdict;
             reps.push(rep);
             renderStats();
             renderHistory();
@@ -1408,25 +1453,30 @@
           function renderStats() {
             var n = reps.length;
             if (!n) return;
-            var rmbVals = [], fireVals = [], fireDeltas = [], scores = [], i, r;
+            // Reaction is enemy-appearance -> Shift release; exit -> RMB
+            // is a separate card. Wasted (too-soon) reps carry nulls
+            // and are excluded from the averages and the best total.
+            var reactVals = [], rmbVals = [], fireVals = [], fireDeltas = [], scores = [], i, r;
             for (i = 0; i < n; i++) {
               r = reps[i];
               scores.push(r.score);
+              if (r.reactMs !== null) reactVals.push(r.reactMs);
               if (r.rmbDelay !== null) {
                 rmbVals.push(r.rmbDelay);
                 fireVals.push(r.fireDelay);
                 fireDeltas.push(r.fireDelay - (r.waitNeeded - r.rmbDelay));
               }
             }
+            var avgReact = avg(reactVals);
             var avgRmb = avg(rmbVals);
             var avgScore = avg(scores);
             var avgFireDelay = avg(fireVals);
             var avgDelta = avg(fireDeltas);
             var perfectCount = 0;
             for (i = 0; i < n; i++) if (reps[i].perfect) perfectCount++;
-            var best = reps[0].total;
-            for (i = 1; i < n; i++) if (reps[i].total < best) best = reps[i].total;
-            var reactTier = avgRmb === null ? "—" : reactionTier(Math.round(avgRmb));
+            var best = null;
+            for (i = 0; i < n; i++) if (reps[i].total !== null && (best === null || reps[i].total < best)) best = reps[i].total;
+            var reactTier = avgReact === null ? "—" : reactionTier(Math.round(avgReact));
             var clean = cleanWord(Math.round(avgScore));
             var letter = letterGrade(Math.round(avgScore));
             var counts = {}, topCat = "", topCount = 0, c;
@@ -1436,11 +1486,11 @@
             }
             for (c in counts) if (counts[c] > topCount) { topCat = c; topCount = counts[c]; }
             var leakText = "No leak yet — every rep perfect.";
-            if (topCat === "late") leakText = "Biggest leak: firing late — the perfect window closes at 300 ms; ADS sooner and fire on the mark.";
-            else if (topCat === "early") leakText = "Biggest leak: firing early — wait for the 300 ms recovery and the 150 ms scope-in before LMB.";
+            if (topCat === "late") leakText = "Biggest leak: firing late — the perfect window closes at 300 ms from exit; ADS sooner and fire on the mark.";
+            else if (topCat === "early") leakText = "Biggest leak: firing early — wait for the enemy to jump out, then release and fire at 300 ms from exit (150 ms after RMB).";
             else if (topCat === "no-ads") leakText = "Biggest leak: firing without ADS — press RMB before LMB.";
-            verdictEl.innerHTML = "Reaction: <b>" + reactTier + "</b> — avg " + (avgRmb === null ? "—" : Math.round(avgRmb) + " ms") + ". Execution: <b>" + clean + " (" + letter + ")</b> — avg score " + Math.round(avgScore) + ", " + perfectCount + " of " + n + " reps perfect.<span class=\"leak\">" + leakText + "</span>";
-            setText("stAvgReact", avgRmb === null ? "—" : Math.round(avgRmb) + " ms");
+            verdictEl.innerHTML = "Reaction: <b>" + reactTier + "</b> — avg " + (avgReact === null ? "—" : Math.round(avgReact) + " ms") + ". Execution: <b>" + clean + " (" + letter + ")</b> — avg score " + Math.round(avgScore) + ", " + perfectCount + " of " + n + " reps perfect.<span class=\"leak\">" + leakText + "</span>";
+            setText("stAvgReact", avgReact === null ? "—" : Math.round(avgReact) + " ms");
             setPill("stAvgReactTier", reactTier, reactTier === "ELITE" || reactTier === "SHARP" ? "st-good" : reactTier === "STEADY" ? "st-warn" : reactTier === "—" ? "" : "st-bad");
             setText("stClean", letter);
             setText("stCleanSub", clean + " · avg score " + Math.round(avgScore) + ".");
@@ -1459,13 +1509,17 @@
             setText("stPerfectRate", perfectCount + "/" + n);
             var consistency = rate >= 80 ? "DEADLY CONSISTENT" : rate >= 50 ? "STEADY" : rate >= 25 ? "PATCHY" : "ERRATIC";
             setText("stPerfectSub", rate + "% perfect — " + consistency + ".");
-            setText("stBest", best + " ms");
+            setText("stBest", best === null ? "—" : best + " ms");
           }
           function renderHistory() {
             var html = "", i, r, start = Math.max(0, reps.length - 10);
             for (i = reps.length - 1; i >= start; i--) {
               r = reps[i];
-              html += "<li>Rep " + (i + 1) + " · " + r.total + " ms total · " + (r.rmbDelay === null ? "no RMB" : r.rmbDelay + " ms to RMB") + " · " + (r.fireDelay === null ? "no ADS" : r.fireDelay + " ms RMB→LMB") + " · " + r.verdict + " (" + letterGrade(r.score) + ")</li>";
+              if (r.total === null) {
+                html += "<li>Rep " + (i + 1) + " · released too soon · " + r.verdict + " (" + letterGrade(r.score) + ")</li>";
+              } else {
+                html += "<li>Rep " + (i + 1) + " · " + r.total + " ms total · " + r.reactMs + " ms enemy→release · " + (r.rmbDelay === null ? "no RMB" : r.rmbDelay + " ms exit→RMB") + " · " + (r.fireDelay === null ? "no ADS" : r.fireDelay + " ms RMB→LMB") + " · " + r.verdict + " (" + letterGrade(r.score) + ")</li>";
+              }
             }
             historyEl.innerHTML = html;
           }
@@ -1500,12 +1554,19 @@
           });
           document.getElementById("stReset").addEventListener("click", function () {
             reps = [];
+            clearAppearTimer();
+            state = "idle"; // back to idle so no stale sprint can grade a rep after Reset
+            appeared = false; appearAt = 0; releaseAt = 0; rmbAt = 0;
+            enemy.classList.remove("show");
+            arena.classList.remove("sprinting");
+            arena.classList.remove("ads");
+            sprintPad.classList.remove("held");
             verdictEl.textContent = "Run a rep to get your verdict — reaction tier, execution grade and your biggest leak.";
             ["stAvgReact", "stAvgReactTier", "stClean", "stAvgRmb", "stAvgRmbLabel", "stAvgFire", "stAvgFireLabel", "stPerfectRate", "stBest"].forEach(function (id) { document.getElementById(id).textContent = "—"; });
             setText("stCleanSub", "Average score across reps.");
             setText("stPerfectSub", "Share of reps graded PERFECT.");
             historyEl.innerHTML = "";
-            liveEl.textContent = "Exit → RMB — · RMB → LMB — · Total —";
+            liveEl.textContent = "Enemy → release — · RMB → LMB — · Total —";
             setPhase("Hold Shift (or SPRINT) to sprint");
           });
           setGap(GAP_HIP);
