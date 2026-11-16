@@ -147,7 +147,10 @@ export function voteCheckHtml(v, result) {
   if (r.status === "no-commit") return `<div class="vc-dim">${tr("or.v.noSeal", "🔐 Fingerprint not ready yet.")}</div>`;
   if (r.status === "no-crypto") return `<div class="vc-bad">${tr("or.v.noCrypto", "This browser can't run the check (it needs a secure page).")}</div>`;
   const k = r.kinds[0] || {};
-  const btc = (kk) => (kk.btc_height ? ` · <a href="https://mempool.space/block/${esc(kk.btc_block)}" target="_blank" rel="noopener noreferrer">${tr("or.v.btcBlock", "Bitcoin block {n}", { n: kk.btc_height })}</a>`
+  // Link only when the block hash is present: a confirmed height without a
+  // hash (stale Worker reply) shows as plain text, never /block/undefined.
+  const btc = (kk) => (kk.btc_height && kk.btc_block ? ` · <a href="https://mempool.space/block/${esc(kk.btc_block)}" target="_blank" rel="noopener noreferrer">${tr("or.v.btcBlock", "Bitcoin block {n}", { n: kk.btc_height })}</a>`
+    : kk.btc_height ? ` · ${tr("or.v.btcBlock", "Bitcoin block {n}", { n: kk.btc_height })}`
     : kk.ots_status === "pending" ? ` · ${tr("or.v.btcPending", "submitted to Bitcoin, confirmation pending")}` : "");
   const banner = r.status === "ok" ? `<div class="vc-ok">${tr("or.v.checkOk", "✅ Matches the sealed record for {d}.", { d: k.day })}${btc(k)}</div>`
     : r.status === "not-rooted" ? `<div class="vc-ok">${tr("or.v.checkNotRooted", "✅ Fingerprint matches what was recorded. Day {d} is sealed overnight — check back tomorrow for the Bitcoin block.", { d: k.day })}</div>`

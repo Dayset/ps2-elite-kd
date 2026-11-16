@@ -74,9 +74,23 @@ test("voteCheckHtml renders the verdict, salt and copy button", async () => {
   assert.match(h, new RegExp(placedHash));
   assert.match(h, new RegExp(settledHash));
   assert.match(h, /Bitcoin block 975729/);
+  assert.match(h, new RegExp(`href="https://mempool\\.space/block/${"a".repeat(64)}"`), "link carries the block hash, not /undefined");
   assert.match(h, /data-vcopy="v1"/);
   assert.match(h, /Keep the salt private/);
   assert.match(voteCheckHtml(sealed, { status: "checking", kinds: [] }), /Checking…/);
+});
+
+test("voteCheckHtml: a confirmed height without a block hash shows plain text, never /undefined", async () => {
+  const noHash = { ...sealed, commits: {
+    placed: { ...sealed.commits.placed, btc_block: undefined },
+    settled: { ...sealed.commits.settled, btc_block: undefined },
+  } };
+  const r = await verifyVoteCheck(noHash);
+  assert.equal(r.status, "ok");
+  const h = voteCheckHtml(noHash, r);
+  assert.match(h, /Bitcoin block 975729/);
+  assert.doesNotMatch(h, /mempool\.space\/block\//, "no link without a hash to point at");
+  assert.doesNotMatch(h, /undefined/);
 });
 
 test("voteListHtml: a sealed vote gets a Check button, an unsealed one does not", () => {

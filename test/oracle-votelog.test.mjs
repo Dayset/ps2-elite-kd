@@ -199,6 +199,7 @@ test("votelog end to end: upgradeDays confirms a pending day and leaves an uncon
     const mine = (await commitsFor(DB, ["v1"])).v1;
     assert.equal(mine.placed.btc_height, HEIGHT);
     assert.equal(mine.placed.btc_time, BLOCK_TIME);
+    assert.equal(mine.placed.btc_block, blockHash, "the voter's commits carry the block hash for the mempool link");
   } finally {
     globalThis.fetch = realFetch;
   }

@@ -350,7 +350,7 @@ export async function commitsFor(db, voteIds) {
   const roots = {};
   const leavesByDay = {};
   for (const d of days) {
-    const root = await db.prepare("SELECT root, ots_status, btc_height, btc_time FROM vote_root WHERE day = ?").bind(d).first();
+    const root = await db.prepare("SELECT root, ots_status, btc_height, btc_time, btc_block FROM vote_root WHERE day = ?").bind(d).first();
     if (!root) continue;
     roots[d] = root;
     leavesByDay[d] = (await db.prepare("SELECT hash FROM vote_commit WHERE day = ?").bind(d).all()).results.map((r) => r.hash);
@@ -359,7 +359,7 @@ export async function commitsFor(db, voteIds) {
   for (const r of rows) {
     const root = roots[r.day] || null;
     const path = root ? await merklePath(leavesByDay[r.day], r.hash) : null;
-    (out[r.vote_id] ||= {})[r.kind] = { hash: r.hash, salt: r.salt, day: r.day, root: root && root.root, ots_status: root && root.ots_status, btc_height: root && root.btc_height, btc_time: root && root.btc_time, path };
+    (out[r.vote_id] ||= {})[r.kind] = { hash: r.hash, salt: r.salt, day: r.day, root: root && root.root, ots_status: root && root.ots_status, btc_height: root && root.btc_height, btc_time: root && root.btc_time, btc_block: root && root.btc_block, path };
   }
   return out;
 }
