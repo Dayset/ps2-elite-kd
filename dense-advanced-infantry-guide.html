@@ -251,6 +251,20 @@
       .st-step.done::before { background: var(--good); border-color: var(--good); }
       .st-step.now { color: var(--ink); font-weight: 700; }
       .st-step.now::before { background: var(--bg); border-color: var(--accent); box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent); }
+      .st-phases-cap { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .14em; color: var(--ink-3); margin: 12px 4px 0; }
+      .st-phases-cap + .st-phases { margin-top: 0; }
+      /* The enemy's row reads amber: his progress is the threat. */
+      .st-enemy-phases .st-step.done { color: var(--warn); }
+      .st-enemy-phases .st-step.done::before { background: var(--warn); border-color: var(--warn); }
+      .st-enemy-phases .st-step.now::before { border-color: var(--warn); box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--warn); }
+      .st-arena.lost { border-color: var(--bad); }
+      .st-arena.lost .st-phase { border-color: var(--bad); color: var(--bad); }
+      /* ---- duel sliders: enemy ADS delay % + randomness % ---- */
+      .st-sliders { display: grid; gap: 8px; margin-top: 12px; }
+      .st-sliders label { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; }
+      .st-sliders label span { font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 400; color: var(--ink-2); white-space: nowrap; }
+      .st-sliders input[type="range"] { flex: 1; accent-color: var(--accent); }
+      .st-enemy-note { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; color: var(--ink-2); margin: 0; }
 
       /* ---------- class blocks ---------- */
       .classblock { border-top: 2px solid var(--ink); padding-top: 14px; margin-top: 26px; }
@@ -659,10 +673,16 @@
             <div class="calc" id="sprintAdsTrainer">
               <div class="calc-head">
                 <h3>Sprint → ADS → fire trainer</h3>
-                <span class="hint">React to the enemy — release Shift, ADS, fire</span>
+                <span class="hint">Duel him — release, ADS, fire before he shoots</span>
               </div>
               <div class="calc-body">
-                <p>Hold <strong>Shift</strong> (or hold <strong>SPRINT</strong> below) to sprint. At a random moment, 1–3 s in, the enemy <strong>steps out from behind the cover to the centre</strong> — that step-out is your cue. Release <strong>Shift</strong> to stop, press <strong>RMB</strong> to ADS, <strong>LMB</strong> to fire. Sprint recovery is 300 ms and scope-in is 150 ms, so the earliest accurate shot is 300 ms after you stop — <em>if</em> you ADS at once. Release before the enemy appears and the rep is wasted. Fire earlier than the recovery or the scope-in and the shot goes out of a bloomed cone. Watch the cross: huge while sprinting, closing as you recover and ADS — it lands tight exactly when the shot is good to go. Tight means shoot.</p>
+                <p>Hold <strong>W + Shift</strong> (or hold <strong>SPRINT</strong> below) to sprint — W is the run key, Shift is the sprint key, like in-game. At a random moment, 1–3 s in, the enemy <strong>steps out from behind the cover to the centre</strong> — that step-out is your cue. Release to stop, press <strong>RMB</strong> to ADS, <strong>LMB</strong> to fire. Sprint recovery is 300 ms and scope-in is 150 ms, so the earliest accurate shot is 300 ms after you stop — <em>if</em> you ADS at once. Release before the enemy appears and the rep is wasted. Fire earlier than the recovery or the scope-in and the shot goes out of a bloomed cone. Watch the cross: huge while sprinting, closing as you recover and ADS — it lands tight exactly when the shot is good to go. Tight means shoot.</p>
+                <p>He shoots back. The enemy ADS's and fires on his own clock — if his shot lands first, you lose the rep, even if your timing was clean. The sliders set his speed: his ADS delay as a % of 300 ms, and how much his time varies. The second phase line is his.</p>
+                <div class="st-sliders">
+                  <label>Enemy ADS delay <input type="range" id="stEnemyDelay" min="50" max="150" step="5" value="100"> <span id="stEnemyDelayVal">100%</span></label>
+                  <label>Enemy randomness <input type="range" id="stEnemyRand" min="0" max="50" step="5" value="20"> <span id="stEnemyRandVal">±20%</span></label>
+                  <p class="st-enemy-note" id="stEnemyNote">Enemy fires ~450 ms after stepping out.</p>
+                </div>
                 <div class="st-arena" id="stArena">
                   <div class="st-wall"></div>
                   <div class="st-floor"></div>
@@ -678,13 +698,18 @@
                   </div>
                   <svg class="st-ring" id="stRing" viewBox="0 0 200 200" aria-hidden="true"><circle id="stRingCircle" cx="100" cy="100" r="60" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="4 4" /></svg>
                   <div class="st-cross" id="stCross" aria-hidden="true"><i class="t"></i><i class="b"></i><i class="l"></i><i class="r"></i><i class="dot"></i></div>
-                  <div class="st-phase" id="stPhase">Hold Shift (or SPRINT) to sprint</div>
+                  <div class="st-phase" id="stPhase">Hold W + Shift (or SPRINT) to sprint</div>
                 </div>
-                <div class="st-phases" id="stPhases" aria-label="Rep phases">
+                <p class="st-phases-cap">YOU</p>
+                <div class="st-phases" id="stPhases" aria-label="Your rep phases">
                   <span class="st-step" data-step="0">SPRINT</span><span class="st-step" data-step="1">ENEMY OUT</span><span class="st-step" data-step="2">RELEASE</span><span class="st-step" data-step="3">ADS</span><span class="st-step" data-step="4">FIRE</span>
                 </div>
+                <p class="st-phases-cap">ENEMY</p>
+                <div class="st-phases st-enemy-phases" id="stEnemyPhases" aria-label="Enemy phases">
+                  <span class="st-step" data-step="0">HIDDEN</span><span class="st-step" data-step="1">OUT</span><span class="st-step" data-step="2">ADS</span><span class="st-step" data-step="3">FIRE</span>
+                </div>
                 <div class="st-pads">
-                  <button type="button" class="st-pad" id="stSprintPad">SPRINT<small>hold Shift</small></button>
+                  <button type="button" class="st-pad" id="stSprintPad">SPRINT<small>hold W + Shift</small></button>
                   <button type="button" class="st-pad" id="stAdsPad">ADS<small>right-click</small></button>
                   <button type="button" class="st-pad" id="stFirePad">FIRE<small>left-click</small></button>
                 </div>
@@ -696,12 +721,12 @@
                   <div class="result"><span class="k">Avg exit → RMB</span><span class="v"><span id="stAvgRmb">—</span><span class="st-pill" id="stAvgRmbLabel">—</span></span><span class="st-sub">Press RMB the instant you stop sprinting.</span></div>
                   <div class="result"><span class="k">Avg RMB → LMB</span><span class="v"><span id="stAvgFire">—</span><span class="st-pill" id="stAvgFireLabel">—</span></span><span class="st-sub">Perfect wait is 150 ms after RMB, and never before 300 ms from exit.</span></div>
                   <div class="result"><span class="k">Perfect reps</span><span class="v" id="stPerfectRate">—</span><span class="st-sub" id="stPerfectSub">Share of reps graded PERFECT.</span></div>
-                  <div class="result"><span class="k">Best total</span><span class="v" id="stBest">—</span><span class="st-sub">Fastest enemy-appearance-to-accurate-shot.</span></div>
+                  <div class="result"><span class="k">Best total</span><span class="v" id="stBest">—</span><span class="st-sub">Fastest enemy-appearance-to-accurate-shot — winning shots only.</span></div>
                 </div>
                 <ol class="st-hist" id="stHistory"></ol>
                 <button type="button" class="st-reset" id="stReset">Reset history</button>
               </div>
-              <div class="foot"><p>The enemy steps out 1–3 s into your sprint at random — he never appears on sprint exit, so you react to him instead of timing a fixed delay. The phase line under the arena shows where you are: SPRINT → ENEMY OUT → RELEASE → ADS → FIRE. Perfect fire is 300 ms after you stop sprinting, with 150 ms of scope-in after you ADS. The crosshair lands tight exactly at the earliest accurate shot — tight is the signal to shoot, never before. One open question: this trainer grades on the <strong>overlap model</strong> — ADS starting during the 300 ms sprint recovery, so the earliest accurate shot is 300 ms from exit. That is not settled fact; a VR Training check is the deciding test for it. If ADS turns out to be blocked until recovery ends, perfect becomes 450 ms instead.</p><p>Reaction tiers: ELITE ≤250 ms · SHARP ≤350 · STEADY ≤500 · SLOW ≤800 · VERY SLOW 800+. Cleanliness: CLEAN 90+ · MOSTLY CLEAN 75+ · ROUGH 55+ · SLOPPY under 55.</p></div>
+              <div class="foot"><p>The enemy steps out 1–3 s into your sprint at random — he never appears on sprint exit, so you react to him instead of timing a fixed delay. The phase line under the arena shows where you are: SPRINT → ENEMY OUT → RELEASE → ADS → FIRE. Perfect fire is 300 ms after you stop sprinting, with 150 ms of scope-in after you ADS. The crosshair lands tight exactly at the earliest accurate shot — tight is the signal to shoot, never before. The enemy fires on 150 ms reaction + 300 ms ADS at 100% delay, varied by the randomness slider — if his shot lands first, the rep is lost. One open question: this trainer grades on the <strong>overlap model</strong> — ADS starting during the 300 ms sprint recovery, so the earliest accurate shot is 300 ms from exit. That is not settled fact; a VR Training check is the deciding test for it. If ADS turns out to be blocked until recovery ends, perfect becomes 450 ms instead.</p><p>Reaction tiers: ELITE ≤250 ms · SHARP ≤350 · STEADY ≤500 · SLOW ≤800 · VERY SLOW 800+. Cleanliness: CLEAN 90+ · MOSTLY CLEAN 75+ · ROUGH 55+ · SLOPPY under 55.</p></div>
             </div>
 
             <div class="note dated">
@@ -1264,9 +1289,17 @@
           var firePad = document.getElementById("stFirePad");
           var state = "idle"; // idle | sprinting | exited | ads | done
           var t0 = 0, rmbAt = 0;
-          // Random-appearance cue: the enemy jumps out 1-3 s into the
-          // sprint, while you are still holding Shift.
+          // Random-appearance cue: the enemy steps out 1-3 s into the
+          // sprint, while you are still holding W + Shift.
           var appearAt = 0, releaseAt = 0, appeared = false, appearTimer = null;
+          // The duel: the enemy fires back on his own clock. His shot
+          // lands enemyMs after he steps out: 150 ms reaction + 300 ms
+          // ADS scaled by the delay slider, varied by ±randomness.
+          // If it lands first, the rep is lost.
+          var ENEMY_REACT = 150, ENEMY_ADS = 300;
+          var enemyMs = 0, enemyFired = false, enemyAdsTimer = null, enemyFireTimer = null;
+          var enemyDelayEl = document.getElementById("stEnemyDelay");
+          var enemyRandEl = document.getElementById("stEnemyRand");
           var reps = [];
           var gap = GAP_HIP, gapAnim = null;
 
@@ -1304,6 +1337,64 @@
               else if (i === n) el.classList.add(perfect ? "done" : "now");
             });
           }
+          // The enemy's phase line: HIDDEN → OUT → ADS → FIRE, on his clock.
+          var enemyStepEls = Array.prototype.slice.call(document.querySelectorAll("#stEnemyPhases .st-step"));
+          function setEnemyStep(n) {
+            enemyStepEls.forEach(function (el, i) {
+              el.classList.remove("done", "now");
+              if (n < 0) return;
+              if (i < n) el.classList.add("done");
+              else if (i === n) el.classList.add("now");
+            });
+          }
+          function enemyDelayPct() { return enemyDelayEl ? +enemyDelayEl.value : 100; }
+          function enemyRandPct() { return enemyRandEl ? +enemyRandEl.value : 20; }
+          function enemyBaseMs() { return ENEMY_REACT + ENEMY_ADS * enemyDelayPct() / 100; }
+          function computeEnemyMs() {
+            var base = enemyBaseMs();
+            var spread = base * enemyRandPct() / 100;
+            return Math.max(150, Math.round(base + (Math.random() * 2 - 1) * spread));
+          }
+          function clearEnemyTimers() {
+            if (enemyAdsTimer !== null) { clearTimeout(enemyAdsTimer); enemyAdsTimer = null; }
+            if (enemyFireTimer !== null) { clearTimeout(enemyFireTimer); enemyFireTimer = null; }
+          }
+          function updateEnemyNote() {
+            var note = document.getElementById("stEnemyNote");
+            var delayVal = document.getElementById("stEnemyDelayVal");
+            var randVal = document.getElementById("stEnemyRandVal");
+            if (delayVal) delayVal.textContent = enemyDelayPct() + "%";
+            if (randVal) randVal.textContent = "±" + enemyRandPct() + "%";
+            if (note) {
+              var base = enemyBaseMs();
+              var spread = Math.round(base * enemyRandPct() / 100);
+              note.textContent = spread === 0
+                ? "Enemy fires " + base + " ms after stepping out."
+                : "Enemy fires " + (base - spread) + "–" + (base + spread) + " ms after stepping out.";
+            }
+          }
+          function enemyShoots() {
+            // His shot landed first: the rep is lost. Only ends a rep
+            // the player hasn't already finished by firing.
+            enemyFireTimer = null;
+            if (state === "done" || enemyFired) return;
+            enemyFired = true;
+            state = "done";
+            clearEnemyTimers();
+            setEnemyStep(3);
+            arena.classList.add("lost");
+            arena.classList.remove("sprinting");
+            arena.classList.remove("ads");
+            sprintPad.classList.remove("held");
+            animateGap(GAP_HIP, 200);
+            var reactMs = releaseAt ? Math.round(releaseAt - appearAt) : null;
+            var rep = { total: null, reactMs: reactMs, rmbDelay: rmbAt ? Math.round(rmbAt - t0) : null, fireDelay: null, waitNeeded: RECOVERY, enemyMs: enemyMs, perfect: false, score: 0, verdict: "ENEMY SHOT FIRST — YOU LOST", leakCat: "late" };
+            reps.push(rep);
+            setPhase(rep.verdict);
+            liveEl.textContent = "Enemy fired at " + enemyMs + " ms — you didn't fire in time. Rep lost.";
+            renderStats();
+            renderHistory();
+          }
           function setText(id, text) { document.getElementById(id).textContent = text; }
           function setPill(id, text, cls) {
             var el = document.getElementById(id);
@@ -1330,14 +1421,23 @@
             appeared = true;
             appearAt = performance.now();
             enemy.classList.add("show");
+            // His clock starts now: he ADS's after his 150 ms reaction
+            // and fires at enemyMs. Beat that time or lose the rep.
+            enemyMs = computeEnemyMs();
+            enemyAdsTimer = setTimeout(function () { enemyAdsTimer = null; setEnemyStep(2); }, ENEMY_REACT);
+            enemyFireTimer = setTimeout(enemyShoots, enemyMs);
             setPhase("ENEMY OUT — RELEASE SHIFT");
             setStep(1);
-            liveEl.textContent = "Enemy stepped out — release Shift now, then ADS + fire.";
+            setEnemyStep(1);
+            liveEl.textContent = "Enemy stepped out — he fires in ~" + enemyMs + " ms. Release now, then ADS + fire.";
           }
           function startSprint() {
             if (state === "sprinting") return;
+            if (state === "exited" || state === "ads") return; // mid-rep: starting again must not restart the duel
             clearAppearTimer();
-            appeared = false; appearAt = 0; releaseAt = 0;
+            clearEnemyTimers();
+            appeared = false; appearAt = 0; releaseAt = 0; enemyMs = 0; enemyFired = false;
+            arena.classList.remove("lost");
             pickCoverSide();
             state = "sprinting";
             arena.classList.add("sprinting");
@@ -1349,6 +1449,7 @@
             appearTimer = setTimeout(showEnemy, Math.round(1000 + Math.random() * 2000));
             setPhase("SPRINTING — WAIT FOR THE ENEMY");
             setStep(0);
+            setEnemyStep(0);
             liveEl.textContent = "Sprinting… the enemy steps out at a random moment (1–3 s). Wait for him.";
             sprintPad.classList.add("held");
           }
@@ -1393,7 +1494,7 @@
           function pressRmb() {
             if (state === "sprinting") exitSprint(); // RMB cancels the sprint
             if (state !== "exited") {
-              if (state === "idle") setPhase("SPRINT FIRST — HOLD SHIFT");
+              if (state === "idle") setPhase("SPRINT FIRST — HOLD W + SHIFT");
               return;
             }
             state = "ads";
@@ -1450,7 +1551,7 @@
           }
           function pressLmb() {
             if (state !== "exited" && state !== "ads") {
-              if (state === "idle") setPhase("SPRINT FIRST — HOLD SHIFT");
+              if (state === "idle") setPhase("SPRINT FIRST — HOLD W + SHIFT");
               return;
             }
             var fireAt = performance.now();
@@ -1462,7 +1563,7 @@
             var rmbDelay = rmbAt ? Math.round(rmbAt - t0) : null;
             var fireDelay = rmbDelay === null ? null : Math.round(fireAt - rmbAt);
             var waitNeeded = rmbDelay === null ? RECOVERY : Math.max(RECOVERY, rmbDelay + SCOPE_IN);
-            var rep = { total: total, reactMs: reactMs, rmbDelay: rmbDelay, fireDelay: fireDelay, waitNeeded: waitNeeded, perfect: false, score: 0, verdict: "", leakCat: "" };
+            var rep = { total: total, reactMs: reactMs, rmbDelay: rmbDelay, fireDelay: fireDelay, waitNeeded: waitNeeded, enemyMs: enemyMs, accurate: false, perfect: false, score: 0, verdict: "", leakCat: "" };
             if (rmbDelay === null) {
               rep.verdict = "NO ADS — FIRED FROM THE HIP";
               rep.score = 0;
@@ -1476,6 +1577,9 @@
               rep.score = 45;
               rep.leakCat = "early";
             } else {
+              // Accurate shot — and it landed before the enemy's, or
+              // the enemy's timer would already have ended the rep.
+              rep.accurate = true;
               var late = exitTotal - waitNeeded;
               // Reaction penalty is on enemy-appearance -> Shift release.
               var reactPen = reactMs <= 250 ? 0 : Math.min(20, (reactMs - 250) / 25);
@@ -1489,6 +1593,7 @@
                 rep.leakCat = "late";
               }
             }
+            clearEnemyTimers();
             state = "done";
             arena.classList.remove("sprinting");
             arena.classList.remove("ads");
@@ -1525,8 +1630,10 @@
             var avgDelta = avg(fireDeltas);
             var perfectCount = 0;
             for (i = 0; i < n; i++) if (reps[i].perfect) perfectCount++;
+            // Best total counts accurate winning shots only — a
+            // too-early 101 ms "best" was never a win.
             var best = null;
-            for (i = 0; i < n; i++) if (reps[i].total !== null && (best === null || reps[i].total < best)) best = reps[i].total;
+            for (i = 0; i < n; i++) if (reps[i].accurate && reps[i].total !== null && (best === null || reps[i].total < best)) best = reps[i].total;
             var reactTier = avgReact === null ? "—" : reactionTier(Math.round(avgReact));
             var clean = cleanWord(Math.round(avgScore));
             var letter = letterGrade(Math.round(avgScore));
@@ -1566,10 +1673,13 @@
             var html = "", i, r, start = Math.max(0, reps.length - 10);
             for (i = reps.length - 1; i >= start; i--) {
               r = reps[i];
-              if (r.total === null) {
+              var enemyBit = r.enemyMs ? " · enemy " + r.enemyMs + " ms" : "";
+              if (r.total === null && r.verdict.indexOf("ENEMY SHOT FIRST") === 0) {
+                html += "<li>Rep " + (i + 1) + " · enemy fired at " + r.enemyMs + " ms · " + (r.reactMs === null ? "never reacted" : r.reactMs + " ms enemy→release") + " · " + r.verdict + " (" + letterGrade(r.score) + ")</li>";
+              } else if (r.total === null) {
                 html += "<li>Rep " + (i + 1) + " · released too soon · " + r.verdict + " (" + letterGrade(r.score) + ")</li>";
               } else {
-                html += "<li>Rep " + (i + 1) + " · " + r.total + " ms total · " + r.reactMs + " ms enemy→release · " + (r.rmbDelay === null ? "no RMB" : r.rmbDelay + " ms exit→RMB") + " · " + (r.fireDelay === null ? "no ADS" : r.fireDelay + " ms RMB→LMB") + " · " + r.verdict + " (" + letterGrade(r.score) + ")</li>";
+                html += "<li>Rep " + (i + 1) + " · " + r.total + " ms total · " + r.reactMs + " ms enemy→release · " + (r.rmbDelay === null ? "no RMB" : r.rmbDelay + " ms exit→RMB") + " · " + (r.fireDelay === null ? "no ADS" : r.fireDelay + " ms RMB→LMB") + enemyBit + " · " + r.verdict + " (" + letterGrade(r.score) + ")</li>";
               }
             }
             historyEl.innerHTML = html;
@@ -1594,23 +1704,32 @@
           sprintPad.addEventListener("contextmenu", function (e) { e.preventDefault(); });
           adsPad.addEventListener("contextmenu", function (e) { e.preventDefault(); });
           firePad.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+          // Sprint is W + Shift, like in-game: W runs, Shift sprints.
+          // Either key released stops the sprint. Both orders work.
+          var wDown = false, shiftDown = false;
+          function maybeStartSprint() { if (wDown && shiftDown) startSprint(); }
+          function isTextTarget(t) {
+            return t && (t.tagName === "SELECT" || t.tagName === "TEXTAREA" || (t.tagName === "INPUT" && t.type !== "range"));
+          }
           document.addEventListener("keydown", function (e) {
-            if (e.key !== "Shift" || e.repeat) return;
-            if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "SELECT" || e.target.tagName === "TEXTAREA")) return;
-            e.preventDefault();
-            startSprint();
+            if (e.repeat || isTextTarget(e.target)) return;
+            if (e.code === "KeyW") { wDown = true; maybeStartSprint(); }
+            else if (e.key === "Shift") { e.preventDefault(); shiftDown = true; maybeStartSprint(); }
           });
           document.addEventListener("keyup", function (e) {
-            if (e.key === "Shift") exitSprint();
+            if (e.code === "KeyW") { wDown = false; exitSprint(); }
+            else if (e.key === "Shift") { shiftDown = false; exitSprint(); }
           });
           document.getElementById("stReset").addEventListener("click", function () {
             reps = [];
             clearAppearTimer();
+            clearEnemyTimers();
             state = "idle"; // back to idle so no stale sprint can grade a rep after Reset
-            appeared = false; appearAt = 0; releaseAt = 0; rmbAt = 0;
+            appeared = false; appearAt = 0; releaseAt = 0; rmbAt = 0; enemyMs = 0; enemyFired = false;
             enemy.classList.remove("show");
             arena.classList.remove("sprinting");
             arena.classList.remove("ads");
+            arena.classList.remove("lost");
             sprintPad.classList.remove("held");
             verdictEl.textContent = "Run a rep to get your verdict — reaction tier, execution grade and your biggest leak.";
             ["stAvgReact", "stAvgReactTier", "stClean", "stAvgRmb", "stAvgRmbLabel", "stAvgFire", "stAvgFireLabel", "stPerfectRate", "stBest"].forEach(function (id) { document.getElementById(id).textContent = "—"; });
@@ -1618,9 +1737,13 @@
             setText("stPerfectSub", "Share of reps graded PERFECT.");
             historyEl.innerHTML = "";
             liveEl.textContent = "Enemy → release — · RMB → LMB — · Total —";
-            setPhase("Hold Shift (or SPRINT) to sprint");
+            setPhase("Hold W + Shift (or SPRINT) to sprint");
             setStep(-1);
+            setEnemyStep(-1);
           });
+          if (enemyDelayEl) enemyDelayEl.addEventListener("input", updateEnemyNote);
+          if (enemyRandEl) enemyRandEl.addEventListener("input", updateEnemyNote);
+          updateEnemyNote();
           setGap(GAP_HIP);
         })();
 
