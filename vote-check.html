@@ -81,7 +81,7 @@
         <option value="it">🇮🇹 Italiano</option>
       </select>
       <h1 data-i18n="vc.h1">🔐 How to check a vote</h1>
-      <p class="st-sub" data-i18n="vc.sub">Anyone can check that oracle votes were recorded publicly and not changed later. No account, download or other app needed — tap a day below.</p>
+      <p class="st-sub" data-i18n="vc.sub">Anyone can check that oracle votes were recorded publicly and not changed later. No account, download or other app needed — tap a day to check its seal, or check your own vote in one tap.</p>
     </div>
 
     <section class="st-card" aria-labelledby="vcWhat">
@@ -109,13 +109,15 @@
       <ol class="st-list">
         <li data-i18n="vc.voter1">Sign in to the oracle and open "All my votes". It lists each vote with its alert, amount and result.</li>
         <li data-i18n="vc.voter2">Tap 🔐 Check this vote under any vote in "All my votes". It shows the vote's fingerprint and secret number and checks them against the day's seal, in your browser — nothing is sent anywhere.</li>
-        <li data-i18n="vc.voter3">The worked example below runs the same check in your browser, on sample votes.</li>
+        <li data-i18n="vc.voterSee">The panel shows the fingerprint when placed and when settled — each with a ✅ when it matches what was recorded — the secret number, and the verdict. When the day is sealed it reads "✅ Matches the sealed record for that day. · Bitcoin block N", with the block linked. When the day is not sealed yet, it says the fingerprint matches and to check back tomorrow for the block.</li>
+        <li data-i18n="vc.voterCopy">Tap "📋 Copy record" on the vote to get its record as JSON — paste it into the Advanced box further down, or send it to someone else to check.</li>
       </ol>
+      <p data-i18n="vc.voter3">The worked example below runs the same check in your browser, on sample votes.</p>
       <p class="st-dim" data-i18n="vc.voterNote">If you want someone else to check your vote, show them your details and salt only. Do not post the salt publicly.</p>
     </section>
 
     <section class="st-card" aria-labelledby="vcEx">
-      <h2 id="vcEx" data-i18n="vc.exH">Worked example</h2>
+      <h2 id="vcEx" data-i18n="vc.exH">Worked example — the same check, on sample votes</h2>
       <p data-i18n="vc.ex1">These are sample values, not real votes. The page computes each step in your browser, the same way the site does. Each example has its own salt.</p>
       <h3 class="vc-h3" data-i18n="vc.winH">Example A: a vote that won</h3>
       <table class="vc-tbl">
@@ -141,8 +143,8 @@
     </section>
 
     <section class="st-card" aria-labelledby="vcMine">
-      <h2 id="vcMine" data-i18n="vc.mineH">Check a vote record (stays in your browser)</h2>
-      <p data-i18n="vc.mine1">If you have your vote record as JSON — fingerprint, salt, path and seal — paste it here. The check runs in your browser; nothing is sent anywhere. The record is in this shape: {"kind":"placed","values":[...details in the order shown on the site...],"salt":"...","hash":"...","path":[...],"root":"..."}. The first fields come from your vote; path and root come from the public check for that hash. You can also tap "Copy record" on a vote in "All my votes" to get its record.</p>
+      <h2 id="vcMine" data-i18n="vc.mineH">Advanced: check a pasted vote record</h2>
+      <p data-i18n="vc.mine1">If someone shows you their vote record as JSON — or you copied one with "📋 Copy record" — paste it here. The check runs in your browser; nothing is sent anywhere. The record is in this shape: {"kind":"placed","values":[...details in the order shown on the site...],"salt":"...","hash":"...","path":[...],"root":"..."}. The first fields come from the vote; path and root come from the public check for that hash.</p>
       <textarea id="mineIn" class="vc-area" spellcheck="false" aria-label="Your vote record" data-i18n-aria-label="vc.mineAria"></textarea>
       <button id="mineBtn" class="vc-btn" type="button" data-i18n="vc.mineBtn">Check</button>
       <p id="mineOk" class="vc-verdict vc-ok vc-hide" data-i18n="vc.mineOk">✅ Matches: your vote is inside the sealed record, unchanged since sealing.</p>
