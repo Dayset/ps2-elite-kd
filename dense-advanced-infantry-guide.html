@@ -199,8 +199,8 @@
       .st-cover { position: absolute; bottom: 0; width: 84px; height: 210px; background: var(--ink-2); border: 1px solid var(--ink); z-index: 4; }
       .st-cover.left { left: 4%; }
       .st-cover.right { right: 4%; }
-      .st-enemy { position: absolute; bottom: 24%; left: var(--st-start, 12%); width: 64px; height: 110px; z-index: 3; transform: translateX(-50%); }
-      /* No left transition: the enemy JUMPS to centre instantly when he appears — a slow slide would telegraph the cue. Position is set directly in JS, so the jump works with reduced motion too. */
+      .st-enemy { position: absolute; bottom: 24%; left: var(--st-start, 12%); width: 64px; height: 110px; z-index: 3; transform: translateX(-50%); transition: left .55s ease; }
+      /* The enemy MOVES out from behind the cover to the centre — a visible walk, not a pop. The cue is the start of the move. */
       .st-enemy.show { left: 50%; }
       .st-enemy svg { display: block; width: 100%; height: auto; }
       .st-ring { position: absolute; left: 50%; top: 58%; width: 200px; height: 200px; margin: -100px 0 0 -100px; z-index: 5; pointer-events: none; color: var(--ink); opacity: .75; }
@@ -240,7 +240,17 @@
       }
       @media (prefers-reduced-motion: reduce) {
         .st-arena.sprinting .st-floor { animation: none; }
+        .st-enemy { transition: none; }
       }
+      /* ---- phase line: SPRINT → ENEMY OUT → RELEASE → ADS → FIRE ---- */
+      .st-phases { position: relative; display: flex; justify-content: space-between; margin: 12px 4px 0; padding-top: 16px; font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .04em; color: var(--ink-3); }
+      .st-phases::before { content: ""; position: absolute; left: 8%; right: 8%; top: 5px; border-top: 2px solid var(--line); }
+      .st-step { position: relative; text-align: center; flex: 1; }
+      .st-step::before { content: ""; position: absolute; left: 50%; top: -16px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: var(--surface); border: 2px solid var(--ink-3); }
+      .st-step.done { color: var(--good); }
+      .st-step.done::before { background: var(--good); border-color: var(--good); }
+      .st-step.now { color: var(--ink); font-weight: 700; }
+      .st-step.now::before { background: var(--bg); border-color: var(--accent); box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent); }
 
       /* ---------- class blocks ---------- */
       .classblock { border-top: 2px solid var(--ink); padding-top: 14px; margin-top: 26px; }
@@ -652,7 +662,7 @@
                 <span class="hint">React to the enemy — release Shift, ADS, fire</span>
               </div>
               <div class="calc-body">
-                <p>Hold <strong>Shift</strong> (or hold <strong>SPRINT</strong> below) to sprint. At a random moment, 1–3 s in, the enemy <strong>jumps out from behind the cover to the centre</strong> — that jump is your cue. Release <strong>Shift</strong> to stop, press <strong>RMB</strong> to ADS, <strong>LMB</strong> to fire. Sprint recovery is 300 ms and scope-in is 150 ms, so the earliest accurate shot is 300 ms after you stop — <em>if</em> you ADS at once. Release before the enemy appears and the rep is wasted. Fire earlier than the recovery or the scope-in and the shot goes out of a bloomed cone. Watch the cross: huge while sprinting, closing over the 300 ms recovery, tight once the scope is up.</p>
+                <p>Hold <strong>Shift</strong> (or hold <strong>SPRINT</strong> below) to sprint. At a random moment, 1–3 s in, the enemy <strong>steps out from behind the cover to the centre</strong> — that step-out is your cue. Release <strong>Shift</strong> to stop, press <strong>RMB</strong> to ADS, <strong>LMB</strong> to fire. Sprint recovery is 300 ms and scope-in is 150 ms, so the earliest accurate shot is 300 ms after you stop — <em>if</em> you ADS at once. Release before the enemy appears and the rep is wasted. Fire earlier than the recovery or the scope-in and the shot goes out of a bloomed cone. Watch the cross: huge while sprinting, closing as you recover and ADS — it lands tight exactly when the shot is good to go. Tight means shoot.</p>
                 <div class="st-arena" id="stArena">
                   <div class="st-wall"></div>
                   <div class="st-floor"></div>
@@ -669,6 +679,9 @@
                   <svg class="st-ring" id="stRing" viewBox="0 0 200 200" aria-hidden="true"><circle id="stRingCircle" cx="100" cy="100" r="60" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="4 4" /></svg>
                   <div class="st-cross" id="stCross" aria-hidden="true"><i class="t"></i><i class="b"></i><i class="l"></i><i class="r"></i><i class="dot"></i></div>
                   <div class="st-phase" id="stPhase">Hold Shift (or SPRINT) to sprint</div>
+                </div>
+                <div class="st-phases" id="stPhases" aria-label="Rep phases">
+                  <span class="st-step" data-step="0">SPRINT</span><span class="st-step" data-step="1">ENEMY OUT</span><span class="st-step" data-step="2">RELEASE</span><span class="st-step" data-step="3">ADS</span><span class="st-step" data-step="4">FIRE</span>
                 </div>
                 <div class="st-pads">
                   <button type="button" class="st-pad" id="stSprintPad">SPRINT<small>hold Shift</small></button>
@@ -688,7 +701,7 @@
                 <ol class="st-hist" id="stHistory"></ol>
                 <button type="button" class="st-reset" id="stReset">Reset history</button>
               </div>
-              <div class="foot"><p>The enemy jumps out 1–3 s into your sprint at random — he never appears on sprint exit, so you react to him instead of timing a fixed delay. Perfect fire is 300 ms after you stop sprinting, with 150 ms of scope-in after you ADS. One open question: this trainer grades on the <strong>overlap model</strong> — ADS starting during the 300 ms sprint recovery, so the earliest accurate shot is 300 ms from exit. That is not settled fact; a VR Training check is the deciding test for it. If ADS turns out to be blocked until recovery ends, perfect becomes 450 ms instead.</p><p>Reaction tiers: ELITE ≤250 ms · SHARP ≤350 · STEADY ≤500 · SLOW ≤800 · VERY SLOW 800+. Cleanliness: CLEAN 90+ · MOSTLY CLEAN 75+ · ROUGH 55+ · SLOPPY under 55.</p></div>
+              <div class="foot"><p>The enemy steps out 1–3 s into your sprint at random — he never appears on sprint exit, so you react to him instead of timing a fixed delay. The phase line under the arena shows where you are: SPRINT → ENEMY OUT → RELEASE → ADS → FIRE. Perfect fire is 300 ms after you stop sprinting, with 150 ms of scope-in after you ADS. The crosshair lands tight exactly at the earliest accurate shot — tight is the signal to shoot, never before. One open question: this trainer grades on the <strong>overlap model</strong> — ADS starting during the 300 ms sprint recovery, so the earliest accurate shot is 300 ms from exit. That is not settled fact; a VR Training check is the deciding test for it. If ADS turns out to be blocked until recovery ends, perfect becomes 450 ms instead.</p><p>Reaction tiers: ELITE ≤250 ms · SHARP ≤350 · STEADY ≤500 · SLOW ≤800 · VERY SLOW 800+. Cleanliness: CLEAN 90+ · MOSTLY CLEAN 75+ · ROUGH 55+ · SLOPPY under 55.</p></div>
             </div>
 
             <div class="note dated">
@@ -1223,10 +1236,12 @@
 
         /* ---- Sprint → ADS → fire trainer ----
            The ORIGINAL loop: you sprint, and at a RANDOM moment 1-3 s
-           in the enemy JUMPS out from behind the cover to the centre.
-           That jump is the cue — release Shift, ADS, fire. The enemy
-           NEVER appears on sprint exit; releasing before he appears
-           wastes the rep. Sprint recovery 300 ms, scope-in 150 ms.
+           in the enemy STEPS out from behind the cover and MOVES to
+           the centre — a visible walk, not a pop. That step-out is
+           the cue — release Shift, ADS, fire. The enemy NEVER appears
+           on sprint exit; releasing before he appears wastes the rep.
+           Sprint recovery 300 ms, scope-in 150 ms. The phase line
+           under the arena marks where you are in the rep.
            Perfect fire = 300 ms after exit (with RMB + 150 ms).
            Reaction is enemy-appearance -> Shift release. No MAX suit,
            no second model. */
@@ -1277,6 +1292,18 @@
             gapAnim = requestAnimationFrame(step);
           }
           function setPhase(text) { phaseEl.textContent = text; }
+          // Phase line under the arena: SPRINT → ENEMY OUT → RELEASE →
+          // ADS → FIRE. Steps behind the marker read done, the marker
+          // itself is the "now" step; a perfect rep turns FIRE done.
+          var stepEls = Array.prototype.slice.call(document.querySelectorAll("#stPhases .st-step"));
+          function setStep(n, perfect) {
+            stepEls.forEach(function (el, i) {
+              el.classList.remove("done", "now");
+              if (n < 0) return;
+              if (i < n) el.classList.add("done");
+              else if (i === n) el.classList.add(perfect ? "done" : "now");
+            });
+          }
           function setText(id, text) { document.getElementById(id).textContent = text; }
           function setPill(id, text, cls) {
             var el = document.getElementById(id);
@@ -1294,15 +1321,18 @@
             if (appearTimer !== null) { clearTimeout(appearTimer); appearTimer = null; }
           }
           function showEnemy() {
-            // The JUMP: final position set directly, no CSS transition
-            // involved, so it lands instantly — including with
-            // prefers-reduced-motion, where transitions are off anyway.
+            // The step-out: adding .show moves the enemy from behind
+            // the cover to the centre on the CSS transition — a visible
+            // move, not a pop. The cue is the START of the move, so
+            // appearAt is recorded here. With reduced motion the
+            // transition is off, so he is at centre at once.
             appearTimer = null;
             appeared = true;
             appearAt = performance.now();
             enemy.classList.add("show");
             setPhase("ENEMY OUT — RELEASE SHIFT");
-            liveEl.textContent = "Enemy jumped out — release Shift now, then ADS + fire.";
+            setStep(1);
+            liveEl.textContent = "Enemy stepped out — release Shift now, then ADS + fire.";
           }
           function startSprint() {
             if (state === "sprinting") return;
@@ -1318,7 +1348,8 @@
             // He never appears on sprint exit — that was the bug.
             appearTimer = setTimeout(showEnemy, Math.round(1000 + Math.random() * 2000));
             setPhase("SPRINTING — WAIT FOR THE ENEMY");
-            liveEl.textContent = "Sprinting… the enemy jumps out at a random moment (1–3 s). Wait for him.";
+            setStep(0);
+            liveEl.textContent = "Sprinting… the enemy steps out at a random moment (1–3 s). Wait for him.";
             sprintPad.classList.add("held");
           }
           function exitSprint() {
@@ -1336,7 +1367,14 @@
               var voidRep = { total: null, reactMs: null, rmbDelay: null, fireDelay: null, waitNeeded: RECOVERY, perfect: false, score: 0, verdict: "TOO SOON — ENEMY HADN'T APPEARED YET", leakCat: "early" };
               reps.push(voidRep);
               setPhase(voidRep.verdict);
-              liveEl.textContent = "Released before the enemy appeared — wait for the jump. Rep wasted, score 0.";
+              // Marker stops at RELEASE — the rep ended there. ENEMY OUT
+              // stays unmarked: he never appeared, so it was never reached.
+              stepEls.forEach(function (el, i) {
+                el.classList.remove("done", "now");
+                if (i === 0) el.classList.add("done");
+                else if (i === 2) el.classList.add("now");
+              });
+              liveEl.textContent = "Released before the enemy appeared — wait for the step-out. Rep wasted, score 0.";
               animateGap(GAP_HIP, 200);
               renderStats();
               renderHistory();
@@ -1345,6 +1383,7 @@
             releaseAt = performance.now();
             animateGap(GAP_RECOVERY_END, RECOVERY);
             setPhase("ADS NOW — FIRE AT 300 MS");
+            setStep(2);
             liveEl.textContent = "Released " + Math.round(releaseAt - appearAt) + " ms after the enemy appeared — ADS now, fire at 300 ms from exit.";
           }
           function updateLive() {
@@ -1360,8 +1399,19 @@
             state = "ads";
             rmbAt = performance.now();
             arena.classList.add("ads");
-            animateGap(GAP_ADS, SCOPE_IN);
+            // The circle must land tight EXACTLY at the earliest
+            // accurate shot — tight is the brain's signal to shoot.
+            // Closing it over the 150 ms scope-in alone made it tight
+            // 150 ms early (RMB at exit -> tight at 150, good shot
+            // only at 300), so the eye fired into the recovery.
+            // Animate over the time remaining until waitNeeded
+            // (300 ms after exit, or RMB + 150 ms, whichever is later).
+            var rmbDelayMs = rmbAt - t0;
+            var waitMs = Math.max(RECOVERY, Math.round(rmbDelayMs) + SCOPE_IN);
+            var remainMs = Math.max(SCOPE_IN, Math.round(waitMs - rmbDelayMs));
+            animateGap(GAP_ADS, remainMs);
             setPhase("SCOPE IN — FIRE AT 300 MS");
+            setStep(3);
             updateLive();
           }
           function reactionTier(ms) {
@@ -1445,6 +1495,7 @@
             sprintPad.classList.remove("held");
             animateGap(GAP_HIP, 200);
             setPhase(rep.verdict);
+            setStep(4, rep.perfect);
             liveEl.textContent = "Enemy → release " + reactMs + " ms · RMB → LMB " + (fireDelay === null ? "—" : fireDelay + " ms") + " · Total " + total + " ms — " + rep.verdict;
             reps.push(rep);
             renderStats();
@@ -1487,7 +1538,7 @@
             for (c in counts) if (counts[c] > topCount) { topCat = c; topCount = counts[c]; }
             var leakText = "No leak yet — every rep perfect.";
             if (topCat === "late") leakText = "Biggest leak: firing late — the perfect window closes at 300 ms from exit; ADS sooner and fire on the mark.";
-            else if (topCat === "early") leakText = "Biggest leak: firing early — wait for the enemy to jump out, then release and fire at 300 ms from exit (150 ms after RMB).";
+            else if (topCat === "early") leakText = "Biggest leak: firing early — wait for the enemy to step out, then release and fire at 300 ms from exit (150 ms after RMB).";
             else if (topCat === "no-ads") leakText = "Biggest leak: firing without ADS — press RMB before LMB.";
             verdictEl.innerHTML = "Reaction: <b>" + reactTier + "</b> — avg " + (avgReact === null ? "—" : Math.round(avgReact) + " ms") + ". Execution: <b>" + clean + " (" + letter + ")</b> — avg score " + Math.round(avgScore) + ", " + perfectCount + " of " + n + " reps perfect.<span class=\"leak\">" + leakText + "</span>";
             setText("stAvgReact", avgReact === null ? "—" : Math.round(avgReact) + " ms");
@@ -1568,6 +1619,7 @@
             historyEl.innerHTML = "";
             liveEl.textContent = "Enemy → release — · RMB → LMB — · Total —";
             setPhase("Hold Shift (or SPRINT) to sprint");
+            setStep(-1);
           });
           setGap(GAP_HIP);
         })();
