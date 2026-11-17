@@ -8,7 +8,7 @@ import { t as tr, currentLang } from "./i18n.mjs";
 // Column tip in the current language (tip.<id> in i18n/*.json, English otherwise).
 const tipOf = (c) => (c.id ? tr("tip." + c.id, c.tip || "") : c.tip || "") + (c.tipExtra ? " " + c.tipExtra : "");
 import { compareByCharName } from "./analyze-run.mjs?v=20261101-bg1";
-import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261115-symlog1";
+import { histogram, binIndexOf, percentileOf, shareAtOrAbove, stepDigits, binJumpTarget } from "./dist.mjs?v=20261117-sqrt1";
 import { MIN_FIGHTS_RULE, MIN_FIGHTS_TIP, THIN_METRICS, LEGACY_SAMPLE_MARK, LEGACY_SAMPLE_TIP } from "./player-metrics.mjs?v=20261027-z79";
 import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP, isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
 import { HUT_DIFF_NOTE, hutMarkOf } from "./hut.mjs?v=20261030-hs1";
@@ -1117,11 +1117,18 @@ export function initRankings(host) {
   // 16.7%, first bar the exact-0 point mass (11.6% of players whose 🧘 Pure
   // was ≤ 0). (An earlier symlog build spread the negatives over half the
   // chart; the owner dropped it the same day — dist.mjs keeps symlog support.)
-  const LOG1P_DIST = new Set(["act", "pvs", "rkd", "rf", "adjs", "combinedivi"]);
+  // ⚔️ iVi moved log1p → sqrt 2026-11-17 (owner: "move the graph to the
+  // left"): log1p's widening bins put the tallest bar at 664–1096 (slot
+  // 85%) while the density peaks near 150 — sqrt moves the peak to
+  // 196–256 (slot 35%) with 10 thin bars below 400. Measured on
+  // 2026-11-17 data/ranks.json (n=20,447): 22 sqrt bins, edges are
+  // perfect squares (0, 4, 16, …, 1936), max core bar 5.1%.
+  const LOG1P_DIST = new Set(["act", "pvs", "rkd", "rf", "combinedivi"]);
+  const SQRT_DIST = new Set(["adjs"]);
   function getHist(id) {
     if (!histCache.has(id)) {
       const vals = data.rows.map((r) => r[id]);
-      const scale = LOG1P_DIST.has(id) ? "log1p" : "linear";
+      const scale = SQRT_DIST.has(id) ? "sqrt" : LOG1P_DIST.has(id) ? "log1p" : "linear";
       histCache.set(id, histogram(vals, { floor: id === "adjs" || id === "pureivi" ? 0 : null, scale }));
     }
     return histCache.get(id);
@@ -1502,7 +1509,7 @@ export function initRankings(host) {
     }
     if (h.bins[0].kind === "under") xl.appendChild(svgEl("text", { x: slotX(0) + slotW / 2, y: M.t + PH + 26 * ui }, `<${fmtEdge(h.lo, h)}`));
     if (h.bins[nb - 1].kind === "over") xl.appendChild(svgEl("text", { x: slotX(nb - 1) + slotW / 2, y: M.t + PH + 26 * ui }, `>${fmtEdge(h.hi, h)}`));
-    xl.appendChild(svgEl("text", { x: M.l + PW / 2, y: H - 3, fill: th.text, "font-size": fs + 1 }, h.scale === "log1p" ? `${col.label} · ${tr("dist.nonLinear", "non-linear scale")}` : col.label));
+    xl.appendChild(svgEl("text", { x: M.l + PW / 2, y: H - 3, fill: th.text, "font-size": fs + 1 }, h.scale === "log1p" || h.scale === "sqrt" ? `${col.label} · ${tr("dist.nonLinear", "non-linear scale")}` : col.label));
     svg.appendChild(xl);
 
     // cumulative line (right axis)
@@ -1599,7 +1606,7 @@ export function initRankings(host) {
     const lead = String(c.label || "").split(" ")[0];
     let tip = String(tipOf(c) || "");
     if (lead && /\p{Extended_Pictographic}/u.test(lead) && tip.startsWith(lead + " ")) tip = tip.slice(lead.length + 1);
-    if (c.id && LOG1P_DIST.has(c.id)) tip += " " + tr("dist.nonLinearHint", "Non-linear scale: bins get wider to the right, so the bulk is visible.");
+    if (c.id && (LOG1P_DIST.has(c.id) || SQRT_DIST.has(c.id))) tip += " " + tr("dist.nonLinearHint", "Non-linear scale: bins get wider to the right, so the bulk is visible.");
     return tr("dist.hint", "{label}, all players: {tip}", { label: c.label, tip }).trim();
   }
   function showDistHint() {

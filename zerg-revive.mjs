@@ -32,7 +32,7 @@
  * columns "rvp" / "crp"; trait-scores.mjs zergScore() applies them.
  */
 import { t as tr } from "./i18n.mjs";
-import { percentileOf } from "./dist.mjs?v=20261010-sav1";
+import { percentileOf } from "./dist.mjs?v=20261117-sqrt1";
 
 export const CROWD_MIN_DEATHS = 50;
 export const CROWD_MIN_MIN = 120; // minutes of play in the XP detail (2 h)

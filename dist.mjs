@@ -78,6 +78,13 @@ export function niceStep(raw) {
  *    In log1p mode out.step is the nice step in log(1+x) units, and
  *    out.digits is the decimal places for edge labels (2 — the t-step
  *    alone would round small edges to 1 decimal and collapse them).
+ *  - opts.scale = "sqrt" (2026-11-17): the middle ground between linear
+ *    and log1p for ⚔️ iVi — its density peaks near 150, but log1p's
+ *    widening bins put the tallest count bar at ~900 (slot 85%) and leave
+ *    0–400 as a ramp of stubs. sqrt bins move the peak to ~200–300
+ *    (slot ~30%) with ~10 thin bars below 400, so the graph sits on the
+ *    left and the tail still fits. Same equal-steps-in-t-space machinery
+ *    as log1p; out.digits is 0 when the square edges are all integers.
  *  - opts.scale = "symlog" (2026-11-15): the signed twin of log1p for
  *    two-sided metrics (⚔️ iVi, 🧘 Pure) — bins are equal on a
  *    sign(x)·log(1+|x|) scale, so 0 stays 0 and the bins widen away from
@@ -116,8 +123,9 @@ export function histogram(values, opts = {}) {
   }
   const span = b - a;
   const iqr = quantile(s, 0.75) - quantile(s, 0.25);
-  // log1p only for non-negative data with a real spread in log space.
+  // log1p / sqrt only for non-negative data with a real spread in t-space.
   const useLog = scale === "log1p" && a >= 0 && (floor == null || floor >= 0) && Math.log1p(b) > Math.log1p(a);
+  const useSqrt = scale === "sqrt" && a >= 0 && (floor == null || floor >= 0) && Math.sqrt(b) > Math.sqrt(a);
   let edges;
   if (useSym) {
     // Same bin-count logic as log1p, carried out in signed-log space:
@@ -152,32 +160,35 @@ export function histogram(values, opts = {}) {
     out.digits = 2;
     out.lo = edges[0];
     out.hi = edges[edges.length - 1];
-  } else if (useLog) {
-    // Same bin-count logic as linear, carried out in log(1+x) space.
-    const ta = Math.log1p(a);
-    const tb = Math.log1p(b);
+  } else if (useLog || useSqrt) {
+    // Same bin-count logic as linear, carried out in t-space: log(1+x) for
+    // log1p, sqrt(x) for sqrt — narrow bins near 0, wider in the tail.
+    const t = useSqrt ? (x) => Math.sqrt(x) : (x) => Math.log1p(x);
+    const inv = useSqrt ? (y) => y * y : (y) => Math.expm1(y);
+    const ta = t(a);
+    const tb = t(b);
     const spanT = tb - ta;
-    const iqrT = Math.log1p(quantile(s, 0.75)) - Math.log1p(quantile(s, 0.25));
+    const iqrT = t(quantile(s, 0.75)) - t(quantile(s, 0.25));
     let rawT = spanT / targetBins;
     if (n < 200 && iqrT > 0) rawT = Math.max(rawT, (2 * iqrT) / Math.cbrt(n));
     rawT = Math.min(spanT / minBins, Math.max(spanT / maxBins, rawT));
     let stepT = niceStep(rawT);
     let loT = Math.floor(ta / stepT) * stepT;
-    if (floor != null) loT = Math.max(loT, Math.log1p(floor));
+    if (floor != null) loT = Math.max(loT, t(floor));
     let hiT = Math.ceil(tb / stepT) * stepT;
     if (hiT <= loT) hiT = loT + stepT;
     while ((hiT - loT) / stepT > maxBins) {
       stepT = niceStep(stepT * 1.01);
       loT = Math.floor(ta / stepT) * stepT;
-      if (floor != null) loT = Math.max(loT, Math.log1p(floor));
+      if (floor != null) loT = Math.max(loT, t(floor));
       hiT = Math.ceil(tb / stepT) * stepT;
     }
     const nbT = Math.max(1, Math.round((hiT - loT) / stepT));
     edges = [];
-    for (let i = 0; i <= nbT; i++) edges.push(+Math.expm1(loT + i * stepT).toPrecision(12));
+    for (let i = 0; i <= nbT; i++) edges.push(+inv(loT + i * stepT).toPrecision(12));
     out.step = stepT;
-    out.scale = "log1p";
-    out.digits = 2;
+    out.scale = useSqrt ? "sqrt" : "log1p";
+    out.digits = useSqrt ? (edges.some((e) => Math.abs(e - Math.round(e)) > 1e-9) ? 2 : 0) : 2;
     out.lo = edges[0];
     out.hi = edges[edges.length - 1];
   } else {

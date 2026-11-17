@@ -26,7 +26,7 @@
  * 🔀 vehicle damp (diff-vehicle.mjs, ranks.json "vdf") and 🛖 (hut.mjs, "hut")
  *   both scale a positive Diff; the stronger (lower) factor applies, never both.
  */
-import { percentileOf } from "./dist.mjs?v=20261010-sav1";
+import { percentileOf } from "./dist.mjs?v=20261117-sqrt1";
 import { reviveZerg } from "./zerg-revive.mjs?v=20261024-crowd1";
 
 const fin = (v) => typeof v === "number" && Number.isFinite(v);

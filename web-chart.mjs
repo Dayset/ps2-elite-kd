@@ -31,7 +31,7 @@
  *
  * DOM-free; chart.mjs owns the SVG, app.js owns the view cycle.
  */
-import { lowerBound, sortedFinite } from "./dist.mjs?v=20261010-sav1";
+import { lowerBound, sortedFinite } from "./dist.mjs?v=20261117-sqrt1";
 import { traitPools, zergScore } from "./trait-scores.mjs?v=20261027-z79";
 import { pureIvI } from "./pure-ivi.mjs?v=20261029-purevis1";
 import { gScores } from "./g-score.mjs?v=20261108-g2f1";

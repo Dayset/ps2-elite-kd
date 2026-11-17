@@ -4,7 +4,7 @@
  * English defaults here; translations under the same keys in i18n/*.json.
  */
 import { t as tr } from "./i18n.mjs";
-import { percentileOf } from "./dist.mjs?v=20261010-sav1";
+import { percentileOf } from "./dist.mjs?v=20261117-sqrt1";
 import { zrevConfirmedTip, zrevSoftTip, zrevPlainTip, zrevEstTip } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { vdiffFromTip } from "./diff-vehicle.mjs?v=20261023-short1";
 import { nbdFromTip } from "./newbie-diff.mjs?v=20261023-nbh1";

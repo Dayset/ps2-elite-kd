@@ -37,7 +37,7 @@ import {
 import { formatClock, fmtNum, slugKey, bareName, parseNames, namesEqualIgnoreCase, namesSetKey, niceLinTicks, niceNum, niceLogTicks, formatTick, escapeHtml, makeAbortError, isAbortError, checkAborted, readJsonLS, writeJsonLS } from "./app-util.mjs?v=20261027-z79";
 import { createAnalyze } from "./analyze.mjs?v=20261101-bg1";
 import { createShareAdd } from "./share-add.mjs?v=20261027-z79";
-import { createSharedIndex } from "./shared-index.mjs?v=20261115-srvrank1";
+import { createSharedIndex } from "./shared-index.mjs?v=20261117-sqrt1";
 import { createNamesField } from "./names-field.mjs?v=20261102-pending1";
 import { initFactionPanel } from "./faction-panel.mjs?v=20261031-fr4";
 import { initServerPanel } from "./server-panel.mjs?v=20261031-sr2";
@@ -56,7 +56,7 @@ import { t as tr, ready as i18nReady } from "./i18n.mjs";
 // Wait for the chosen language file (English loads nothing), so the first render is translated.
 await i18nReady;
 import { keepSortedColumnVisible } from "./sort-scroll.mjs?v=20261020-wide1";
-import { percentileOf } from "./dist.mjs?v=20261010-sav1";
+import { percentileOf } from "./dist.mjs?v=20261117-sqrt1";
 import { traitPools, aimGap, zergScore } from "./trait-scores.mjs?v=20261027-z79";
 import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, diffValueHtml, aimGapCellTip, zergCellTip } from "./trait-tips.mjs?v=20261024-crowd1";
 import { ZREV_NOTE } from "./zerg-revive.mjs?v=20261024-crowd1";

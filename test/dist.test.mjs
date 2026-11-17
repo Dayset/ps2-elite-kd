@@ -117,6 +117,50 @@ describe("dist helpers", () => {
     assert.equal(histogram([], { scale: "log1p" }).bins.length, 0);
   });
 
+  it("histogram sqrt: iVi-like data moves the peak left vs log1p, counts add up, stats unchanged (2026-11-17)", () => {
+    // ⚔️ iVi-like: a quarter negative, positives exponential (mean ~700,
+    // truncated at 1900) — density falls with value, so log1p's widening
+    // bins put the tallest bar on the right and sqrt puts it where the
+    // density actually peaks.
+    const vals = range(1000, (i) =>
+      i < 270 ? -1300 + (i / 270) * 1250
+        : Math.min(1900, -700 * Math.log(1 - ((i - 270) / 730) * 0.95)));
+    const lin = histogram(vals, { floor: 0 });
+    const log = histogram(vals, { floor: 0, scale: "log1p" });
+    const sq = histogram(vals, { floor: 0, scale: "sqrt" });
+    assert.equal(sq.scale, "sqrt");
+    assert.equal(sq.digits, 0, "square edges are integers, no decimals needed");
+    assert.equal(sq.step, niceStep(sq.step)); // nice step in sqrt units
+    assert.equal(sq.bins.reduce((a, b) => a + b.count, 0), 1000);
+    assert.equal(sq.bins.at(-1).cumPct, 100);
+    assert.equal(sq.median, lin.median);
+    assert.equal(sq.p90, lin.p90);
+    assert.equal(sq.p99, lin.p99);
+    const core = sq.bins.filter((b) => b.kind === "core");
+    assert.ok(core.length >= 12 && core.length <= 40, `sqrt core bins ${core.length}`);
+    for (let i = 1; i < core.length; i++) assert.ok(core[i].x0 >= core[i - 1].x1 - 1e-9, "sqrt edges increase");
+    assert.ok(core.every((b) => b.x1 > b.x0), "every sqrt bin has positive width");
+    assert.ok(core.every((b) => Number.isInteger(b.x0) && Number.isInteger(b.x1)), "sqrt edges are whole numbers");
+    const peakSlot = (h) => {
+      const c = h.bins.filter((b) => b.kind === "core");
+      const p = c.reduce((a, b) => (b.pct > a.pct ? b : a), c[0]);
+      return (h.bins.indexOf(p) + 0.5) / h.bins.length;
+    };
+    const sqPeak = core.reduce((a, b) => (b.pct > a.pct ? b : a), core[0]);
+    const logCore = log.bins.filter((b) => b.kind === "core");
+    const logPeak = logCore.reduce((a, b) => (b.pct > a.pct ? b : a), logCore[0]);
+    assert.ok(sqPeak.x1 <= 400, `sqrt peak ends at ${sqPeak.x1}, not in the tail`);
+    assert.ok(logPeak.x0 >= 400, `log1p peak starts at ${logPeak.x0}, on the right`);
+    assert.ok(peakSlot(sq) < 0.6 && peakSlot(log) > 0.7, `sqrt peak slot ${peakSlot(sq).toFixed(2)} vs log1p ${peakSlot(log).toFixed(2)}`);
+  });
+
+  it("histogram sqrt falls back to linear for negatives / constant data", () => {
+    const neg = histogram([-5, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30], { scale: "sqrt" });
+    assert.equal(neg.scale, "linear");
+    assert.equal(histogram([3, 3, 3], { scale: "sqrt" }).bins.reduce((a, b) => a + b.count, 0), 3);
+    assert.equal(histogram([], { scale: "sqrt" }).bins.length, 0);
+  });
+
   it("histogram symlog: two-sided data spreads both ways, counts add up, stats unchanged (2026-11-15)", () => {
     // ⚔️ iVi-like: a quarter negative with real spread, bulk positive —
     // uniform in signed-log space on each side, so the transform (not the
@@ -172,23 +216,39 @@ describe("dist helpers", () => {
     assert.equal(binIndexOf(h, NaN), -1);
   });
 
-  it("dist chart wiring: act / pvs / rkd / rf / adjs / combinedivi use log1p, the rest stay linear (2026-11-15)", () => {
+  it("dist chart wiring: act / pvs / rkd / rf / combinedivi use log1p, adjs uses sqrt, the rest stay linear (2026-11-17)", () => {
     const src = readFileSync(new URL("../rankings.mjs", import.meta.url), "utf8");
     const set = src.split("\n").find((l) => l.includes("LOG1P_DIST = new Set"));
     assert.ok(set, "LOG1P_DIST set present");
-    for (const id of ["act", "pvs", "rkd", "rf", "adjs", "combinedivi"]) assert.ok(set.includes(`"${id}"`), `log1p covers ${id}: ${set.trim()}`);
-    for (const id of ["cons", "apk", "inf", "pureivi", "luck", "zerg"]) assert.ok(!set.includes(`"${id}"`), `log1p must not cover ${id}`);
+    for (const id of ["act", "pvs", "rkd", "rf", "combinedivi"]) assert.ok(set.includes(`"${id}"`), `log1p covers ${id}: ${set.trim()}`);
+    for (const id of ["adjs", "cons", "apk", "inf", "pureivi", "luck", "zerg"]) assert.ok(!set.includes(`"${id}"`), `log1p must not cover ${id}`);
+    const sqrtSet = src.split("\n").find((l) => l.includes("SQRT_DIST = new Set"));
+    assert.ok(sqrtSet && sqrtSet.includes('"adjs"'), `SQRT_DIST covers adjs: ${sqrtSet && sqrtSet.trim()}`);
+    for (const id of ["act", "pvs", "rkd", "rf", "combinedivi", "pureivi"]) assert.ok(!sqrtSet.includes(`"${id}"`), `sqrt must not cover ${id}`);
     assert.ok(!src.includes("SYMLOG_DIST"), "no symlog wiring left (dropped 2026-11-15: negatives are one underflow bar)");
     assert.ok(!src.includes("dist.symlogHint"), "no symlog pill hint left");
-    const scaleLine = src.split("\n").find((l) => l.includes("const scale = LOG1P_DIST.has(id)"));
-    assert.ok(scaleLine && scaleLine.includes('LOG1P_DIST.has(id) ? "log1p" : "linear"'), `getHist picks log1p: ${scaleLine && scaleLine.trim()}`);
+    const scaleLine = src.split("\n").find((l) => l.includes("const scale = SQRT_DIST.has(id)"));
+    assert.ok(scaleLine && scaleLine.includes('SQRT_DIST.has(id) ? "sqrt" : LOG1P_DIST.has(id) ? "log1p" : "linear"'), `getHist picks sqrt/log1p: ${scaleLine && scaleLine.trim()}`);
     assert.ok(src.includes('dist.nonLinear'), "axis labels the non-linear scale");
-    assert.ok(src.includes('dist.mjs?v=20261115-symlog1'), "rankings loads the symlog dist build (cache-bust pin, 2026-11-15)");
+    assert.ok(src.includes('dist.mjs?v=20261117-sqrt1'), "rankings loads the sqrt dist build (cache-bust pin, 2026-11-17)");
     // 📊 y-scale cap (2026-11-15): the axis tops out at the tallest CORE bar,
     // tail bars (under/over) never set it — and a tail bar taller than the
     // axis clips at the plot top instead of poking out of the chart.
     assert.ok(src.includes('h.bins.filter((b) => b.kind === "core").map((b) => b.pct)'), "y-scale caps at the tallest core bar");
     assert.ok(src.includes("Math.max(M.t, yL(b.pct))"), "tail bars clip at the plot top");
+  });
+
+  it("binIndexOf places values in the right sqrt bin", () => {
+    const vals = range(1000, (i) => (i < 270 ? -1300 + (i / 270) * 1250 : ((i - 270) / 730) * 1900));
+    const h = histogram(vals, { floor: 0, scale: "sqrt" });
+    assert.equal(h.scale, "sqrt");
+    for (const v of [0, 50, 200, 1000, 1900]) {
+      const i = binIndexOf(h, v);
+      assert.ok(i >= 0, `v=${v}`);
+      const b = h.bins[i];
+      if (b.kind === "core") assert.ok(v >= b.x0 && v <= b.x1, `v=${v} in ${b.x0}–${b.x1}`);
+    }
+    assert.equal(binIndexOf(h, NaN), -1);
   });
 
   it("binIndexOf places values in the right log1p bin", () => {

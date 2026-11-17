@@ -26,7 +26,7 @@ import { liveLuck, liveLuckRaw, luckPush, luckFill, luckText, anchorGap, luckChi
 import { SESS_MIN_KILLS, SESS_ANCHOR_W, sessionReady, sessionKd, sessionInf, sessionApk, sessionInflation, sessionBrave, sessionZerg, sessionG, sessText, anchorValue } from "./live-session.mjs?v=20261108-anch1";
 import { DUEL_FIT_V1, duelFitKind, playerLuck } from "./duels.mjs?v=20261102-luck5";
 import { isPenalizedPadder, POOP_MARK, POOP_TIP } from "./padding.mjs?v=20261023-short1";
-import { percentileOf } from "./dist.mjs?v=20261010-sav1";
+import { percentileOf } from "./dist.mjs?v=20261117-sqrt1";
 import { traitPools, zergScore } from "./trait-scores.mjs?v=20261027-z79";
 import { zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { infMedian, tractorCuts, TRACTOR_EMOJI } from "./tractor.mjs?v=20261024-trac1";

@@ -29,7 +29,7 @@ import { THIN_MARK, THIN_NOTE_HEAD, playerMetrics, shownValue, THIN_METRICS, thi
 import { compareByCharName, columnRef, honuProfileUrl, pctFromRef, pctTitle, fmtPctFromRef } from "./analyze-run.mjs?v=20261101-bg1";
 import { dotSlot } from "./online-status.mjs?v=20261018-onl1";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
-import { percentileOf } from "./dist.mjs?v=20261010-sav1";
+import { percentileOf } from "./dist.mjs?v=20261117-sqrt1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261025-loc1";
 import { statMark, isPenalizedPadder, POOP_TIP, POOP_MARK, markNote } from "./padding.mjs?v=20261023-short1";
 import { autoMarksHtml } from "./auto-marks.mjs?v=20261030-hs1";
