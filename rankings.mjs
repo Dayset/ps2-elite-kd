@@ -1123,8 +1123,16 @@ export function initRankings(host) {
   // 196–256 (slot 35%) with 10 thin bars below 400. Measured on
   // 2026-11-17 data/ranks.json (n=20,447): 22 sqrt bins, edges are
   // perfect squares (0, 4, 16, …, 1936), max core bar 5.1%.
-  const LOG1P_DIST = new Set(["act", "pvs", "rkd", "rf", "combinedivi"]);
-  const SQRT_DIST = new Set(["adjs"]);
+  // 🧼 Pure joined sqrt the same day (owner: "same scaling"): log1p
+  // put its tallest bar at 402–664 (slot 78%) while the density peaks
+  // near 200 — sqrt moves the hump to 196–256 (6.8%, slot ~32%) with
+  // 10 thin bars below 400. Measured on 2026-11-17 data/ranks.json
+  // (n=12,876 with a Pure value): 23 sqrt bins, first bar the exact-0
+  // point mass (11.7% of players whose 🧘 Pure was ≤ 0); no negatives,
+  // so no underflow bar. 🧘‍♂️ Pure iVi stays linear — its peak already
+  // sits at 100–200 (slot 11%).
+  const LOG1P_DIST = new Set(["act", "pvs", "rkd", "rf"]);
+  const SQRT_DIST = new Set(["adjs", "combinedivi"]);
   function getHist(id) {
     if (!histCache.has(id)) {
       const vals = data.rows.map((r) => r[id]);

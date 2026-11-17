@@ -216,15 +216,15 @@ describe("dist helpers", () => {
     assert.equal(binIndexOf(h, NaN), -1);
   });
 
-  it("dist chart wiring: act / pvs / rkd / rf / combinedivi use log1p, adjs uses sqrt, the rest stay linear (2026-11-17)", () => {
+  it("dist chart wiring: act / pvs / rkd / rf use log1p, adjs / combinedivi use sqrt, the rest stay linear (2026-11-17)", () => {
     const src = readFileSync(new URL("../rankings.mjs", import.meta.url), "utf8");
     const set = src.split("\n").find((l) => l.includes("LOG1P_DIST = new Set"));
     assert.ok(set, "LOG1P_DIST set present");
-    for (const id of ["act", "pvs", "rkd", "rf", "combinedivi"]) assert.ok(set.includes(`"${id}"`), `log1p covers ${id}: ${set.trim()}`);
-    for (const id of ["adjs", "cons", "apk", "inf", "pureivi", "luck", "zerg"]) assert.ok(!set.includes(`"${id}"`), `log1p must not cover ${id}`);
+    for (const id of ["act", "pvs", "rkd", "rf"]) assert.ok(set.includes(`"${id}"`), `log1p covers ${id}: ${set.trim()}`);
+    for (const id of ["adjs", "combinedivi", "cons", "apk", "inf", "pureivi", "luck", "zerg"]) assert.ok(!set.includes(`"${id}"`), `log1p must not cover ${id}`);
     const sqrtSet = src.split("\n").find((l) => l.includes("SQRT_DIST = new Set"));
-    assert.ok(sqrtSet && sqrtSet.includes('"adjs"'), `SQRT_DIST covers adjs: ${sqrtSet && sqrtSet.trim()}`);
-    for (const id of ["act", "pvs", "rkd", "rf", "combinedivi", "pureivi"]) assert.ok(!sqrtSet.includes(`"${id}"`), `sqrt must not cover ${id}`);
+    assert.ok(sqrtSet && sqrtSet.includes('"adjs"') && sqrtSet.includes('"combinedivi"'), `SQRT_DIST covers adjs + combinedivi: ${sqrtSet && sqrtSet.trim()}`);
+    for (const id of ["act", "pvs", "rkd", "rf", "pureivi"]) assert.ok(!sqrtSet.includes(`"${id}"`), `sqrt must not cover ${id}`);
     assert.ok(!src.includes("SYMLOG_DIST"), "no symlog wiring left (dropped 2026-11-15: negatives are one underflow bar)");
     assert.ok(!src.includes("dist.symlogHint"), "no symlog pill hint left");
     const scaleLine = src.split("\n").find((l) => l.includes("const scale = SQRT_DIST.has(id)"));
