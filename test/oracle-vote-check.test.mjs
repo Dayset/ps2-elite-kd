@@ -3,6 +3,7 @@
 // stored Merkle path to the day's seal — the same rule the Worker commits with.
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { verifyVoteCheck, voteCheckHtml, voteListHtml, placedVoteValues, settledVoteValues } from "../oracle/js/vote.js";
 import { commitHash, merkleRoot, merklePath, placedValues, settledValues } from "../oracle-worker/src/votelog.js";
 
@@ -98,4 +99,35 @@ test("voteListHtml: a sealed vote gets a Check button, an unsealed one does not"
   assert.match(h, /data-vcheck="v1"/);
   assert.doesNotMatch(h, /data-vcheck="v2"/);
   assert.match(h, /Fingerprint not ready yet/);
+});
+
+// Hide the "Check this vote" buttons (owner 2026-11-18): a checkbox above the
+// list, remembered on-device; it hides only the check buttons, never the
+// "Copy record" button, and the buttons stay in the markup (CSS hides them).
+test("voteListHtml: hide checkbox present, unchecked by default, buttons shown", () => {
+  const h = voteListHtml([sealed]);
+  assert.match(h, /<label class="vcheck-hide"><input type="checkbox" data-vcheck-hide> Hide vote-check buttons<\/label>/);
+  assert.match(h, /data-vcheck="v1"/);
+  assert.doesNotMatch(h, /hide-vcheck"/, "no hide class on the list");
+});
+
+test("voteListHtml: hide=true checks the box, hides the list, keeps the buttons in the markup", () => {
+  const h = voteListHtml([sealed], true);
+  assert.match(h, /<div class="vlist hide-vcheck">/);
+  assert.match(h, /<input type="checkbox" data-vcheck-hide checked>/);
+  assert.match(h, /data-vcheck="v1"/, "buttons stay in the DOM; the CSS rule hides them");
+});
+
+test("voteListHtml: no votes, no checkbox (nothing to hide)", () => {
+  const h = voteListHtml([]);
+  assert.match(h, /No votes yet/);
+  assert.doesNotMatch(h, /data-vcheck-hide/);
+});
+
+test("vote.js hides only the check buttons, and remembers the choice on-device", () => {
+  const src = readFileSync(new URL("../oracle/js/vote.js", import.meta.url), "utf8");
+  assert.ok(src.includes(".vlist.hide-vcheck button[data-vcheck] { display: none; }"), "CSS hides data-vcheck buttons only");
+  assert.ok(src.includes("ps2oracle_hide_vcheck"), "preference key");
+  assert.match(src, /addEventListener\("change", \(e\) => \{[\s\S]*?data-vcheck-hide[\s\S]*?classList\.toggle\("hide-vcheck"/, "change listener toggles the class without a re-render");
+  assert.doesNotMatch(src, /\.hide-vcheck button\[data-vcopy\]/, "the Copy record button is never hidden by the toggle");
 });

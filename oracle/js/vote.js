@@ -21,6 +21,10 @@ const FACS = ["VS", "NC", "TR"];
 const AMOUNTS = [25, 50, 100, 200];
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const token = () => { try { return localStorage.getItem("ps2oracle_token"); } catch { return null; } };
+/** Hide the per-vote "Check this vote" buttons (owner 2026-11-18): remembered on-device. */
+const HIDE_CHECK_KEY = "ps2oracle_hide_vcheck";
+const hideCheckStored = () => { try { return localStorage.getItem(HIDE_CHECK_KEY) === "1"; } catch { return false; } };
+const saveHideCheck = (v) => { try { localStorage.setItem(HIDE_CHECK_KEY, v ? "1" : "0"); } catch { /* private mode */ } };
 const pts = (x) => (Math.round(x * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 });
 
 /** Grayed placeholder between alerts so users see voting exists. */
@@ -178,7 +182,7 @@ function emitVotes() {
  * placed (local time) and how far into the alert, the alert, the faction, what was put in,
  * the oracle odds at that moment, what comes back if right, and the result (owner 2026-10-24).
  */
-export function voteListHtml(votes) {
+export function voteListHtml(votes, hide = hideCheckStored()) {
   const vs = votes || [];
   if (!vs.length) return `<div class="note">${tr("or.v.none", "No votes yet.")}</div>`;
   const when = (ts) => new Date(ts * 1000).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -187,7 +191,10 @@ export function voteListHtml(votes) {
     : v.status === "lost" ? `<span class="mvst lost">${STATUS.lost} · −${pts(v.amount)}</span>`
     : `<span class="mvst void">${STATUS.void}</span>`);
   // Two short lines per vote, no table (phones), plus a one-tap seal check per vote.
-  return `<div class="vlist">${vs.map((v) => `<div class="vrow ${esc(v.status)}">
+  // The toggle sits above the list (inside the <details>, never inside its
+  // <summary>, so ticking it can't collapse the section); it hides only the
+  // check buttons (data-vcheck), never the "Copy record" button (data-vcopy).
+  return `<div class="vlist${hide ? " hide-vcheck" : ""}"><label class="vcheck-hide"><input type="checkbox" data-vcheck-hide${hide ? " checked" : ""}> ${tr("or.v.hideCheck", "Hide vote-check buttons")}</label>${vs.map((v) => `<div class="vrow ${esc(v.status)}">
     <div><b>${esc(when(v.placed_ts))}</b> · ${esc(alertName(v.key))} <span class="note">${tr("or.v.into", "{p}% into the alert", { p: Math.round((v.progress || 0) * 100) })}</span></div>
     <div><span class="${esc(v.outcome)}">${esc(v.outcome)}</span> ${pts(v.amount)} <span class="note">${tr("or.v.at", "at {p}%", { p: esc(v.pct) })}</span> · ${res(v)}</div>
     <div>${v.commits && v.commits.placed ? `<button type="button" class="vcheck-btn" data-vcheck="${esc(v.id)}">${tr("or.v.checkBtn", "🔐 Check this vote")}</button><div class="vcheck">${checked.has(v.id) ? voteCheckHtml(v, checked.get(v.id)) : ""}</div>` : `<span class="note">${tr("or.v.noSeal", "🔐 Fingerprint not ready yet.")}</span>`}</div></div>`).join("")}</div>`;
@@ -347,6 +354,9 @@ const css = `
 .mvrow.won .mvst, .myvotescard b.won { color: var(--ok); } .mvrow.lost .mvst, .myvotescard b.lost { color: var(--err); } .mvrow.void .mvst { color: var(--dim); }
 .vcheck-btn { background: var(--panel2); border: 1px solid var(--border); border-radius: 0; color: var(--text); font: inherit; font-size: 13px; padding: 6px 10px; min-height: 36px; cursor: pointer; margin-top: 6px; }
 .vcheck-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.vcheck-hide { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; margin: 2px 0 6px; }
+.vcheck-hide input { accent-color: var(--accent); margin: 0; }
+.vlist.hide-vcheck button[data-vcheck] { display: none; }
 .vcheck { margin-top: 6px; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
 .vcheck code { font-family: ui-monospace, Consolas, monospace; font-size: 11px; word-break: break-all; }
 .vcheck .vc-ok { color: var(--ok); font-weight: 600; }
@@ -399,6 +409,15 @@ function mount() {
     rerender(wasOpen);
     checked.set(vote.id, await verifyVoteCheck(vote));
     rerender(wasOpen);
+  });
+  // Hide/show the per-vote seal-check buttons: instant, no re-render (which
+  // would collapse the <details>), remembered on-device for the next render.
+  if (slotEl) slotEl.addEventListener("change", (e) => {
+    const t = e.target.closest ? e.target.closest("[data-vcheck-hide]") : null;
+    if (!t) return;
+    saveHideCheck(t.checked);
+    const list = t.closest(".vlist");
+    if (list) list.classList.toggle("hide-vcheck", t.checked);
   });
   setInterval(refresh, 30000);
   // #82: switching from the PC to the phone (or back) shows what the other device did, right away.

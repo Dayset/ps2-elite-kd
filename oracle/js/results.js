@@ -4,7 +4,7 @@ import { get } from "./api.js?v=20261018-scrub2";
 import { poolLabel } from "./other.js?v=20261111-flat1";
 import { t as tr, currentLang } from "../../i18n.mjs";
 import { renderSkillFoot } from "./skill-foot.js?v=20261102-globfoot1";
-import { myVoteMark } from "./vote.js?v=20261115-votecheck2";
+import { myVoteMark } from "./vote.js?v=20261118-votehide1";
 
 // The signed-in player's votes, from vote.js ("oracle:votes" event): history rows mark them, signed-out sees nothing.
 let myVotes = null;
