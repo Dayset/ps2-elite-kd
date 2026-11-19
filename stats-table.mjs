@@ -27,12 +27,12 @@ import { gScores } from "./g-score.mjs?v=20261108-g2f1";
 import { combinedIvI } from "./combined-ivi.mjs?v=20261110-cmb1";
 import { THIN_MARK, THIN_NOTE_HEAD, playerMetrics, shownValue, THIN_METRICS, thinPlayerLine, isLegacySample, LEGACY_SAMPLE_TIP, LEGACY_SAMPLE_MARK } from "./player-metrics.mjs?v=20261027-z79";
 import { compareByCharName, columnRef, honuProfileUrl, pctFromRef, pctTitle, fmtPctFromRef } from "./analyze-run.mjs?v=20261101-bg1";
-import { dotSlot } from "./online-status.mjs?v=20261018-onl1";
+import { dotSlot } from "./online-status.mjs?v=20261118-grave1";
 import { vehicleCutTip } from "./vehicle-cut.mjs?v=20261022-wpc1";
 import { percentileOf } from "./dist.mjs?v=20261117-sqrt1";
 import { isTouchUi, showHeadTip } from "./head-tip.mjs?v=20261025-loc1";
 import { statMark, isPenalizedPadder, POOP_TIP, POOP_MARK, markNote } from "./padding.mjs?v=20261023-short1";
-import { autoMarksHtml } from "./auto-marks.mjs?v=20261030-hs1";
+import { autoMarksHtml } from "./auto-marks.mjs?v=20261118-grave1";
 import { tierOf, IVI_TIERS, BELOW_TIER } from "./tiers.mjs?v=20261108-neg2";
 import { hiddenList, isConfirmedCheater as isOorHit } from "./hidden.mjs?v=20261025-oor1";
 import { PADDING_MARK, PADDING_MARK_TIP, ADJUSTED_MARK, ADJUSTED_MARK_TIP } from "./padding.mjs?v=20261023-short1";
@@ -855,7 +855,10 @@ export function createStatsTable($) {
     const g = aimGap(traitP, zAdjs(row), row.ivi, $.hutOf(d), vdfOf(d), nbdOf(d, row.p));
     const z = zergScore(traitP, shownValue(row, "inflation"), apkBySlug && apkBySlug.get(slugKey(d)), rvpOf(d), crpOf(d));
     const ie = infBySlug && infBySlug.get(slugKey(d)); // owner t622u: 🚜 by the name from the build's rule (tractor.mjs)
-    return autoMarksHtml(g, z, row.p.times || null, Date.now(), nbhOf(d, row.p), ie ? { inf: ie.inf, trc: ie.trc, cuts: tracCuts } : null);
+    // 🪦 suppression (live-online): a fresh live lookup carries row.p.online
+    // (loader.mjs); cached/shared players have none, so their 🪦 is hidden
+    // later by online-status paint() once the batch fetch says online.
+    return autoMarksHtml(g, z, row.p.times || null, Date.now(), nbhOf(d, row.p), ie ? { inf: ie.inf, trc: ie.trc, cuts: tracCuts } : null, row.p.online === true);
   }
 
   /** 🛖 safe-spot player (hut.mjs HUT_TIP): positive 🔀 Diff damped; next to the name, never in the Diff cell (owner t504u). */

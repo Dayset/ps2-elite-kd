@@ -10,7 +10,7 @@ import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
 import { t as tr } from "./i18n.mjs";
 import { censusRequest, OPPONENT_TOP_N, fetchPlayerCensus } from "./census-fetch.mjs?v=20261010-sav1";
 import { kpmCurve } from "./math.mjs?v=20261114-ysc1";
-import { accountTimes } from "./flairs.mjs?v=20261010-sav1";
+import { accountTimes } from "./flairs.mjs?v=20261118-grave1";
 import { infantryKillsUrl, summarizeInfantryKills } from "./infantry.mjs?v=20261023-short1";
 import { removedList } from "./opt-out.mjs?v=20261023-proof1";
 
@@ -121,15 +121,18 @@ export function createLoader($) {
     return np;
   }
 
+  /** Census characters_online_status join (oracle-worker/src/auth.js lookupCharacter pattern): "0" = offline, anything else = online; missing = unknown (null). */
+  const onlineOf = (c) => (c && c.o && c.o.online_status !== undefined ? c.o.online_status !== "0" : null);
+
   async function resolveCensus(name, signal) {
     const raw = censusQueryName(name); // "[TAG] Name" → "Name"
     if (!raw) throw new NameLoadError(`Census: empty name ${JSON.stringify(name)}`, "not-found");
     if ($.IS_PS) return resolveCensusPs(raw, name, signal);
     let url;
     if (/^\d{16,}$/.test(raw)) {
-      url = `${$.CENSUS}character?character_id=${encodeURIComponent(raw)}&c:resolve=outfit,stat_history,world`;
+      url = `${$.CENSUS}character?character_id=${encodeURIComponent(raw)}&c:resolve=outfit,stat_history,world&c:join=characters_online_status^inject_at:o^show:online_status`;
     } else {
-      url = `${$.CENSUS}character?name.first_lower=${encodeURIComponent(raw.toLowerCase())}&c:resolve=outfit,stat_history,world`;
+      url = `${$.CENSUS}character?name.first_lower=${encodeURIComponent(raw.toLowerCase())}&c:resolve=outfit,stat_history,world&c:join=characters_online_status^inject_at:o^show:online_status`;
     }
     let data;
     try {
@@ -340,6 +343,10 @@ export function createLoader($) {
     });
     // 🌍 The character's own world (c:resolve=world, same call): browser-only rows get a server rank (srv-key.mjs).
     if (!$.IS_PS && /^\d+$/.test(String(c.world_id || ""))) np.world = +c.world_id;
+    // 🪦 suppression (live-online): the joined online_status travels with the
+    // live player only — normalizePlayer drops it on read, so a cached/shared
+    // copy never carries a stale online value.
+    np.online = onlineOf(c);
     np.fetchedAt = Date.now();
     // Graceful partial result: opponents Census couldn't return are left out.
     if (r.skipped || r.ownFailed) np.partialSkipped = r.skipped + (r.ownFailed ? 1 : 0);

@@ -246,6 +246,7 @@ export function createSharedIndex($) {
     get maxNames() { return $.nameLimit(); },
     loadRanks: () => loadRanksPayload(), // t376u: one shared ranks.json parse
     getNames: () => $.nameTokens.slice(),
+    refreshOnlineRoom: (roots) => $.refreshOnlineRoom(roots), // 🪦 suppression: rankings grave slots fetch online state through here
     toggleName(name, anchor, add) {
       const has = $.nameTokens.some((n) => $.namesMatch(n, name));
       if (add === has) return;
@@ -268,7 +269,7 @@ export function createSharedIndex($) {
 
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261117-sqrt2")
+    rankingsLoading = import("./rankings.mjs?v=20261118-grave1")
       .then((m) => {
         $.rankingsApi = m.initRankings(rankingsHost);
         return $.rankingsApi.ready;

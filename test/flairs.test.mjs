@@ -59,6 +59,20 @@ test("normalizePlayer keeps times; backfill only sets player.times", () => {
   assert.equal(withTimes(raw, null), raw);
 });
 
+test("🪦 suppressed while live-online (stale Census times, SuperMango 2026-11-18)", () => {
+  const grave = { created: 1398444038, last: 1398444230 };
+  assert.deepEqual(flairsFor(grave, NOW, undefined, { online: true }), []);
+  assert.equal(flairsHtml(grave, NOW, 1, { online: true }), "");
+  assert.deepEqual(flairsFor(grave, NOW, undefined, { online: false }).map((x) => x.id), ["inactive"]);
+  assert.deepEqual(flairsFor(grave, NOW, undefined, {}).map((x) => x.id), ["inactive"]);
+  assert.deepEqual(flairsFor(grave, NOW).map((x) => x.id), ["inactive"]); // unknown: old behaviour
+});
+
+test("online suppresses only 🪦: 👶 and 👴🏽 still show", () => {
+  assert.deepEqual(flairsFor({ created: s(NOW - 30 * DAY_MS), last: s(NOW) }, NOW, undefined, { online: true }).map((x) => x.id), ["new"]);
+  assert.deepEqual(flairsFor({ created: s(NOW - 10 * YEAR_MS), last: s(NOW - 10 * 86400000) }, NOW, undefined, { online: true }).map((x) => x.id), ["veteran"]);
+});
+
 test("👶 new account: created < 91 days ago", () => {
   const f = flairsFor({ created: s(Date.UTC(2026, 7, 20)), last: s(NOW) }, NOW);
   assert.deepEqual(f.map((x) => x.id), ["new"]);

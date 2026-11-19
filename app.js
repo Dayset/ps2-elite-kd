@@ -37,15 +37,15 @@ import {
 import { formatClock, fmtNum, slugKey, bareName, parseNames, namesEqualIgnoreCase, namesSetKey, niceLinTicks, niceNum, niceLogTicks, formatTick, escapeHtml, makeAbortError, isAbortError, checkAborted, readJsonLS, writeJsonLS } from "./app-util.mjs?v=20261027-z79";
 import { createAnalyze } from "./analyze.mjs?v=20261101-bg1";
 import { createShareAdd } from "./share-add.mjs?v=20261027-z79";
-import { createSharedIndex } from "./shared-index.mjs?v=20261117-sqrt2";
+import { createSharedIndex } from "./shared-index.mjs?v=20261118-grave1";
 import { createNamesField } from "./names-field.mjs?v=20261102-pending1";
 import { initFactionPanel } from "./faction-panel.mjs?v=20261031-fr4";
 import { initServerPanel } from "./server-panel.mjs?v=20261031-sr2";
 import { createOutfitRoster, canTakeName as canTakeNameRule, OUTFIT_MAX_NAMES } from "./outfit-tags.mjs?v=20261101-osrv1";
-import { createStatsTable } from "./stats-table.mjs?v=20261111-sore4";
+import { createStatsTable } from "./stats-table.mjs?v=20261118-grave1";
 import { createChartWave } from "./chart-wave.mjs?v=20261029-puregraph1";
 import { createChart } from "./chart.mjs?v=20261030-hs1";
-import { createLoader } from "./loader.mjs?v=20261101-osrv1";
+import { createLoader } from "./loader.mjs?v=20261118-grave1";
 import { createCacheChips } from "./cache-chips.mjs?v=20261027-z79";
 import { createLocalCache } from "./local-cache.mjs?v=20261027-z79";
 import { createProgress } from "./progress.mjs?v=20261101-bg1";
@@ -131,9 +131,9 @@ import { psIviBaseline, psKpmRatio } from "./ps-baseline.mjs?v=20261027-z79";
 import { removedList } from "./opt-out.mjs?v=20261023-proof1";
 import { createPairMatch, PAIR_MATCH_ENABLED } from "./pair-match.mjs?v=20261027-pmoff1"; // t710: 👯 play-pattern match of two names
 import { HUT_MARK, HUT_TIP, HUT_DIFF_NOTE, playMinutes } from "./hut.mjs?v=20261030-hs1";
-import { autoMarksHtml } from "./auto-marks.mjs?v=20261030-hs1";
+import { autoMarksHtml } from "./auto-marks.mjs?v=20261118-grave1";
 // Account flairs (🪦 inactive, 👴🏽 veteran) from Census character.times: chart name list only.
-import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261010-sav1";
+import { accountTimes, flairsHtml, flairsFor } from "./flairs.mjs?v=20261118-grave1";
 // Full-name popup for truncated .nm names (tap / long-press on touch); installs itself.
 import "./name-peek.mjs?v=20261025-loc1";
 import { sfx, recentGesture, mountSfxToggle } from "./sfx.mjs?v=20261026-sfx2";
@@ -143,7 +143,7 @@ import { COLORS as PALETTE_DARK, LIGHT_COLORS as PALETTE_LIGHT } from "./palette
 import { mountJumpButtons, sectionJumpState, glideTo, scrollBehavior } from "./jump-btns.mjs?v=20261020-i18n2";
 // Live data: Daybreak Census only (batched, paced); Honu just for a rare history fallback.
 import { CENSUS_SERVICE_ID } from "./config.mjs?v=20261010-sav1";
-import { dotSlot, refreshOnline } from "./online-status.mjs?v=20261018-onl1";
+import { dotSlot, refreshOnline } from "./online-status.mjs?v=20261118-grave1";
 // PC | PlayStation rooms (#55): ?room=ps reads data-ps/ and the PS Census namespaces only.
 import { pageRoom, dataPrefix, ROOMS, PS_SERVERS, censusNsBase, nsOfBase, parsePsKey, roomLsKey, withRoom } from "./rooms.mjs?v=20261022-ps1";
 import {
@@ -415,6 +415,7 @@ import {
       get namesMatch() { return namesMatch; },
       get nameTokens() { return nameTokens; },
       get rankingsApi() { return rankingsApi; }, set rankingsApi(v) { rankingsApi = v; },
+      get refreshOnlineRoom() { return refreshOnlineRoom; },
       get rankVals() { return rankVals; }, set rankVals(v) { rankVals = v; },
       get scheduleGraphSync() { return scheduleGraphSync; },
       get SHARED_INDEX_URL() { return SHARED_INDEX_URL; },

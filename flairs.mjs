@@ -83,12 +83,20 @@ export const FLAIR_RULES = Object.freeze([
   },
 ]);
 
-/** All flairs for a player's times: [{ id, emoji, tip }]. */
-export function flairsFor(times, now = Date.now(), rules = FLAIR_RULES) {
+/**
+ * All flairs for a player's times: [{ id, emoji, tip }].
+ * opts.online = true (live Census online_status / Honu online list) suppresses
+ * 🪦 only: Census `times` can freeze for years while the player is active
+ * (SuperMangoPumpkinPieQueen, 2026-11-18: online, last_login/last_save stuck
+ * at 2024-03-14), so a live-online player is never inactive, whatever the
+ * stored date says. Unknown (null / missing) keeps the old behaviour.
+ */
+export function flairsFor(times, now = Date.now(), rules = FLAIR_RULES, opts = {}) {
   const t = cleanTimes(times);
   if (!t) return [];
   const out = [];
   for (const r of rules) {
+    if (opts.online === true && r.id === "inactive") continue;
     const tip = r.test(t, now);
     if (tip) out.push({ id: r.id, emoji: r.emoji, tip });
   }
@@ -102,8 +110,8 @@ const esc = (s) =>
  * <span class="flair">…</span> for the top-priority flair only (limit = how
  * many to show; Infinity for all). "" when none.
  */
-export function flairsHtml(times, now = Date.now(), limit = 1) {
-  return flairsFor(times, now)
+export function flairsHtml(times, now = Date.now(), limit = 1, opts = {}) {
+  return flairsFor(times, now, FLAIR_RULES, opts)
     .slice(0, limit)
     .map((f) => `<span class="flair flair-${f.id}" title="${esc(f.tip)}" aria-label="${esc(f.tip)}">${f.emoji}</span>`)
     .join("");

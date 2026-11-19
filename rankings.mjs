@@ -46,7 +46,8 @@ import { AIMGAP_HINT, ZERG_HINT, AIMGAP_MISSING, ZERG_MISSING, fmtSigned, DIFF_T
 import { ZREV_NOTE, zergEstimate } from "./zerg-revive.mjs?v=20261024-crowd1";
 import { VDIFF_NOTE } from "./diff-vehicle.mjs?v=20261023-short1";
 import { NBD_NOTE } from "./newbie-diff.mjs?v=20261023-nbh1";
-import { autoMarksHtml, inactiveMark } from "./auto-marks.mjs?v=20261030-hs1";
+import { autoMarksHtml, inactiveMark } from "./auto-marks.mjs?v=20261118-grave1";
+import { graveSlot } from "./online-status.mjs?v=20261118-grave1";
 import { playerLuck, loadLuckData, luckPoints, luckCellHtml, luckLabel, luckText, LUCK_HINT_EN } from "./luck-col.mjs?v=20261102-luck5";
 
 /**
@@ -647,7 +648,30 @@ export function initRankings(host) {
   /** Row HTML for one player (plain strings: cheap for ~1000 rows). */
   /** 💩 after a confirmed padder's name (hover explains the −10% iVi penalty). */
   function poopHtml(r) {
-    return (r && r.poop ? `<span class="poop-mark" title="${esc(POOP_TIP)}" aria-label="${esc(POOP_TIP)}">${POOP_MARK}</span>` : "") + hutHtml(r) + autoMarksHtml(r._gap, r._zerg, r.last ? { created: r.created, last: r.last } : null, Date.now(), r.nbh, fin(r.inf) ? { inf: r.inf, trc: r.trc, cuts: tracCuts() } : null);
+    const marks = hutHtml(r) + autoMarksHtml(r._gap, r._zerg, r.last ? { created: r.created, last: r.last } : null, Date.now(), r.nbh, fin(r.inf) ? { inf: r.inf, trc: r.trc, cuts: tracCuts() } : null);
+    return (r && r.poop ? `<span class="poop-mark" title="${esc(POOP_TIP)}" aria-label="${esc(POOP_TIP)}">${POOP_MARK}</span>` : "") + marks + graveSlotFor(r, marks);
+  }
+  /**
+   * 🪦 suppression (live-online): a grave row whose cid this browser knows
+   * (cidOf: previously looked-up players, localStorage) gets a hidden online
+   * slot; online-status paint() hides the 🪦 span when Census says online.
+   * Rows without a known cid keep the mark (no id → no live check).
+   */
+  function graveSlotFor(r, marks) {
+    if (!marks || !marks.includes("auto-mark-inactive")) return "";
+    const cid = cidOf(r.name);
+    return cid ? graveSlot(cid) : "";
+  }
+  /**
+   * Fetch online state for any grave slots rendered so far (main-table chunks
+   * + position boxes); refreshOnline() itself is guarded (inflight + 60 s TTL),
+   * so repeat calls while scrolling are cheap no-ops.
+   */
+  function refreshGraveOnline() {
+    if (typeof host.refreshOnlineRoom !== "function") return;
+    const roots = [$("ranksTable"), $("rkPositions"), $("rkSrvPositions")].filter(Boolean);
+    if (!roots.some((root) => root.querySelector(".online-slot[data-cid]"))) return;
+    host.refreshOnlineRoom(roots);
   }
   /** 🛖 next to the name (owner t504u: auto changes are marked by the name, never inside numeric cells). */
   function hutHtml(r) {
@@ -725,6 +749,9 @@ export function initRankings(host) {
     }
     $("ranksBody").insertAdjacentHTML("beforeend", html);
     st.at = i;
+    // 🪦 suppression (live-online): a chunk that added grave slots fetches
+    // their online state now (later chunks re-check on their own).
+    if (html.includes("online-slot")) refreshGraveOnline();
   }
 
   /* ---------- ⚔️ iVi tiers (t371u) ----------
@@ -1082,6 +1109,8 @@ export function initRankings(host) {
       const srvNames = serversOfRoom(ROOM === "ps").map((k) => SERVER_LABEL[k]).join(" / ");
       sbox.innerHTML = (rows.length ? `<div class="rk-pos-wrap"><table class="rk-pos-table rk-srv-table" aria-label="${esc(tr("rk.srvAria", "Rank of the selected players on their own server ({servers})", { servers: srvNames }))}"><thead>${head}</thead><tbody>${tableRows(true)}</tbody></table></div>` : "") + miss;
     }
+    // 🪦 suppression (live-online): position-box rows can carry grave slots too.
+    refreshGraveOnline();
   }
 
   /* ---------- 📊 Distribution chart ---------- */

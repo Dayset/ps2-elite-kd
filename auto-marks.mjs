@@ -24,7 +24,7 @@ import { REV_CONFIRM, zrevConfirmedTip } from "./zerg-revive.mjs?v=20261024-crow
 import { nbdFromTip, nbdNewTip } from "./newbie-diff.mjs?v=20261023-nbh1";
 import { HUT_MARK_MIN } from "./hut.mjs?v=20261030-hs1";
 import { fmtSigned } from "./trait-tips.mjs?v=20261024-crowd1";
-import { flairsFor } from "./flairs.mjs?v=20261010-sav1";
+import { flairsFor, FLAIR_RULES } from "./flairs.mjs?v=20261118-grave1";
 import { t as tr, currentLang } from "./i18n.mjs";
 import { tractorMarked, tractorHint, TRACTOR_EMOJI } from "./tractor.mjs?v=20261024-trac1";
 
@@ -57,6 +57,9 @@ export function autoMarks(g, z, nbh = null) {
  * flairs.mjs rule unchanged): last activity (Census last_save / last_login)
  * more than 365 days ago. 👶 new / 👴🏽 veteran stay hidden.
  * times = { created, last } in UNIX seconds (flairs.mjs cleanTimes shape).
+ * online = true (live Census online_status / Honu online list) suppresses the
+ * mark: Census `times` can freeze while the player is active, so a live-online
+ * player is never inactive. Unknown (false) keeps the old behaviour.
  */
 export const INACTIVE_MARK = "🪦";
 function lastPlayed(sec) {
@@ -67,8 +70,8 @@ function lastPlayed(sec) {
     return `${d.getUTCMonth() + 1}/${d.getUTCFullYear()}`;
   }
 }
-export function inactiveMark(times, now = Date.now()) {
-  const f = flairsFor(times, now).find((x) => x.id === "inactive");
+export function inactiveMark(times, now = Date.now(), online = false) {
+  const f = flairsFor(times, now, FLAIR_RULES, { online }).find((x) => x.id === "inactive");
   if (!f) return null;
   return { id: "inactive", mark: INACTIVE_MARK, tip: tr("flair.inactive", "🪦 Inactive: no activity for over a year (last played {date})", { date: lastPlayed(+times.last) }) };
 }
@@ -91,10 +94,12 @@ const esc = (s) =>
  * Owner t592u/t593u/t622u: 🚜 = the build's vehicle mark (tractor.mjs rule: infantry < p25 + vehicle XP ≥ p75, or infantry < p2),
  * static, same look and hover as 🪦, just before it. trac = { inf, trc, cuts } (infantry %, build mark 1/0/null, ranks "tracCuts") or null. Same look as 🛖 (poop-mark class: name width rules already reserve room).
  * 🪦 wins over 🐣 (owner 2026-10-23): an inactive player shows no 🐣 mark (new-player or softened);
- * only the mark is dropped, the softened Diff itself is unchanged.
+ * only the mark is dropped, the softened Diff itself is unchanged. When online
+ * suppresses 🪦 (live-online player, stale times), 🐣 returns: the player is
+ * not inactive, so the win no longer applies.
  */
-export function autoMarksHtml(g, z, times = null, now = Date.now(), nbh = null, trac = null) {
-  const ina = times ? inactiveMark(times, now) : null;
+export function autoMarksHtml(g, z, times = null, now = Date.now(), nbh = null, trac = null, online = false) {
+  const ina = times ? inactiveMark(times, now, online) : null;
   const marks = autoMarks(g, z, nbh).filter((m) => !(ina && m.id === "nbd"));
   const tm = tractorMark(trac);
   return [...marks, ...(tm ? [tm] : []), ...(ina ? [ina] : [])]

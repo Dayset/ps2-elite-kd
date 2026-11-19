@@ -33,10 +33,40 @@ export function dotSlot(cid) {
   return `<span class="online-slot" data-cid="${String(cid).replace(/[^0-9]/g, "")}">${s ? dotHtml(s.online) : ""}</span>`;
 }
 
+/**
+ * Hidden trigger slot for a 🪦 row (rankings.mjs): the same
+ * `.online-slot[data-cid]` contract refreshOnline() collects, but display:none
+ * so no 🟢/🔴 dot ever appears in the Rankings table — paint() only uses it
+ * to hide the 🪦 span when Census says online.
+ */
+export function graveSlot(cid) {
+  if (!cid) return "";
+  return `<span class="online-slot" data-cid="${String(cid).replace(/[^0-9]/g, "")}" style="display:none"></span>`;
+}
+
+/**
+ * Hide/show the 🪦 spans in a slot's cell for its online state. Exported for
+ * tests (only closest / querySelectorAll / style are used, so fakes work).
+ * Only online === true hides: offline AND unknown leave the mark visible —
+ * fail-closed, a missing Census answer must never clear a mark.
+ */
+export function syncGraveMark(slotEl, online) {
+  if (!slotEl || typeof slotEl.closest !== "function") return;
+  const cell = slotEl.closest("th, td") || slotEl.closest("tr");
+  if (!cell || typeof cell.querySelectorAll !== "function") return;
+  for (const g of cell.querySelectorAll(".auto-mark-inactive")) {
+    if (g && g.style) g.style.display = online === true ? "none" : "";
+  }
+}
+
 function paint(root) {
   for (const el of root.querySelectorAll(".online-slot[data-cid]")) {
     const s = state.get(el.dataset.cid);
     el.innerHTML = s ? dotHtml(s.online) : "";
+    // 🪦 suppression (live-online): a grave span in this slot's cell hides
+    // while its player is online (stale Census `times` can mark a live
+    // player 🪦 — SuperMangoPumpkinPieQueen, 2026-11-18).
+    syncGraveMark(el, s ? s.online : undefined);
   }
 }
 

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { autoMarks, autoMarksHtml, AUTO_MARK_MIN } from "../auto-marks.mjs";
+import { autoMarks, autoMarksHtml, inactiveMark, AUTO_MARK_MIN } from "../auto-marks.mjs";
 import { HUT_MARK_MIN } from "../hut.mjs";
 import { appSource } from "./app-source.mjs";
 
@@ -93,4 +93,18 @@ test("🪦 wins over 🐣: inactive player shows no 🐣 (new or softened), soft
   assert.equal(st.graveHiddenCount, 1);
   assert.deepEqual(st.graveHidden.map((x) => [x.slug, x.kind]), [["p1", "new"]]);
   assert.equal(st.newCount, 6);
+});
+
+test("🪦 suppressed while live-online; 🐣 returns (SuperMango 2026-11-18)", () => {
+  const now = Date.UTC(2026, 9, 23), s = now / 1000, day = 86400;
+  const grave = { created: s - 3000 * day, last: s - 400 * day };
+  assert.equal(inactiveMark(grave, now, true), null);
+  assert.equal(inactiveMark(grave, now, false).mark, "🪦");
+  assert.equal(inactiveMark(grave, now).mark, "🪦"); // unknown: old behaviour
+  const soft = { by: "nbd", raw: -40, score: -5 };
+  const h = autoMarksHtml(soft, null, grave, now, 3, null, true);
+  assert.doesNotMatch(h, /🪦/);
+  assert.match(h, /auto-mark-nbd.*🐣/); // 🐣 returns once 🪦 is suppressed
+  assert.match(autoMarksHtml(soft, null, grave, now, 3, null, false), /🪦/);
+  assert.match(autoMarksHtml(soft, null, grave, now, 3), /🪦/); // no flag: old behaviour
 });
