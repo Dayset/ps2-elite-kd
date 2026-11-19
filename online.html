@@ -41,12 +41,17 @@
     #onlineTable th[data-sort]:hover { text-decoration: underline; }
     #onlineTable td { white-space: nowrap; }
     #onlineTable td .on-name { font-weight: 600; }
+    /* 13 columns never fit a fixed layout with no <colgroup> (2026-11-18):
+       fixed splits the wrapper evenly (~86px each at 1280px) and names
+       truncate with no scroll. Size columns to content at every width and
+       let .ranks-table-wrap scroll sideways; min-width keeps it full-width
+       when the content is narrower than the wrap. */
+    #onlineTable { table-layout: auto; width: max-content; min-width: 100%; }
     /* Phones (2026-11-15): 13 columns, same squish as Fresh/Archetypes.
        Keep Player, Faction, Server, ⚔️ iVi, K/D, 🧘 Pure; the rest is a
        sideways swipe. Hidden: Continent, BR, KPM, 🤝 Assists, 🪖 Infantry,
        🪳 Zerg, Session. */
     @media (max-width: 700px) {
-      #onlineTable { table-layout: auto; width: max-content; min-width: 100%; }
       #onlineTable th:nth-child(4), #onlineTable td:nth-child(4),
       #onlineTable th:nth-child(5), #onlineTable td:nth-child(5),
       #onlineTable th:nth-child(8), #onlineTable td:nth-child(8),

@@ -161,7 +161,7 @@ test("countBy groups players per server", () => {
   assert.equal(m.get("Ceres"), 1);
 });
 
-test("phones: 7 secondary columns hidden, kept columns sized to content", () => {
+test("phones: 7 secondary columns hidden; table sized to content at every width (PC scrolls)", () => {
   const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
   const html = readFileSync(join(ROOT, "online.html"), "utf8");
   const m = html.match(/@media \(max-width: 700px\) \{([\s\S]*?)\n    \}/);
@@ -169,5 +169,9 @@ test("phones: 7 secondary columns hidden, kept columns sized to content", () => 
   const css = m[1];
   for (const n of [4, 5, 8, 9, 10, 11, 13]) assert.ok(css.includes(`#onlineTable th:nth-child(${n})`), `column ${n} hidden on phones`);
   for (const n of [1, 2, 3, 6, 7, 12]) assert.ok(!css.includes(`#onlineTable th:nth-child(${n})`), `column ${n} kept on phones`);
-  assert.match(css, /#onlineTable \{ table-layout: auto; width: max-content; min-width: 100%; \}/);
+  // PC too (2026-11-18): the table rule is base-level, not phone-only — fixed
+  // layout with no <colgroup> splits 13 columns evenly (~86px at 1280px) and
+  // names truncate with no scroll. Kept columns size to content at every width.
+  assert.match(html, /#onlineTable \{ table-layout: auto; width: max-content; min-width: 100%; \}/);
+  assert.doesNotMatch(css, /#onlineTable \{ table-layout: auto;/); // not phone-only anymore
 });
