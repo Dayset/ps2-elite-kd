@@ -126,6 +126,14 @@ export function initRankings(host) {
     { id: "ivi", label: "IvI", digits: 0, tip: "Public Infantry vs Infantry score" },
   ];
   const ALL_COLS = [...VISIBLE, ...DEBUG, ...PUBLIC];
+  // No 🧼 Pure on PlayStation (owner 2026-11-20): the PS data carries no
+  // pureivi / combinedivi (pureivi is forced null for ROOM "ps", so the
+  // combined column is null too) — either column would read all "—". Hide
+  // both from the PS room's table, the distribution menu and the sort-append.
+  const PS_NO_COLS = new Set(["combinedivi", "pureivi"]);
+  const visibleCols = () => (ROOM === "ps" ? VISIBLE.filter((c) => !PS_NO_COLS.has(c.id)) : VISIBLE);
+  const debugCols = () => (ROOM === "ps" ? DEBUG.filter((c) => !PS_NO_COLS.has(c.id)) : DEBUG);
+  const psHidden = (id) => ROOM === "ps" && PS_NO_COLS.has(id);
   // Opponent-sample metrics are null in ranks.json below MIN_FIGHTS (player-metrics.mjs):
   // "—" with the reason on hover; they're left out of ranks, percentiles and histograms.
   for (const c of ALL_COLS) {
@@ -284,10 +292,11 @@ export function initRankings(host) {
   }
 
   function colList() {
-    const base = showDebug ? VISIBLE.concat(DEBUG) : VISIBLE.slice();
+    const base = showDebug ? visibleCols().concat(debugCols()) : visibleCols().slice();
     // Sorted by a metric the table doesn't show (a 📊 chart jump on a public /
     // debug metric, t308u): append it so the order and values are visible.
-    const extra = sortKey !== "name" && !base.some((c) => c.id === sortKey) && colById(sortKey);
+    // Never append a PS-hidden Pure column (no data there to show).
+    const extra = sortKey !== "name" && !base.some((c) => c.id === sortKey) && !psHidden(sortKey) && colById(sortKey);
     return extra ? base.concat(extra) : base;
   }
 
@@ -542,8 +551,13 @@ export function initRankings(host) {
     $("ranksCols").innerHTML = colEls.join("");
     // t483u: width the number columns take (pick + # + each col; fixed-layout
     // col widths already include cell padding) — styles.css lets the name
-    // column use the rest of the box.
-    const fixedCh = cols.reduce((s, c) => s + (COL_W[c.id] || 10), 0);
+    // column use the rest of the box. Only the standard (visible) set counts:
+    // debug / appended-extra columns are scrollable content (the wrap already
+    // scrolls sideways), so their ~99ch must not squeeze the name column to
+    // its 17ch floor the way it did with debug on (PS at 1326px: names cut
+    // to "TexasOuTla…", the debug columns off-screen right anyway).
+    const fitIds = new Set(visibleCols().map((c) => c.id));
+    const fixedCh = cols.filter((c) => fitIds.has(c.id)).reduce((s, c) => s + (COL_W[c.id] || 10), 0);
     $("ranksTable").style.setProperty("--rk-fixed", `calc(4.2rem + ${fixedCh}ch + 1px)`);
     const cells = [
       `<th class="rk-pick" scope="col" title="${tr("rk.pickMax", "Pick up to {n} to Compare", { n: maxNames() })}"></th>`,
@@ -1023,7 +1037,7 @@ export function initRankings(host) {
 
   function render() {
     if (!data) return;
-    if (sortKey !== "name" && !colById(sortKey)) {
+    if (sortKey !== "name" && (!colById(sortKey) || psHidden(sortKey))) {
       sortKey = "adjs";
       sortDir = "desc";
     }
@@ -1076,14 +1090,14 @@ export function initRankings(host) {
       return;
     }
     const light = document.documentElement.getAttribute("data-theme") === "light";
-    const head = `<tr><th scope="col" class="rk-pos-num">#</th><th scope="col" class="rk-pos-name">${tr("rk.player", "Player")}</th>` + VISIBLE.map((c) => `<th scope="col" data-col="${c.id}" title="${esc(tipOf(c) || c.label)}">${esc(c.label)}</th>`).join("") + `</tr>`;
+    const head = `<tr><th scope="col" class="rk-pos-num">#</th><th scope="col" class="rk-pos-name">${tr("rk.player", "Player")}</th>` + visibleCols().map((c) => `<th scope="col" data-col="${c.id}" title="${esc(tipOf(c) || c.label)}">${esc(c.label)}</th>`).join("") + `</tr>`;
     const basisOf = (c) => (c.luck ? tr("rk.basisLuck", "players with 20+ opponents") : c.apk || c.zerg ? tr("rk.basisApk", "players with 100+ session kills") : c.inf ? tr("rk.basisInf", "measured players (100+ kills)") : tr("rk.basisCached", "cached players"));
     // 🌍 t812u: srv = true → the same table, ranked only among the players of the row's own server.
     const tableRows = (srv) => rows.map((r) => {
       const i = colorOf.get(r.query);
       const sk = srv ? r.srvKey : null;
       const sname = sk ? SERVER_LABEL[sk] || sk : "";
-      const cells = VISIBLE.map((c) => {
+      const cells = visibleCols().map((c) => {
         const v = r[c.id];
         if ((c.apk || c.inf || c.zerg || c.aimgap || c.luck) && !fin(v)) return `<td>—</td>`; // t396u: APK ranks like the other columns
         if (!fin(v)) return r.thin && c.thinTip ? `<td class="thin-sample" title="${esc(MIN_FIGHTS_TIP)}">—</td>` : `<td>—</td>`;
@@ -1219,7 +1233,8 @@ export function initRankings(host) {
     const sel = $("distMetric");
     // t345u/t346u: only our own current metrics — no older / outdated stats
     // (DEBUG, incl. 🎈 Inflation) and no 📊 Public lifetime Census stats.
-    const groups = [["✨ Adjusted", VISIBLE]];
+    // visibleCols(): no 🧼 Pure on PlayStation (no data there).
+    const groups = [["✨ Adjusted", visibleCols()]];
     sel.innerHTML = groups
       .map(([g, cols]) => `<optgroup label="${esc(g)}">` + cols.map((c) => `<option value="${c.id}">${esc(c.label)}</option>`).join("") + `</optgroup>`)
       .join("");
@@ -1257,7 +1272,7 @@ export function initRankings(host) {
   }
 
   /** Metrics the 📊 chart menu offers (our own current stats only, t345u/t346u). */
-  const DIST_IDS = new Set(VISIBLE.map((c) => c.id));
+  const DIST_IDS = new Set(visibleCols().map((c) => c.id));
   function setDistMetric(id) {
     if (!DIST_IDS.has(id)) return; // older stat (debug column sort): chart keeps its metric
     // Only user actions land here (menu / column sort): hold the auto-cycle.

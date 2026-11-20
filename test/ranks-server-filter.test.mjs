@@ -33,7 +33,7 @@ describe("Rankings server switch (static wiring)", () => {
       assert.match(html, /<button type="button" class="rk-server-btn" data-server="osprey" aria-pressed="false"[^>]*><span class="srv-full">Osprey<\/span><span class="srv-short">O<\/span><\/button>/, `${page}: Osprey full + short`);
       assert.match(html, /<button type="button" class="rk-server-btn" data-server="wainwright" aria-pressed="false"[^>]*><span class="srv-full">Wainwright<\/span><span class="srv-short">W<\/span><\/button>/, `${page}: Wainwright full + short`);
       assert.ok(html.includes("styles.css?v=20261115-srv1"), `${page}: styles pin bumped`);
-      assert.ok(html.includes("app.js?v=20261115-srv1"), `${page}: app pin bumped`);
+      assert.ok(html.includes("app.js?v=20261120-pspure1"), `${page}: app pin bumped`);
     }
   });
 

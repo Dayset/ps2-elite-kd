@@ -64,8 +64,12 @@ test("freshEtaText: n × learned live time, default 7 s", () => {
 });
 
 test("Rankings chart menu: only our own current metrics; 🎈 Inflation is an older stat (t345u/t346u); 🔀 Diff is debug-only (owner 2026-10-28)", () => {
-  assert.match(ranks, /const groups = \[\["✨ Adjusted", VISIBLE\]\];/);
-  assert.match(ranks, /const DIST_IDS = new Set\(VISIBLE\.map/);
+  // visibleCols(): VISIBLE on PC, VISIBLE minus 🧼 Pure on PlayStation (no
+  // Pure data there — owner 2026-11-20).
+  assert.match(ranks, /const groups = \[\["✨ Adjusted", visibleCols\(\)\]\];/);
+  assert.match(ranks, /const DIST_IDS = new Set\(visibleCols\(\)\.map/);
+  assert.match(ranks, /const PS_NO_COLS = new Set\(\["combinedivi", "pureivi"\]\)/);
+  assert.match(ranks, /visibleCols = \(\) => \(ROOM === "ps" \? VISIBLE\.filter\(\(c\) => !PS_NO_COLS\.has\(c\.id\)\) : VISIBLE\)/);
   const vis = ranks.slice(ranks.indexOf("const VISIBLE = ["), ranks.indexOf("const DEBUG = ["));
   assert.doesNotMatch(vis, /id: "inflation"/);
   const dbg = ranks.slice(ranks.indexOf("const DEBUG = ["), ranks.indexOf("const PUBLIC = ["));
