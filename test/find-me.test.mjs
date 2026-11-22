@@ -25,7 +25,27 @@ test("👤 find-me button: markup, logic, 9-language hover, static", () => {
     const v = JSON.parse(read(`i18n/${l}.json`))["ranks.findMe"];
     assert.ok(v && v.startsWith("👤 ") && v.length <= 45 && !v.includes("\n"), `${l}: ${v}`);
   }
-  assert.match(read("shared-index.mjs"), /rankings\.mjs\?v=20261120-pspure1/);
+  assert.match(read("shared-index.mjs"), /rankings\.mjs\?v=20261122-findme1/);
+});
+
+test("Find player switches the view to include the picked player (owner 2026-11-22)", () => {
+  const rk = read("rankings.mjs");
+  // One shared helper, before locating: server → his server, clear
+  // non-matching search text, turn off whichever browse cut hides him.
+  assert.match(rk, /function ensurePlayerVisible\(q\) \{/);
+  assert.match(rk, /const target = row\.srvKey \|\| "all";/);
+  assert.match(rk, /if \(serverFilter !== "all" && serverFilter !== target\) \{/); // All stays All
+  assert.match(rk, /if \(hideZeroIvi && fin\(row\.adjs\) && row\.adjs <= 0\) \{/);
+  assert.match(rk, /if \(hideInactive && inactiveMark\(\{ last: row\.last \}\)\) \{/);
+  assert.match(rk, /if \(maxAgeMonths && fin\(row\.created\)/);
+  // Manual Find tap only — the automatic locate-on-sort path never flips the view.
+  assert.match(rk, /if \(manual\) ensurePlayerVisible\(q\);/);
+  // 👤 is NOT bundled (separate decision): its handler must not flip the view.
+  const h = rk.slice(rk.indexOf('$("ranksFindMe").addEventListener("click"'));
+  const fmBody = h.slice(0, h.indexOf("\n  });") + 6);
+  assert.doesNotMatch(fmBody, /ensurePlayerVisible/);
+  // Not a ranked player: nothing to switch to (helper returns false).
+  assert.match(rk, /if \(!row\) return false;/);
 });
 
 test("👤 fill does not focus the input (owner t645u: no phone keyboard)", () => {

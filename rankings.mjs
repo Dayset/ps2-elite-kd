@@ -1827,9 +1827,12 @@ export function initRankings(host) {
    * shown only while exactly ONE name is entered (same rule as 👤). A tap
    * scrolls the table box so that player's row sits in the middle, neighbours
    * above and below, and flashes it (the chart jump's rk-flash). Instant
-   * scroll, no focus (no keyboard). Not in the table (filtered out / not a
-   * ranked player): nothing happens. locateEl stays null, so locateOn() is
-   * false and the old auto paths (relocateSoon, after-sort) safely no-op.
+   * scroll, no focus (no keyboard). If the current view hides him — other
+   * server, stale search text, a browse cut — the tap first switches the
+   * view to include him (ensurePlayerVisible: server to his server, toggles
+   * off), then scrolls. Not a ranked player at all: nothing happens.
+   * locateEl stays null, so locateOn() is false and the old auto paths
+   * (relocateSoon, after-sort) safely no-op.
    */
   const locateEl = $("locateToggle");
   const findBtn = $("findPlayerBtn");
@@ -1853,11 +1856,83 @@ export function initRankings(host) {
     const w = $("locateWrap");
     return !!(locateEl && locateEl.checked && w && !w.hidden);
   }
+  /*
+   * Find player must find the picked player even when the current view
+   * hides him (owner 2026-11-22: server mismatch, hide-inactive, hide-zero,
+   * stale search text and the max-age cut all made the button quietly do
+   * nothing). Before locating, switch the view to include him — server to
+   * his server (his pick), clear non-matching search text, turn off
+   * whichever browse cut hides him — visibly in the controls, same as the
+   * server flip, so the change is undoable by hand. Returns false when he
+   * isn't a ranked player at all (nothing to switch to); the tap then
+   * does nothing, as before. Manual taps only — the automatic locate-on-sort
+   * path never flips the view on its own.
+   */
+  function ensurePlayerVisible(q) {
+    if (!data) return false;
+    const row = data.rows.find((r) => r.query === q)
+      || data.rows.find((r) => bare(r.name) === bare(q));
+    if (!row) return false;
+    let changed = false;
+    // Server: only when the current filter excludes him — a single server
+    // that isn't his (his server then, or All when he has none on file,
+    // 52 rows). From All he is already in view server-wise, so All stays.
+    const target = row.srvKey || "all";
+    if (serverFilter !== "all" && serverFilter !== target) {
+      serverFilter = target;
+      try { localStorage.setItem(LS_SERVER_FILTER, target); } catch {}
+      syncServerSwitch();
+      changed = true;
+    }
+    // Stale search text that doesn't match him: clear it. (A name search
+    // skips the browse cuts, so clearing it can re-expose them — the cuts
+    // below run after this, in the same pass.)
+    const search = $("ranksSearch");
+    if (search && bare(search.value) && !row._bare.includes(bare(search.value))) {
+      search.value = "";
+      filter = "";
+      tierManual.clear();
+      changed = true;
+    }
+    // Browse cuts (only when no search text is active — a search skips them).
+    if (!bare(filter)) {
+      if (hideZeroIvi && fin(row.adjs) && row.adjs <= 0) {
+        hideZeroIvi = false;
+        const t = $("hideZeroIviToggle");
+        if (t) t.checked = false;
+        try { localStorage.removeItem(LS_HIDE_ZERO_IVI); } catch {}
+        changed = true;
+      }
+      if (hideInactive && inactiveMark({ last: row.last })) {
+        hideInactive = false;
+        const t = $("hideInactiveToggle");
+        if (t) t.checked = false;
+        try { localStorage.removeItem(LS_HIDE_INACTIVE); } catch {}
+        changed = true;
+      }
+      if (maxAgeMonths && fin(row.created) && row.created > 0
+        && row.created < Date.now() / 1000 - maxAgeMonths * MONTH_S) {
+        maxAgeMonths = null;
+        try {
+          localStorage.removeItem(LS_MAX_AGE_MONTHS);
+          localStorage.removeItem(LS_MAX_AGE_YEARS);
+        } catch {}
+        for (const id of ["maxAgeInput", "maxAgeInput2"]) {
+          const inp = $(id);
+          if (inp && inp.max) inp.value = inp.max; // ceiling: cuts nobody
+        }
+        changed = true;
+      }
+    }
+    if (changed) render();
+    return true;
+  }
   function locatePlayer(manual = false) {
     if ((!manual && !locateOn()) || !renderState || picked.size !== 1) return;
     const sec = $("ranksTableSection");
     if (sec && !sec.open) return;
     const q = [...picked.keys()][0];
+    if (manual) ensurePlayerVisible(q);
     const k = renderState.list.findIndex((r) => r.query === q);
     if (k < 0) return; // filtered out / not in the table: quietly nothing
     openTiersFor(k, k + 1);

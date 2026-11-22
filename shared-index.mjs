@@ -269,7 +269,7 @@ export function createSharedIndex($) {
 
   function loadRankings() {
     if (rankingsLoading || typeof document === "undefined" || !document.getElementById("rankings")) return rankingsLoading;
-    rankingsLoading = import("./rankings.mjs?v=20261120-pspure1")
+    rankingsLoading = import("./rankings.mjs?v=20261122-findme1")
       .then((m) => {
         $.rankingsApi = m.initRankings(rankingsHost);
         return $.rankingsApi.ready;
