@@ -79,21 +79,38 @@ export function weaponEff(weapon, recoil, { range, fpsOn, fps, stance }) {
   };
 }
 
+/** Identity of a gun's numbers, to 1e-6 (float noise on equal cones must not split skins). */
+export function sameNumbers(cat, e) {
+  const q = (x) => (x == null ? "-" : Math.round(x * 1e6));
+  return `${cat}|${q(e.eff)}|${q(e.loss)}|${e.nFree}`;
+}
+
 /**
  * Tier rows for every class: { classes: [{ cat, rows }], total, omitted }.
  * `weapons` = the compare page's weapon records; classes are sorted by name,
  * rows by effective DPS descending (name breaks ties, so the order is
  * deterministic). Rows carry { id, name, fac, cat, eff, loss, nFree, tier }.
+ * Skins of one gun (AE, "Treasured", Apex …) have identical numbers: they
+ * collapse into one row, named by the shortest name, so they neither repeat
+ * nor dilute the tier bands.
  */
 export function computeTiers(weapons, recoil, opts) {
   const byCat = new Map();
+  const seen = new Map();
   let total = 0, omitted = 0;
   for (const w of weapons || []) {
     const e = weaponEff(w, recoil, opts);
     if (!e) { omitted++; continue; }
-    total++;
+    const key = sameNumbers(w.cat, e);
+    const prev = seen.get(key);
+    if (prev) {
+      if (w.name.length < prev.name.length) Object.assign(prev, { id: w.id, name: w.name, fac: w.fac });
+      continue;
+    }
     const row = { id: w.id, name: w.name, fac: w.fac, cat: w.cat, eff: e.eff, loss: e.loss, nFree: e.nFree, tier: null };
+    seen.set(key, row);
     (byCat.get(w.cat) || byCat.set(w.cat, []).get(w.cat)).push(row);
+    total++;
   }
   const classes = [...byCat.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([cat, rows]) => {
     rows.sort((a, b) => b.eff - a.eff || a.name.localeCompare(b.name));

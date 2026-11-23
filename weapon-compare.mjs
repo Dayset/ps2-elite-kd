@@ -23,7 +23,7 @@ import {
   FPS_LIMIT, fpsFireRateDrop, withFpsLimit, deepBands, minShots, hitDamage,
 } from "./weapons-model.mjs?v=20261112-pellet1";
 import { METRICS, GROUPS, GROUP_EN, NO_BLOOM, statValues, bestOf, rank, classBests, rowAllSame } from "./weapon-stats.mjs?v=20261112-pellet1";
-import { computeTiers, TIER_MIN_CLASS } from "./weapon-tiers.mjs?v=20261112-pellet1";
+import { computeTiers, TIER_MIN_CLASS } from "./weapon-tiers.mjs?v=20261122-skin1";
 import {
   simParams, compareBursts, burstAnalysis, deepTimings, sprayPattern, attEffects, SLOTS, slotOf, canon, TARGET, STANCES,
   stylesFor, loadoutEffects, loadoutProfile, loadoutRec, pelletConeOf,

@@ -4,7 +4,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { tierBand, TIER_BANDS, TIER_MIN_CLASS, weaponEff, computeTiers } from "../weapon-tiers.mjs";
+import { tierBand, TIER_BANDS, TIER_MIN_CLASS, weaponEff, computeTiers, sameNumbers } from "../weapon-tiers.mjs";
 import { deriveCurrent } from "../weapon-adad.mjs";
 import { toProfile } from "../replay/weapons.mjs";
 import { withCadence } from "../weapons-model.mjs";
@@ -67,9 +67,11 @@ test("the Naginata is the walk-cost poster child: D-tier hip, mid C-tier ADS (35
   const lmg = classes.find((c) => c.cat === "LMG");
   assert.ok(lmg.rows.length >= 20, `LMG rows: ${lmg.rows.length}`);
   const nag = lmg.rows.find((r) => r.name === "NSX Naginata");
-  const beet = lmg.rows.find((r) => r.name === "Betelgeuse 54-A");
+  // Betelgeuse 54-A is Orion VS54's skin: one row, under the shorter name
+  const beet = lmg.rows.find((r) => r.name === "Orion VS54");
   assert.equal(nag.tier, "D");
-  assert.equal(beet.tier, "S");
+  // skins fold into one row, so the S band (top 10%) is 2 of 27 unique LMGs
+  assert.equal(beet.tier, "A");
   assert.ok(Math.abs(Math.round(nag.eff) - 35) <= 1, `Naginata hip eff ${nag.eff}`);
   assert.ok(Math.abs(Math.round(beet.eff) - 67) <= 1, `Betelgeuse hip eff ${beet.eff}`);
   assert.ok(nag.loss > 0.5, `Naginata hip walk loss ${nag.loss}`);
@@ -84,46 +86,52 @@ test("the Naginata is the walk-cost poster child: D-tier hip, mid C-tier ADS (35
 test("shotguns rank on spread-adjusted DPS: the cone is inside the torso, the pellets are not", () => {
   const { classes } = computeTiers(weapons, recoil, { range: 35, fpsOn: true, fps: 60, stance: "hip" });
   const sg = classes.find((c) => c.cat === "Shotgun");
-  assert.equal(sg.rows.length, 29);
-  // the tightest spread wins now: the three Barons (2.5° spread) tie at 531 eff DPS
-  // and the pumps (3–3.5°) sit below them; name order breaks the tie, so the
-  // third Baron is A, not S — the band is by rank, not by value
-  assert.equal(sg.rows[0].name, "NS \"Lucky\" Baron G5");
+  assert.equal(sg.rows.length, 10);
+  // the tightest spread wins now: the Baron (2.5° spread) tops at 531 eff DPS;
+  // its "Lucky" skin folds into it, and the pumps (3–3.5°) sit below
+  assert.equal(sg.rows[0].name, "NS Baron G5");
   assert.equal(sg.rows[0].tier, "S");
   assert.ok(Math.abs(Math.round(sg.rows[0].eff) - 531) <= 1, `top shotgun eff ${sg.rows[0].eff}`);
-  const jack = sg.rows.find((r) => r.name === "TAS-16 Blackjack");
-  assert.equal(jack.tier, "B", "was A at 1987 eff DPS with all pellets landing");
-  assert.ok(Math.abs(Math.round(jack.eff) - 457) <= 1, `Blackjack eff ${jack.eff}`);
-  assert.ok(jack.loss < 0.001, `Blackjack walk loss ${jack.loss}`);
-  assert.equal(jack.nFree, 0);
+  // TAS-16 Blackjack has the same numbers as Deimos VA29: one row, named Deimos
+  assert.equal(sg.rows.find((r) => r.name === "TAS-16 Blackjack"), undefined);
   const deimos = sg.rows.find((r) => r.name === "Deimos VA29");
   assert.equal(deimos.tier, "B", "was S at 1987 eff DPS with all pellets landing");
+  assert.ok(deimos.loss < 0.001, `Deimos walk loss ${deimos.loss}`);
+  assert.equal(deimos.nFree, 0);
   assert.ok(Math.abs(Math.round(deimos.eff) - 457) <= 1, `Deimos eff ${deimos.eff}`);
 });
 
 test("tiny classes are ranked but untiered", () => {
   const { classes } = computeTiers(weapons, recoil, { range: 35, fpsOn: true, fps: 60, stance: "ads" });
-  // the full catalog (not just the 194 ADAD rows) puts 24 weapons in Heavy
-  // Weapon and 6 in Crossbow, so both tier now; only Hybrid Rifle (the two
-  // Kuwas) stays below the five-weapon line. ADS drops the launchers (no ADS
-  // fire mode), so Heavy Weapon is 13 there, 24 at the hip.
+  // skins fold into one gun, so the catalog's 24 hip-fire Heavy Weapons are
+  // 10 guns (a Jackhammer and its AE, a Thumper and its SE, …); the ADS pool
+  // drops the launchers, leaving 4. The 6 crossbows are one gun in six skins.
   const hip = computeTiers(weapons, recoil, { range: 35, fpsOn: true, fps: 60, stance: "hip" });
   const heavyHip = hip.classes.find((c) => c.cat === "Heavy Weapon");
-  assert.equal(heavyHip.rows.length, 24);
+  assert.equal(heavyHip.rows.length, 10);
   const heavy = classes.find((c) => c.cat === "Heavy Weapon");
-  assert.equal(heavy.rows.length, 13);
-  assert.ok(heavy.rows.some((r) => r.tier === "S"));
+  assert.equal(heavy.rows.length, 4);
+  assert.ok(heavy.rows.every((r) => r.tier === null), "4 guns is under the five-weapon line");
   const bow = classes.find((c) => c.cat === "Crossbow");
-  assert.equal(bow.rows.length, 6);
-  assert.equal(bow.rows[0].tier, "A"); // top of six is the top 16.7%
+  assert.equal(bow.rows.length, 1);
+  assert.equal(bow.rows[0].name, "Hunter QCX");
   const hybrid = classes.find((c) => c.cat === "Hybrid Rifle");
-  assert.ok(hybrid && hybrid.rows.length === 2);
+  assert.ok(hybrid && hybrid.rows.length === 1);
   assert.ok(hybrid.rows.every((r) => r.tier === null));
 });
 
+test("skins of one gun are one row: no two rows in a class share their numbers", () => {
+  for (const stance of ["hip", "ads"]) {
+    const { classes } = computeTiers(weapons, recoil, { range: 35, fpsOn: true, fps: 60, stance });
+    for (const c of classes) {
+      const keys = c.rows.map((r) => sameNumbers(c.cat, r));
+      assert.equal(new Set(keys).size, keys.length, `${stance} ${c.cat} has a repeated gun`);
+    }
+  }
+});
 test("rows are sorted by effective DPS inside each class, classes by name", () => {
   const { classes, total, omitted } = computeTiers(weapons, recoil, { range: 20, fpsOn: false, fps: 60, stance: "ads" });
-  assert.ok(total > 175, `pool ${total}`);
+  assert.ok(total > 160, `pool ${total}`);
   assert.ok(omitted >= 0);
   const names = classes.map((c) => c.cat);
   assert.deepEqual(names, [...names].sort((a, b) => a.localeCompare(b)));
