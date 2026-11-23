@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title data-i18n="wg.title">📖 Weapon guide</title>
+  <script>
+    try {
+      if (localStorage.getItem("ps2-elite-kd-theme") === "light") document.documentElement.setAttribute("data-theme", "light");
+      if (localStorage.getItem("ps2-elite-kd-bg-image") === "0") document.documentElement.classList.add("no-bg-image");
+    } catch (e) {}
+  </script>
+  <link rel="preload" href="assets/weapons/catalog.json" as="fetch" crossorigin />
+  <link rel="preload" href="assets/weapons/profiles.json" as="fetch" crossorigin />
+  <link rel="preload" href="assets/weapons/recoil.json" as="fetch" crossorigin />
+  <link rel="stylesheet" href="styles.css?v=20261115-srv1" />
+  <link rel="stylesheet" href="weapon-compare.css?v=20261122-guide1" />
+  <link rel="stylesheet" href="weapon-guide.css?v=20261122-guide1" />
+</head>
+<body class="site-page">
+  <header class="site-nav" aria-label="Site sections">
+    <nav style="display:contents" aria-label="Main">
+        <a class="sn-brand" href="index.html">⚔️ PS2 Elite</a>
+        <a href="index.html">📊 Players</a>
+        <a href="weapon-compare.html" class="sn-active">⚖️ Weapons</a>
+        <a href="oracle/">🔮 Oracle</a>
+        <a href="outfits.html">🛡️ Outfits</a>
+        <a href="columns.html" class="sn-hide-m">📖 Columns</a>
+        <a href="dense-advanced-infantry-guide.html">🎯 Guide</a>
+        <a href="archive.html">📚 Archive</a>
+        <a href="updates.html" class="sn-hide-m">📝 Updates</a>
+        <a href="privacy.html" class="sn-hide-m">🔒 Privacy</a>
+    </nav>
+  </header>
+  <main class="wc-wrap wg-wrap">
+    <header class="wc-panel wc-head wc-slim">
+      <a class="wc-back" href="weapon-compare.html" aria-label="Back to the weapon comparison" data-i18n-aria-label="wg.back">🔙</a>
+      <div class="wc-headtext"><h1 data-i18n="wg.title">📖 Weapon guide</h1></div>
+      <select id="langSelect" class="lang-select" title="Language" aria-label="Language" data-i18n-title="lang.label" data-i18n-aria-label="lang.label">
+        <option value="en" selected>🇬🇧 English</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="uk">🇺🇦 Українська</option>
+        <option value="it">🇮🇹 Italiano</option>
+      </select>
+    </header>
+
+    <section class="wc-panel" aria-label="Choose a weapon" data-i18n-aria-label="wg.pickAria">
+      <div class="wg-pick-row">
+        <label class="wc-field"><span data-i18n="wc.catLabel">Weapon type</span><select id="wgCat"></select></label>
+        <label class="wc-field wc-grow"><span data-i18n="wg.pick">Weapon</span>
+          <input id="wgSearch" type="text" list="wgList" autocomplete="off" spellcheck="false" placeholder="Type a weapon name…" data-i18n-placeholder="wc.search" />
+          <datalist id="wgList"></datalist></label>
+      </div>
+      <p id="wgStatus" class="wc-msg" role="status" aria-live="polite"></p>
+    </section>
+
+    <section id="wgWeapon" class="wg-weapon" hidden>
+      <div class="wc-panel wg-id" id="wgId"></div>
+      <div class="wc-panel"><div class="wc-panel-head"><h2 data-i18n="wg.h.rules">How to fight with it</h2></div><div id="wgRules" class="wg-rules"></div></div>
+      <div class="wg-two">
+        <div class="wc-panel"><div class="wc-panel-head"><h2 data-i18n="wg.h.ways">Ways to fire, best first</h2>
+          <span class="wc-dim" data-i18n="wg.waysNote">Metres at which every shot still lands on the body: first shot, perfect aim.</span></div><div id="wgWays"></div></div>
+        <div class="wc-panel"><div class="wc-panel-head"><h2 id="wgRangeH"></h2>
+          <span class="wc-dim" data-i18n="wg.rangeNote">Time to kill, all body hits, 1,000 health. The strip: gold = fastest in class, green = within 10 %.</span></div><div id="wgRange"></div></div>
+      </div>
+    </section>
+
+    <section class="wc-panel" id="wgClassBox">
+      <div class="wc-panel-head"><h2 id="wgClassH"></h2><span class="wc-dim" data-i18n="wg.classNote">Click a header to sort, a name to open its guide.</span></div>
+      <div class="ranks-table-wrap wc-table-wrap"><table class="ranks-table sortable wg-table" id="wgClass"></table></div>
+    </section>
+  </main>
+  <footer class="wc-site-foot">
+    <nav aria-label="More pages">
+      <a href="index.html">📊 Players</a>
+      <a href="weapon-compare.html">⚖️ Weapons</a>
+      <a href="weapon-guide.html" aria-current="page">📖 Weapon guide</a>
+      <a href="oracle/">🔮 Oracle</a>
+      <a href="outfits.html">🛡️ Outfits</a>
+      <a href="dense-advanced-infantry-guide.html">🎯 Guide</a>
+      <a href="archive.html">📚 Archive</a>
+      <a href="privacy.html">🔒 Privacy</a>
+    </nav>
+    <p>Data from the Daybreak Census API · MIT licensed · not affiliated with Daybreak</p>
+  </footer>
+  <script type="module" src="weapon-guide.mjs?v=20261122-guide1"></script>
+  <script type="module" src="table-sort.mjs"></script>
+  <script type="module" src="page-settings.mjs"></script>
+</body>
+</html>

@@ -32,8 +32,7 @@ html, body { overflow: visible; overflow-x: clip; } /* hidden would make body th
 .wc-slim .lang-select { align-self: center; }
 
 /* weapon picker + one loadout card per chosen weapon */
-.wc-pick-row { display: grid; grid-template-columns: minmax(10rem, 13rem) 1fr auto; gap: 8px 10px; align-items: end; }
-.wc-guidechk { height: 2.25rem; padding: 0 10px; border: 1px solid var(--accent); color: var(--text); font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
+.wc-pick-row { display: grid; grid-template-columns: minmax(10rem, 13rem) 1fr; gap: 8px 10px; align-items: end; }
 .wc-field { display: flex; flex-direction: column; gap: 3px; font-size: 0.8rem; color: var(--dim); min-width: 0; }
 .wc-field select, .wc-field input, .wc-ctl select, .wc-att select { background: var(--input-bg); color: var(--text); border: 1px solid var(--border); border-radius: 0; padding: 0 8px; height: 2.25rem; font: inherit; font-size: 0.9rem; min-width: 0; }
 .wc-field input:focus-visible, .wc-field select:focus-visible, .wc-ctl select:focus-visible, .wc-att select:focus-visible { outline: 1px solid var(--accent); }
@@ -59,19 +58,8 @@ html, body { overflow: visible; overflow-x: clip; } /* hidden would make body th
 .wc-guide:hover, .wc-adadbtn:hover { background: var(--chip-active-bg); color: var(--text); }
 .wc-adadbtn { border-color: var(--border); color: var(--text); font-weight: 400; }
 .wc-adadbtn[hidden] { display: none; }
-.wc-guide-soon { border-style: dashed; border-color: var(--border); color: var(--dim); font-weight: 400; cursor: default; }
-.wc-guide-soon:hover { background: var(--panel); color: var(--dim); }
-body.wc-noguides .wc-guide, body.wc-noguides .wc-guidefind { display: none; }
 .wc-attd > summary { cursor: pointer; font-size: 0.78rem; color: var(--dim); padding: 2px 0; }
 .wc-attd[open] > summary { margin-bottom: 5px; }
-.wc-guidefind { margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px; }
-.wc-guidefind > summary { cursor: pointer; font-weight: 700; font-size: 0.9rem; color: var(--accent); }
-.wc-guidefind .wc-note { margin: 6px 0; }
-.wc-guidelist { display: grid; gap: 6px; }
-.wc-gcat { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; font-size: 0.82rem; }
-.wc-gcat b { flex: 0 0 8.5rem; color: var(--dim); font-weight: 600; }
-.wc-gcat a { padding: 2px 8px; border: 1px solid var(--border); background: var(--bg); text-decoration: none; }
-.wc-gcat a:hover { border-color: var(--accent); }
 
 /* the sticky control bar: four equal cells */
 .wc-sticky { position: sticky; top: var(--nav-h, 0px); z-index: 20; box-shadow: 0 6px 10px -8px var(--shadow); } /* --nav-h: portal nav height, set by weapon-compare.mjs */

@@ -1,0 +1,66 @@
+/* weapon-guide.html: builds on weapon-compare.css (.wc-panel, .wc-field, chart classes). Flat, square corners. */
+.wg-pick-row { display: grid; grid-template-columns: minmax(10rem, 13rem) 1fr; gap: 8px 10px; align-items: end; }
+.wg-weapon { display: flex; flex-direction: column; gap: var(--wc-gap); }
+.wg-weapon[hidden] { display: none; }
+.wg-id { display: grid; grid-template-columns: 112px minmax(0, 1fr) auto; gap: 14px; align-items: center; }
+.wg-id img { width: 112px; height: 56px; object-fit: contain; }
+.wg-id h2 { margin: 0; font-size: 1.35rem; }
+.wg-idtxt { display: flex; flex-direction: column; min-width: 0; }
+
+/* the four rules: big number + one sentence */
+.wg-rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 8px; }
+.wg-rule { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; padding: 10px; background: var(--bg); border: 1px solid var(--border); border-left: 3px solid var(--accent); }
+.wg-ri { font-size: 1.4rem; line-height: 1; }
+.wg-rh { display: block; color: var(--dim); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.wg-rb { display: block; font-size: 1.5rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.wg-rule p { margin: 4px 0 0; font-size: 0.86rem; line-height: 1.4; }
+
+.wg-two { display: grid; grid-template-columns: 1fr 1fr; gap: var(--wc-gap); }
+
+/* ways to fire: one bar each, best first */
+.wg-ways { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.wg-way { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr) 4.2rem 3.4rem; gap: 8px; align-items: center; font-size: 0.86rem; }
+.wg-wl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wg-way b { text-align: right; font-variant-numeric: tabular-nums; }
+.wg-cone { color: var(--dim); font-size: 0.76rem; text-align: right; font-variant-numeric: tabular-nums; }
+.wg-bar { height: 12px; background: var(--bg); border: 1px solid var(--border); }
+.wg-bar i { display: block; height: 100%; background: var(--wc-good, #3fb950); }
+.wg-hip .wg-bar i { background: var(--accent); }
+.wg-air .wg-bar i { background: var(--err); }
+.wg-top .wg-wl, .wg-top b { font-weight: 700; }
+
+/* range chart */
+#wgRange svg { width: 100%; height: auto; display: block; }
+#wgRange .plot { fill: var(--bg); stroke: var(--border); }
+#wgRange .grid { stroke: var(--border); stroke-width: 1; }
+#wgRange .ax { fill: var(--dim); font-size: 11px; }
+.wg-mine { fill: none; stroke: var(--accent); stroke-width: 2.5; }
+.wg-best { fill: none; stroke: var(--dim); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.wg-s2 { fill: var(--wc-gold, #d4a72c); }
+.wg-s1 { fill: var(--wc-good, #3fb950); }
+.wg-s0 { fill: var(--border); }
+.wg-sw-mine { background: var(--accent); }
+.wg-sw-best { background: var(--dim); }
+
+/* class table */
+.wg-table { table-layout: auto; width: 100%; min-width: 40rem; }
+.wg-table td, .wg-table th { text-align: center; white-space: nowrap; }
+.wg-table td:first-child, .wg-table th:first-child { position: sticky; left: 0; z-index: 2; background: inherit; }
+.wg-table .wg-name { text-align: left; white-space: nowrap; }
+.wg-table tr.wg-cur td { background: var(--chip-active-bg); font-weight: 700; }
+.wg-table tr.wg-click { cursor: pointer; }
+.wg-table .wg-name a { color: var(--text); text-decoration: none; }
+.wg-more { display: inline-block; margin-left: 4px; padding: 0 4px; font-size: 0.72rem; color: var(--dim); border: 1px solid var(--border); cursor: help; }
+.wg-table .wg-name a:hover { color: var(--accent); }
+
+@media (max-width: 900px) {
+  .wg-two { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .wg-pick-row { grid-template-columns: 1fr; }
+  .wg-id { grid-template-columns: 72px minmax(0, 1fr); }
+  .wg-id img { width: 72px; height: 36px; }
+  .wg-id .wc-guide { grid-column: 1 / -1; justify-self: start; }
+  .wg-way { grid-template-columns: 6.8rem minmax(0, 1fr) 3.8rem; }
+  .wg-cone { display: none; }
+}

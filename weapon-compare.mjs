@@ -29,6 +29,7 @@ import {
   stylesFor, loadoutEffects, loadoutProfile, loadoutRec, pelletConeOf,
 } from "./weapon-sim.mjs?v=20261112-pellet1";
 import { sageLines, SAGE_TEXT } from "./weapon-sage.mjs?v=20261107-sage1";
+import { verdict, rangeShares, classStanding } from "./weapon-traits.mjs?v=20261122-guide1";
 
 export const MAX_WEAPONS = 4;
 export const MAX_RANGE = 500;        // hard cap (the 500 m option); the chart shows 100 / 200 / 500, see viewMax()
@@ -40,234 +41,7 @@ const MODE_EN = { auto: "Automatic", semi: "Semi-auto", burst: "Burst", bolt: "B
 const FACTION = { 0: "NS", 1: "VS", 2: "NC", 3: "TR" };
 const OPEN_KEY = "ps2-elite-kd-wc-open";
 const DIFF_KEY = "ps2-elite-kd-wc-diff";   // "0" = show the rows that are the same for every chosen weapon
-const GUIDES_KEY = "ps2-elite-kd-wc-guides";   // "0" = hide every Sage guide link (the veteran view)
 const FOLLOW_KEY = "ps2-elite-kd-wc-deep-follow";   // "1" = the deep dive follows the page headshot rate instead of chest aim
-// item id -> sage guide page; the link shows when a loaded weapon has one
-const SAGE_GUIDES = new Map([
-  [7233, "weapon-sage-gd22s.html"],
-  [79, "weapon-sage-t9-carv.html"],
-  [80, "weapon-sage-orion-vs54.html"],
-  [6009899, "weapon-sage-xmg-100.html"],
-  [78, "weapon-sage-nc6-gauss-saw.html"],
-  [7254, "weapon-sage-msw-r.html"],
-  [7276, "weapon-sage-sva-88.html"],
-  [7235, "weapon-sage-em6.html"],
-  [7277, "weapon-sage-flare-ve6.html"],
-  [7255, "weapon-sage-t16-rhino.html"],
-  [7275, "weapon-sage-pulsar-lsw.html"],
-  [7257, "weapon-sage-t32-bull.html"],
-  [7236, "weapon-sage-la1-anchor.html"],
-  [7278, "weapon-sage-ursa.html"],
-  [802106, "weapon-sage-ns-15m2.html"],
-  [7232, "weapon-sage-em1.html"],
-  [6004218, "weapon-sage-mgr-l1-promise.html"],
-  [1879, "weapon-sage-nc6a-godsaw.html"],
-  [7234, "weapon-sage-nc6s-gauss-saw-s.html"],
-  [1894, "weapon-sage-betelgeuse-54-a.html"],
-  [6004118, "weapon-sage-ve-h-maw.html"],
-  [7274, "weapon-sage-vx29-polaris.html"],
-  [6004120, "weapon-sage-mg-h1-watchman.html"],
-  [7253, "weapon-sage-t9-carv-s.html"],
-  [1924, "weapon-sage-t9a-butcher.html"],
-  [7256, "weapon-sage-tmg-50.html"],
-  [804249, "weapon-sage-nsx-naginata.html"],
-  [14, "weapon-sage-t1-cycler.html"],
-  [7124, "weapon-sage-cycler-trv.html"],
-  [1909, "weapon-sage-darkstar.html"],
-  [73, "weapon-sage-gr-22.html"],
-  [7148, "weapon-sage-h-v45.html"],
-  [4, "weapon-sage-nc1-gauss-rifle.html"],
-  [70998, "weapon-sage-ns-11a.html"],
-  [20, "weapon-sage-pulsar-vs1.html"],
-  [7128, "weapon-sage-tar.html"],
-  [7153, "weapon-sage-terminus-vx-9.html"],
-  [7129, "weapon-sage-torq-9.html"],
-  [7103, "weapon-sage-carnage-ar.html"],
-  [7149, "weapon-sage-cme.html"],
-  [7152, "weapon-sage-corvus-va55.html"],
-  [7150, "weapon-sage-equinox-ve2-burst.html"],
-  [7151, "weapon-sage-equinox-ve2.html"],
-  [77822, "weapon-sage-gauss-prime.html"],
-  [7101, "weapon-sage-gauss-rifle-burst.html"],
-  [7102, "weapon-sage-gauss-rifle-s.html"],
-  [69999, "weapon-sage-ns-11p.html"],
-  [7108, "weapon-sage-reaper-dmr.html"],
-  [7125, "weapon-sage-sabr-13.html"],
-  [1904, "weapon-sage-t1a-unity.html"],
-  [7126, "weapon-sage-t1b-cycler.html"],
-  [6009864, "weapon-sage-ar-100.html"],
-  [7104, "weapon-sage-nc9-a-tross.html"],
-  [804246, "weapon-sage-nsx-yumi.html"],
-  [7127, "weapon-sage-t1s-cycler.html"],
-  // carbine sage guides
-  [3, "weapon-sage-af-19-mercenary.html"],
-  [43, "weapon-sage-trac-5.html"],
-  [44, "weapon-sage-solstice-ve3.html"],
-  [6009893, "weapon-sage-cb-100.html"],
-  [7169, "weapon-sage-gd-7f.html"],
-  [7170, "weapon-sage-ac-x11.html"],
-  [7171, "weapon-sage-af-20-rogue.html"],
-  [7172, "weapon-sage-nc2-gauss-compact.html"],
-  [7173, "weapon-sage-razor-gd-23.html"],
-  [7174, "weapon-sage-af-4a-bandit.html"],
-  [7190, "weapon-sage-t5-amc.html"],
-  [7191, "weapon-sage-trac-5-burst.html"],
-  [7192, "weapon-sage-trac-5-s.html"],
-  [7193, "weapon-sage-lc3-jaguar.html"],
-  [7194, "weapon-sage-hc1-cougar.html"],
-  [7211, "weapon-sage-pulsar-c.html"],
-  [7212, "weapon-sage-solstice-burst.html"],
-  [7213, "weapon-sage-prominence-ve4.html"],
-  [7214, "weapon-sage-serpent-ve92.html"],
-  [7215, "weapon-sage-zenith-vx-5.html"],
-  [75005, "weapon-sage-ns-11c.html"],
-  [804243, "weapon-sage-nsx-tanto.html"],
-  [19000, "weapon-sage-lc2-lynx.html"],
-  [20000, "weapon-sage-vx6-7.html"],
-  [6005049, "weapon-sage-mg-c1-kindred.html"],
-  [6005055, "weapon-sage-mgr-c1-charger.html"],
-  [6005110, "weapon-sage-ve-c-horizon.html"],
-  [6009894, "weapon-sage-cb-x75.html"],
-  [6009895, "weapon-sage-cb-200.html"],
-  [1869, "weapon-sage-19a-fortuna.html"],
-  [1914, "weapon-sage-trac-shot.html"],
-  [1919, "weapon-sage-eclipse-ve3a.html"],
-  [6011251, "weapon-sage-cb-arx-newton.html"],
-  // smg sage guides
-  [27000, "weapon-sage-af-4-cyclone.html"],
-  [27001, "weapon-sage-blitz-gd-10.html"],
-  [28000, "weapon-sage-smg-46-armistice.html"],
-  [28001, "weapon-sage-pdw-16-hailstorm.html"],
-  [29000, "weapon-sage-eridani-sx5.html"],
-  [29001, "weapon-sage-sirius-sx12.html"],
-  [7494, "weapon-sage-ns-7-pdw.html"],
-  [2314, "weapon-sage-mkv-suppressed.html"],
-  [6003879, "weapon-sage-mg-s1-jackal.html"],
-  [6003850, "weapon-sage-mgr-s1-gladius.html"],
-  [6003925, "weapon-sage-ve-s-canis.html"],
-  [804257, "weapon-sage-nsx-tengu.html"],
-  [6009203, "weapon-sage-ns-66-punisher.html"],
-  [6011153, "weapon-sage-nsx-kappa.html"],
-  [6009896, "weapon-sage-pmg-100.html"],
-  [6009897, "weapon-sage-pmg-200.html"],
-  [6009898, "weapon-sage-pmg-3xb.html"],
-  [6011253, "weapon-sage-pmg-arx-schrodinger.html"],
-  [1944, "weapon-sage-shuriken.html"],
-  [1949, "weapon-sage-skorpios.html"],
-  [1899, "weapon-sage-tempest.html"],
-  // shotgun sage guides
-  [39001, "weapon-sage-trs-12-uppercut.html"],
-  [39002, "weapon-sage-tas-16-blackjack.html"],
-  [40001, "weapon-sage-gd-66-claw.html"],
-  [40002, "weapon-sage-la39-bruiser.html"],
-  [41001, "weapon-sage-phobos-vx86.html"],
-  [41002, "weapon-sage-deimos-va29.html"],
-  [6009908, "weapon-sage-hsg-400.html"],
-  [6011256, "weapon-sage-sg-arx-rutherford.html"],
-  [128, "weapon-sage-mauler-s6.html"],
-  [129, "weapon-sage-nova.html"],
-  [1884, "weapon-sage-the-brawler.html"],
-  [1934, "weapon-sage-havoc.html"],
-  [1939, "weapon-sage-chaos.html"],
-  [39000, "weapon-sage-fa1-barrage.html"],
-  [7423, "weapon-sage-nc12-sweeper.html"],
-  [7432, "weapon-sage-ts4-haymaker.html"],
-  [7441, "weapon-sage-thanatos-ve70.html"],
-  [75083, "weapon-sage-ns-baron-g5.html"],
-  [6009910, "weapon-sage-sg-100.html"],
-  [6011234, "weapon-sage-ns-viscount-g6.html"],
-  [30, "weapon-sage-as16-nighthawk.html"],
-  [40000, "weapon-sage-af-57-piston.html"],
-  [41000, "weapon-sage-pandora-vx25.html"],
-  [6009909, "weapon-sage-sg-a25.html"],
-  [7528, "weapon-sage-nc05-jackhammer.html"],
-  [7390, "weapon-sage-nc08-mag-scatter.html"],
-  // sniper sage guides
-  [87, "weapon-sage-nc14-bolt-driver.html"],
-  [24001, "weapon-sage-sas-r.html"],
-  [24002, "weapon-sage-impetus.html"],
-  [24003, "weapon-sage-la80.html"],
-  [24004, "weapon-sage-em4-longshot.html"],
-  [7301, "weapon-sage-af-8-railjack.html"],
-  [24000, "weapon-sage-gauss-spr.html"],
-  [25000, "weapon-sage-m77-b.html"],
-  [25001, "weapon-sage-tsar-42.html"],
-  [25002, "weapon-sage-ksr-35.html"],
-  [25003, "weapon-sage-sr-7.html"],
-  [25004, "weapon-sage-rams-50m.html"],
-  [7316, "weapon-sage-trap-m1.html"],
-  [1974, "weapon-sage-bighorn-50m.html"],
-  [88, "weapon-sage-99sv.html"],
-  [26000, "weapon-sage-xm98.html"],
-  [26001, "weapon-sage-ghost.html"],
-  [26002, "weapon-sage-phantom-va23.html"],
-  [26003, "weapon-sage-v10.html"],
-  [26004, "weapon-sage-parallax-vx3.html"],
-  [7337, "weapon-sage-phaseshift-vx-s.html"],
-  [1979, "weapon-sage-parsec-vx3-a.html"],
-  [89, "weapon-sage-va39-spectre.html"],
-  [802771, "weapon-sage-ns-am7-archer.html"],
-  [804255, "weapon-sage-nsx-daimyo.html"],
-  [6010510, "weapon-sage-sr-100.html"],
-  [6010512, "weapon-sage-sr-150.html"],
-  [6010511, "weapon-sage-sr-l75.html"],
-  [6006850, "weapon-sage-advx-mako.html"],
-  [6011255, "weapon-sage-sr-arx-einstein.html"],
-  [1969, "weapon-sage-moonshot.html"],
-  // pistol sage guides
-  [15, "weapon-sage-tx1-repeater.html"],
-  [2, "weapon-sage-nc4-mag-shot.html"],
-  [21, "weapon-sage-beamer-vs3.html"],
-  [6009902, "weapon-sage-u-100-lastly.html"],
-  [1889, "weapon-sage-the-executive.html"],
-  [1954, "weapon-sage-the-president.html"],
-  [1959, "weapon-sage-the-immortal.html"],
-  [6011258, "weapon-sage-u-arx-dirac.html"],
-  [7388, "weapon-sage-la8-rebel.html"],
-  [7389, "weapon-sage-la3-desperado.html"],
-  [7400, "weapon-sage-tx2-emperor.html"],
-  [7401, "weapon-sage-ts2-inquisitor.html"],
-  [7402, "weapon-sage-t4-amp.html"],
-  [7412, "weapon-sage-manticore-sx40.html"],
-  [7413, "weapon-sage-cerberus.html"],
-  [7414, "weapon-sage-spiker.html"],
-  [75063, "weapon-sage-ns-44-commissioner.html"],
-  [75071, "weapon-sage-ns-357-underboss.html"],
-  [802733, "weapon-sage-ns-44l-blackhand.html"],
-  [6003793, "weapon-sage-ns-44l-showdown.html"],
-  [6003943, "weapon-sage-ns-357-ia.html"],
-  [804138, "weapon-sage-ns-61-emissary.html"],
-  [6003665, "weapon-sage-ns-45-pilot.html"],
-  [6004995, "weapon-sage-ectoblaster.html"],
-  [6011154, "weapon-sage-nsx-yawara.html"],
-  [6009903, "weapon-sage-u-150-recall.html"],
-  [6009904, "weapon-sage-u-200-harbinger.html"],
-  [25008, "weapon-sage-amr-66.html"],
-  [6010045, "weapon-sage-bar-100.html"],
-  [6010047, "weapon-sage-bar-200.html"],
-  [6010046, "weapon-sage-bar-a50.html"],
-  [6011257, "weapon-sage-bar-arx-feynman.html"],
-  [1989, "weapon-sage-dmr-99.html"],
-  [26008, "weapon-sage-eidolon-ve33.html"],
-  [1984, "weapon-sage-gd-guardian.html"],
-  [6004216, "weapon-sage-mg-hbr1-dragoon.html"],
-  [6004209, "weapon-sage-mgr-m1-bishop.html"],
-  [2311, "weapon-sage-ns-30-vandal.html"],
-  [1994, "weapon-sage-revenant.html"],
-  [6004214, "weapon-sage-ve-lr-obelisk.html"],
-  [24008, "weapon-sage-warden.html"],
-  [24007, "weapon-sage-af-6-shadow.html"],
-  [25007, "weapon-sage-hsr-1.html"],
-  [26007, "weapon-sage-nyx-vx31.html"],
-  [7358, "weapon-sage-af-18-stalker.html"],
-  [7365, "weapon-sage-soas-20.html"],
-  [7372, "weapon-sage-artemis-vx26.html"],
-  [804252, "weapon-sage-nsx-tomoe.html"],
-  [6011155, "weapon-sage-nsx-sesshin.html"],
-  [6009101, "weapon-sage-ns-30-tranquility.html"],
-  [7533, "weapon-sage-t7-mini-chaingun.html"],
-  [7540, "weapon-sage-lasher-x2.html"],
-]);
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const nf = (v, d = 0) => Number(v).toLocaleString(currentLang(), { maximumFractionDigits: d, minimumFractionDigits: d });
@@ -518,7 +292,7 @@ async function boot() {
     window.addEventListener("resize", q, { passive: true });
     q();
   }
-  window.addEventListener("ps2-lang", () => { fillCats(); fillHp(); paintSeg(); renderGuideFinder(); invalidate("all"); });
+  window.addEventListener("ps2-lang", () => { fillCats(); fillHp(); paintSeg(); invalidate("all"); });
   // the weapon cards: ✕ removes, the slot menus set the loadout
   $("wcChips").addEventListener("click", (e) => { const b = e.target.closest("button[data-id]"); if (b) removeId(+b.dataset.id); });
   $("wcChips").addEventListener("change", (e) => {
@@ -611,35 +385,15 @@ async function boot() {
   }
   const SLOT_EN = { barrel: "Barrel", rail: "Rail", ammo: "Ammo" };
 
-  // ---- beginner guides: a link on every weapon that has a Sage guide; one switch hides them all (veteran view) ----
-  let showGuides = true;
-  try { showGuides = localStorage.getItem(GUIDES_KEY) !== "0"; } catch {}
-  const paintGuides = () => { document.body.classList.toggle("wc-noguides", !showGuides); $("wcGuides").checked = showGuides; };
-  $("wcGuides").addEventListener("change", () => {
-    showGuides = $("wcGuides").checked;
-    try { localStorage.setItem(GUIDES_KEY, showGuides ? "1" : "0"); } catch {}
-    paintGuides();
-  });
-  paintGuides();
-  // the finder: every weapon that has a guide, by weapon type, one click to open it
-  function renderGuideFinder() {
-    const have = [...SAGE_GUIDES].map(([id, href]) => ({ w: weapons.get(id), href })).filter((x) => x.w);
-    $("wcGuideFind").hidden = !have.length;
-    $("wcGuideFindS").textContent = tr("wc.guide.find", "📖 New here? Beginner guides ({n} weapons)", { n: nf(have.length) });
-    const by = new Map();
-    for (const x of have) (by.get(x.w.cat) || by.set(x.w.cat, []).get(x.w.cat)).push(x);
-    $("wcGuideList").innerHTML = [...by.keys()].sort().map((cat) => `<div class="wc-gcat"><b>${esc(cat)}</b>`
-      + by.get(cat).sort((a, b) => a.w.name.localeCompare(b.w.name)).map((x) => `<a href="${esc(x.href)}">${esc(x.w.name)}</a>`).join("") + `</div>`).join("");
-  }
-
-  renderGuideFinder();
-
   // ---- the ADAD badge: free still shots with this loadout; a click opens the calculator on this weapon ----
   const FREE_ROW = (hip) => METRICS.find((m) => m.key === (hip ? "freeHip" : "freeAds"));
   function adadBadge(w) {
     if (!recoil) return { text: "", tip: "" };
     const v = FREE_ROW(hipAim()).get({ rec: loadoutRec(recoilOf(w.id), effectsOf(w), hipAim()) });
     if (!Number.isFinite(v)) return { text: "", tip: "" };
+    // 0 free shots because moving costs nothing at all reads as the opposite: say "strafe free" instead
+    const t = !hipAim() && v === 0 ? traitsOf(w) : null;
+    if (t && t.strafeFree) return { text: tr("wc.adad.free", "🎯 strafe free"), tip: tr("wc.adad.freeTip", "Aiming while moving costs no accuracy on this weapon. Click for the ADAD calculator.") };
     return {
       text: v >= NO_BLOOM ? tr("wc.adad.noBloom", "🎯 no bloom") : tr("wc.adad.badge", "🎯 {n} free shots", { n: nf(v) }),
       tip: tr("wc.adad.badgeTip", "Shots you can fire standing still before strafing costs nothing. Click for the ADAD calculator."),
@@ -671,14 +425,13 @@ async function boot() {
         const note = fx ? (Object.keys(fx).length ? "" : " · " + tr("wc.sim.noCombat", "no effect on killing")) : " · " + tr("wc.sim.noEffect", "not modelled");
         return `<option value="${esc(n)}" ${mine[sl] === n ? "selected" : ""}>${esc(n + note)}</option>`;
       }).join("")}</select></label>`).join("");
-      const guide = SAGE_GUIDES.get(w.id);
       const b = adadBadge(w);
       return `<div class="wc-wcard" role="listitem" data-card="${w.id}" style="--c:${color(i)}"><div class="wc-wtop">`
         + `<img src="assets/weapons/${w.img}.webp" alt="" width="56" height="28" loading="lazy" onerror="this.style.visibility='hidden'" />`
         + `<div class="wc-wtxt"><b>${esc(w.name)}</b><span class="wc-wmeta">${esc(FACTION[w.fac] ?? "")} · ${esc(w.cat)}</span></div>`
         + `<button type="button" class="wc-rm" data-id="${w.id}" title="${tip}" aria-label="${tip}">✕</button></div>`
         + `<div class="wc-wlinks">`
-        + (guide ? `<a class="wc-guide" href="${esc(guide)}">${esc(tr("wc.guide.btn", "📖 Beginner guide"))}</a>` : `<span class="wc-guide wc-guide-soon">${esc(tr("wc.guide.soon", "📖 Guide coming soon"))}</span>`)
+        + `<a class="wc-guide" href="weapon-guide.html?w=${w.id}">${esc(tr("wc.guide.btn", "📖 Guide"))}</a>`
         + `<button type="button" class="wc-adadbtn" data-adad="${w.id}" title="${esc(b.tip)}"${b.text ? "" : " hidden"}>${esc(b.text)}</button></div>`
         + (slots ? `<details class="wc-attd" data-w="${w.id}"${openAtt.has(w.id) ? " open" : ""}><summary>${esc(attSummary(w.id))}</summary><div class="wc-atts">${slots}</div></details>` : recoil ? "" : `<p class="wc-dim wc-attwait">${esc(tr("wc.sim.wait", "Loading recoil data…"))}</p>`)
         + `</div>`;
@@ -809,7 +562,34 @@ async function boot() {
     });
     const dists = ws.map((w) => ttkDistribution(w.p, { ...opt, range: st.range, ...coneOf(w) }));
     const med = dists.map((d) => quantileMs(d, 0.5));
-    calc = { maxR, ws, xs, curves: cs, dists, med, winners: winnerStrip(cs) };
+    const winners = winnerStrip(cs);
+    calc = { maxR, ws, xs, curves: cs, dists, med, winners, shares: rangeShares(winners, ws.length), okey };
+  }
+
+  // the whole class over the same ranges (stock weapons), for "fastest in class at N % of ranges". All body hits,
+  // 1,000 health, like the guide page: the class race does not follow the sliders (a full race at 30 % accuracy is
+  // ~2,500 exact distributions, seconds of work); the chosen weapon runs it with its loadout.
+  const RACE = { acc: 1, hsr: 0, hp: 1000 };
+  const raceCache = new Map();
+  const raceCurve = (p, id, A, xs) => ttkCurve(p, xs, { ...RACE, ...(recoil ? pelletConeOf(loadoutRec(recoilOf(id), A, hipAim()), hipAim(), A) : { spread: 0, cof: 0 }) });
+  function classShare(i) {
+    const { ws, xs } = calc, w = ws[i];
+    const key = w.cat + "|" + xs.length + "|" + xs[xs.length - 1] + "|" + (recoil ? 1 : 0) + "|" + simState.aim + "|" + (st.fpsOn ? st.fps : 0);
+    if (!raceCache.has(key)) {
+      if (raceCache.size > 40) raceCache.clear();
+      raceCache.set(key, new Map((byCat.get(w.cat) || []).map((x) => [x.id, raceCurve(fpsP(x.p), x.id, [], xs)])));
+    }
+    const field = raceCache.get(key);
+    const mine = raceCurve(w.p, w.id, effectsOf(w), xs);
+    const all = [...[...field].filter(([id]) => id !== w.id).map(([, c]) => c), mine];
+    return classStanding(all, all.length - 1).best;
+  }
+  // how to fire it: does moving cost accuracy, how far the shots still hit in the air (weapon-traits.mjs)
+  function traitsOf(w) {
+    const r = recoil && loadoutRec(recoilOf(w.id), effectsOf(w), false);
+    if (!r) return null;
+    const ads = r.adsStates || [];
+    return verdict(r.states, ads, r.handling, { hip: pelletConeOf(r, true, effectsOf(w)).spread, ads: ads.length ? pelletConeOf(r, false, effectsOf(w)).spread : 0 });
   }
 
   // ------------------------------------------------------------ the table --
@@ -883,6 +663,20 @@ async function boot() {
       return td(`wc-med ${rank(med[i], -1, best, null)}`, `<b>${esc(fmtMs(med[i]))}</b>${cmp ? `<span class="wc-cmp">${esc(cmp)}</span>` : ""}`);
     }).join(""), "wc-hl");
     h += row(esc(tr("wc.medSim", "With recoil: best way to fire")), ws.map((w, i) => `<td class="wc-med" data-sim="${i}"><b>…</b></td>`).join(""), "wc-hl");
+    // range wins: the share of 0–max m each weapon kills fastest, here and against its whole class
+    const sh = calc.shares, shBest = Math.max(...sh);
+    h += row(esc(tr("wc.rangeWin", "Fastest at 0–{max} m", { max: nf(calc.maxR) })), ws.map((w, i) => td(`wc-med ${ws.length > 1 && sh[i] === shBest && shBest > 0 ? "good" : ""}`,
+      `<b>${esc(tr("wc.rangeShare", "{pct}% of ranges", { pct: nf(Math.round(sh[i] * 100)) }))}</b><span class="wc-cmp">${esc(tr("wc.rangeClass", "{pct}% against every {cat}, all body hits", { pct: nf(Math.round(classShare(i) * 100)), cat: w.cat }))}</span>`)).join(""), "wc-hl");
+    const tv = ws.map(traitsOf);
+    if (tv.some(Boolean)) {
+      h += row(esc(tr("wc.moveRow", "Moving while aiming")), ws.map((w, i) => {
+        const v = tv[i];
+        if (!v || !v.ads) return td("wc-med", "–");
+        const cost = v.strafeFree ? tr("wc.moveFree", "free") : tr("wc.moveCost", "+{pct}% cone", { pct: nf(Math.round((v.moveX - 1) * 100)) });
+        return td(`wc-med ${v.strafeFree ? "good" : ""}`, `<b>${esc(cost)}</b><span class="wc-cmp">${esc(tr("wc.airLine", "jumping: hits to {m} m", { m: nf(v.airM) }))}</span>`,
+          tr("wc.moveTip", "Moving widens the aimed cone this much. In the air every shot hits the body only up to this distance."));
+      }).join(""), "wc-hl");
+    }
     h += "</tbody>";
 
     for (const g of GROUPS) {

@@ -21,7 +21,7 @@
   <link rel="preload" href="assets/weapons/profiles.json" as="fetch" crossorigin />
   <link rel="preload" href="assets/weapons/recoil.json" as="fetch" crossorigin />
   <link rel="stylesheet" href="styles.css?v=20261115-srv1" />
-  <link rel="stylesheet" href="weapon-compare.css?v=20261111-wctiers1" />
+  <link rel="stylesheet" href="weapon-compare.css?v=20261122-guide1" />
   <link rel="stylesheet" href="weapon-adad.css?v=20261109-merge1" />
 </head>
 <body class="site-page">
@@ -67,16 +67,9 @@
           <input id="wcSearch" type="text" list="wcList" autocomplete="off" spellcheck="false" placeholder="Type a weapon name…" data-i18n-placeholder="wc.search" />
           <datalist id="wcList"></datalist>
         </label>
-        <label class="wc-check wc-guidechk" data-i18n-title="wc.guides.tip" title="Links to the step-by-step guides for new players. Turn this off if you already know the weapons.">
-          <input id="wcGuides" type="checkbox" checked /> <span data-i18n="wc.guides.toggle">📖 Beginner guides</span></label>
       </div>
       <div id="wcChips" class="wc-loadouts" role="list"></div>
       <div id="wcMsg" class="wc-msg" role="status" aria-live="polite"></div>
-      <details class="wc-guidefind" id="wcGuideFind">
-        <summary id="wcGuideFindS"></summary>
-        <p class="wc-note" data-i18n="wc.guide.findNote">Short tutorials for new players: which attachments to use, where to aim at each distance, and how the weapon does against its rivals. Click a weapon to open its guide.</p>
-        <div id="wcGuideList" class="wc-guidelist"></div>
-      </details>
     </section>
 
     <section class="wc-panel wc-bar wc-sticky" aria-label="Accuracy, headshot rate, range and health" data-i18n-aria-label="wc.ctlAria">
@@ -356,6 +349,7 @@
     <nav aria-label="More pages">
       <a href="index.html">📊 Players</a>
       <a href="weapon-compare.html" aria-current="page">⚖️ Weapons</a>
+      <a href="weapon-guide.html">📖 Weapon guide</a>
       <a href="oracle/">🔮 Oracle</a>
       <a href="weapon-adad.html">🎯 ADAD calculator</a>
       <a href="outfits.html">🛡️ Outfits</a>
@@ -371,7 +365,7 @@
     <div class="wc-zoomhead"><b id="wcZoomH"></b><button type="button" class="wc-btn" id="wcZoomClose" data-i18n="wc.sim.zoomClose">Close</button></div>
     <div id="wcZoomBody"></div>
   </dialog>
-  <script type="module" src="weapon-compare.mjs?v=20261111-wctiers1"></script>
+  <script type="module" src="weapon-compare.mjs?v=20261122-guide1"></script>
 <script type="module" src="page-settings.mjs"></script>
 </body>
 </html>

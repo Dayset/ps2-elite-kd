@@ -6,7 +6,7 @@
  * The full file was 2.8 MB, mostly 8,157 attachment items (cosmetic copies of ~60 parts, each with
  * its own copy of ~80 descriptions). slimRecoil() keeps:
  *   - fm2: only the fire modes the weapons use, only the fields the page reads;
- *   - groups: only the four stances the page shows, only the cone fields;
+ *   - groups: only the stances the pages read (0, 1, 2, 5, and 4 = in the air), only the cone fields;
  *   - attachments: the parts with a slot (weapon-sim.mjs slotOf), each name + description once:
  *     atts = [[name, descIndex | -1]], descs = [text], att[itemId] = [index into atts].
  * cadenceOf() = { itemId: [burstCount, autoFireMs, refireMs, delayMs] } for weapons that fire bursts
@@ -20,7 +20,7 @@ import { slotOf } from "../weapon-sim.mjs";
 
 const FM_KEEP = /^(recoil_|cof_recoil$|cof_pellet_spread$|pellet_spread$|fire_refire_ms$|fire_burst_count$|fire_auto_fire_ms$|fire_delay_ms$|reload_chamber_ms$|zoom_default$|move_modifier$|iron_sights$|psg$)/;
 const ROW_KEEP = ["player_state_id", "cof_min", "cof_max", "cof_recovery_rate", "cof_recovery_delay_ms"];
-const STANCES = new Set([0, 1, 2, 5]);
+const STANCES = new Set([0, 1, 2, 4, 5]);   // 4 = in the air (weapon-traits.mjs)
 
 /** Full (old) or slim recoil object -> slim object. Idempotent. */
 export function slimRecoil(full) {

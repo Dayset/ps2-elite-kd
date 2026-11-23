@@ -150,15 +150,21 @@ test("tier lists: a folded section after the ADAD calculator, wired to the page 
   }
 });
 
-test("beginner guides: one switch, a finder, and a link slot on every weapon card (veteran view hides them)", () => {
-  const html = read("weapon-compare.html"), mjs = read("weapon-compare.mjs"), css = read("weapon-compare.css");
-  assert.match(html, /id="wcGuides" type="checkbox" checked/);
-  assert.match(html, /<details class="wc-guidefind" id="wcGuideFind">/);
-  assert.doesNotMatch(html, /<details[^>]*id="wcGuideFind"[^>]* open/);
-  assert.match(mjs, /class="wc-guide" href=/);
-  assert.match(mjs, /wc-guide-soon/);
-  assert.match(mjs, /ps2-elite-kd-wc-guides/);
-  assert.match(css, /body\.wc-noguides \.wc-guide, body\.wc-noguides \.wc-guidefind \{ display: none; \}/);
-  // every guide the page links to exists as a file
-  for (const m of mjs.matchAll(/"(weapon-sage-[a-z0-9-]+\.html)"/g)) assert.ok(existsSync(new URL("../" + m[1], import.meta.url)), m[1]);
+test("guides: every weapon card links to the one data-driven guide page; no per-weapon guide files", () => {
+  const html = read("weapon-compare.html"), mjs = read("weapon-compare.mjs");
+  assert.doesNotMatch(html, /id="wcGuides"|wcGuideFind/);
+  assert.match(mjs, /class="wc-guide" href="weapon-guide\.html\?w=\$\{w\.id\}"/);
+  assert.doesNotMatch(mjs, /weapon-sage-[a-z0-9-]+\.html|SAGE_GUIDES/);
+  assert.ok(existsSync(new URL("../weapon-guide.html", import.meta.url)));
+  // old guide links still land: the 404 page forwards weapon-sage-<slug>.html to the guide
+  assert.match(read("404.html"), /weapon-guide\.html\?n=/);
+});
+
+test("range wins and moving rows sit in the headline of the stat table", () => {
+  const mjs = read("weapon-compare.mjs");
+  const en = JSON.parse(read("i18n/en.json"));
+  for (const k of ["wc.rangeWin", "wc.rangeShare", "wc.rangeClass", "wc.moveRow", "wc.moveFree", "wc.moveCost", "wc.airLine", "wc.moveTip", "wc.adad.free", "wc.adad.freeTip"]) {
+    assert.ok(mjs.includes(`"${k}"`), k);
+    assert.ok(typeof en[k] === "string" && en[k].length, k);
+  }
 });

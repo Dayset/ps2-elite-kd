@@ -34,6 +34,15 @@
 </style>
 </head>
 <body>
+<script>
+  // The old per-weapon guides (weapon-sage-<name>.html) and weapon-handling-advanced.html became one
+  // data-driven page on 2026-11-22: send old links there. GitHub Pages serves this file for any missing path.
+  (function () {
+    var p = location.pathname, m = p.match(/^(.*\/)weapon-sage-([a-z0-9-]+)\.html$/);
+    if (m) location.replace(m[1] + "weapon-guide.html?n=" + m[2]);
+    else if ((m = p.match(/^(.*\/)weapon-handling-advanced\.html$/))) location.replace(m[1] + "weapon-guide.html");
+  })();
+</script>
 <main>
   <p class="code">404</p>
   <h1>🗺️ This base doesn't exist.</h1>
