@@ -2,21 +2,23 @@
   "room": "ps",
   "running": false,
   "lastRun": {
-    "runId": "45411808003",
+    "runId": "45422439562",
     "kind": "discovery",
-    "startedAt": "2026-11-24T14:14:56.234Z",
-    "endedAt": "2026-11-24T14:14:56.488Z",
-    "seconds": 0,
+    "startedAt": "2026-11-24T15:11:35.343Z",
+    "endedAt": "2026-11-24T15:11:58.037Z",
+    "seconds": 23,
     "added": [],
-    "updated": [],
+    "updated": [
+      "[UnEm] Kerios91"
+    ],
     "failed": [],
     "stoppedEarly": null,
     "indexSize": 2565,
     "assists": {
       "calls": 1,
-      "rows": 37,
-      "players": 14,
-      "skipped": 21,
+      "rows": 29,
+      "players": 15,
+      "skipped": 13,
       "error": null
     },
     "servers": {
@@ -29,11 +31,21 @@
         "Genudine": 0,
         "Ceres": 0
       },
-      "slices": {}
+      "slices": {
+        "ps2ps4eu": {
+          "calls": 3,
+          "swept": 280,
+          "prefiltered": 106,
+          "checked": 106,
+          "qualified": 0,
+          "newPlaying": 0,
+          "done": true
+        }
+      }
     }
   },
   "outlierGuard": {
-    "checkedAt": "2026-11-24T14:14:59.343Z",
+    "checkedAt": "2026-11-24T15:12:01.933Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 3,
     "explained": 12,
@@ -504,7 +516,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-11-24T14:14:59.829Z",
+    "checkedAt": "2026-11-24T15:12:02.799Z",
     "red": 17,
     "padding": 0,
     "adjusted": 286,
@@ -515,7 +527,7 @@
     "forensics": 0
   },
   "sessionStats": {
-    "checkedAt": "2026-11-24T14:14:59.349Z",
+    "checkedAt": "2026-11-24T15:12:01.944Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -530,9 +542,9 @@
     "coverage": {
       "players": 2565,
       "withSessions": 2090,
-      "measured": 1243,
-      "sessions": 33612,
-      "kills": 703981,
+      "measured": 1244,
+      "sessions": 33627,
+      "kills": 704076,
       "xpPlayers": 0,
       "xpMeasured": 0,
       "xpSessions": 0
@@ -637,7 +649,7 @@
     ],
     "distributions": {
       "s_apk": {
-        "n": 1243,
+        "n": 1244,
         "min": 0,
         "p01": 0.053,
         "p05": 0.123,
@@ -647,7 +659,7 @@
         "max": 0.865
       },
       "s_share": {
-        "n": 1240,
+        "n": 1241,
         "min": 0.461,
         "p01": 0.49,
         "p05": 0.517,
@@ -657,17 +669,17 @@
         "max": 0.835
       },
       "s_kpm": {
-        "n": 1243,
+        "n": 1244,
         "min": 0.031,
         "p01": 0.064,
         "p05": 0.099,
-        "median": 0.304,
+        "median": 0.303,
         "p95": 0.99,
         "p99": 1.556,
         "max": 13.65
       },
       "s_maxKpm": {
-        "n": 1195,
+        "n": 1196,
         "min": 0.092,
         "p01": 0.124,
         "p05": 0.181,
@@ -677,7 +689,7 @@
         "max": 15.266
       },
       "s_kpmCv": {
-        "n": 1095,
+        "n": 1096,
         "min": 0,
         "p01": 0.026,
         "p05": 0.097,
@@ -687,7 +699,7 @@
         "max": 1.733
       },
       "s_kd": {
-        "n": 1243,
+        "n": 1244,
         "min": 0.136,
         "p01": 0.222,
         "p05": 0.363,
@@ -697,12 +709,12 @@
         "max": 1796.25
       },
       "s_maxKd": {
-        "n": 1195,
+        "n": 1196,
         "min": 0.245,
         "p01": 0.333,
         "p05": 0.541,
         "median": 2.077,
-        "p95": 16,
+        "p95": 16.333,
         "p99": 189,
         "max": 9684
       },
@@ -1115,7 +1127,7 @@
     "outliersUnexplained": 0
   },
   "forensics": {
-    "checkedAt": "2026-11-24T14:14:59.355Z",
+    "checkedAt": "2026-11-24T15:12:01.956Z",
     "candidates": [
       "thingzzvs",
       "wertytr",
@@ -1207,7 +1219,7 @@
     "players": []
   },
   "review": {
-    "checkedAt": "2026-11-24T14:14:59.363Z",
+    "checkedAt": "2026-11-24T15:12:01.968Z",
     "count": 296,
     "players": [
       {
@@ -3626,9 +3638,9 @@
         "medShare": 0.553
       },
       "untagged": {
-        "count": 5,
-        "medApk": 0.32,
-        "medShare": 0.575
+        "count": 6,
+        "medApk": 0.267,
+        "medShare": 0.582
       }
     },
     "predict": {
@@ -3648,21 +3660,21 @@
       }
     },
     "tagMin": 20,
-    "checkedAt": "2026-11-24T14:14:59.459Z",
+    "checkedAt": "2026-11-24T15:12:02.197Z",
     "coverage": {
       "players": 2558,
       "withSessions": 2087,
-      "measured": 1239,
-      "measuredPct": 48.4
+      "measured": 1240,
+      "measuredPct": 48.5
     },
     "cuts": {
-      "kd": 1.98,
+      "kd": 1.979,
       "shareHi": 0.607,
       "shareLo": 0.555,
       "apk": 0.486,
-      "iviLo": 196.605,
-      "iviHi": 394.131,
-      "medApk": 0.296,
+      "iviLo": 196.638,
+      "iviHi": 394.119,
+      "medApk": 0.295,
       "medShare": 0.58
     },
     "rule": {
@@ -3958,7 +3970,7 @@
     }
   },
   "padderPenalty": {
-    "checkedAt": "2026-11-24T14:14:59.367Z",
+    "checkedAt": "2026-11-24T15:12:01.975Z",
     "ranked": 2544,
     "penalty": 0.1,
     "ref": 610.6,
@@ -3968,7 +3980,7 @@
     "players": []
   },
   "vehicleCut": {
-    "checkedAt": "2026-11-24T14:14:59.375Z",
+    "checkedAt": "2026-11-24T15:12:01.989Z",
     "ranked": 2544,
     "cut": 1454,
     "buckets": {
@@ -6244,7 +6256,7 @@
     "watch": []
   },
   "infantry": {
-    "checkedAt": "2026-11-24T14:15:00.039Z",
+    "checkedAt": "2026-11-24T15:12:03.149Z",
     "players": 2565,
     "counts": {
       "infantry": 1635,
@@ -6263,7 +6275,7 @@
   },
   "burst": {
     "rule": "KPM ≥ 5 and ≥ 15 kills in ≥ 2 min (one stored session, no 10-minute floor); skipped when within the player's own normal (≥ 5 other sessions of ≥ 10 min, ≤ 2× their median KPM, career K/D < 10); 🛡️ established players (account ≥ 1 year, eKPM ≥ 0.75, ≥ 3 stored sessions) show as cleared automatically",
-    "checkedAt": "2026-11-24T14:15:00.323Z",
+    "checkedAt": "2026-11-24T15:12:03.676Z",
     "sessions": 28,
     "ownNormalSkipped": 0,
     "flaggedPlayers": 8,
@@ -6679,7 +6691,7 @@
     "caught": []
   },
   "hut": {
-    "builtAt": "2026-11-24T14:14:59.272Z",
+    "builtAt": "2026-11-24T15:12:01.819Z",
     "cuts": {
       "actMedian": 0.2223,
       "actMult": 1.333,
@@ -7384,7 +7396,7 @@
     "cleared": []
   },
   "newbieDiff": {
-    "builtAt": "2026-11-24T14:14:59.295Z",
+    "builtAt": "2026-11-24T15:12:01.860Z",
     "loH": 6.1,
     "hiH": 252.8,
     "n": 2550,
@@ -15720,7 +15732,7 @@
     "cleared": []
   },
   "vehDiff": {
-    "builtAt": "2026-11-24T14:14:59.282Z",
+    "builtAt": "2026-11-24T15:12:01.837Z",
     "start": 14.3,
     "damped": 604,
     "dieHardHut": 251,
@@ -22375,8 +22387,8 @@
     "cleared": []
   },
   "zergRevive": {
-    "builtAt": "2026-11-24T14:14:59.301Z",
-    "zergScored": 1239,
+    "builtAt": "2026-11-24T15:12:01.870Z",
+    "zergScored": 1240,
     "measured": 0,
     "measuredZerg": 0,
     "confirmed": 0,
@@ -22399,7 +22411,7 @@
     "cleared": []
   },
   "assistGap": {
-    "checkedAt": "2026-11-24T14:14:59.459Z",
+    "checkedAt": "2026-11-24T15:12:02.198Z",
     "start": "2026-04-01T13:00:00.000Z",
     "end": "2026-05-07T05:00:00.000Z",
     "url": "https://www.planetside2.com/patch-notes/may-6-hotfix-2026",
@@ -22409,7 +22421,7 @@
     "players": []
   },
   "tractorMark": {
-    "checkedAt": "2026-11-24T14:14:59.305Z",
+    "checkedAt": "2026-11-24T15:12:01.878Z",
     "rule": "🚜 = infantry % < p25 (72.8%) and (vehicle repair/min ≥ p75 (null) or vehicle kills/min ≥ p75 (null) of the 0 players with 2+ h of XP detail), or infantry % < p2 (22.4%)",
     "cuts": {
       "cut": 72.8,
