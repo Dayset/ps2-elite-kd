@@ -57,27 +57,35 @@
   <main class="st-wrap">
     <h1>Update log</h1>
     <div class="st-sub">Latest changes, live from GitHub. A fix shows up here as soon as it is pushed. <a href="index.html">Back to the stats</a> · <a href="columns.html">What the columns mean</a> · <a href="https://github.com/Dayset/ps2-elite-kd/commits/main">Full history on GitHub</a></div>
-    <div class="st-toggle"><label><input type="checkbox" id="showCache" /> show routine cache refreshes</label></div>
+    <div class="st-toggle"><label><input type="checkbox" id="showBot" /> show bot refreshes</label></div>
     <div class="st-card"><div id="log" class="st-dim">Loading…</div></div>
   </main>
   <script type="module">
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s == null ? "" : s).replace(/[&<>\"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
     const API = "https://api.github.com/repos/Dayset/ps2-elite-kd/commits?per_page=100";
-    const isCache = (c) => /^chore\(cache\)/i.test(c.commit.message || "");
+    // [bot] commits (owner 2026-11-25): routine data refreshes — ps-room,
+    // cache, scrims, outfits, luck, duels, spawn-camp — every one ends its
+    // message with "[bot]" and comes from github-actions[bot]. 96 of the
+    // last 100 commits were bot, so the log fetches further pages until it
+    // holds enough real changes (or runs out of pages).
+    const isBot = (c) => /\[bot\]/i.test(c.commit.message || "") || /\[bot\]$/i.test((c.author && c.author.login) || "");
+    const VISIBLE_TARGET = 20; // real (non-bot) commits to show
+    const MAX_PAGES = 4;
 
     let commits = [];
 
     function render() {
-      const showCache = $("showCache").checked;
-      const hidden = commits.filter(isCache).length;
-      const list = commits.filter((c) => showCache || !isCache(c));
+      const showBot = $("showBot").checked;
+      const hidden = commits.filter(isBot).length;
+      const list = commits.filter((c) => showBot || !isBot(c));
+      let html = "";
+      if (!showBot && hidden > 0) html += '<p class="st-dim">' + hidden + " bot refresh" + (hidden === 1 ? "" : "es") + " hidden — tick the box above to show them.</p>";
       if (!list.length) {
-        $("log").innerHTML = '<span class="st-dim">No changes to show.</span>';
+        html += '<span class="st-dim">No changes to show.</span>';
+        $("log").innerHTML = html;
         return;
       }
-      let html = "";
-      if (!showCache && hidden > 0) html += '<p class="st-dim">' + hidden + " routine cache refresh" + (hidden === 1 ? "" : "es") + " hidden — tick the box above to show them.</p>";
       let lastDay = "";
       for (const c of list) {
         const date = (c.commit.committer && c.commit.committer.date || "").slice(0, 10);
@@ -101,14 +109,30 @@
       $("log").innerHTML = html;
     }
 
-    $("showCache").addEventListener("change", render);
+    $("showBot").addEventListener("change", render);
 
-    fetch(API, { headers: { Accept: "application/vnd.github+json" } })
-      .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-      .then((data) => { commits = Array.isArray(data) ? data : []; render(); })
-      .catch(() => {
-        $("log").innerHTML = '<span class="st-err">Couldn’t load the update log from GitHub (rate limit or network).</span> See the <a href="https://github.com/Dayset/ps2-elite-kd/commits/main">full history on GitHub</a>.';
-      });
+    // Fetch successive pages until VISIBLE_TARGET real commits are in hand
+    // (or MAX_PAGES / a short last page), so bot noise can't crowd the log
+    // down to a handful of entries. A failed page renders what arrived so
+    // far; a failed first page shows the error.
+    async function load() {
+      try {
+        for (let page = 1; page <= MAX_PAGES; page++) {
+          const r = await fetch(API + "&page=" + page, { headers: { Accept: "application/vnd.github+json" } });
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          const data = await r.json();
+          if (!Array.isArray(data) || !data.length) break;
+          commits = commits.concat(data);
+          if (commits.filter((c) => !isBot(c)).length >= VISIBLE_TARGET) break;
+          if (data.length < 100) break; // short page: no more history
+        }
+        render();
+      } catch {
+        if (commits.length) render();
+        else $("log").innerHTML = '<span class="st-err">Couldn’t load the update log from GitHub (rate limit or network).</span> See the <a href="https://github.com/Dayset/ps2-elite-kd/commits/main">full history on GitHub</a>.';
+      }
+    }
+    load();
   </script>
 <script type="module" src="page-settings.mjs"></script>
 </body>
