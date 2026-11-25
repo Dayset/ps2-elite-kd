@@ -2,11 +2,11 @@
   "room": "ps",
   "running": false,
   "lastRun": {
-    "runId": "45582154031",
+    "runId": "45602776639",
     "kind": "discovery",
-    "startedAt": "2026-11-25T09:06:31.528Z",
-    "endedAt": "2026-11-25T09:06:31.745Z",
-    "seconds": 0,
+    "startedAt": "2026-11-25T11:16:54.127Z",
+    "endedAt": "2026-11-25T11:16:56.590Z",
+    "seconds": 2,
     "added": [],
     "updated": [],
     "failed": [],
@@ -14,9 +14,9 @@
     "indexSize": 2568,
     "assists": {
       "calls": 1,
-      "rows": 34,
-      "players": 13,
-      "skipped": 18,
+      "rows": 25,
+      "players": 8,
+      "skipped": 15,
       "error": null
     },
     "servers": {
@@ -29,11 +29,21 @@
         "Genudine": 0,
         "Ceres": 0
       },
-      "slices": {}
+      "slices": {
+        "ps2ps4eu": {
+          "calls": 3,
+          "swept": 318,
+          "prefiltered": 106,
+          "checked": 106,
+          "qualified": 0,
+          "newPlaying": 0,
+          "done": true
+        }
+      }
     }
   },
   "outlierGuard": {
-    "checkedAt": "2026-11-25T09:06:34.281Z",
+    "checkedAt": "2026-11-25T11:16:59.755Z",
     "rule": "robust z beyond ±6 AND past p99 + 3×(p99 − median) (or the mirror below p01)",
     "unexplained": 3,
     "explained": 12,
@@ -131,8 +141,8 @@
         "name": "WertyTR",
         "id": "s_kd",
         "value": 69.866,
-        "bound": 27.679,
-        "z": 89.752,
+        "bound": 27.678,
+        "z": 89.733,
         "side": "high",
         "explained": true,
         "reason": "Also in 🚩 red flags (aim), listed there",
@@ -298,8 +308,8 @@
             "id": "s_kd",
             "label": "🧪 Session K/D",
             "value": 69.866,
-            "bound": 27.679,
-            "z": 89.752,
+            "bound": 27.678,
+            "z": 89.733,
             "side": "high"
           },
           {
@@ -504,7 +514,7 @@
     ]
   },
   "bins": {
-    "checkedAt": "2026-11-25T09:06:34.712Z",
+    "checkedAt": "2026-11-25T11:17:00.295Z",
     "red": 17,
     "padding": 0,
     "adjusted": 286,
@@ -515,7 +525,7 @@
     "forensics": 0
   },
   "sessionStats": {
-    "checkedAt": "2026-11-25T09:06:34.288Z",
+    "checkedAt": "2026-11-25T11:16:59.762Z",
     "min": {
       "MIN_KILLS": 100,
       "SESSION_SEC": 600,
@@ -531,8 +541,8 @@
       "players": 2568,
       "withSessions": 2092,
       "measured": 1253,
-      "sessions": 34174,
-      "kills": 713348,
+      "sessions": 34184,
+      "kills": 713390,
       "xpPlayers": 0,
       "xpMeasured": 0,
       "xpSessions": 0
@@ -1027,8 +1037,8 @@
             "id": "s_kd",
             "label": "🧪 Session K/D",
             "value": 69.866,
-            "bound": 27.679,
-            "z": 89.752,
+            "bound": 27.678,
+            "z": 89.733,
             "side": "high"
           },
           {
@@ -1115,7 +1125,7 @@
     "outliersUnexplained": 0
   },
   "forensics": {
-    "checkedAt": "2026-11-25T09:06:34.297Z",
+    "checkedAt": "2026-11-25T11:16:59.770Z",
     "candidates": [
       "thingzzvs",
       "wertytr",
@@ -1207,7 +1217,7 @@
     "players": []
   },
   "review": {
-    "checkedAt": "2026-11-25T09:06:34.304Z",
+    "checkedAt": "2026-11-25T11:16:59.778Z",
     "count": 296,
     "players": [
       {
@@ -3648,7 +3658,7 @@
       }
     },
     "tagMin": 20,
-    "checkedAt": "2026-11-25T09:06:34.383Z",
+    "checkedAt": "2026-11-25T11:16:59.883Z",
     "coverage": {
       "players": 2561,
       "withSessions": 2089,
@@ -3958,7 +3968,7 @@
     }
   },
   "padderPenalty": {
-    "checkedAt": "2026-11-25T09:06:34.307Z",
+    "checkedAt": "2026-11-25T11:16:59.783Z",
     "ranked": 2547,
     "penalty": 0.1,
     "ref": 610.6,
@@ -3968,7 +3978,7 @@
     "players": []
   },
   "vehicleCut": {
-    "checkedAt": "2026-11-25T09:06:34.313Z",
+    "checkedAt": "2026-11-25T11:16:59.792Z",
     "ranked": 2547,
     "cut": 1458,
     "buckets": {
@@ -6244,7 +6254,7 @@
     "watch": []
   },
   "infantry": {
-    "checkedAt": "2026-11-25T09:06:34.895Z",
+    "checkedAt": "2026-11-25T11:17:00.526Z",
     "players": 2568,
     "counts": {
       "infantry": 1638,
@@ -6263,7 +6273,7 @@
   },
   "burst": {
     "rule": "KPM ≥ 5 and ≥ 15 kills in ≥ 2 min (one stored session, no 10-minute floor); skipped when within the player's own normal (≥ 5 other sessions of ≥ 10 min, ≤ 2× their median KPM, career K/D < 10); 🛡️ established players (account ≥ 1 year, eKPM ≥ 0.75, ≥ 3 stored sessions) show as cleared automatically",
-    "checkedAt": "2026-11-25T09:06:35.147Z",
+    "checkedAt": "2026-11-25T11:17:00.843Z",
     "sessions": 28,
     "ownNormalSkipped": 0,
     "flaggedPlayers": 8,
@@ -6679,7 +6689,7 @@
     "caught": []
   },
   "hut": {
-    "builtAt": "2026-11-25T09:06:34.224Z",
+    "builtAt": "2026-11-25T11:16:59.673Z",
     "cuts": {
       "actMedian": 0.2223,
       "actMult": 1.333,
@@ -7384,7 +7394,7 @@
     "cleared": []
   },
   "newbieDiff": {
-    "builtAt": "2026-11-25T09:06:34.243Z",
+    "builtAt": "2026-11-25T11:16:59.699Z",
     "loH": 6.2,
     "hiH": 252.8,
     "n": 2553,
@@ -15776,7 +15786,7 @@
     "cleared": []
   },
   "vehDiff": {
-    "builtAt": "2026-11-25T09:06:34.233Z",
+    "builtAt": "2026-11-25T11:16:59.686Z",
     "start": 14.4,
     "damped": 602,
     "dieHardHut": 253,
@@ -22409,7 +22419,7 @@
     "cleared": []
   },
   "zergRevive": {
-    "builtAt": "2026-11-25T09:06:34.248Z",
+    "builtAt": "2026-11-25T11:16:59.705Z",
     "zergScored": 1249,
     "measured": 0,
     "measuredZerg": 0,
@@ -22433,7 +22443,7 @@
     "cleared": []
   },
   "assistGap": {
-    "checkedAt": "2026-11-25T09:06:34.384Z",
+    "checkedAt": "2026-11-25T11:16:59.884Z",
     "start": "2026-04-01T13:00:00.000Z",
     "end": "2026-05-07T05:00:00.000Z",
     "url": "https://www.planetside2.com/patch-notes/may-6-hotfix-2026",
@@ -22443,7 +22453,7 @@
     "players": []
   },
   "tractorMark": {
-    "checkedAt": "2026-11-25T09:06:34.250Z",
+    "checkedAt": "2026-11-25T11:16:59.710Z",
     "rule": "🚜 = infantry % < p25 (72.8%) and (vehicle repair/min ≥ p75 (null) or vehicle kills/min ≥ p75 (null) of the 0 players with 2+ h of XP detail), or infantry % < p2 (22.4%)",
     "cuts": {
       "cut": 72.8,
